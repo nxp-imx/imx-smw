@@ -1,0 +1,369 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "RSA",
+			"security_size": 2048,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"RSA_PKCS1V15",
+				"HASH=SHA512"
+			]
+		},
+		"key 2": {
+			"type": "RSA",
+			"security_size": 2048,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"RSA_PSS",
+				"HASH=SHA512"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"restriction_list": "imx8ulp"
+	},
+	"subtest 2": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"restriction_list": "imx8ulp"
+	},
+	"subtest 3": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 4": {
+		"description": "Sign type is undefined",
+		"command": "SIGN_INIT",
+		"sign_attr": [
+			"RSA",
+			"HASH=SHA512"
+		],
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a",
+			"59f8237a1cb51b42f3ded6b202d9af09",
+			"97898fdd03cf60bda951c514547a0850",
+			"cec25444ae2f24cb711bfbafcc3956c9",
+			"41d3de69f155e3f8b10f06db5f37359b",
+			"772ddd43e1035a0a0d3db33242d58430",
+			"33833b0dd43b870c6bf60e8deab55f31",
+			"7cc3273f5e3ba747f0cb65050cb72287",
+			"96210d9254873643008d45f29cfd6c5b",
+			"060c9a"
+		],
+		"context_id": 0,
+		"key_name": "key 1",
+		"depends": 3,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 5": {
+		"command": "OP_CONTEXT_CANCEL",
+		"context_id": 0,
+		"depends": 3
+	},
+	"subtest 6": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 1,
+		"depends": 1
+	},
+	"subtest 7": {
+		"description": "Salt length is set for PKCS1 V1_5 signature type",
+		"command": "SIGN_INIT",
+		"sign_attr": [
+			"RSA_PKCS1V15",
+			"HASH=SHA512",
+			"LENGTH=96"
+		],
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a",
+			"59f8237a1cb51b42f3ded6b202d9af09",
+			"97898fdd03cf60bda951c514547a0850",
+			"cec25444ae2f24cb711bfbafcc3956c9",
+			"41d3de69f155e3f8b10f06db5f37359b",
+			"772ddd43e1035a0a0d3db33242d58430",
+			"33833b0dd43b870c6bf60e8deab55f31",
+			"7cc3273f5e3ba747f0cb65050cb72287",
+			"96210d9254873643008d45f29cfd6c5b",
+			"060c9a"
+		],
+		"context_id": 1,
+		"key_name": "key 1",
+		"depends": 1,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 8": {
+		"command": "OP_CONTEXT_CANCEL",
+		"context_id": 1,
+		"depends": 5
+	},
+	"subtest 9": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 2,
+		"depends": 2
+	},
+	"subtest 10": {
+		"description": "Generate RSA PSS signature multi-part (init)",
+		"command": "SIGN_INIT",
+		"sign_attr": [
+			"RSA_PSS",
+			"HASH=SHA512"
+		],
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a",
+			"59f8237a1cb51b42f3ded6b202d9af09"
+		],
+		"context_id": 2,
+		"key_name": "key 2",
+		"depends": 9
+	},
+	"subtest 11": {
+		"description": "Generate RSA PSS signature multi-part (update)",
+		"command": "SIGN_UPDATE",
+		"message": [
+			"97898fdd03cf60bda951c514547a0850",
+			"cec25444ae2f24cb711bfbafcc3956c9",
+			"41d3de69f155e3f8b10f06db5f37359b",
+			"772ddd43e1035a0a0d3db33242d58430",
+			"33833b0dd43b870c6bf60e8deab55f31",
+			"7cc3273f5e3ba747f0cb65050cb72287",
+			"96210d9254873643008d45f29cfd6c5b",
+			"060c9a"
+		],
+		"context_id": 2,
+		"depends": 10
+	},
+	"subtest 12": {
+		"description": "Generate RSA PSS signature multi-part (final)",
+		"command": "SIGN_FINAL",
+		"context_id": 2,
+		"sign_id": 0,
+		"depends": 11
+	},
+	"subtest 13": {
+		"description": "Verify RSA PSS signature one-shot",
+		"command": "VERIFY",
+		"sign_attr": [
+			"RSA_PSS",
+			"HASH=SHA512"
+		],
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a",
+			"59f8237a1cb51b42f3ded6b202d9af09",
+			"97898fdd03cf60bda951c514547a0850",
+			"cec25444ae2f24cb711bfbafcc3956c9",
+			"41d3de69f155e3f8b10f06db5f37359b",
+			"772ddd43e1035a0a0d3db33242d58430",
+			"33833b0dd43b870c6bf60e8deab55f31",
+			"7cc3273f5e3ba747f0cb65050cb72287",
+			"96210d9254873643008d45f29cfd6c5b",
+			"060c9a"
+		],
+		"sign_id": 0,
+		"key_name": "key 2",
+		"depends": 12
+	},
+	"subtest 14": {
+		"description": "Generate RSA PKCS1V15 signature one_shot",
+		"command": "SIGN",
+		"sign_attr": [
+			"RSA_PKCS1V15",
+			"HASH=SHA512"
+		],
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a",
+			"59f8237a1cb51b42f3ded6b202d9af09",
+			"97898fdd03cf60bda951c514547a0850",
+			"cec25444ae2f24cb711bfbafcc3956c9",
+			"41d3de69f155e3f8b10f06db5f37359b",
+			"772ddd43e1035a0a0d3db33242d58430",
+			"33833b0dd43b870c6bf60e8deab55f31",
+			"7cc3273f5e3ba747f0cb65050cb72287",
+			"96210d9254873643008d45f29cfd6c5b",
+			"060c9a"
+		],
+		"sign_id": 1,
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 15": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 3,
+		"depends": 14
+	},
+	"subtest 16": {
+		"description": "Verify RSA PKCS1V15 signature multi-part (init)",
+		"command": "VERIFY_INIT",
+		"sign_attr": [
+			"RSA_PKCS1V15",
+			"HASH=SHA512"
+		],
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a",
+			"59f8237a1cb51b42f3ded6b202d9af09",
+			"97898fdd03cf60bda951c514547a0850"
+		],
+		"context_id": 3,
+		"key_name": "key 1",
+		"depends": 15
+	},
+	"subtest 17": {
+		"description": "Verify RSA PKCS1V15 signature multi-part (update)",
+		"command": "VERIFY_UPDATE",
+		"message": [
+			"cec25444ae2f24cb711bfbafcc3956c9",
+			"41d3de69f155e3f8b10f06db5f37359b",
+			"772ddd43e1035a0a0d3db33242d58430",
+			"33833b0dd43b870c6bf60e8deab55f31"
+		],
+		"context_id": 3,
+		"depends": 16
+	},
+	"subtest 18": {
+		"description": "Verify RSA PKCS1V15 signature multi-part (final)",
+		"command": "VERIFY_FINAL",
+		"message": [
+			"7cc3273f5e3ba747f0cb65050cb72287",
+			"96210d9254873643008d45f29cfd6c5b",
+			"060c9a"
+		],
+		"context_id": 3,
+		"sign_id": 1,
+		"depends": 17
+	},
+	"subtest 19": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 4,
+		"depends": 2
+	},
+	"subtest 20": {
+		"description": "Generate RSA PSS with salt signature multi-part (init)",
+		"command": "SIGN_INIT",
+		"sign_attr": [
+			"RSA_PSS",
+			"HASH=SHA512",
+			"LENGTH=60"
+		],
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a",
+			"59f8237a1cb51b42f3ded6b202d9af09"
+		],
+		"context_id": 4,
+		"key_name": "key 2",
+		"depends": 19
+	},
+	"subtest 21": {
+		"description": "Generate RSA PSS with salt signature multi-part (update)",
+		"command": "SIGN_UPDATE",
+		"message": [
+			"97898fdd03cf60bda951c514547a0850",
+			"cec25444ae2f24cb711bfbafcc3956c9",
+			"41d3de69f155e3f8b10f06db5f37359b",
+			"772ddd43e1035a0a0d3db33242d58430",
+			"33833b0dd43b870c6bf60e8deab55f31"
+		],
+		"context_id": 4,
+		"depends": 20
+	},
+	"subtest 22": {
+		"description": "Generate RSA PSS with salt signature multi-part (final)",
+		"command": "SIGN_FINAL",
+		"message": [
+			"7cc3273f5e3ba747f0cb65050cb72287",
+			"96210d9254873643008d45f29cfd6c5b",
+			"060c9a"
+		],
+		"context_id": 4,
+		"sign_id": 2,
+		"depends": 21
+	},
+	"subtest 23": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 5,
+		"depends": 22
+	},
+	"subtest 24": {
+		"description": "Verify RSA PSS with salt signature multi-part (init)",
+		"command": "VERIFY_INIT",
+		"sign_attr": [
+			"RSA_PSS",
+			"HASH=SHA512",
+			"LENGTH=60"
+		],
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a"
+		],
+		"context_id": 5,
+		"key_name": "key 2",
+		"depends": 23
+	},
+	"subtest 25": {
+		"description": "Verify RSA PSS with salt signature multi-part (update)",
+		"command": "VERIFY_UPDATE",
+		"message": [
+			"59f8237a1cb51b42f3ded6b202d9af09",
+			"97898fdd03cf60bda951c514547a0850",
+			"cec25444ae2f24cb711bfbafcc3956c9",
+			"41d3de69f155e3f8b10f06db5f37359b",
+			"772ddd43e1035a0a0d3db33242d58430",
+			"33833b0dd43b870c6bf60e8deab55f31",
+			"7cc3273f5e3ba747f0cb65050cb72287",
+			"96210d9254873643008d45f29cfd6c5b"
+		],
+		"context_id": 5,
+		"depends": 24
+	},
+	"subtest 26": {
+		"description": "Verify RSA PSS with salt signature multi-part (final)",
+		"command": "VERIFY_FINAL",
+		"message": [
+			"060c9a"
+		],
+		"context_id": 5,
+		"sign_id": 2,
+		"depends": 25
+	},
+	"subtest 27": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 28": {
+		"command": "DELETE",
+		"key_name": "key 2",
+		"depends": 2
+	}
+}

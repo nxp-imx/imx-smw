@@ -1,0 +1,113 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "ED448",
+			"security_size": 448,
+			"priv_key": [
+				"833fe62409237b9d62ec77587520911e",
+				"9a759cec1d19755b7da901b96dca3d42",
+				"ef7822e0d5104127dc05d6dbefde69e3",
+				"ab2cec7c867c6e2c49"
+			],
+			"pub_key": [
+				"259b71c19f83ef77a7abd26524cbdb31",
+				"61b590a48f7d17de3ee0ba9c52beb743",
+				"c09428a131d6b1b57303d90d8132c276",
+				"d5ed3d5d01c0f53880"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 0,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95",
+			"imx943"
+		]
+	},
+	"subtest 2": {
+		"description": [
+			"Multipart (init) Pure EDDSA message,",
+			"key buffer is saved in operation context"
+		],
+		"command": "SIGN_INIT",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"PURE_EDDSA"
+		],
+		"context_id": 0,
+		"key_name": "key 1",
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED",
+		"depends": 1
+	},
+	"subtest 3": {
+		"description": "Pre-hashed EDDSA signature generation",
+		"command": "SIGN",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"ED448PH",
+			"MSG_HASHED"
+		],
+		"message": [
+			"483366601360a8771c6863080cc4114d",
+			"8db44530f8f1e1ee4f94ea37e78b5739",
+			"d5a15bef186a5386c75744c0527e1faa",
+			"9f8726e462a12a4feb06bd8801e751e4"
+		],
+		"signature": [
+			"822f6901f7480f3d5f562c592994d969",
+			"3602875614483256505600bbc281ae38",
+			"1f54d6bce2ea911574932f52a4e6cadd",
+			"78769375ec3ffd1b801a0d9b3f4030cd",
+			"433964b6457ea39476511214f97469b5",
+			"7dd32dbc560a9a94d00bff07620464a3",
+			"ad203df7dc7ce360c3cd3696d9d9fab9",
+			"0f00"
+		],
+		"sign_id": 1,
+		"key_name": "key 1",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95",
+			"imx943"
+		]
+	},
+	"subtest 4": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 1,
+		"depends": 3
+	},
+	"subtest 5": {
+		"description": [
+			"Multipart (init) Pre-hashed EDDSA signature verification,",
+			"key buffer is saved in operation context"
+		],
+		"command": "VERIFY_INIT",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"ED448PH"
+		],
+		"context_id": 1,
+		"key_name": "key 1",
+		"depends": 4
+	},
+	"subtest 6": {
+		"description": "Multipart (update) Pre-hashed EDDSA signature verification",
+		"command": "VERIFY_UPDATE",
+		"message": [
+			"616263"
+		],
+		"context_id": 1,
+		"depends": 5
+	},
+	"subtest 7": {
+		"description": "Multipart (final) Pre-hashed EDDSA signature verification",
+		"command": "VERIFY_FINAL",
+		"context_id": 1,
+		"sign_id": 1,
+		"depends": 6
+	}
+}

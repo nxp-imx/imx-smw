@@ -1,0 +1,83 @@
+{
+	"subtest 1": {
+		"description": "Verify args pointer is NULL",
+		"command": "VERIFY_UPDATE",
+		"message": [
+			"7c9c67323a1df1adbfe5ceb415eaef01",
+			"55ece2820f4d50c1ec22cba4928ac656",
+			"c83fe585db6a78ce40bc42757aba7e5a",
+			"3f582428d6ca68d0c3978336a6efb729",
+			"613e8d9979016204bfd921322fdd5222",
+			"183554447de5e6e9bbe6edf76d7b71e1",
+			"8dc2e8d6dc89b7398364f652fafc7343",
+			"29aafa3dcd45d4f31e388e4fafd7fc64",
+			"95f37ca5cbab7f54d586463da4bfeaa3",
+			"bae09f7b8e9239d832b4f0a733aa609c",
+			"c1f8d4"
+		],
+		"test_error": "ARGS_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": {
+		"description": "Version is not supported",
+		"command": "VERIFY_UPDATE",
+		"version": 255,
+		"message": [
+			"7c9c67323a1df1adbfe5ceb415eaef01",
+			"55ece2820f4d50c1ec22cba4928ac656",
+			"c83fe585db6a78ce40bc42757aba7e5a",
+			"3f582428d6ca68d0c3978336a6efb729",
+			"613e8d9979016204bfd921322fdd5222",
+			"183554447de5e6e9bbe6edf76d7b71e1",
+			"8dc2e8d6dc89b7398364f652fafc7343",
+			"29aafa3dcd45d4f31e388e4fafd7fc64",
+			"95f37ca5cbab7f54d586463da4bfeaa3",
+			"bae09f7b8e9239d832b4f0a733aa609c",
+			"c1f8d4"
+		],
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
+	},
+	"subtest 3": {
+		"description": "Context operation missing",
+		"command": "VERIFY_UPDATE",
+		"message": [
+			"7c9c67323a1df1adbfe5ceb415eaef01",
+			"55ece2820f4d50c1ec22cba4928ac656",
+			"c83fe585db6a78ce40bc42757aba7e5a",
+			"3f582428d6ca68d0c3978336a6efb729",
+			"613e8d9979016204bfd921322fdd5222",
+			"183554447de5e6e9bbe6edf76d7b71e1",
+			"8dc2e8d6dc89b7398364f652fafc7343",
+			"29aafa3dcd45d4f31e388e4fafd7fc64",
+			"95f37ca5cbab7f54d586463da4bfeaa3",
+			"bae09f7b8e9239d832b4f0a733aa609c",
+			"c1f8d4"
+		],
+		"test_error": "CTX_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 4": {
+		"description": "No message buffer",
+		"command": "VERIFY_UPDATE",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 5": {
+		"description": "Message buffer pointer valid but length is 0",
+		"command": "VERIFY_UPDATE",
+		"message": [
+			0,
+			"7c9c67323a1df1adbfe5ceb415eaef01",
+			"55ece2820f4d50c1ec22cba4928ac656",
+			"c83fe585db6a78ce40bc42757aba7e5a",
+			"3f582428d6ca68d0c3978336a6efb729",
+			"613e8d9979016204bfd921322fdd5222",
+			"183554447de5e6e9bbe6edf76d7b71e1",
+			"8dc2e8d6dc89b7398364f652fafc7343",
+			"29aafa3dcd45d4f31e388e4fafd7fc64",
+			"95f37ca5cbab7f54d586463da4bfeaa3",
+			"bae09f7b8e9239d832b4f0a733aa609c",
+			"c1f8d4"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	}
+}

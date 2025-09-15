@@ -68,13 +68,13 @@
 		"depends": 2
 	},
 	"subtest 4": {
-		"description": "Salt length set to 480",
+		"description": "Salt length set to 26",
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
 			"RSA_PSS",
 			"HASH=SHA224",
-			"LENGTH=480"
+			"LENGTH=26"
 		],
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
@@ -99,7 +99,7 @@
 		"sign_attr": [
 			"RSA_PSS",
 			"HASH=SHA224",
-			"LENGTH=480"
+			"LENGTH=26"
 		],
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",

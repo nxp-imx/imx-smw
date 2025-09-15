@@ -1,0 +1,178 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "ED25519",
+			"security_size": 255,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"ED25519PH"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95",
+			"imx943"
+		]
+	},
+	"subtest 2": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 3": {
+		"description": "Ed25519ph multipart signature (init) - with context",
+		"command": "SIGN_INIT",
+		"sign_attr": [
+			"ED25519PH"
+		],
+		"message": [
+			"f726936d19c800494e"
+		],
+		"context": [
+			"666f6f"
+		],
+		"context_id": 0,
+		"key_name": "key 1",
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED",
+		"depends": 2
+	},
+	"subtest 4": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 1,
+		"depends": 1
+	},
+	"subtest 5": {
+		"description": "Ed25519ph multipart signature (init)",
+		"command": "SIGN_INIT",
+		"sign_attr": [
+			"ED25519PH"
+		],
+		"message": [
+			"f726936d19c800494e"
+		],
+		"context_id": 1,
+		"key_name": "key 1",
+		"depends": 4
+	},
+	"subtest 6": {
+		"description": "Ed25519ph multipart signature (update)",
+		"command": "SIGN_UPDATE",
+		"message": [
+			"3fdaff20"
+		],
+		"context_id": 1,
+		"depends": 5
+	},
+	"subtest 7": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 2,
+		"depends": 4
+	},
+	"subtest 8": {
+		"description": "Make a context copy",
+		"command": "OP_CONTEXT_COPY",
+		"type": "SIGN_MULTI_PART",
+		"copy_output": true,
+		"context_id": [
+			1,
+			2
+		],
+		"depends": 7
+	},
+	"subtest 9": {
+		"description": "Ed25519ph multipart signature (final) - with data",
+		"command": "SIGN_FINAL",
+		"message": [
+			"b276a8"
+		],
+		"context_id": 1,
+		"sign_id": 0,
+		"depends": 6
+	},
+	"subtest 10": {
+		"description": [
+			"Ed25519ph multipart signature (update)",
+			"additional data and copied context"
+		],
+		"command": "SIGN_UPDATE",
+		"message": [
+			"b276a8"
+		],
+		"context_id": 2,
+		"depends": [
+			6,
+			8
+		]
+	},
+	"subtest 11": {
+		"description": [
+			"Ed25519ph multipart signature (final)",
+			"no data and with copied context"
+		],
+		"command": "SIGN_FINAL",
+		"context_id": 2,
+		"sign_id": 1,
+		"depends": 10
+	},
+	"subtest 12": {
+		"description": [
+			"Ed25519ph verify signature message pre-hashed",
+			"first signature with first context"
+		],
+		"command": "VERIFY",
+		"sign_attr": [
+			"ED25519PH",
+			"MSG_HASHED"
+		],
+		"message": [
+			"3421bdc8d3b52bfd6ebf93ad61cf2fb1",
+			"c1066e4ffab1e6e1384ac2f634fb9e2a",
+			"8aec57bfe56804b0b95e31706ad54e13",
+			"ee367f14f90cf4561cd6aa53d202d583"
+		],
+		"sign_id": 0,
+		"key_name": "key 1",
+		"depends": 9
+	},
+	"subtest 13": {
+		"description": [
+			"Ed25519ph verify signature message pre-hashed",
+			"second signature with copied context"
+		],
+		"command": "VERIFY",
+		"sign_attr": [
+			"ED25519PH",
+			"MSG_HASHED"
+		],
+		"message": [
+			"3421bdc8d3b52bfd6ebf93ad61cf2fb1",
+			"c1066e4ffab1e6e1384ac2f634fb9e2a",
+			"8aec57bfe56804b0b95e31706ad54e13",
+			"ee367f14f90cf4561cd6aa53d202d583"
+		],
+		"sign_id": 1,
+		"key_name": "key 1",
+		"depends": 11
+	},
+	"subtest 14": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	}
+}

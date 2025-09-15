@@ -1,0 +1,43 @@
+{
+	"subtest 1": {
+		"description": "Verify args pointer is NULL",
+		"command": "VERIFY_FINAL",
+		"test_error": "ARGS_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": {
+		"description": "Version is not supported",
+		"command": "VERIFY_FINAL",
+		"version": 255,
+		"signature": [
+			"5555555555"
+		],
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
+	},
+	"subtest 3": {
+		"description": "Context operation missing",
+		"command": "VERIFY_FINAL",
+		"test_error": "CTX_NULL",
+		"signature": [
+			"5555555555"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 4": {
+		"description": "Message buffer pointer valid but length is 0",
+		"command": "VERIFY_FINAL",
+		"message": [
+			0,
+			"5555555555"
+		],
+		"signature": [
+			"5555555555"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 5": {
+		"description": "Signature buffer not defined",
+		"command": "VERIFY_FINAL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	}
+}

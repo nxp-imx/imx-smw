@@ -1,0 +1,139 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "SECP_R1",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA256"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "SECO",
+		"key_name": "key 1"
+	},
+	"subtest 2": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "SECO",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 3": {
+		"description": "Generate signature multi-part",
+		"command": "SIGN_INIT",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA256"
+		],
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a",
+			"59f8237a1cb51b42f3ded6b202d9af09"
+		],
+		"context_id": 0,
+		"key_name": "key 1",
+		"depends": 2
+	},
+	"subtest 4": {
+		"description": "Update the message to sign",
+		"command": "SIGN_UPDATE",
+		"message": [
+			"97898fdd03cf60bda951c514547a0850",
+			"cec25444ae2f24cb711bfbafcc3956c9",
+			"41d3de69f155e3f8b10f06db5f37359b",
+			"772ddd43e1035a0a0d3db33242d58430"
+		],
+		"context_id": 0,
+		"depends": 3
+	},
+	"subtest 5": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "SECO",
+		"context_id": 1,
+		"depends": 2
+	},
+	"subtest 6": {
+		"description": "Make a context copy",
+		"command": "OP_CONTEXT_COPY",
+		"type": "SIGN_MULTI_PART",
+		"copy_output": true,
+		"context_id": [
+			0,
+			1
+		],
+		"depends": 5
+	},
+	"subtest 7": {
+		"description": "Cancel started context",
+		"command": "OP_CONTEXT_CANCEL",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 8": {
+		"description": "Finalize the message to sign with context copied",
+		"command": "SIGN_FINAL",
+		"message": [
+			"33833b0dd43b870c6bf60e8deab55f31",
+			"7cc3273f5e3ba747f0cb65050cb72287",
+			"96210d9254873643008d45f29cfd6c5b",
+			"060c9a"
+		],
+		"sign_id": 0,
+		"context_id": 1,
+		"depends": 6
+	},
+	"subtest 9": {
+		"description": "Context is NULL",
+		"command": "SIGN_FINAL",
+		"message": [
+			"33833b0dd43b870c6bf60e8deab55f31",
+			"7cc3273f5e3ba747f0cb65050cb72287",
+			"96210d9254873643008d45f29cfd6c5b",
+			"060c9a"
+		],
+		"sign_id": 1,
+		"context_id": 0,
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 7
+	},
+	"subtest 10": {
+		"description": "Verify signature generated with multi-part operation",
+		"command": "VERIFY",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA256"
+		],
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a",
+			"59f8237a1cb51b42f3ded6b202d9af09",
+			"97898fdd03cf60bda951c514547a0850",
+			"cec25444ae2f24cb711bfbafcc3956c9",
+			"41d3de69f155e3f8b10f06db5f37359b",
+			"772ddd43e1035a0a0d3db33242d58430",
+			"33833b0dd43b870c6bf60e8deab55f31",
+			"7cc3273f5e3ba747f0cb65050cb72287",
+			"96210d9254873643008d45f29cfd6c5b",
+			"060c9a"
+		],
+		"sign_id": 0,
+		"key_name": "key 1",
+		"depends": 8
+	},
+	"subtest 11": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	}
+}

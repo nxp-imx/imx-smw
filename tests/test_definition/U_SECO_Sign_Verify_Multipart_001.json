@@ -1,0 +1,214 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "SECP_R1",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA256"
+			]
+		},
+		"key 2": {
+			"type": "SECP_R1",
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA384"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "SECO",
+		"key_name": "key 1"
+	},
+	"subtest 2": {
+		"command": "GENERATE",
+		"subsystem": "SECO",
+		"key_name": "key 2"
+	},
+	"subtest 3": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "SECO",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 4": {
+		"description": "Generate signature multi-part with no data in final stage",
+		"command": "SIGN_INIT",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA256"
+		],
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a",
+			"59f8237a1cb51b42f3ded6b202d9af09"
+		],
+		"context_id": 0,
+		"key_name": "key 1",
+		"depends": 3
+	},
+	"subtest 5": {
+		"description": "Update the message to sign",
+		"command": "SIGN_UPDATE",
+		"message": [
+			"97898fdd03cf60bda951c514547a0850",
+			"cec25444ae2f24cb711bfbafcc3956c9",
+			"41d3de69f155e3f8b10f06db5f37359b",
+			"772ddd43e1035a0a0d3db33242d58430"
+		],
+		"context_id": 0,
+		"depends": 4
+	},
+	"subtest 6": {
+		"description": "Update the message to sign",
+		"command": "SIGN_UPDATE",
+		"message": [
+			"33833b0dd43b870c6bf60e8deab55f31",
+			"7cc3273f5e3ba747f0cb65050cb72287",
+			"96210d9254873643008d45f29cfd6c5b",
+			"060c9a"
+		],
+		"context_id": 0,
+		"depends": 5
+	},
+	"subtest 7": {
+		"description": "Finalize the message to sign (no data)",
+		"command": "SIGN_FINAL",
+		"sign_id": 0,
+		"context_id": 0,
+		"depends": 6
+	},
+	"subtest 8": {
+		"description": "Verify signature multi-part with no data in final stage",
+		"command": "VERIFY",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA256"
+		],
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a",
+			"59f8237a1cb51b42f3ded6b202d9af09",
+			"97898fdd03cf60bda951c514547a0850",
+			"cec25444ae2f24cb711bfbafcc3956c9",
+			"41d3de69f155e3f8b10f06db5f37359b",
+			"772ddd43e1035a0a0d3db33242d58430",
+			"33833b0dd43b870c6bf60e8deab55f31",
+			"7cc3273f5e3ba747f0cb65050cb72287",
+			"96210d9254873643008d45f29cfd6c5b",
+			"060c9a"
+		],
+		"sign_id": 0,
+		"key_name": "key 1",
+		"depends": 7
+	},
+	"subtest 9": {
+		"description": "Generate signature that will be verified with multi-part",
+		"command": "SIGN",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA384"
+		],
+		"message": [
+			"451101250ec6f26652249d59dc974b73",
+			"61d571a8101cdfd36aba3b5854d3ae08",
+			"6b5fdd4597721b66e3c0dc5d8c606d96",
+			"57d0e323283a5217d1f53f2f284f57b8",
+			"5c8a61ac8924711f895c5ed90ef17745",
+			"ed2d728abd22a5f7a13479a462d71b56",
+			"c19a74a40b655c58edfe0a188ad2cf46",
+			"cbf30524f65d423c837dd1ff2bf462ac",
+			"4198007345bb44dbb7b1c861298cdf61",
+			"982a833afc728fae1eda2f87aa2c9480",
+			"858bec"
+		],
+		"sign_id": 1,
+		"key_name": "key 2",
+		"depends": 2
+	},
+	"subtest 10": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "SECO",
+		"context_id": 1,
+		"depends": 9
+	},
+	"subtest 11": {
+		"description": "Verify signature multi-part with data in final stage",
+		"command": "VERIFY_INIT",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA384"
+		],
+		"message": [
+			"451101250ec6f26652249d59dc974b73",
+			"61d571a8101cdfd36aba3b5854d3ae08",
+			"6b5fdd4597721b66e3c0dc5d8c606d96"
+		],
+		"context_id": 1,
+		"key_name": "key 2",
+		"depends": 10
+	},
+	"subtest 12": {
+		"description": "Update message to verify signature",
+		"command": "VERIFY_UPDATE",
+		"message": [
+			"57d0e323283a5217d1f53f2f284f57b8",
+			"5c8a61ac8924711f895c5ed90ef17745",
+			"ed2d728abd22a5f7a13479a462d71b56"
+		],
+		"context_id": 1,
+		"depends": 11
+	},
+	"subtest 13": {
+		"description": "Update message to verify signature",
+		"command": "VERIFY_UPDATE",
+		"message": [
+			"c19a74a40b655c58edfe0a188ad2cf46",
+			"cbf30524f65d423c837dd1ff2bf462ac",
+			"4198007345bb44dbb7b1c861298cdf61"
+		],
+		"context_id": 1,
+		"depends": 12
+	},
+	"subtest 14": {
+		"description": "Verify signature final stage with part of message",
+		"command": "VERIFY_FINAL",
+		"message": [
+			"982a833afc728fae1eda2f87aa2c9480",
+			"858bec"
+		],
+		"context_id": 1,
+		"sign_id": 1,
+		"depends": 13
+	},
+	"subtest 15": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 16": {
+		"command": "DELETE",
+		"key_name": "key 2",
+		"depends": 2
+	}
+}

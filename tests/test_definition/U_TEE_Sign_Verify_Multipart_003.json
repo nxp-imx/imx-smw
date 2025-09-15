@@ -1,0 +1,268 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "ED25519",
+			"security_size": 255,
+			"priv_key": [
+				"833fe62409237b9d62ec77587520911e",
+				"9a759cec1d19755b7da901b96dca3d42"
+			],
+			"pub_key": [
+				"ec172b93ad5e563bf4932c70e1245034",
+				"c35467ef2efd4d64ebf819683467e2bf"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "TEE",
+		"context_id": 0
+	},
+	"subtest 2": {
+		"description": [
+			"Multipart (init) Pure EDDSA message,",
+			"key buffer is saved in operation context"
+		],
+		"command": "SIGN_INIT",
+		"subsystem": "TEE",
+		"sign_attr": [
+			"PURE_EDDSA"
+		],
+		"context_id": 0,
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 3": {
+		"description": "Multipart (update) Pure EDDSA message",
+		"command": "SIGN_UPDATE",
+		"message": [
+			"616263"
+		],
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 4": {
+		"description": "Multipart (final) Pure EDDSA message",
+		"command": "SIGN_FINAL",
+		"signature": [
+			"dc2a4459e7369633a52b1bf277839a00",
+			"201009a3efbf3ecb69bea2186c26b589",
+			"09351fc9ac90b3ecfdfbc7c66431e030",
+			"3dca179c138ac17ad9bef1177331a704"
+		],
+		"context_id": 0,
+		"sign_id": 0,
+		"depends": 3
+	},
+	"subtest 5": {
+		"description": "Pure EDDSA message already digest signature verification",
+		"command": "VERIFY",
+		"subsystem": "TEE",
+		"sign_attr": [
+			"PURE_EDDSA",
+			"MSG_HASHED"
+		],
+		"message": [
+			"ddaf35a193617abacc417349ae204131",
+			"12e6fa4e89a97ea20a9eeee64b55d39a",
+			"2192992a274fc1a836ba3c23a3feebbd",
+			"454d4423643ce80e2a9ac94fa54ca49f"
+		],
+		"sign_id": 0,
+		"key_name": "key 1",
+		"depends": 4
+	},
+	"subtest 6": {
+		"description": "Pre-hashed EDDSA signature generation",
+		"command": "SIGN",
+		"subsystem": "TEE",
+		"sign_attr": [
+			"ED25519PH"
+		],
+		"message": [
+			"ddaf35a193617abacc417349ae204131",
+			"12e6fa4e89a97ea20a9eeee64b55d39a",
+			"2192992a274fc1a836ba3c23a3feebbd",
+			"454d4423643ce80e2a9ac94fa54ca49f"
+		],
+		"signature": [
+			"914DC6538AC512DB8FFBDFBBF9C2FD2C",
+			"1E5C915FF5D708751AD2D3A1425F0C9B",
+			"FA3F1DA6D93E5C7FC5B106B536F7263A",
+			"3DB68E4A285F30E4BD7E8B9F93D42F0E"
+		],
+		"sign_id": 1,
+		"key_name": "key 1"
+	},
+	"subtest 7": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "TEE",
+		"context_id": 1,
+		"depends": 6
+	},
+	"subtest 8": {
+		"description": [
+			"Multipart (init) Pre-hashed EDDSA signature verification,",
+			"key buffer is saved in operation context"
+		],
+		"command": "VERIFY_INIT",
+		"subsystem": "TEE",
+		"sign_attr": [
+			"ED25519PH"
+		],
+		"context_id": 1,
+		"key_name": "key 1",
+		"depends": 7
+	},
+	"subtest 9": {
+		"description": "Multipart (update) Pre-hashed EDDSA signature verification",
+		"command": "VERIFY_UPDATE",
+		"message": [
+			"616263"
+		],
+		"context_id": 1,
+		"depends": 8
+	},
+	"subtest 10": {
+		"description": "Multipart (final) Pre-hashed EDDSA signature verification",
+		"command": "VERIFY_FINAL",
+		"context_id": 1,
+		"sign_id": 1,
+		"depends": 9
+	},
+	"subtest 11": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "TEE",
+		"context_id": 2
+	},
+	"subtest 12": {
+		"description": [
+			"Multipart (init) Pre-hashed EDDSA signature with context,",
+			"key buffer is saved in operation context"
+		],
+		"command": "SIGN_INIT",
+		"subsystem": "TEE",
+		"sign_attr": [
+			"ED25519PH"
+		],
+		"context": [
+			"12345678"
+		],
+		"context_id": 2,
+		"key_name": "key 1",
+		"depends": 11
+	},
+	"subtest 13": {
+		"description": "Multipart (update) Pre-hashed EDDSA message with context",
+		"command": "SIGN_UPDATE",
+		"message": [
+			"616263"
+		],
+		"context_id": 2,
+		"depends": 12
+	},
+	"subtest 14": {
+		"description": "Multipart (final) Pre-hashed EDDSA message with context",
+		"command": "SIGN_FINAL",
+		"signature": [
+			"913EDB56C41C6496E5C4B20F5C5BE66B",
+			"433551C6239BD7B60317928B9599870B",
+			"A52020BD49340DC950EDC1B4F4DEBD3B",
+			"F1AB2C451DFAC7D646408EA73E7E4001"
+		],
+		"context_id": 2,
+		"sign_id": 2,
+		"depends": 13
+	},
+	"subtest 15": {
+		"description": "Pre-hashed EDDSA message signature with context verification",
+		"command": "VERIFY",
+		"subsystem": "TEE",
+		"sign_attr": [
+			"ED25519PH"
+		],
+		"context": [
+			"12345678"
+		],
+		"message": [
+			"ddaf35a193617abacc417349ae204131",
+			"12e6fa4e89a97ea20a9eeee64b55d39a",
+			"2192992a274fc1a836ba3c23a3feebbd",
+			"454d4423643ce80e2a9ac94fa54ca49f"
+		],
+		"sign_id": 2,
+		"key_name": "key 1",
+		"depends": 14
+	},
+	"subtest 16": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "TEE",
+		"context_id": 3
+	},
+	"subtest 17": {
+		"description": [
+			"Multipart (init) EDDSA signature with context,",
+			"key buffer is saved in operation context"
+		],
+		"command": "SIGN_INIT",
+		"subsystem": "TEE",
+		"sign_attr": [
+			"ED25519CTX"
+		],
+		"context": [
+			"12345678"
+		],
+		"context_id": 3,
+		"key_name": "key 1",
+		"depends": 16
+	},
+	"subtest 18": {
+		"description": "Multipart (update) EDDSA message with context",
+		"command": "SIGN_UPDATE",
+		"message": [
+			"616263"
+		],
+		"context_id": 3,
+		"depends": 17
+	},
+	"subtest 19": {
+		"description": "Multipart (final) EDDSA message with context",
+		"command": "SIGN_FINAL",
+		"signature": [
+			"679d6b6bb8ea06bce1b70e5af2544e63",
+			"dd8f2e21a6bdc8c0d068b9a808088564",
+			"67eaf33ddb48a35ef4a8d3ab70c782a2",
+			"23d1111f0773d24993cc86fd3c529108"
+		],
+		"context_id": 3,
+		"sign_id": 3,
+		"depends": 18
+	},
+	"subtest 20": {
+		"description": "EDDSA message signature with context verification",
+		"command": "VERIFY",
+		"subsystem": "TEE",
+		"sign_attr": [
+			"ED25519CTX",
+			"HASH=SHA512"
+		],
+		"context": [
+			"12345678"
+		],
+		"message": [
+			"616263"
+		],
+		"sign_id": 3,
+		"key_name": "key 1",
+		"depends": 19
+	}
+}

@@ -173,9 +173,17 @@ static int execute_derive_cmd(char *cmd, struct subtest_data *subtest)
  */
 static int execute_sign_cmd(char *cmd, struct subtest_data *subtest)
 {
-	(void)cmd;
+	if (!strcmp(cmd, SIGN))
+		return sign_verify(subtest, SIGN_OPERATION);
+	else if (!strcmp(cmd, SIGN_INIT))
+		return sign_verify_init(subtest, SIGN_OPERATION);
+	else if (!strcmp(cmd, SIGN_UPDATE))
+		return sign_verify_update(subtest, SIGN_OPERATION);
+	else if (!strcmp(cmd, SIGN_FINAL))
+		return sign_verify_final(subtest, SIGN_OPERATION);
 
-	return sign_verify(subtest, SIGN_OPERATION);
+	DBG_PRINT("Undefined command");
+	return ERR_CODE(UNDEFINED_CMD);
 }
 
 /**
@@ -190,9 +198,17 @@ static int execute_sign_cmd(char *cmd, struct subtest_data *subtest)
  */
 static int execute_verify_cmd(char *cmd, struct subtest_data *subtest)
 {
-	(void)cmd;
+	if (!strcmp(cmd, VERIFY))
+		return sign_verify(subtest, VERIFY_OPERATION);
+	else if (!strcmp(cmd, VERIFY_INIT))
+		return sign_verify_init(subtest, VERIFY_OPERATION);
+	else if (!strcmp(cmd, VERIFY_UPDATE))
+		return sign_verify_update(subtest, VERIFY_OPERATION);
+	else if (!strcmp(cmd, VERIFY_FINAL))
+		return sign_verify_final(subtest, VERIFY_OPERATION);
 
-	return sign_verify(subtest, VERIFY_OPERATION);
+	DBG_PRINT("Undefined command");
+	return ERR_CODE(UNDEFINED_CMD);
 }
 
 /**

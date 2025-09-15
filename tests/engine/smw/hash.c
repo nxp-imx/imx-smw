@@ -415,6 +415,8 @@ int hash_init(struct subtest_data *subtest)
 	struct smw_hash_init_args args = { 0 };
 	struct smw_hash_init_args *smw_hash_args = &args;
 	struct smw_op_context *api_ctx = (struct smw_op_context *)INTPTR_MAX;
+	unsigned int input_len = 0;
+	unsigned char *input_hex = NULL;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -435,6 +437,16 @@ int hash_init(struct subtest_data *subtest)
 		goto exit;
 
 	args.algo_name = hash_get_algo_name(algo_string);
+
+	res = util_read_hex_buffer(&input_hex, &input_len, subtest->params,
+				   INPUT_OBJ);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(MISSING_PARAMS)) {
+		DBG_PRINT("Failed to read input buffer");
+		goto exit;
+	}
+
+	args.input = input_hex;
+	args.input_length = input_len;
 
 	/* Specific test cases */
 	res = set_hash_init_bad_args(subtest, &smw_hash_args);
@@ -531,12 +543,10 @@ int hash_final(struct subtest_data *subtest)
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	/* Algorithm is mandatory */
+	/* Algorithm is not mandatory */
 	res = util_read_json_type(&algo_string, ALGO_OBJ, t_string,
 				  subtest->params);
-	if ((!is_api_test(subtest) && res != ERR_CODE(PASSED)) ||
-	    (is_api_test(subtest) && res != ERR_CODE(PASSED) &&
-	     res != ERR_CODE(VALUE_NOTFOUND))) {
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND)) {
 		DBG_PRINT("Failed to read algorithm");
 		goto exit;
 	}

@@ -52,8 +52,8 @@ const CK_BYTE brainpoolP384r1[] = ASN1_OID_BRAINPOOL_P384R1;
 const CK_BYTE brainpoolP384t1[] = ASN1_OID_BRAINPOOL_P384T1;
 const CK_BYTE brainpoolP512r1[] = ASN1_OID_BRAINPOOL_P512R1;
 const CK_BYTE brainpoolP512t1[] = ASN1_OID_BRAINPOOL_P512T1;
-const CK_BYTE ed25519[] = ASN1_OID_ED25519;
-const CK_BYTE ed448[] = ASN1_OID_ED448;
+const CK_BYTE edwards25519[] = ASN1_OID_ED25519;
+const CK_BYTE edwards448[] = ASN1_OID_ED448;
 
 enum name_ec_key {
 	EC_PRIME192V1,
@@ -100,8 +100,8 @@ const struct asn1_curve_def ec_asn1_curves[] = {
 	[EC_BRAINPOOL384T1] = EC_ASN1_CURVE(brainpoolP384t1),
 	[EC_BRAINPOOL512R1] = EC_ASN1_CURVE(brainpoolP512r1),
 	[EC_BRAINPOOL512T1] = EC_ASN1_CURVE(brainpoolP512t1),
-	[EC_ED25519] = EC_ASN1_CURVE(ed25519),
-	[EC_ED448] = EC_ASN1_CURVE(ed448),
+	[EC_ED25519] = EC_ASN1_CURVE(edwards25519),
+	[EC_ED448] = EC_ASN1_CURVE(edwards448),
 	[EC_NB_KEY_NAME] = { 0 }
 };
 

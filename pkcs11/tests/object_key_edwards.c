@@ -25,8 +25,8 @@
 		SMW_ATTR_CURVE_##_curve, SMW_ATTR_HASH_##_hash,                \
 		SMW_ATTR_SIGN_PARAM_EDDSA_##_param)
 
-#define EC_STR_ED25519 "ed25519"
-#define EC_STR_ED448   "ed448"
+#define EC_STR_ED25519 "edwards25519"
+#define EC_STR_ED448   "edwards448"
 
 const CK_BYTE ed25519[] = ASN1_OID_ED25519;
 const CK_BYTE ed448[] = ASN1_OID_ED448;

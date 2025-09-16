@@ -56,6 +56,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add support for OFB cipher mode.
 * Return subsystem name when calling smw_get_key_attributes() or
   smw_get_data_info()
+* Update the documentation to include the missing object management APIs and the associated structures
+  defined in smw/public/smw/object.h
 
 ##### 2. Subsystems
 

@@ -50,6 +50,8 @@ static int object_edwards_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 	CK_KEY_TYPE key_type = CKK_EC_EDWARDS;
 	CK_BYTE_PTR pubkey = NULL;
 	CK_ULONG pubkey_len = 0;
+	CK_BYTE_PTR ec_point = NULL;
+	size_t ec_point_len = 0;
 	size_t security_size = 0;
 
 	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_EDDSA };
@@ -77,8 +79,24 @@ static int object_edwards_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 	if (CHECK_EXPECTED(pubkey, "Out of memory"))
 		goto end;
 
-	keyTemplate[3].pValue = pubkey;
-	keyTemplate[3].ulValueLen = pubkey_len;
+	if (!util_asn1_encode_octet_string(pubkey, pubkey_len, NULL,
+					   &ec_point_len)) {
+		TEST_OUT("Get public key object-string length\n");
+		goto end;
+	}
+
+	ec_point = calloc(1, ec_point_len);
+	if (CHECK_EXPECTED(ec_point, "Out of memory"))
+		goto end;
+
+	if (!util_asn1_encode_octet_string(pubkey, pubkey_len, ec_point,
+					   &ec_point_len)) {
+		TEST_OUT("Get public key object-string\n");
+		goto end;
+	}
+
+	keyTemplate[3].pValue = ec_point;
+	keyTemplate[3].ulValueLen = ec_point_len;
 
 	TEST_OUT("Create %sKey Public by curve name\n", token ? "Token " : "");
 	if (CHECK_EXPECTED(util_to_asn1_string(&keyTemplate[2],
@@ -145,6 +163,9 @@ end:
 	if (pubkey)
 		free(pubkey);
 
+	if (ec_point)
+		free(ec_point);
+
 	SUBTEST_END(status);
 	return status;
 }
@@ -162,6 +183,8 @@ static int object_edwards_key_private(CK_FUNCTION_LIST_PTR pfunc,
 	CK_BYTE privkey[MAX_PRIVATE_KEY_LEN] = { 0 };
 	CK_BYTE_PTR pubkey = NULL;
 	CK_ULONG pubkey_len = 0;
+	CK_BYTE_PTR ec_point = NULL;
+	size_t ec_point_len = 0;
 	size_t security_size = 0;
 
 	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_EDDSA };
@@ -201,8 +224,24 @@ static int object_edwards_key_private(CK_FUNCTION_LIST_PTR pfunc,
 	if (CHECK_EXPECTED(pubkey, "Out of memory"))
 		goto end;
 
-	keyTemplate[4].pValue = pubkey;
-	keyTemplate[4].ulValueLen = pubkey_len;
+	if (!util_asn1_encode_octet_string(pubkey, pubkey_len, NULL,
+					   &ec_point_len)) {
+		TEST_OUT("Get public key object-string length\n");
+		goto end;
+	}
+
+	ec_point = calloc(1, ec_point_len);
+	if (CHECK_EXPECTED(ec_point, "Out of memory"))
+		goto end;
+
+	if (!util_asn1_encode_octet_string(pubkey, pubkey_len, ec_point,
+					   &ec_point_len)) {
+		TEST_OUT("Get public key object-string\n");
+		goto end;
+	}
+
+	keyTemplate[4].pValue = ec_point;
+	keyTemplate[4].ulValueLen = ec_point_len;
 
 	/* Set the CKA_VALUE size according to the security size */
 	keyTemplate[3].ulValueLen = BITS_TO_BYTES_SIZE(security_size);
@@ -227,35 +266,33 @@ static int object_edwards_key_private(CK_FUNCTION_LIST_PTR pfunc,
 			goto end;
 	}
 
-		TEST_OUT("Create %sKey Private by curve oid\n",
-			 token ? "Token " : "");
+	TEST_OUT("Create %sKey Private by curve oid\n", token ? "Token " : "");
 
-		if (CHECK_EXPECTED(util_to_asn1_oid(&keyTemplate[2],
-						    &ed_curves[EC_ED25519]),
-				   "ASN1 Conversion"))
+	if (CHECK_EXPECTED(util_to_asn1_oid(&keyTemplate[2],
+					    &ed_curves[EC_ED25519]),
+			   "ASN1 Conversion"))
+		goto end;
+
+	ret = pfunc->C_CreateObject(sess, keyTemplate, ARRAY_SIZE(keyTemplate),
+				    &hkey);
+
+	free(keyTemplate[2].pValue);
+	keyTemplate[2].pValue = NULL;
+
+	if (bsign || !token) {
+		if (CHECK_CK_RV(CKR_OK, "C_CreateObject"))
 			goto end;
 
-		ret = pfunc->C_CreateObject(sess, keyTemplate,
-					    ARRAY_SIZE(keyTemplate), &hkey);
+		TEST_OUT("Key private created by curve oid #%lu\n", hkey);
 
-		free(keyTemplate[2].pValue);
-		keyTemplate[2].pValue = NULL;
-
-		if (bsign || !token) {
-			if (CHECK_CK_RV(CKR_OK, "C_CreateObject"))
-				goto end;
-
-			TEST_OUT("Key private created by curve oid #%lu\n",
-				 hkey);
-
-			TEST_OUT("Key Destroy #%lu\n", hkey);
-			ret = pfunc->C_DestroyObject(sess, hkey);
-			if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-				goto end;
-		} else {
-			if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_CreateObject"))
-				goto end;
-		}
+		TEST_OUT("Key Destroy #%lu\n", hkey);
+		ret = pfunc->C_DestroyObject(sess, hkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			goto end;
+	} else {
+		if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_CreateObject"))
+			goto end;
+	}
 
 	status = TEST_PASS;
 end:
@@ -266,6 +303,9 @@ end:
 
 	if (pubkey)
 		free(pubkey);
+
+	if (ec_point)
+		free(ec_point);
 
 	SUBTEST_END(status);
 	return status;

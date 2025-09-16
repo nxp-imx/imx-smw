@@ -1587,12 +1587,26 @@ static CK_RV export_edwards_public_key(struct smw_key_descriptor *key_desc,
 		goto end;
 	}
 
-	key->point_q.number = public_length;
+	ret = util_asn1_encode_octet_string(NULL, public_length, NULL,
+					    &key->point_q.number);
+	if (ret != CKR_OK)
+		goto end;
+
 	key->point_q.array = calloc(1, key->point_q.number);
 	if (!key->point_q.array) {
 		ret = CKR_HOST_MEMORY;
 		goto end;
 	}
+
+	/*
+	 * Pre-encode the DER octet string without key, just to get
+	 * the encapsulation in order to set the SMW's key buffer.
+	 */
+	ret = util_asn1_encode_octet_string(NULL, public_length,
+					    key->point_q.array,
+					    &key->point_q.number);
+	if (ret != CKR_OK)
+		goto end;
 
 	ret = op_export_common(key_desc, obj);
 

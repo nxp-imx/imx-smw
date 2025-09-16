@@ -465,6 +465,7 @@ static CK_RV edwards_key_set_buffer_from_obj(struct smw_key_descriptor *desc,
 	CK_RV ret = CKR_OK;
 	struct smw_keypair_gen *smw_key = NULL;
 	struct libobj_key_ec_pair *key = NULL;
+	size_t public_length = 0;
 
 	/*
 	 * If SMW key's descriptor buffer field is set, setup it
@@ -482,11 +483,15 @@ static CK_RV edwards_key_set_buffer_from_obj(struct smw_key_descriptor *desc,
 	smw_key = &desc->buffer->gen;
 
 	if (key->point_q.array) {
-		smw_key->public_data = key->point_q.array;
-		if (SET_OVERFLOW(key->point_q.number, smw_key->public_length)) {
-			ret = CKR_ARGUMENTS_BAD;
+		ret = util_asn1_get_field_octet_string(key->point_q.array,
+						       key->point_q.number,
+						       &smw_key->public_data,
+						       &public_length);
+		if (ret != CKR_OK)
 			goto end;
-		}
+
+		if (SET_OVERFLOW(public_length, smw_key->public_length))
+			ret = CKR_ARGUMENTS_BAD;
 	}
 
 	smw_key->private_data = key->value_d.value;

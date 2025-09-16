@@ -164,10 +164,15 @@ int tls_mac_finish(struct hdl *hdl, void *args)
 	SMW_UTILS_MEMCPY(key_ex_args.user_fixed_info, label, label_len);
 	SMW_UTILS_MEMCPY(key_ex_args.user_fixed_info + label_len, msg, msg_len);
 
+	key_ex_args.output_sz = smw_sign_verify_get_sign_len(smw_args);
+	if (key_ex_args.output_sz < TLS12_MAC_FINISH_DEFAULT_LEN) {
+		status = SMW_STATUS_OUTPUT_TOO_SHORT;
+		goto end;
+	}
+
 	key_ex_args.flags = HSM_OP_KEY_EXCHANGE_FLAGS_INPUT_PLAINTEXT_CONTENT;
 	key_ex_args.in_content_sz = (uint32_t)sizeof(payload);
 	key_ex_args.in_content = (uint8_t *)&payload;
-	key_ex_args.output_sz = smw_sign_verify_get_sign_len(smw_args);
 	key_ex_args.output = smw_sign_verify_get_sign_buf(smw_args);
 
 	status = open_key_mgmt_service(hdl, &key_mgt_hdl);

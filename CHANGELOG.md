@@ -64,10 +64,13 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### PKCS#11 Library
 
 * Add support for ed448 key generation and signature
+* Fix ed25519 and ed448 curve name.
+* Encode/Decode eddsa public buffer as an octet string.
 
 #### PKCS#11 Tests
 
 * Add test to validate ed448 key generation and signature
+* Update eddsa tests according to buffer encoding update.
 
 ---
 ### <a id ="rel_5_1"></a></br>**Release 5.1**
@@ -217,6 +220,7 @@ If the user repeat these kinds of operations several times, the TEE subsystem wi
 * As some subsystems are not handling key usage and permitted algorithm, the
   find operation is not able to find all keys whose template defines key usage
   and permitted algorithm.
+* Twisted Edwads curve name is set to "ed25519" instead of "edwards25519" as describe in [rfc7748](https://datatracker.ietf.org/doc/html/rfc7748#section-4.1)
 
 ##### 3. ARM PSA APIs
 

@@ -80,6 +80,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 3. ARM PSA APIs
 
 * Fix coverity 2025.6.0 findings
+* Implemented TLS1.2 key derivation.
 
 ##### 4. OSAL
 
@@ -97,6 +98,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix coverity 2025.6.0 findings
 * Add tests validating the signature multi-part operation.
 * Add output saving mechanism for cipher.
+* Add tests for PSA TLS1.2 key derivation: U_PSA_Derive_008, U_PSA_Derive_009 and
+  U_PSA_Derive_010.
 
 #### PKCS#11 Library
 

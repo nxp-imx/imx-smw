@@ -121,7 +121,7 @@ and supported by the SMW Library.
 	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
-	<td>❌</td>
+	<td>✔️</td>
 </tr>
 <tr>
   <td>TLS 1.3 key agreement</td>

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022-2024 NXP
+ * Copyright 2022-2025 NXP
  */
 
 #ifndef __PSA_CRYPTO_SIZES_H__
@@ -907,11 +907,11 @@ size_t psa_hash_length(psa_algorithm_t alg);
  */
 #define PSA_HASH_SUSPEND_OUTPUT_SIZE(alg)                                      \
 	({                                                                     \
-		typeof(alg) _alg = (alg);                                      \
+		typeof(alg) _algo = (alg);                                     \
 		(PSA_HASH_SUSPEND_ALGORITHM_FIELD_LENGTH +                     \
-		 PSA_HASH_SUSPEND_INPUT_LENGTH_FIELD_LENGTH(_alg) +            \
-		 PSA_HASH_SUSPEND_HASH_STATE_FIELD_LENGTH(_alg) +              \
-		 PSA_HASH_BLOCK_LENGTH(_alg) - 1);                             \
+		 PSA_HASH_SUSPEND_INPUT_LENGTH_FIELD_LENGTH(_algo) +           \
+		 PSA_HASH_SUSPEND_HASH_STATE_FIELD_LENGTH(_algo) +             \
+		 PSA_HASH_BLOCK_LENGTH(_algo) - 1);                            \
 	})
 
 /**
@@ -925,8 +925,8 @@ size_t psa_hash_length(psa_algorithm_t alg);
  */
 #define PSA_MAC_TRUNCATED_LENGTH(alg)                                          \
 	({                                                                     \
-		typeof(alg) _alg = (alg);                                      \
-		PSA_ALG_IS_MAC_TRUNCATED(_alg) ?                               \
+		typeof(alg) _algo = (alg);                                     \
+		PSA_ALG_IS_MAC_TRUNCATED(_algo) ?                              \
 			(_alg & PSA_ALG_MAC_TRUNCATION_MASK) >>                \
 				PSA_MAC_TRUNCATION_OFFSET :                    \
 			0;                                                     \

@@ -170,19 +170,26 @@ static int export_ec_public_key(struct smw_object *obj, CK_BYTE_PTR ec_point,
 			   smw_status))
 		goto end;
 
-	if (obj->p11_key.key_type == CKK_EC) {
+	if (obj->p11_key.key_type == CKK_EC ||
+	    obj->p11_key.key_type == CKK_EC_EDWARDS) {
 		if (!util_asn1_get_field_octet_string(ec_point, ec_point_len,
 						      &public_data,
 						      &public_len))
 			goto end;
 
 		/* Check if ec_point start with Uncompress key tag */
-		if (CHECK_EXPECTED(public_data[0] == ANSI_UNCOMPRESS_KEY_TAG,
-				   "EC Public point start with 0x%02x",
-				   public_data[0]))
-			goto end;
-		check_pub_data = &public_data[1];
-		check_pub_len = public_len - 1;
+		if (obj->p11_key.key_type == CKK_EC) {
+			if (CHECK_EXPECTED(public_data[0] ==
+						   ANSI_UNCOMPRESS_KEY_TAG,
+					   "EC Public point start with 0x%02x",
+					   public_data[0]))
+				goto end;
+			check_pub_data = &public_data[1];
+			check_pub_len = public_len - 1;
+		} else {
+			check_pub_data = public_data;
+			check_pub_len = public_len;
+		}
 
 	} else {
 		check_pub_data = ec_point;
@@ -979,8 +986,10 @@ static int find_all_keys(CK_FUNCTION_LIST_PTR pfunc, CK_SESSION_HANDLE sess)
 
 		status = find_keys_attrs(pfunc, sess, nb_max_keys, match_attrs,
 					 ARRAY_SIZE(match_attrs));
-		if (status == TEST_FAIL)
+		if (status == TEST_FAIL) {
 			error = 1;
+			goto end;
+		}
 	}
 
 end:

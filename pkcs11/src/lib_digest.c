@@ -12,7 +12,7 @@
 
 #include "trace.h"
 
-static CK_RV lib_digest_cancel_operation(CK_SESSION_HANDLE hsession)
+CK_RV lib_digest_cancel_operation(CK_SESSION_HANDLE hsession)
 {
 	CK_RV ret = CKR_OK;
 

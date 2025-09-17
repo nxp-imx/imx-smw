@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021, 2023-2024 NXP
+ * Copyright 2020-2021, 2023-2025 NXP
  */
 
 #include <stdlib.h>
@@ -13,7 +13,12 @@
 #include "lib_opctx.h"
 #include "lib_session.h"
 
+#include "lib_cipher.h"
+#include "lib_digest.h"
+#include "lib_sign_verify.h"
+
 #include "trace.h"
+#include "list.h"
 
 static CK_RV get_slotdev(struct libdevice **dev, struct libsess *sess)
 {
@@ -203,23 +208,17 @@ err:
 	return ret;
 }
 
-CK_RV libsess_close(CK_SESSION_HANDLE hsession)
+CK_RV libsess_destroy_query(CK_SESSION_HANDLE hsession)
 {
 	CK_RV ret = CKR_OK;
-	struct libdevice *dev = NULL;
+
 	struct libobj_query *query = NULL;
 	struct libobj_handles *obj = NULL;
 	struct libobj_handles *next = NULL;
-	struct libsess *sess = (struct libsess *)hsession;
 
-	DBG_TRACE("Try to close session %p (slotid = %ld)", sess, sess->slotid);
-
-	/* First clean query list if any */
+	DBG_TRACE("Destroy query list, if any on session %lu", hsession);
 	ret = libsess_get_query(hsession, &query);
-	if (ret != CKR_OK)
-		return ret;
-
-	if (query) {
+	if (ret == CKR_OK && query) {
 		obj = LIST_FIRST(&query->objects);
 		while (obj) {
 			next = LIST_NEXT(obj);
@@ -228,10 +227,25 @@ CK_RV libsess_close(CK_SESSION_HANDLE hsession)
 		}
 
 		free(query);
+
 		ret = libsess_set_query(hsession, NULL);
-		if (ret != CKR_OK)
-			return ret;
 	}
+
+	return ret;
+}
+
+CK_RV libsess_close(CK_SESSION_HANDLE hsession)
+{
+	CK_RV ret = CKR_OK;
+	struct libdevice *dev = NULL;
+	struct libsess *sess = (struct libsess *)hsession;
+
+	DBG_TRACE("Try to close session %p (slotid = %ld)", sess, sess->slotid);
+
+	/* Clean query list, if any */
+	ret = libsess_destroy_query(hsession);
+	if (ret != CKR_OK)
+		return ret;
 
 	ret = get_slotdev(&dev, sess);
 	if (ret != CKR_OK)
@@ -821,32 +835,500 @@ end:
 	return ret;
 }
 
+static CK_RV cancel_op(CK_SESSION_HANDLE hSession, CK_FLAGS op_flag)
+{
+	CK_RV ret = CKR_OK;
+
+	switch (op_flag) {
+	case CKF_ENCRYPT:
+	case CKF_DECRYPT:
+	case CKF_MESSAGE_ENCRYPT:
+	case CKF_MESSAGE_DECRYPT:
+		ret = lib_cipher_cancel_operation(hSession, op_flag);
+		break;
+
+	case CKF_SIGN:
+	case CKF_VERIFY:
+	case CKF_MESSAGE_SIGN:
+	case CKF_MESSAGE_VERIFY:
+		ret = lib_sign_verify_cancel_operation(hSession, op_flag);
+		break;
+
+	case CKF_DIGEST:
+		ret = lib_digest_cancel_operation(hSession);
+		break;
+
+	default:
+		ret = CKR_GENERAL_ERROR;
+		break;
+	}
+
+	return ret;
+}
+
+static CK_RV calculate_op_state_size(const struct lib_op_state *op_state,
+				     CK_ULONG_PTR total_size)
+{
+	CK_RV ret = CKR_OK;
+	CK_ULONG size = 0;
+	CK_ULONG ctx_size = 0;
+	CK_ULONG handles_size = 0;
+
+	/* Size for operation context count */
+	size += sizeof(op_state->op_ctx_count);
+
+	/* Size for operation contexts */
+	if (op_state->op_ctx_count > 0) {
+		ctx_size = op_state->op_ctx_count * sizeof(struct libopctx);
+		if (ADD_OVERFLOW(size, ctx_size, &size)) {
+			ret = CKR_STATE_UNSAVEABLE;
+			goto end;
+		}
+	}
+
+	/* Size for object count */
+	if (ADD_OVERFLOW(size, sizeof(op_state->obj_count), &size)) {
+		ret = CKR_STATE_UNSAVEABLE;
+		goto end;
+	}
+
+	/* Size for object handles */
+	if (op_state->obj_count > 0) {
+		handles_size = op_state->obj_count * sizeof(CK_OBJECT_HANDLE);
+		if (ADD_OVERFLOW(size, handles_size, &size)) {
+			ret = CKR_STATE_UNSAVEABLE;
+			goto end;
+		}
+	}
+
+	*total_size = size;
+
+end:
+	return ret;
+}
+
+static void free_mech_param(CK_MECHANISM *mech)
+{
+	if (mech && mech->pParameter) {
+		free(mech->pParameter);
+		mech->pParameter = NULL;
+		mech->ulParameterLen = 0;
+	}
+}
+
+static CK_RV serialize_op_state(const struct lib_op_state *op_state,
+				CK_BYTE_PTR pOperationState)
+{
+	CK_RV ret = CKR_OK;
+	CK_ULONG offset = 0;
+	CK_ULONG ctx_size = 0;
+	CK_ULONG handles_size = 0;
+
+	/* Serialize operation context count */
+	memcpy(pOperationState, &op_state->op_ctx_count,
+	       sizeof(op_state->op_ctx_count));
+	offset += sizeof(op_state->op_ctx_count);
+
+	/* Serialize operation contexts */
+	if (op_state->op_ctx_count > 0 && op_state->op_ctx) {
+		ctx_size = op_state->op_ctx_count * sizeof(*op_state->op_ctx);
+		memcpy(pOperationState + offset, op_state->op_ctx, ctx_size);
+		if (ADD_OVERFLOW(offset, ctx_size, &offset)) {
+			ret = CKR_STATE_UNSAVEABLE;
+			goto end;
+		}
+	}
+
+	/* Serialize object count */
+	memcpy(pOperationState + offset, &op_state->obj_count,
+	       sizeof(op_state->obj_count));
+	offset += sizeof(op_state->obj_count);
+
+	/* Serialize object handles */
+	if (op_state->obj_count > 0 && op_state->obj_handle) {
+		if (MUL_OVERFLOW(op_state->obj_count,
+				 sizeof(*op_state->obj_handle),
+				 &handles_size)) {
+			ret = CKR_STATE_UNSAVEABLE;
+			goto end;
+		}
+
+		memcpy(pOperationState + offset, op_state->obj_handle,
+		       handles_size);
+	}
+
+end:
+	return ret;
+}
+
+static CK_RV deserialize_op_state(CK_BYTE_PTR pOperationState,
+				  CK_ULONG ulOperationStateLen,
+				  struct lib_op_state *op_state)
+{
+	CK_RV ret = CKR_OK;
+	CK_ULONG offset = 0;
+	CK_ULONG size = 0;
+	CK_ULONG ctx_size = 0;
+	CK_ULONG handles_size = 0;
+
+	memset(op_state, 0, sizeof(*op_state));
+
+	if (ulOperationStateLen < sizeof(op_state->op_ctx_count))
+		return CKR_SAVED_STATE_INVALID;
+
+	/* Deserialize operation context count */
+	memcpy(&op_state->op_ctx_count, pOperationState + offset,
+	       sizeof(op_state->op_ctx_count));
+	offset += sizeof(op_state->op_ctx_count);
+
+	/* Deserialize operation contexts */
+	if (op_state->op_ctx_count > 0) {
+		ctx_size = op_state->op_ctx_count * sizeof(struct libopctx);
+
+		if (ADD_OVERFLOW(offset, ctx_size, &size) ||
+		    size > ulOperationStateLen) {
+			ret = CKR_SAVED_STATE_INVALID;
+			goto end;
+		}
+
+		op_state->op_ctx = malloc(ctx_size);
+		if (!op_state->op_ctx) {
+			ret = CKR_HOST_MEMORY;
+			goto end;
+		}
+
+		memcpy(op_state->op_ctx, pOperationState + offset, ctx_size);
+
+		offset += ctx_size;
+	}
+
+	if (ADD_OVERFLOW(offset, sizeof(op_state->obj_count), &size) ||
+	    size > ulOperationStateLen) {
+		ret = CKR_SAVED_STATE_INVALID;
+		goto end;
+	}
+
+	/* Deserialize object count */
+	memcpy(&op_state->obj_count, pOperationState + offset,
+	       sizeof(op_state->obj_count));
+	offset += sizeof(op_state->obj_count);
+
+	/* Deserialize object handles */
+	if (op_state->obj_count > 0) {
+		handles_size = op_state->obj_count * sizeof(CK_OBJECT_HANDLE);
+
+		if (ADD_OVERFLOW(offset, handles_size, &size) ||
+		    size > ulOperationStateLen) {
+			ret = CKR_SAVED_STATE_INVALID;
+			goto end;
+		}
+
+		op_state->obj_handle = malloc(handles_size);
+		if (!op_state->obj_handle) {
+			ret = CKR_HOST_MEMORY;
+			goto end;
+		}
+
+		memcpy(op_state->obj_handle, pOperationState + offset,
+		       handles_size);
+	}
+
+end:
+	if (ret != CKR_OK) {
+		if (op_state->op_ctx) {
+			free(op_state->op_ctx);
+			op_state->op_ctx = NULL;
+		}
+
+		if (op_state->obj_handle) {
+			free(op_state->obj_handle);
+			op_state->obj_handle = NULL;
+		}
+
+		op_state->op_ctx_count = 0;
+		op_state->obj_count = 0;
+	}
+
+	return ret;
+}
+
+static void free_op_state(struct lib_op_state *op_state)
+{
+	if (op_state) {
+		if (op_state->op_ctx) {
+			free(op_state->op_ctx);
+			op_state->op_ctx = NULL;
+		}
+
+		if (op_state->obj_handle) {
+			free(op_state->obj_handle);
+			op_state->obj_handle = NULL;
+		}
+
+		op_state->op_ctx_count = 0;
+		op_state->obj_count = 0;
+	}
+}
+
+static CK_RV collect_operation_contexts(CK_SESSION_HANDLE hSession,
+					CK_BYTE_PTR pOperationState,
+					struct lib_op_state *op_state)
+{
+	CK_RV ret = CKR_OK;
+	struct libsess *sess = (struct libsess *)hSession;
+	struct libopctx *opctx = NULL;
+	struct libopctx *dest_ctx = NULL;
+	CK_ULONG ctx_index = 0;
+	CK_ULONG ctx_size = 0;
+	unsigned int i = 0;
+
+	CK_ULONG op_flags[] = {
+		CKF_ENCRYPT,	     CKF_DECRYPT,	 CKF_MESSAGE_ENCRYPT,
+		CKF_MESSAGE_DECRYPT, CKF_SIGN,		 CKF_VERIFY,
+		CKF_MESSAGE_SIGN,    CKF_MESSAGE_VERIFY, CKF_DIGEST,
+	};
+
+	/* Count active multi-part operations */
+	op_state->op_ctx_count = 0;
+	for (; i < ARRAY_SIZE(op_flags); i++) {
+		ret = libopctx_find(&sess->opctx, op_flags[i], &opctx);
+		if (ret == CKR_OK && opctx) {
+			if (INC_OVERFLOW(op_state->op_ctx_count, 1)) {
+				ret = CKR_GENERAL_ERROR;
+				goto end;
+			}
+		}
+	}
+
+	op_state->op_ctx = NULL;
+
+	/*
+	 * If pOperationState is NULL, only count active operations to calculate
+	 * the required buffer size (returned via pulOperationStateLen).
+	 */
+	if (op_state->op_ctx_count == 0 || !pOperationState) {
+		ret = CKR_OK;
+		goto end;
+	}
+
+	ctx_size = op_state->op_ctx_count * sizeof(struct libopctx);
+	op_state->op_ctx = calloc(1, ctx_size);
+	if (!op_state->op_ctx) {
+		ret = CKR_HOST_MEMORY;
+		goto end;
+	}
+
+	/* Copy active operations */
+	ctx_index = 0;
+	for (i = 0; i < ARRAY_SIZE(op_flags); i++) {
+		ret = libopctx_find(&sess->opctx, op_flags[i], &opctx);
+		if (ret != CKR_OK || !opctx)
+			continue;
+
+		dest_ctx = &op_state->op_ctx[ctx_index];
+		ret = libopctx_copy(opctx, dest_ctx);
+		if (ret != CKR_OK) {
+			ret = CKR_STATE_UNSAVEABLE;
+			break;
+		}
+
+		ctx_index++;
+	}
+
+end:
+	if (ret != CKR_OK && op_state->op_ctx) {
+		free(op_state->op_ctx);
+		op_state->op_ctx = NULL;
+		op_state->op_ctx_count = 0;
+	}
+
+	return ret;
+}
+
+static CK_RV collect_search_objects(CK_SESSION_HANDLE hSession,
+				    CK_BYTE_PTR pOperationState,
+				    struct lib_op_state *op_state)
+{
+	CK_RV ret = CKR_OK;
+	struct libobj_query *query = NULL;
+	struct libobj_handles *obj = NULL;
+	CK_ULONG obj_index = 0;
+	CK_ULONG handles_size = 0;
+
+	ret = libsess_get_query(hSession, &query);
+	if (ret != CKR_OK)
+		goto end;
+
+	op_state->obj_count = 0;
+	op_state->obj_handle = NULL;
+
+	if (!query) {
+		ret = CKR_OK;
+		goto end;
+	}
+
+	/* Count search objects in query */
+	obj = LIST_FIRST(&query->objects);
+	while (obj) {
+		if (INC_OVERFLOW(op_state->obj_count, 1)) {
+			ret = CKR_STATE_UNSAVEABLE;
+			goto end;
+		}
+
+		obj = LIST_NEXT(obj);
+	}
+
+	/*
+	 * If pOperationState is NULL, only count the search objects to calculate
+	 * the required buffer size (returned via pulOperationStateLen).
+	 */
+	if (op_state->obj_count == 0 || !pOperationState) {
+		ret = CKR_OK;
+		goto end;
+	}
+
+	handles_size = op_state->obj_count * sizeof(CK_OBJECT_HANDLE);
+	op_state->obj_handle = calloc(1, handles_size);
+	if (!op_state->obj_handle) {
+		ret = CKR_HOST_MEMORY;
+		goto end;
+	}
+
+	/* Copy object handles */
+	obj = LIST_FIRST(&query->objects);
+	obj_index = 0;
+	while (obj && obj_index < op_state->obj_count) {
+		op_state->obj_handle[obj_index] = obj->handle;
+		obj = LIST_NEXT(obj);
+		obj_index++;
+	}
+
+end:
+	if (ret != CKR_OK && op_state->obj_handle) {
+		free(op_state->obj_handle);
+		op_state->obj_handle = NULL;
+		op_state->obj_count = 0;
+	}
+
+	return ret;
+}
+
+static CK_RV restore_operation_contexts(CK_SESSION_HANDLE hSession,
+					const struct lib_op_state *op_state)
+{
+	CK_RV ret = CKR_OK;
+	struct libopctx active_ctx = { 0 };
+	struct libopctx *ctx = NULL_PTR;
+	unsigned int i = 0;
+
+	if (op_state->op_ctx_count == 0)
+		goto end;
+
+	if (!op_state->op_ctx) {
+		ret = CKR_SAVED_STATE_INVALID;
+		goto end;
+	}
+
+	/* Fetch operation contexts */
+	for (; i < op_state->op_ctx_count; i++) {
+		ctx = &op_state->op_ctx[i];
+		ret = libsess_find_opctx(hSession, ctx->op_flag,
+					 &active_ctx.mech, &active_ctx.ctx);
+		if (ret != CKR_OK && ret != CKR_OPERATION_NOT_INITIALIZED)
+			break;
+
+		/*
+		 * If a multi-part operation of the type indicated by @ctx->op_flag
+		 * (CK_FLAGS) is currently active in a session, it must be cancelled
+		 * before restoring the saved operation state, as required by the
+		 * PKCS#11 specification.
+		 */
+		if (ret == CKR_OK && active_ctx.ctx) {
+			ret = cancel_op(hSession, ctx->op_flag);
+			if (ret != CKR_OK)
+				break;
+		}
+
+		ret = libsess_add_opctx(hSession, ctx->op_flag, &ctx->mech,
+					ctx->ctx);
+		if (ret != CKR_OK)
+			break;
+
+		free_mech_param(&active_ctx.mech);
+	}
+
+	if (ret != CKR_OK)
+		free_mech_param(&active_ctx.mech);
+
+end:
+	return ret;
+}
+
+static CK_RV restore_search_objects(CK_SESSION_HANDLE hSession,
+				    const struct lib_op_state *op_state)
+{
+	CK_RV status = CKR_OK;
+	struct libobj_query *query = NULL_PTR;
+	struct libobj_handles *obj = NULL_PTR;
+	struct libobj_handles *tmp = NULL_PTR;
+	struct libobj_handles *next = NULL_PTR;
+
+	unsigned int i = 0;
+
+	if (op_state->obj_count == 0)
+		return status;
+
+	if (!op_state->obj_handle)
+		return CKR_SAVED_STATE_INVALID;
+
+	query = calloc(1, sizeof(*query));
+	if (!query) {
+		status = CKR_HOST_MEMORY;
+		goto end;
+	}
+
+	/* Create object handles list from saved handles */
+	for (; i < op_state->obj_count; i++) {
+		obj = calloc(1, sizeof(*obj));
+		if (!obj) {
+			status = CKR_HOST_MEMORY;
+			goto end;
+		}
+
+		obj->handle = op_state->obj_handle[i];
+		LIST_INSERT_TAIL(&query->objects, obj);
+	}
+
+	status = libsess_set_query(hSession, query);
+
+end:
+	if (status != CKR_OK) {
+		if (query) {
+			/* Free any allocated object handles */
+			tmp = LIST_FIRST(&query->objects);
+			while (tmp) {
+				next = LIST_NEXT(tmp);
+				free(tmp);
+				tmp = next;
+			}
+
+			free(query);
+		}
+
+		(void)libsess_set_query(hSession, NULL);
+	}
+
+	return status;
+}
+
 CK_RV libsess_get_operation_state(CK_SESSION_HANDLE hSession,
 				  CK_BYTE_PTR pOperationState,
 				  CK_ULONG_PTR pulOperationStateLen)
 {
-	struct libsess *sess = (struct libsess *)hSession;
-	struct libopctx destctx = { 0 };
-	size_t i = 0;
-
-	CK_ULONG op_flags[] = {
-		CKF_ENCRYPT,
-		CKF_DECRYPT,
-		CKF_MESSAGE_ENCRYPT,
-		CKF_MESSAGE_DECRYPT,
-
-		CKF_SIGN,
-		CKF_VERIFY,
-		CKF_MESSAGE_SIGN,
-		CKF_MESSAGE_VERIFY,
-
-		CKF_DIGEST,
-	};
-
-	struct libopctx *opctx = NULL;
 	CK_RV ret = CKR_OK;
-	CK_ULONG op_state_len = 0;
-	CK_ULONG n_ops = 0;
+	struct libsess *sess = (struct libsess *)hSession;
+	struct lib_op_state op_state = { 0 };
+	CK_ULONG required_size = 0;
 
 	ret = libsess_validate(hSession);
 	if (ret != CKR_OK)
@@ -856,61 +1338,46 @@ CK_RV libsess_get_operation_state(CK_SESSION_HANDLE hSession,
 	if (ret != CKR_OK)
 		return ret;
 
-	for (; i < ARRAY_SIZE(op_flags); i++) {
-		ret = libopctx_find(&sess->opctx, op_flags[i], &opctx);
-		if (ret == CKR_OK && opctx)
-			if (INC_OVERFLOW(n_ops, 1)) {
-				ret = CKR_GENERAL_ERROR;
-				goto end;
-			}
-	}
+	ret = collect_operation_contexts(hSession, pOperationState, &op_state);
+	if (ret != CKR_OK)
+		goto end;
 
-	if (n_ops == 0) {
+	ret = collect_search_objects(hSession, pOperationState, &op_state);
+	if (ret != CKR_OK)
+		goto end;
+
+	/* Check if there's any state to save */
+	if (op_state.op_ctx_count == 0 && op_state.obj_count == 0) {
 		ret = CKR_OPERATION_NOT_INITIALIZED;
 		goto end;
 	}
 
-	if (MUL_OVERFLOW(n_ops, sizeof(struct libopctx), &op_state_len)) {
-		ret = CKR_STATE_UNSAVEABLE;
+	/* Calculate required buffer size */
+	ret = calculate_op_state_size(&op_state, &required_size);
+	if (ret != CKR_OK)
 		goto end;
-	}
 
-	if (!pOperationState || *pulOperationStateLen < op_state_len) {
-		*pulOperationStateLen = op_state_len;
+	DBG_TRACE("Total required operation state length = %ld", required_size);
+
+	if (!pOperationState || *pulOperationStateLen < required_size) {
+		*pulOperationStateLen = required_size;
 		ret = CKR_BUFFER_TOO_SMALL;
 		goto end;
 	}
 
-	op_state_len = 0;
+	ret = serialize_op_state(&op_state, pOperationState);
+	if (ret != CKR_OK)
+		goto end;
 
-	for (i = 0; i < ARRAY_SIZE(op_flags); i++) {
-		ret = libopctx_find(&sess->opctx, op_flags[i], &opctx);
-		if (ret != CKR_OK || !opctx)
-			continue;
-
-		memset(&destctx, 0, sizeof(destctx));
-		ret = libopctx_copy(opctx, &destctx);
-
-		if (ret != CKR_OK) {
-			op_state_len = 0;
-			ret = CKR_STATE_UNSAVEABLE;
-			goto end;
-		}
-
-		memcpy(pOperationState + op_state_len, &destctx,
-		       sizeof(destctx));
-		if (ADD_OVERFLOW(op_state_len, sizeof(struct libopctx),
-				 &op_state_len)) {
-			ret = CKR_STATE_UNSAVEABLE;
-			goto end;
-		}
-	}
+	*pulOperationStateLen = required_size;
 
 end:
 	if (ret != CKR_OK) {
-		if (pOperationState && op_state_len > 0)
-			memset(pOperationState, 0, op_state_len);
+		if (pOperationState && required_size > 0)
+			memset(pOperationState, 0, required_size);
 	}
+
+	free_op_state(&op_state);
 
 	LLIST_UNLOCK(&sess->opctx);
 
@@ -921,30 +1388,43 @@ CK_RV libsess_set_operation_state(CK_SESSION_HANDLE hSession,
 				  CK_BYTE_PTR pOperationState,
 				  CK_ULONG ulOperationStateLen)
 {
-	struct libopctx srcctx = { 0 };
 	CK_RV ret = CKR_OK;
 
-	if (ulOperationStateLen % sizeof(struct libopctx))
-		return CKR_SAVED_STATE_INVALID;
+	struct libobj_query *query = NULL;
+	struct lib_op_state op_state = { 0 };
 
 	ret = libsess_validate(hSession);
 	if (ret != CKR_OK)
-		return ret;
+		goto end;
 
-	while (ulOperationStateLen > 0) {
-		memcpy(&srcctx,
-		       pOperationState +
-			       (ulOperationStateLen - sizeof(struct libopctx)),
-		       sizeof(srcctx));
+	/* Validate and deserialize the operation state */
+	ret = deserialize_op_state(pOperationState, ulOperationStateLen,
+				   &op_state);
+	if (ret != CKR_OK)
+		goto end;
 
-		libsess_add_opctx(hSession, srcctx.op_flag, &srcctx.mech,
-				  srcctx.ctx);
+	ret = restore_operation_contexts(hSession, &op_state);
+	if (ret != CKR_OK)
+		goto end;
 
-		ulOperationStateLen -= sizeof(struct libopctx);
+	ret = libsess_get_query(hSession, &query);
+	if (ret != CKR_OK)
+		goto end;
 
-		if (srcctx.mech.pParameter)
-			free(srcctx.mech.pParameter);
+	/*
+	 * As per PKCS#11 spec, any active object search (C_FindObjectsInit)
+	 * must be terminated before restoring a saved operation state.
+	 */
+	if (query) {
+		ret = libsess_destroy_query(hSession);
+		if (ret != CKR_OK)
+			goto end;
 	}
 
+	/* Restore session's object search sate */
+	ret = restore_search_objects(hSession, &op_state);
+
+end:
+	free_op_state(&op_state);
 	return ret;
 }

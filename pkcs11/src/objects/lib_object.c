@@ -1859,15 +1859,8 @@ end:
 CK_RV libobj_find_final(CK_SESSION_HANDLE hsession)
 {
 	CK_RV ret = CKR_OK;
-	struct libobj_query *query = NULL;
 
-	DBG_TRACE("Final Find Object Query on session %lu", hsession);
-	ret = libsess_get_query(hsession, &query);
-
-	if (ret == CKR_OK && query) {
-		destroy_query_list(query);
-		ret = libsess_set_query(hsession, NULL);
-	}
+	ret = libsess_destroy_query(hsession);
 
 	DBG_TRACE("Final Find Object Query on session %lu return %ld", hsession,
 		  ret);

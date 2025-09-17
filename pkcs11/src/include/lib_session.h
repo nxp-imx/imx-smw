@@ -1,11 +1,28 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021, 2023-2024 NXP
+ * Copyright 2020-2021, 2023-2025 NXP
  */
 #ifndef __LIB_SESSION_H__
 #define __LIB_SESSION_H__
 
 #include "types.h"
+
+/**
+ * struct lib_op_state - operation states backup
+ * @op_ctx_count: Number of operation context
+ * @obj_count: Number of object recorded in the find query
+ * @op_ctx: Array of operation contexts
+ * @obj_handle: Array of object handle in the query
+ *
+ * @op_ctx is NULL, if @op_ctx_count = 0.
+ * @obj_handle is NULL, if @obj_count = 0.
+ */
+struct lib_op_state {
+	CK_ULONG op_ctx_count;
+	CK_ULONG obj_count;
+	struct libopctx *op_ctx;
+	CK_OBJECT_HANDLE_PTR obj_handle;
+};
 
 /**
  * libsess_open() - Open a session on a token
@@ -226,6 +243,18 @@ CK_RV libsess_get_query(CK_SESSION_HANDLE hsession,
 			struct libobj_query **query);
 
 /**
+ * libsess_destroy_query() - Destroy the session query object
+ * @hsession: Session handle
+ *
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
+ * CKR_GENERAL_ERROR                  - No slot defined
+ * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
+ * CKR_OK                             - Success
+ */
+CK_RV libsess_destroy_query(CK_SESSION_HANDLE hsession);
+
+/**
  * libsess_callback() - Call the application callback function
  * @hsession: Session handle
  * @event: Type of notification callback
@@ -314,6 +343,18 @@ CK_RV libsess_cancel_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag,
  * @hSession: Session handle
  * @pOperationState: Buffer that receives the state
  * @pulOperationStateLen: Length of buffer that receives the state
+ *
+ * The memory pointed to by @pOperationState is a serialized representation
+ * of the session's state. It includes:
+ *   - The number of operation context of all active multi-part operations.
+ *   - The operation context for each active operation (represented by
+ *     struct libopctx).
+ *   - The number of objects matching the current active search criteria.
+ *   - The object handles of each matching object (CK_OBJECT_HANDLE).
+ *
+ * Captures the session's cryptographic operation and search state into
+ * @pOperationState, allowing it to be restored later via C_SetOperationState(),
+ * using libsess_set_operation_state().
  *
  * Return:
  * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized

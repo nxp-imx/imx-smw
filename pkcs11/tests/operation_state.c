@@ -12,6 +12,8 @@
 #include "util.h"
 #include "util_digest.h"
 
+#define NB_KEYS_HDL 3
+
 static CK_BYTE data1[] =
 	"Multi-part cipher operations using symmetric crypto algorithms (part 1)";
 static CK_BYTE data2[] =
@@ -1321,6 +1323,20 @@ static int operation_state_digest(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_EXPECTED(match, "Digest mismatch"))
 		goto end;
 
+	TEST_OUT("Initialize digest operation\n");
+	ret = pfunc->C_DigestInit(session, &digest_mech);
+	if (CHECK_CK_RV(CKR_OK, "C_DigestInit"))
+		goto end;
+
+	TEST_OUT("Call C_DigestUpdate with first part of data\n");
+	ret = pfunc->C_DigestUpdate(session, message, message_part_length);
+	if (CHECK_CK_RV(CKR_OK, "C_DigestUpdate"))
+		goto end;
+
+	/*
+	 * Cancels the on-going digest multi-part operation and restores the
+	 * saved operation state.
+	 */
 	TEST_OUT("Retrieve the saved operation state\n");
 	ret = pfunc->C_SetOperationState(session, operation_state,
 					 operation_state_len, CK_INVALID_HANDLE,
@@ -1357,6 +1373,515 @@ end:
 
 	if (operation_state)
 		free(operation_state);
+
+	if (digest_1)
+		free(digest_1);
+
+	if (digest_2)
+		free(digest_2);
+
+	SUBTEST_END(status);
+	return status;
+}
+
+static int generate_cipher_key(CK_FUNCTION_LIST_PTR pfunc,
+			       CK_SESSION_HANDLE_PTR sess,
+			       CK_OBJECT_HANDLE_PTR hkey)
+{
+	int status = TEST_FAIL;
+
+	CK_RV ret = CKR_OK;
+	CK_MECHANISM genmech = { .mechanism = CKM_AES_KEY_GEN };
+	CK_ULONG key_len = 16;
+	CK_BBOOL btrue = CK_TRUE;
+	CK_MECHANISM_TYPE key_allowed_mech = CKM_AES_ECB;
+
+	CK_ATTRIBUTE key_attrs[] = {
+		{ CKA_VALUE_LEN, &key_len, sizeof(key_len) },
+		{ CKA_ENCRYPT, &btrue, sizeof(btrue) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) }
+	};
+
+	TEST_OUT("Generate Cipher key\n");
+	ret = pfunc->C_GenerateKey(*sess, &genmech, key_attrs,
+				   ARRAY_SIZE(key_attrs), hkey);
+	if (CHECK_CK_RV(CKR_OK, "C_GenerateKey"))
+		goto end;
+
+	TEST_OUT("Key generated #%lu\n", *hkey);
+
+	status = TEST_PASS;
+
+end:
+	return status;
+}
+
+static int is_expected_key(CK_OBJECT_HANDLE_PTR hkey, CK_OBJECT_HANDLE_PTR hexp,
+			   size_t nb_exp)
+{
+	size_t idx = 0;
+
+	if (!hkey || !hexp || !nb_exp)
+		return 0;
+
+	for (; idx < nb_exp; idx++)
+		if (hexp[idx] != CK_INVALID_HANDLE && *hkey == hexp[idx])
+			return 1;
+
+	return 0;
+}
+
+static int operation_state_find_object(CK_FUNCTION_LIST_PTR pfunc)
+{
+	int status = TEST_FAIL;
+
+	CK_RV ret = CKR_OK;
+	CK_OBJECT_HANDLE hkeys[NB_KEYS_HDL] = { 0 };
+	CK_OBJECT_HANDLE hkeys_match[NB_KEYS_HDL] = { 0 };
+	CK_SESSION_HANDLE sess = 0;
+	CK_KEY_TYPE key_type = CKK_AES;
+	CK_BBOOL token = CK_FALSE;
+	CK_BYTE_PTR operation_state = NULL_PTR;
+	CK_ULONG operation_state_len = 0;
+	CK_ATTRIBUTE match_attrs[] = {
+		{ CKA_KEY_TYPE, &key_type, sizeof(key_type) },
+		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
+	};
+
+	CK_ULONG nb_match = 0;
+	unsigned int i = 0;
+	int match = 0;
+
+	SUBTEST_START();
+
+	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
+		goto end;
+
+	TEST_OUT("Login to R/W Session as User\n");
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_Login"))
+		goto end;
+
+	for (; i < NB_KEYS_HDL; i++) {
+		if (generate_cipher_key(pfunc, &sess, &hkeys[i]) == TEST_FAIL)
+			goto end;
+	}
+
+	TEST_OUT("Initialize find operation\n");
+	ret = pfunc->C_FindObjectsInit(sess, match_attrs,
+				       ARRAY_SIZE(match_attrs));
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjectsInit"))
+		goto end;
+
+	TEST_OUT("Get the size needed to save the operation state\n");
+	ret = pfunc->C_GetOperationState(sess, NULL_PTR, &operation_state_len);
+	if (CHECK_CK_RV(CKR_BUFFER_TOO_SMALL, "C_GetOperationState"))
+		goto end;
+
+	TEST_OUT("Allocate the operation state buffer\n");
+	operation_state = calloc(1, operation_state_len);
+	if (CHECK_EXPECTED(operation_state, "Allocation error"))
+		goto end;
+
+	TEST_OUT("Save the operation state\n");
+	ret = pfunc->C_GetOperationState(sess, operation_state,
+					 &operation_state_len);
+	if (ret == CKR_STATE_UNSAVEABLE) {
+		TEST_OUT("Cannot save the operation state!\n");
+		status = TEST_SKIP;
+		goto end;
+	} else if (CHECK_CK_RV(CKR_OK, "C_GetOperationState")) {
+		goto end;
+	}
+
+	TEST_OUT("Find Cipher AES keys\n");
+	ret = pfunc->C_FindObjects(sess, hkeys_match, NB_KEYS_HDL, &nb_match);
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjects"))
+		goto end;
+
+	if (CHECK_EXPECTED(nb_match == NB_KEYS_HDL,
+			   "Got %lu but expected %d objects", nb_match,
+			   NB_KEYS_HDL))
+		goto end;
+
+	TEST_OUT("Terminate the active find operation\n");
+	ret = pfunc->C_FindObjectsFinal(sess);
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjectsFinal"))
+		goto end;
+
+	TEST_OUT("Retrieve the saved operation state\n");
+	ret = pfunc->C_SetOperationState(sess, operation_state,
+					 operation_state_len, CK_INVALID_HANDLE,
+					 CK_INVALID_HANDLE);
+	if (CHECK_CK_RV(CKR_OK, "C_SetOperationState"))
+		goto end;
+
+	nb_match = 0;
+	memset(hkeys_match, 0, sizeof(hkeys_match));
+
+	TEST_OUT("Find Cipher AES keys after restoring operation state\n");
+	ret = pfunc->C_FindObjects(sess, hkeys_match, NB_KEYS_HDL, &nb_match);
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjects"))
+		goto end;
+
+	TEST_OUT("Terminate the active find operation\n");
+	ret = pfunc->C_FindObjectsFinal(sess);
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjectsFinal"))
+		goto end;
+
+	if (CHECK_EXPECTED(nb_match == NB_KEYS_HDL,
+			   "Got %lu but expected %d objects", nb_match,
+			   NB_KEYS_HDL))
+		goto end;
+
+	TEST_OUT("Compare keys\n");
+	for (i = 0; i < NB_KEYS_HDL; i++) {
+		match = is_expected_key(&hkeys_match[i], hkeys, nb_match);
+		if (CHECK_EXPECTED(match, "Key #%lu not expected",
+				   hkeys_match[i]))
+			goto end;
+	}
+
+	status = TEST_PASS;
+
+end:
+	for (i = 0; i < NB_KEYS_HDL; i++) {
+		TEST_OUT("Destroy key #%lu\n", hkeys[i]);
+		if (hkeys[i] != CK_INVALID_HANDLE) {
+			ret = pfunc->C_DestroyObject(sess, hkeys[i]);
+			if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+				status = TEST_FAIL;
+		}
+	}
+
+	util_close_session(pfunc, &sess);
+
+	if (operation_state)
+		free(operation_state);
+
+	SUBTEST_END(status);
+	return status;
+}
+
+static int operation_state_find_digest_encrypt(CK_FUNCTION_LIST_PTR pfunc)
+{
+	int status = TEST_FAIL;
+
+	CK_RV ret = CKR_OK;
+	CK_OBJECT_HANDLE hkeys[NB_KEYS_HDL] = { 0 };
+	CK_OBJECT_HANDLE hkeys_match[NB_KEYS_HDL] = { 0 };
+	CK_SESSION_HANDLE sess = 0;
+	CK_KEY_TYPE key_type = CKK_AES;
+	CK_BBOOL token = CK_FALSE;
+	CK_BYTE_PTR operation_state = NULL_PTR;
+	CK_ULONG operation_state_len = 0;
+	CK_ATTRIBUTE match_attrs[] = {
+		{ CKA_KEY_TYPE, &key_type, sizeof(key_type) },
+		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
+	};
+
+	CK_MECHANISM encrypt_mech = { CKM_AES_ECB, NULL_PTR, 0 };
+
+	enum mechanism_id id = MECH_ID_SHA256;
+	CK_MECHANISM digest_mech = { 0 };
+
+	CK_ULONG nb_match = 0;
+	unsigned int i = 0;
+	int match = 0;
+
+	CK_BYTE_PTR message = NULL_PTR;
+	CK_ULONG total_message_length = 0;
+	CK_ULONG message_part_length = 0;
+	CK_BYTE_PTR digest_1 = NULL_PTR;
+	CK_ULONG digest_length_1 = 0;
+	CK_BYTE_PTR digest_2 = NULL_PTR;
+	CK_ULONG digest_length_2 = 0;
+
+	CK_ULONG encrypted_length = 0;
+	CK_BYTE_PTR encrypted_data_1 = NULL_PTR;
+	CK_ULONG index_data_1 = 0;
+	CK_BYTE_PTR encrypted_data_2 = NULL_PTR;
+	CK_ULONG index_data_2 = 0;
+	CK_ULONG skip_over = 0;
+	CK_ULONG encrypted_data_size = 0;
+
+	SUBTEST_START();
+
+	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
+		goto end;
+
+	TEST_OUT("Login to R/W Session as User\n");
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_Login"))
+		goto end;
+
+	for (; i < NB_KEYS_HDL; i++) {
+		if (generate_cipher_key(pfunc, &sess, &hkeys[i]) == TEST_FAIL)
+			goto end;
+	}
+
+	TEST_OUT("Initialize find operation\n");
+	ret = pfunc->C_FindObjectsInit(sess, match_attrs,
+				       ARRAY_SIZE(match_attrs));
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjectsInit"))
+		goto end;
+
+	digest_mech.mechanism = DIGEST_MECHANISM(id);
+	TEST_OUT("Initialize digest operation\n");
+	ret = pfunc->C_DigestInit(sess, &digest_mech);
+	if (CHECK_CK_RV(CKR_OK, "C_DigestInit"))
+		goto end;
+
+	digest_length_1 = DIGEST_LENGTH(id);
+	digest_1 = malloc(digest_length_1);
+	if (CHECK_EXPECTED(digest_1, "Allocation error"))
+		goto end;
+
+	message = (CK_BYTE_PTR)TV_MSG(id);
+	total_message_length = TV_MSG_LEN(id);
+	message_part_length = total_message_length / 2;
+
+	TEST_OUT("Call C_DigestUpdate with first part of data\n");
+	ret = pfunc->C_DigestUpdate(sess, message, message_part_length);
+	if (CHECK_CK_RV(CKR_OK, "C_DigestUpdate"))
+		goto end;
+
+	encrypted_data_size =
+		sizeof(data1) + sizeof(data2) + sizeof(data3) + 64;
+
+	TEST_OUT("Allocate first encrypted data\n");
+	encrypted_data_1 = calloc(1, encrypted_data_size);
+	if (CHECK_EXPECTED(encrypted_data_1, "Allocation error"))
+		goto end;
+
+	TEST_OUT("Allocate second encrypted data\n");
+	encrypted_data_2 = calloc(1, encrypted_data_size);
+	if (CHECK_EXPECTED(encrypted_data_2, "Allocation error"))
+		goto end;
+
+	TEST_OUT("Initialize encryption operation\n");
+	ret = pfunc->C_EncryptInit(sess, &encrypt_mech, hkeys[0]);
+	if (CHECK_CK_RV(CKR_OK, "C_EncryptInit"))
+		goto end;
+
+	TEST_OUT("Encrypt data first part\n");
+	encrypted_length = encrypted_data_size;
+	ret = pfunc->C_EncryptUpdate(sess, data1, sizeof(data1),
+				     &encrypted_data_1[index_data_1],
+				     &encrypted_length);
+	index_data_1 += encrypted_length;
+	if (CHECK_CK_RV(CKR_OK, "C_EncryptUpdate"))
+		goto end;
+
+	/*
+	 * This ciphertext is only part of encrypted_data_1, because the operation
+	 * state is saved after it is computed.
+	 */
+	skip_over = index_data_1;
+
+	TEST_OUT("Get the size needed to save the operation state\n");
+	ret = pfunc->C_GetOperationState(sess, NULL_PTR, &operation_state_len);
+	if (CHECK_CK_RV(CKR_BUFFER_TOO_SMALL, "C_GetOperationState"))
+		goto end;
+
+	TEST_OUT("Allocate the operation state buffer\n");
+	operation_state = calloc(1, operation_state_len);
+	if (CHECK_EXPECTED(operation_state, "Allocation error"))
+		goto end;
+
+	/*
+	 * C_GetOperationState should save the operation state of
+	 *  1. Find object operation
+	 *  2. Digest multi-part operation
+	 *  3. Encrypt multi-part operation
+	 */
+	TEST_OUT("Save the operation state\n");
+	ret = pfunc->C_GetOperationState(sess, operation_state,
+					 &operation_state_len);
+	if (ret == CKR_STATE_UNSAVEABLE) {
+		TEST_OUT("Cannot save the operation state!\n");
+		status = TEST_SKIP;
+		goto end;
+	} else if (CHECK_CK_RV(CKR_OK, "C_GetOperationState")) {
+		goto end;
+	}
+
+	TEST_OUT("Find Cipher AES keys\n");
+	ret = pfunc->C_FindObjects(sess, hkeys_match, NB_KEYS_HDL, &nb_match);
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjects"))
+		goto end;
+
+	if (CHECK_EXPECTED(nb_match == NB_KEYS_HDL,
+			   "Got %lu but expected %d objects", nb_match,
+			   NB_KEYS_HDL))
+		goto end;
+
+	TEST_OUT("Terminate the active find operation\n");
+	ret = pfunc->C_FindObjectsFinal(sess);
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjectsFinal"))
+		goto end;
+
+	TEST_OUT("Call C_DigestUpdate with second part of data\n");
+	ret = pfunc->C_DigestUpdate(sess, message + message_part_length,
+				    total_message_length - message_part_length);
+	if (CHECK_CK_RV(CKR_OK, "C_DigestUpdate"))
+		goto end;
+
+	TEST_OUT("Finalize the multi-part digest operation\n");
+	ret = pfunc->C_DigestFinal(sess, digest_1, &digest_length_1);
+	if (CHECK_CK_RV(CKR_OK, "C_DigestFinal"))
+		goto end;
+
+	match = check_digest(TV_DIGEST(id), DIGEST_LENGTH(id), digest_1,
+			     digest_length_1);
+	if (CHECK_EXPECTED(match, "Digest mismatch"))
+		goto end;
+
+	TEST_OUT("Encrypt data second part\n");
+	encrypted_length = encrypted_data_size - index_data_1;
+	ret = pfunc->C_EncryptUpdate(sess, data2, sizeof(data2),
+				     &encrypted_data_1[index_data_1],
+				     &encrypted_length);
+	index_data_1 += encrypted_length;
+	if (CHECK_CK_RV(CKR_OK, "C_EncryptUpdate"))
+		goto end;
+
+	TEST_OUT("Encrypt data third part\n");
+	encrypted_length = encrypted_data_size - index_data_1;
+	ret = pfunc->C_EncryptUpdate(sess, data3, sizeof(data3),
+				     &encrypted_data_1[index_data_1],
+				     &encrypted_length);
+	index_data_1 += encrypted_length;
+	if (CHECK_CK_RV(CKR_OK, "C_EncryptUpdate"))
+		goto end;
+
+	TEST_OUT("Finish encrypting data\n");
+	encrypted_length = encrypted_data_size - index_data_1;
+	ret = pfunc->C_EncryptFinal(sess, &encrypted_data_1[index_data_1],
+				    &encrypted_length);
+	index_data_1 += encrypted_length;
+	if (CHECK_CK_RV(CKR_OK, "C_EncryptFinal"))
+		goto end;
+
+	/*
+	 * C_SetOperationState should retrieve operation states of
+	 *  1. Find object operation
+	 *  2. Digest multi-part operation
+	 *  3. Encrypt multi-part operation
+	 */
+	TEST_OUT("Retrieve the saved operation state\n");
+	ret = pfunc->C_SetOperationState(sess, operation_state,
+					 operation_state_len, CK_INVALID_HANDLE,
+					 CK_INVALID_HANDLE);
+	if (CHECK_CK_RV(CKR_OK, "C_SetOperationState"))
+		goto end;
+
+	nb_match = 0;
+	memset(hkeys_match, 0, sizeof(hkeys_match));
+
+	TEST_OUT("Find Cipher AES keys after restoring operation state\n");
+	ret = pfunc->C_FindObjects(sess, hkeys_match, NB_KEYS_HDL, &nb_match);
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjects"))
+		goto end;
+
+	TEST_OUT("Terminate the active find operation\n");
+	ret = pfunc->C_FindObjectsFinal(sess);
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjectsFinal"))
+		goto end;
+
+	if (CHECK_EXPECTED(nb_match == NB_KEYS_HDL,
+			   "Got %lu but expected %d objects", nb_match,
+			   NB_KEYS_HDL))
+		goto end;
+
+	TEST_OUT("Compare keys\n");
+	for (i = 0; i < NB_KEYS_HDL; i++) {
+		match = is_expected_key(&hkeys_match[i], hkeys, nb_match);
+		if (CHECK_EXPECTED(match, "Key #%lu not expected",
+				   hkeys_match[i]))
+			goto end;
+	}
+
+	digest_length_2 = DIGEST_LENGTH(id);
+	digest_2 = malloc(digest_length_2);
+	if (CHECK_EXPECTED(digest_2, "Allocation error"))
+		goto end;
+
+	TEST_OUT("Continue with C_DigestUpdate after restoring op state\n");
+	ret = pfunc->C_DigestUpdate(sess, message + message_part_length,
+				    total_message_length - message_part_length);
+	if (CHECK_CK_RV(CKR_OK, "C_DigestUpdate"))
+		goto end;
+
+	TEST_OUT("Finalize the multi-part digest operation\n");
+	ret = pfunc->C_DigestFinal(sess, digest_2, &digest_length_2);
+	if (CHECK_CK_RV(CKR_OK, "C_DigestFinal"))
+		goto end;
+
+	if (!util_compare_buffers(digest_1, digest_length_1, digest_2,
+				  digest_length_2)) {
+		TEST_OUT("Digest do not match!\n");
+		goto end;
+	}
+
+	TEST_OUT("Continue with C_EncryptUpdate after restoring op state\n");
+	/* Encrypt second part of data */
+	encrypted_length = encrypted_data_size - index_data_2;
+	ret = pfunc->C_EncryptUpdate(sess, data2, sizeof(data2),
+				     &encrypted_data_2[index_data_2],
+				     &encrypted_length);
+	index_data_2 += encrypted_length;
+	if (CHECK_CK_RV(CKR_OK, "C_EncryptUpdate"))
+		goto end;
+
+	TEST_OUT("Encrypt data third part\n");
+	encrypted_length = encrypted_data_size - index_data_2;
+	ret = pfunc->C_EncryptUpdate(sess, data3, sizeof(data3),
+				     &encrypted_data_2[index_data_2],
+				     &encrypted_length);
+	index_data_2 += encrypted_length;
+	if (CHECK_CK_RV(CKR_OK, "C_EncryptUpdate"))
+		goto end;
+
+	TEST_OUT("Finish encrypting data\n");
+	encrypted_length = encrypted_data_size - index_data_2;
+	ret = pfunc->C_EncryptFinal(sess, &encrypted_data_2[index_data_2],
+				    &encrypted_length);
+	index_data_2 += encrypted_length;
+	if (CHECK_CK_RV(CKR_OK, "C_EncryptFinal"))
+		goto end;
+
+	if (!util_compare_buffers(encrypted_data_2,
+				  encrypted_data_size - skip_over,
+				  encrypted_data_1 + skip_over,
+				  encrypted_data_size - skip_over)) {
+		TEST_OUT("encrypted_data_1 != encrypted_data_2\n");
+		goto end;
+	}
+
+	status = TEST_PASS;
+
+end:
+	for (i = 0; i < NB_KEYS_HDL; i++) {
+		TEST_OUT("Destroy key #%lu\n", hkeys[i]);
+		if (hkeys[i] != CK_INVALID_HANDLE) {
+			ret = pfunc->C_DestroyObject(sess, hkeys[i]);
+			if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+				status = TEST_FAIL;
+		}
+	}
+
+	util_close_session(pfunc, &sess);
+
+	if (operation_state)
+		free(operation_state);
+
+	if (encrypted_data_1)
+		free(encrypted_data_1);
+
+	if (encrypted_data_2)
+		free(encrypted_data_2);
 
 	if (digest_1)
 		free(digest_1);
@@ -1414,7 +1939,13 @@ void tests_pkcs11_operation_state(void *lib_hdl, CK_VOID_PTR pfunc)
 	if (operation_state_sign_verify_rsa_pkcs(pfunc) == TEST_FAIL)
 		goto end;
 
-	status = operation_state_digest(pfunc);
+	if (operation_state_digest(pfunc) == TEST_FAIL)
+		goto end;
+
+	if (operation_state_find_object(pfunc) == TEST_FAIL)
+		goto end;
+
+	status = operation_state_find_digest_encrypt(pfunc);
 
 end:
 	ret = ((CK_FUNCTION_LIST_PTR)pfunc)->C_Finalize(NULL_PTR);

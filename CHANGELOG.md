@@ -82,6 +82,9 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Update the libobj structure with user id according to the database content.
   As if no user id is given, the unique database id is used by default.
 * Fix TLS signature algorithm according to CK_TLS_MAC_PARAMS hash mechanism.
+* Save the current object search state during C_GetOperationState and restore it during C_SetOperationState.
+* Cancel the ongoing multi-part cryptographic operation if it matches the type of operation being restored,
+  to prevent conflicts during state restoration.
 
 #### PKCS#11 Tests
 
@@ -91,6 +94,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Check that user id is set by default if none given.
 * Test TLS signature algorithm with different hash mechanisms.
 * Fix find_ext test unique id get attribute.
+* Add tests for saving/restoring session state for digest, encrypt, and object search operations.
 
 ---
 ### <a id ="rel_5_1"></a></br>**Release 5.1**

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023-2024 NXP
+ * Copyright 2021, 2023-2025 NXP
  */
 
 #include <stdlib.h>
@@ -215,6 +215,9 @@ CK_RV libopctx_check_next_state(enum op_state current_state,
 
 CK_RV libopctx_copy(struct libopctx *src, struct libopctx *dst)
 {
+	if (!src || !src->ctx)
+		return CKR_GENERAL_ERROR;
+
 	memset(&dst->mech, 0, sizeof(dst->mech));
 
 	if (src->mech.pParameter) {

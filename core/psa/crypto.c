@@ -92,6 +92,7 @@ static const struct cipher_algo_info {
 			 CIPHER_ALGO(CTR, CTR),
 			 CIPHER_ALGO(ECB_NO_PADDING, ECB),
 			 CIPHER_ALGO(XTS, XTS),
+			 CIPHER_ALGO(OFB, OFB),
 			 CIPHER_ALGO(NONE, NONE) };
 
 static smw_cipher_mode_t get_cipher_mode_name(psa_algorithm_t alg)

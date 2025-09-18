@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2024 NXP
+ * Copyright 2021-2025 NXP
  */
 
 #include <string.h>
@@ -32,7 +32,8 @@ static struct {
 	smw_cipher_mode_t name;
 	const char *string;
 } cipher_mode_names[] = { CIPHER_MODE(CBC), CIPHER_MODE(CFB), CIPHER_MODE(CTR),
-			  CIPHER_MODE(CTS), CIPHER_MODE(ECB), CIPHER_MODE(XTS) };
+			  CIPHER_MODE(CTS), CIPHER_MODE(ECB), CIPHER_MODE(XTS),
+			  CIPHER_MODE(OFB) };
 
 #define CIPHER_OP_TYPE(_name)                                                  \
 	{                                                                      \

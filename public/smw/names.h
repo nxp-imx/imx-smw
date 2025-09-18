@@ -259,6 +259,7 @@ typedef enum {
  * * SMW_CIPHER_MODE_NAME_CTS: Ciphertext Stealing mode
  * * SMW_CIPHER_MODE_NAME_ECB: Electronic Codebook Block mode
  * * SMW_CIPHER_MODE_NAME_XTS: XEX Tweakable Block Cipher with Ciphertext Stealing mode
+ * * SMW_CIPHER_MODE_NAME_OFB: Output Feedback Block mode
  * * SMW_CIPHER_MODE_NAME_NB: Number of cipher modes
  */
 typedef enum {
@@ -269,6 +270,7 @@ typedef enum {
 	SMW_CIPHER_MODE_NAME_CTS,
 	SMW_CIPHER_MODE_NAME_ECB,
 	SMW_CIPHER_MODE_NAME_XTS,
+	SMW_CIPHER_MODE_NAME_OFB,
 	SMW_CIPHER_MODE_NAME_NB
 } smw_cipher_mode_t;
 

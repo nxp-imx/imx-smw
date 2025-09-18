@@ -13,7 +13,8 @@ static const char *const cipher_mode_strings[] = {
 	[SMW_CONFIG_CIPHER_MODE_ID_CTR] = "CTR",
 	[SMW_CONFIG_CIPHER_MODE_ID_CTS] = "CTS",
 	[SMW_CONFIG_CIPHER_MODE_ID_ECB] = "ECB",
-	[SMW_CONFIG_CIPHER_MODE_ID_XTS] = "XTS"
+	[SMW_CONFIG_CIPHER_MODE_ID_XTS] = "XTS",
+	[SMW_CONFIG_CIPHER_MODE_ID_OFB] = "OFB"
 };
 
 int read_cipher_mode_strings(char **start, char *end, unsigned long *bitmap)

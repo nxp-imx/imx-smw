@@ -53,16 +53,21 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### SMW Library
 ##### 1. SMW APIs
 
+* Add support for OFB cipher mode.
+
 ##### 2. Subsystems
 
 * TEE: Set the hash buffer length to 0 when the hash buffer is NULL to allow `TEE_DigestDoFinal`
   report required digest size.
+* ELE: Add support for OFB cipher mode.
 
 ##### 3. ARM PSA APIs
 
 ##### 4. OSAL
 
 #### SMW Tests
+
+* Add tests validating OFB cipher mode.
 
 #### PKCS#11 Library
 

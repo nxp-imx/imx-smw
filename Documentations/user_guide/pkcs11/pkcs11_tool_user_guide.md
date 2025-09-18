@@ -118,6 +118,12 @@ implementation.
 Support of the token certificate is not yet available. Only PKCS11 session
 certificate are handled.
 
+Known issue: `pkcs11-tool` uri encoding fail to encode id bigger than `0xff`
+As specified in [PKCS#11 URI Scheme](https://datatracker.ietf.org/doc/html/rfc7512)
+The value of the attribute "id" MUST be compared using the simple
+string comparison after **all bytes** are percent-encoded using
+uppercase letters for digits A-F (i.e. `0x102` is encoded as `%01%02`).
+
 # Commands and Examples
 
 ## 📋 Listing Tokens

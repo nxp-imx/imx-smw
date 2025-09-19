@@ -302,13 +302,13 @@ struct mgroup {
 		       SMW_ATTR_CURVE_ANY, SMW_ATTR_HASH_##_hash),             \
 	       _id)
 
-#define M_SIGN_TLS12(_hash, _id)                                               \
-	M_ALGO(NONE, SMW_HASH_ALGO_NAME_##_hash, SMW_MAC_ALGO_NAME_NONE,       \
+#define M_SIGN_TLS12(_id)                                                      \
+	M_ALGO(NONE, SMW_HASH_ALGO_NAME_NONE, SMW_MAC_ALGO_NAME_NONE,          \
 	       SMW_CIPHER_MODE_NAME_NONE, SMW_AEAD_MODE_NAME_NONE,             \
 	       SMW_SIGNATURE_ALGO_NAME_TLS_1_2, SMW_SIGNATURE_TYPE_NAME_NONE,  \
 	       SMW_KDF_NAME_NONE,                                              \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_TLS_1_2_NO_LABEL(            \
-		       SMW_ATTR_HASH_##_hash),                                 \
+		       SMW_ATTR_HASH_ANY),                                     \
 	       _id)
 
 #define M_SIGN_EDDSA_ANY_HASH(_id)                                             \
@@ -451,8 +451,7 @@ static struct mentry msign_rsa[] = {
 };
 
 static struct mentry msign_tls12[] = {
-	M_SIGN_TLS12(SHA256, TLS_MAC),
-	M_SIGN_TLS12(SHA384, TLS_MAC),
+	M_SIGN_TLS12(TLS_MAC),
 };
 
 /*

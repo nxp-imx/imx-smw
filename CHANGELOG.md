@@ -68,12 +68,14 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Encode/Decode eddsa public buffer as an octet string.
 * Update the libobj structure with user id according to the database content.
   As if no user id is given, the unique database id is used by default.
+* Fix TLS signature algorithm according to CK_TLS_MAC_PARAMS hash mechanism.
 
 #### PKCS#11 Tests
 
 * Add test to validate ed448 key generation and signature
 * Update eddsa tests according to buffer encoding update.
 * Check that user id is set by default if none given.
+* Test TLS signature algorithm with different hash mechanisms.
 
 ---
 ### <a id ="rel_5_1"></a></br>**Release 5.1**

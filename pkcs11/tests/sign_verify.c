@@ -37,6 +37,15 @@ static CK_BYTE msg_sha256[] = {
 
 static CK_ULONG msg_sha256_len = 32;
 
+static CK_BYTE msg_sha384[] = {
+	0xb8, 0xe0, 0xcd, 0x2f, 0x4a, 0x71, 0x77, 0x3b, 0x68, 0x82, 0xb9, 0x46,
+	0xc1, 0x08, 0x56, 0x82, 0xd2, 0x88, 0xea, 0x72, 0x02, 0x5d, 0x9b, 0x63,
+	0xe9, 0x7b, 0x56, 0xc9, 0x7a, 0x38, 0x87, 0x68, 0x70, 0x78, 0xdc, 0xc4,
+	0x52, 0x16, 0x72, 0xfe, 0x5b, 0x96, 0x82, 0x1e, 0x22, 0x94, 0x52, 0xd2
+};
+
+static CK_ULONG msg_sha384_len = 48;
+
 static CK_BYTE msg_sha512[] = {
 	0xe6, 0x7e, 0xf4, 0x68, 0x5e, 0x8e, 0x06, 0x28, 0x20, 0x86, 0x9e,
 	0xd8, 0x32, 0x56, 0xcf, 0xb5, 0xeb, 0x06, 0xb4, 0xa7, 0xf5, 0xa7,
@@ -1503,7 +1512,8 @@ static int sign_verify_tls(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("Sign message with signature buffer too small\n");
-	ret = pfunc->C_Sign(sess, msg, msg_len, signature, &signature_len);
+	ret = pfunc->C_Sign(sess, msg_sha256, msg_sha256_len, signature,
+			    &signature_len);
 	if (CHECK_CK_RV(CKR_BUFFER_TOO_SMALL, "C_Sign"))
 		goto end;
 
@@ -1512,8 +1522,22 @@ static int sign_verify_tls(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_EXPECTED(signature, "Allocation error"))
 		goto end;
 
-	TEST_OUT("Sign message\n");
-	ret = pfunc->C_Sign(sess, msg, msg_len, signature, &signature_len);
+	TEST_OUT("Sign sha256 hash\n");
+	ret = pfunc->C_Sign(sess, msg_sha256, msg_sha256_len, signature,
+			    &signature_len);
+	if (CHECK_CK_RV(CKR_OK, "C_Sign"))
+		goto end;
+
+	tls_mac_params.prfHashMechanism = CKM_SHA384;
+
+	TEST_OUT("Initialize sign operation\n");
+	ret = pfunc->C_SignInit(sess, &sign_verify_mech, master_hsecretkey);
+	if (CHECK_CK_RV(CKR_OK, "C_SignInit"))
+		goto end;
+
+	TEST_OUT("Sign sha384 hash\n");
+	ret = pfunc->C_Sign(sess, msg_sha384, msg_sha384_len, signature,
+			    &signature_len);
 	if (CHECK_CK_RV(CKR_OK, "C_Sign"))
 		goto end;
 

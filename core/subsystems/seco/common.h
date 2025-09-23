@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #ifndef __COMMON_H__
@@ -79,6 +79,20 @@ bool seco_hash_handle(struct hdl *hdl, enum operation_id operation_id,
 		      void *args, int *status);
 
 /**
+ * seco_copy_hash_context() - Copy the hash context
+ * @src_ctx: Source operation context arguments structure
+ * @dst_ctx: Destination operation context arguments structure
+ *
+ * Allocates and copies the hash source context to destination source context.
+ *
+ * Return:
+ * SMW_STATUS_OK                      - Success
+ * SMW_STATUS_ALLOC_FAILURE           - Memory allocation failure
+ */
+int seco_copy_hash_context(struct smw_op_context *src_ctx,
+			   struct smw_op_context *dst_ctx);
+
+/**
  * seco_sign_verify_handle() - Handle the Sign and Verify operations.
  * @hdl: Pointer to the SECO handles structure.
  * @operation_id: Security Operation ID.
@@ -94,6 +108,30 @@ bool seco_hash_handle(struct hdl *hdl, enum operation_id operation_id,
  */
 bool seco_sign_verify_handle(struct hdl *hdl, enum operation_id operation_id,
 			     void *args, int *status);
+
+/**
+ * seco_free_sign_context() - Free the ELE signature context
+ * @ctx: Signature context
+ *
+ * Return:
+ * None.
+ */
+void seco_free_sign_context(struct smw_op_context *ctx);
+
+/**
+ * seco_copy_sign_context() - Copy the signature context
+ * @src_ctx: Source operation context arguments structure
+ * @dst_ctx: Destination operation context arguments structure
+ *
+ * Allocates and copies the hash source context to destination source context.
+ *
+ * Return:
+ * SMW_STATUS_OK                      - Success
+ * SMW_STATUS_INVALID_PARAM           - Parameter invalid
+ * SMW_STATUS_ALLOC_FAILURE           - Memory allocation failure
+ */
+int seco_copy_sign_context(struct smw_op_context *src_ctx,
+			   struct smw_op_context *dst_ctx);
 
 /**
  * seco_rng_handle() - Handle the RNG operation.

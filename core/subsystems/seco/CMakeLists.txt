@@ -18,7 +18,7 @@ message(STATUS "    Seco Headers  : ${SECO_INCLUDE_DIRS}")
 add_library(seco OBJECT "")
 set_target_properties(seco PROPERTIES C_VISIBILITY_PRESET hidden)
 
-if (ENABLE_CIPHER OR ENABLE_AEAD OR ENABLE_TLS)
+if (ENABLE_HASH OR ENABLE_SIGN_VERIFY OR ENABLE_TLS)
     set(ENABLE_CONTEXT ON)
 endif()
 

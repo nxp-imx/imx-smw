@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #include "smw_status.h"
@@ -274,16 +274,11 @@ static int hash_final(struct smw_op_context *op_context,
 	input = smw_crypto_get_hash_input_data(args);
 	input_length = smw_crypto_get_hash_input_length(args);
 
-	status = smw_utils_hash_update(&hash_context->context, input,
-				       input_length);
-	if (status != SMW_STATUS_OK)
-		goto end;
-
 	digest = smw_crypto_get_hash_output_data(args);
 	digest_length = smw_crypto_get_hash_output_length(args);
 
-	status = smw_utils_hash_final(&hash_context->context, digest,
-				      &digest_length);
+	status = smw_utils_hash_final(&hash_context->context, input,
+				      input_length, digest, &digest_length);
 
 	if (status == SMW_STATUS_OK || status == SMW_STATUS_OUTPUT_TOO_SHORT)
 		smw_crypto_set_hash_output_length(args, digest_length);
@@ -341,4 +336,33 @@ bool seco_hash_handle(struct hdl *hdl, enum operation_id operation_id,
 	}
 
 	return true;
+}
+
+int seco_copy_hash_context(struct smw_op_context *src_ctx,
+			   struct smw_op_context *dst_ctx)
+{
+	int status = SMW_STATUS_ALLOC_FAILURE;
+
+	struct hash_context *src_hash_ctx = NULL;
+	struct hash_context *dst_hash_ctx = NULL;
+
+	if (!src_ctx || !dst_ctx || !src_ctx->subsystem_context) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	src_hash_ctx = src_ctx->subsystem_context;
+
+	dst_hash_ctx = SMW_UTILS_MALLOC(sizeof(*dst_hash_ctx));
+	if (!dst_hash_ctx)
+		goto end;
+
+	*dst_hash_ctx = *src_hash_ctx;
+
+	dst_ctx->subsystem_context = dst_hash_ctx;
+
+	status = SMW_STATUS_OK;
+
+end:
+	return status;
 }

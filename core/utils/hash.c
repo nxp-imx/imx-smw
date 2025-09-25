@@ -622,11 +622,8 @@ int smw_utils_hash(enum smw_config_hash_algo_id hash_id, unsigned char *input,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	status = smw_utils_hash_update(&context, input, input_length);
-	if (status != SMW_STATUS_OK)
-		goto end;
-
-	status = smw_utils_hash_final(&context, digest, digest_length);
+	status = smw_utils_hash_final(&context, input, input_length, digest,
+				      digest_length);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -750,7 +747,8 @@ end:
 	return status;
 }
 
-int smw_utils_hash_final(struct smw_hash_context *context, uint8_t *digest,
+int smw_utils_hash_final(struct smw_hash_context *context, const uint8_t *input,
+			 unsigned int input_length, uint8_t *digest,
 			 unsigned int *digest_length)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
@@ -777,6 +775,10 @@ int smw_utils_hash_final(struct smw_hash_context *context, uint8_t *digest,
 		status = SMW_STATUS_OUTPUT_TOO_SHORT;
 		goto end;
 	}
+
+	status = smw_utils_hash_update(context, input, input_length);
+	if (status != SMW_STATUS_OK)
+		goto end;
 
 	info->final(context);
 	info->result(context, digest);

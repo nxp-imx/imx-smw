@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021, 2023-2024 NXP
+ * Copyright 2020-2021, 2023-2025 NXP
  */
 
 #ifndef __HASH_H__
@@ -221,6 +221,8 @@ int smw_utils_hash_update(struct smw_hash_context *context,
 /**
  * smw_utils_hash_final() - Finalize hash multi-part.
  * @context: Pointer to operation context arguments structure.
+ * @input: Location of the stream to be hashed.
+ * @input_length: Length of the stream to be hashed.
  * @digest: Location where the digest has to be written.
  * @digest_length: Length of the digest.
  *
@@ -232,7 +234,8 @@ int smw_utils_hash_update(struct smw_hash_context *context,
  * SMW_STATUS_OPERATION_NOT_SUPPORTED   - Hash algorithm not supported.
  * SMW_STATUS_OUTPUT_TOO_SHORT          - Ouptut buffer is too short.
  */
-int smw_utils_hash_final(struct smw_hash_context *context, uint8_t *digest,
+int smw_utils_hash_final(struct smw_hash_context *context, const uint8_t *input,
+			 unsigned int input_length, uint8_t *digest,
 			 unsigned int *digest_length);
 
 #endif /* __HASH_H__ */

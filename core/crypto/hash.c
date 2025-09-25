@@ -338,6 +338,7 @@ enum smw_status_code smw_hash_update(struct smw_hash_update_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_hash_args hash_args = { 0 };
+	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	SMW_DBG_TRACE_API_CALL;
 
@@ -348,9 +349,12 @@ enum smw_status_code smw_hash_update(struct smw_hash_update_args *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	status = smw_crypto_get_ctx_subsystem_id(args->context, &subsystem_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	status = smw_utils_execute_update(OPERATION_ID_HASH_MULTI_PART,
-					  &hash_args,
-					  args->context->subsystem_id);
+					  &hash_args, subsystem_id);
 
 	/*
 	 * Release the operation context if the final operation has returned any
@@ -369,6 +373,7 @@ enum smw_status_code smw_hash_final(struct smw_hash_final_args *args)
 	int status = SMW_STATUS_INVALID_PARAM;
 	int tmp_status = SMW_STATUS_OK;
 	struct smw_crypto_hash_args hash_args = { 0 };
+	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	SMW_DBG_TRACE_API_CALL;
 
@@ -380,9 +385,12 @@ enum smw_status_code smw_hash_final(struct smw_hash_final_args *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	status = smw_crypto_get_ctx_subsystem_id(args->context, &subsystem_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	status = smw_utils_execute_final(OPERATION_ID_HASH_MULTI_PART,
-					 &hash_args,
-					 args->context->subsystem_id);
+					 &hash_args, subsystem_id);
 
 	/*
 	 * Get output buffer length feature - If the output buffer is NULL and

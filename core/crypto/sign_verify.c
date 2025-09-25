@@ -374,6 +374,7 @@ static int sign_verify_update(enum operation_id operation_id,
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_sign_verify_args sign_verify_args = { 0 };
+	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	SMW_DBG_TRACE_API_CALL;
 
@@ -384,8 +385,12 @@ static int sign_verify_update(enum operation_id operation_id,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	status = smw_crypto_get_ctx_subsystem_id(args->context, &subsystem_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	status = smw_utils_execute_update(operation_id, &sign_verify_args,
-					  args->context->subsystem_id);
+					  subsystem_id);
 
 	/*
 	 * Release the operation context if the final operation has returned any
@@ -405,6 +410,7 @@ static int sign_verify_final(enum operation_id operation_id,
 	int status = SMW_STATUS_INVALID_PARAM;
 	int tmp_status = SMW_STATUS_OK;
 	struct smw_crypto_sign_verify_args sign_verify_args = { 0 };
+	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	SMW_DBG_TRACE_API_CALL;
 
@@ -425,8 +431,12 @@ static int sign_verify_final(enum operation_id operation_id,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	status = smw_crypto_get_ctx_subsystem_id(args->context, &subsystem_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	status = smw_utils_execute_final(operation_id, &sign_verify_args,
-					 args->context->subsystem_id);
+					 subsystem_id);
 
 	/*
 	 * Get output buffer length feature - If the output buffer is NULL and

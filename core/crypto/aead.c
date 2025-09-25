@@ -1043,6 +1043,7 @@ enum smw_status_code smw_aead_update_aad(struct smw_aead_aad_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_aead_args aead_args = { 0 };
+	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	SMW_DBG_TRACE_API_CALL;
 
@@ -1054,13 +1055,16 @@ enum smw_status_code smw_aead_update_aad(struct smw_aead_aad_args *args)
 		goto end;
 	}
 
+	status = smw_crypto_get_ctx_subsystem_id(args->context, &subsystem_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	aead_args.op_step = SMW_OP_STEP_UPDATE;
 
 	aead_args.aad_pub = args;
 
 	status = smw_utils_execute_update_implicit(OPERATION_ID_AEAD_UPDATE_AAD,
-						   &aead_args,
-						   args->context->subsystem_id);
+						   &aead_args, subsystem_id);
 	/*
 	 * Release the context if the update AAD operation has returned any status
 	 * code except SMW_STATUS_OK and SMW_STATUS_INVALID_PARAM.
@@ -1077,6 +1081,7 @@ enum smw_status_code smw_aead_update(struct smw_aead_data_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_aead_args aead_args = { 0 };
+	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	SMW_DBG_TRACE_API_CALL;
 
@@ -1089,12 +1094,15 @@ enum smw_status_code smw_aead_update(struct smw_aead_data_args *args)
 		goto end;
 	}
 
+	status = smw_crypto_get_ctx_subsystem_id(args->context, &subsystem_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	aead_args.op_step = SMW_OP_STEP_UPDATE;
 	aead_args.data_pub = args;
 
 	status = smw_utils_execute_update(OPERATION_ID_AEAD_MULTI_PART,
-					  &aead_args,
-					  args->context->subsystem_id);
+					  &aead_args, subsystem_id);
 
 	/*
 	 * SMW_STATUS_OUTPUT_TOO_SHORT is the expected internal status if the
@@ -1123,6 +1131,7 @@ enum smw_status_code smw_aead_final(struct smw_aead_final_args *args)
 	int status = SMW_STATUS_INVALID_PARAM;
 	int tmp_status = SMW_STATUS_OK;
 	struct smw_crypto_aead_args aead_args = { 0 };
+	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	SMW_DBG_TRACE_API_CALL;
 
@@ -1136,6 +1145,11 @@ enum smw_status_code smw_aead_final(struct smw_aead_final_args *args)
 		status = SMW_STATUS_VERSION_NOT_SUPPORTED;
 		goto end;
 	}
+
+	status = smw_crypto_get_ctx_subsystem_id(args->data->context,
+						 &subsystem_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
 
 	aead_args.op_step = SMW_OP_STEP_FINAL;
 
@@ -1160,8 +1174,7 @@ enum smw_status_code smw_aead_final(struct smw_aead_final_args *args)
 		goto end;
 
 	status = smw_utils_execute_final(OPERATION_ID_AEAD_MULTI_PART,
-					 &aead_args,
-					 args->data->context->subsystem_id);
+					 &aead_args, subsystem_id);
 
 	/*
 	 * Release the operation context if the final operation has returned any

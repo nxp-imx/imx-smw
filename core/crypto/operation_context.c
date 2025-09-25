@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023-2024 NXP
+ * Copyright 2021, 2023-2025 NXP
  */
 
 #include "smw_status.h"
@@ -17,6 +17,21 @@ inline void smw_crypto_set_ctx_subsystem_id(struct smw_op_context *op_context,
 {
 	if (op_context)
 		op_context->subsystem_id = subsystem_id;
+}
+
+inline int smw_crypto_get_ctx_subsystem_id(struct smw_op_context *op_context,
+					   enum subsystem_id *subsystem_id)
+{
+	int status = SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME;
+
+	if (op_context) {
+		if (op_context->subsystem_id < SUBSYSTEM_ID_NB)
+			*subsystem_id = op_context->subsystem_id;
+
+		status = SMW_STATUS_OK;
+	}
+
+	return status;
 }
 
 void smw_crypto_copy_ctx_members(struct smw_op_context *dst_context,

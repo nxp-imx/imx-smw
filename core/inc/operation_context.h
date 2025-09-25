@@ -68,6 +68,18 @@ void smw_crypto_set_ctx_subsystem_id(struct smw_op_context *op_context,
 				     enum subsystem_id subsystem_id);
 
 /**
+ * smw_crypto_get_ctx_subsystem_id() - Get subsystem_id field in the op context
+ * @op_context: Pointer to operation context arguments structure
+ * @subsystem_id: Secure Subsystem ID
+ *
+ * Return:
+ * SMW_STATUS_OK                      - Success
+ * SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME  - Context's subsystem name unknown
+ */
+int smw_crypto_get_ctx_subsystem_id(struct smw_op_context *op_context,
+				    enum subsystem_id *subsystem_id);
+
+/**
  * smw_crypto_copy_ctx_members() - Copy source ctx structure members to dest
  * @dst_context: Pointer to destination operation context arguments structure
  * @src_context: Pointer to source operation context arguments structure

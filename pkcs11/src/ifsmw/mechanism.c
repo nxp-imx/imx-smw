@@ -2510,22 +2510,22 @@ static CK_RV info_msign_tls12(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 static CK_RV sign(struct lib_signature_params *params,
 		  smw_subsystem_t subsystem_name,
 		  struct smw_key_descriptor *key_desc,
-		  smw_attr_algo_t sign_algo, smw_hash_algo_t hash_algo,
-		  unsigned char *input, unsigned int input_length,
-		  unsigned char *output, unsigned int output_length)
+		  smw_attr_algo_t sign_algo, unsigned char *input,
+		  unsigned int input_length, unsigned char *output,
+		  unsigned int output_length)
 {
 	CK_RV ret = CKR_OK;
 	enum smw_status_code status = SMW_STATUS_OK;
-	struct smw_sign_verify_args smw_sign_verify_args = { 0 };
-	struct smw_hash_init_args smw_hash_init_args = { 0 };
-	struct smw_hash_update_args smw_hash_update_args = { 0 };
-	struct smw_hash_final_args smw_hash_final_args = { 0 };
+	struct smw_sign_verify_args smw_oneshot_args = { 0 };
+	struct smw_sign_verify_init_args smw_init_args = { 0 };
+	struct smw_sign_verify_update_args smw_update_args = { 0 };
+	struct smw_sign_verify_final_args smw_final_args = { 0 };
 	struct smw_eddsa_params eddsa_params = { 0 };
+	struct smw_context_args op_ctx_args = { 0 };
 
 	struct lib_signature_ctx *ctx = params->ctx;
 
 	if (ctx->type == SIGN_TYPE_EDDSA && ctx->sign.eddsa.context_data) {
-		smw_sign_verify_args.eddsa_params = &eddsa_params;
 		eddsa_params.context = ctx->sign.eddsa.context_data;
 		if (SET_OVERFLOW(ctx->sign.eddsa.context_len,
 				 eddsa_params.context_length)) {
@@ -2536,24 +2536,25 @@ static CK_RV sign(struct lib_signature_params *params,
 
 	switch (params->state) {
 	case OP_ONE_SHOT:
-		smw_sign_verify_args.subsystem_name = subsystem_name;
-		smw_sign_verify_args.key_descriptor = key_desc;
-		smw_sign_verify_args.sign_algo = sign_algo;
-		smw_sign_verify_args.message = input;
-		smw_sign_verify_args.message_length = input_length;
-		smw_sign_verify_args.signature = output;
-		smw_sign_verify_args.signature_length = output_length;
+		smw_oneshot_args.subsystem_name = subsystem_name;
+		smw_oneshot_args.key_descriptor = key_desc;
+		smw_oneshot_args.sign_algo = sign_algo;
+		smw_oneshot_args.message = input;
+		smw_oneshot_args.message_length = input_length;
+		smw_oneshot_args.signature = output;
+		smw_oneshot_args.signature_length = output_length;
+		smw_oneshot_args.eddsa_params = &eddsa_params;
 
 		if (params->op_flag & (CKF_SIGN | CKF_MESSAGE_SIGN)) {
-			status = smw_sign(&smw_sign_verify_args);
+			status = smw_sign(&smw_oneshot_args);
 
 			/* Update signature length */
 			if (status == SMW_STATUS_OK ||
 			    status == SMW_STATUS_OUTPUT_TOO_SHORT)
 				params->ulsignaturelen =
-					smw_sign_verify_args.signature_length;
+					smw_oneshot_args.signature_length;
 		} else {
-			status = smw_verify(&smw_sign_verify_args);
+			status = smw_verify(&smw_oneshot_args);
 		}
 
 		break;
@@ -2562,22 +2563,39 @@ static CK_RV sign(struct lib_signature_params *params,
 	case OP_NEXT:
 		if (ctx->current_state == OP_INIT ||
 		    ctx->current_state == OP_BEGIN) {
-			smw_hash_init_args.algo_name = hash_algo;
-			smw_hash_init_args.input = input;
-			smw_hash_init_args.input_length = input_length;
-			status = initialize_digest(subsystem_name,
-						   &smw_hash_init_args);
+			op_ctx_args.subsystem_name = subsystem_name;
+			status = smw_allocate_context(&op_ctx_args);
+			if (status != SMW_STATUS_OK)
+				goto end;
+
+			smw_init_args.context = op_ctx_args.context;
+			smw_init_args.key_descriptor = key_desc;
+			smw_init_args.sign_algo = sign_algo;
+			smw_init_args.message = input;
+			smw_init_args.message_length = input_length;
+			smw_init_args.eddsa_params = &eddsa_params;
+
+			if (params->op_flag & (CKF_SIGN | CKF_MESSAGE_SIGN))
+				status = smw_sign_init(&smw_init_args);
+			else
+				status = smw_verify_init(&smw_init_args);
+
 			if (status == SMW_STATUS_OK)
-				ctx->context = smw_hash_init_args.context;
+				ctx->context = smw_init_args.context;
+
 		} else if (ctx->current_state == OP_UPDATE ||
 			   ctx->current_state == OP_NEXT) {
-			smw_hash_update_args.context = ctx->context;
-			smw_hash_update_args.input = input;
-			smw_hash_update_args.input_length = input_length;
+			smw_update_args.context = ctx->context;
+			smw_update_args.message = input;
+			smw_update_args.message_length = input_length;
 
-			status = smw_hash_update(&smw_hash_update_args);
-			if (status == SMW_STATUS_OK)
-				ctx->context = smw_hash_update_args.context;
+			if (params->op_flag & (CKF_SIGN | CKF_MESSAGE_SIGN))
+				status = smw_sign_update(&smw_update_args);
+			else
+				status = smw_verify_update(&smw_update_args);
+
+			/* Update the context even if operation fails */
+			ctx->context = smw_update_args.context;
 		}
 
 		break;
@@ -2585,82 +2603,46 @@ static CK_RV sign(struct lib_signature_params *params,
 	case OP_FINAL:
 	case OP_END:
 		if (ctx->context) {
+			smw_final_args.context = ctx->context;
+			smw_final_args.message = input;
+			smw_final_args.message_length = input_length;
+			smw_final_args.signature = output;
+			smw_final_args.signature_length = output_length;
+
 			if (params->op_flag & (CKF_SIGN | CKF_MESSAGE_SIGN)) {
-				smw_sign_verify_args.subsystem_name =
-					subsystem_name;
-				smw_sign_verify_args.key_descriptor = key_desc;
-				smw_sign_verify_args.sign_algo = sign_algo;
-				smw_sign_verify_args.message = NULL;
-				smw_sign_verify_args.message_length = 0;
-				smw_sign_verify_args.signature = NULL;
-				smw_sign_verify_args.signature_length = 0;
-
-				status = smw_sign(&smw_sign_verify_args);
-				if (status != SMW_STATUS_OK)
-					goto end;
-
-				if (!params->psignature ||
-				    output_length < smw_sign_verify_args
-							    .signature_length) {
-					if (params->psignature)
-						status =
-							SMW_STATUS_OUTPUT_TOO_SHORT;
-
+				status = smw_sign_final(&smw_final_args);
+				/* Update signature length */
+				if (status == SMW_STATUS_OK ||
+				    status == SMW_STATUS_OUTPUT_TOO_SHORT)
 					params->ulsignaturelen =
-						smw_sign_verify_args
+						smw_final_args.signature_length;
+			} else {
+				status = smw_verify_final(&smw_final_args);
+			}
+
+			/* Update the context even if operation fails */
+			ctx->context = smw_final_args.context;
+		} else {
+			smw_oneshot_args.message = input;
+			smw_oneshot_args.message_length = input_length;
+			smw_oneshot_args.subsystem_name = subsystem_name;
+			smw_oneshot_args.key_descriptor = key_desc;
+			smw_oneshot_args.sign_algo = sign_algo;
+			smw_oneshot_args.signature = output;
+			smw_oneshot_args.signature_length = output_length;
+
+			if (params->op_flag & (CKF_SIGN | CKF_MESSAGE_SIGN)) {
+				status = smw_sign(&smw_oneshot_args);
+
+				/* Update signature length */
+				if (status == SMW_STATUS_OK ||
+				    status == SMW_STATUS_OUTPUT_TOO_SHORT)
+					params->ulsignaturelen =
+						smw_oneshot_args
 							.signature_length;
-					goto end;
-				}
+			} else {
+				status = smw_verify(&smw_oneshot_args);
 			}
-
-			smw_hash_final_args.context = ctx->context;
-			status = smw_hash_final(&smw_hash_final_args);
-			ctx->context = smw_hash_final_args.context;
-			if (status != SMW_STATUS_OK &&
-			    status != SMW_STATUS_OUTPUT_TOO_SHORT)
-				goto end;
-
-			smw_hash_final_args.output =
-				malloc(smw_hash_final_args.output_length);
-			if (!smw_hash_final_args.output) {
-				status = SMW_STATUS_ALLOC_FAILURE;
-				goto end;
-			}
-
-			smw_hash_final_args.input = input;
-			smw_hash_final_args.input_length = input_length;
-			status = smw_hash_final(&smw_hash_final_args);
-			ctx->context = smw_hash_final_args.context;
-			if (status != SMW_STATUS_OK)
-				goto end;
-
-			sign_algo = SMW_ATTR_SET_MSG_HASHED(sign_algo);
-
-			smw_sign_verify_args.message =
-				smw_hash_final_args.output;
-			smw_sign_verify_args.message_length =
-				smw_hash_final_args.output_length;
-		} else {
-			smw_sign_verify_args.message = input;
-			smw_sign_verify_args.message_length = input_length;
-		}
-
-		smw_sign_verify_args.subsystem_name = subsystem_name;
-		smw_sign_verify_args.key_descriptor = key_desc;
-		smw_sign_verify_args.sign_algo = sign_algo;
-		smw_sign_verify_args.signature = output;
-		smw_sign_verify_args.signature_length = output_length;
-
-		if (params->op_flag & (CKF_SIGN | CKF_MESSAGE_SIGN)) {
-			status = smw_sign(&smw_sign_verify_args);
-
-			/* Update signature length */
-			if (status == SMW_STATUS_OK ||
-			    status == SMW_STATUS_OUTPUT_TOO_SHORT)
-				params->ulsignaturelen =
-					smw_sign_verify_args.signature_length;
-		} else {
-			status = smw_verify(&smw_sign_verify_args);
 		}
 
 		break;
@@ -2670,9 +2652,6 @@ static CK_RV sign(struct lib_signature_params *params,
 	}
 
 end:
-	if (smw_hash_final_args.output)
-		free(smw_hash_final_args.output);
-
 	ret = smw_status_to_ck_rv(status);
 
 	DBG_TRACE("%s on subsystem #%d SMW status %d return 0x%lx",
@@ -2723,19 +2702,6 @@ static CK_RV op_msign_common(CK_SLOT_ID slotid, struct mentry *entry,
 					      get_hash_algo_id(ctx->hash_mech));
 	} else {
 		hash_algo = entry->smw_hash;
-	}
-
-	if ((ctx->current_state == OP_BEGIN && params->state == OP_NEXT) ||
-	    (ctx->current_state == OP_INIT && params->state == OP_UPDATE)) {
-		/*
-		 * Operation requesting hashing of the message in multipart
-		 * is not supported for EDDSA.
-		 */
-		if (ctx->type == SIGN_TYPE_EDDSA)
-			return CKR_FUNCTION_NOT_SUPPORTED;
-
-		if (hash_algo == SMW_HASH_ALGO_NAME_NONE)
-			return CKR_ARGUMENTS_BAD;
 	}
 
 	switch (ctx->type) {
@@ -2830,8 +2796,8 @@ static CK_RV op_msign_common(CK_SLOT_ID slotid, struct mentry *entry,
 	if (SET_OVERFLOW(params->ulsignaturelen, output_length))
 		return CKR_SIGNATURE_LEN_RANGE;
 
-	return sign(params, subsystem_name, &key_desc, sign_algo, hash_algo,
-		    input, input_length, output, output_length);
+	return sign(params, subsystem_name, &key_desc, sign_algo, input,
+		    input_length, output, output_length);
 }
 
 static CK_RV op_msign_ecdsa(CK_SLOT_ID slotid, struct mentry *entry, void *args)

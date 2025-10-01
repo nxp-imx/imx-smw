@@ -446,7 +446,7 @@ static int signature_init(struct hdl *hdl,
 	int status = SMW_STATUS_INVALID_PARAM;
 
 	struct smw_crypto_hash_args hash_args = { 0 };
-	struct smw_hash_init_args init_pub = { 0 };
+	struct smw_hash_init_args init_pub = { .version = 1 };
 	struct smw_sign_verify_attributes *sign_attrs = NULL;
 	struct smw_keymgr_descriptor *key_desc = &args->key_descriptor;
 	struct smw_keymgr_identifier *key_identifier = &key_desc->identifier;

@@ -89,6 +89,8 @@ static int set_hash_context(struct smw_op_context *op_context,
 	op_context->subsystem_context = hash_context;
 	op_context->op_state = CTX_OP_STATE_INIT;
 
+	smw_crypto_set_ctx_subsystem_id(op_context, SUBSYSTEM_ID_SECO);
+
 end:
 	if (status != SMW_STATUS_OK && hash_context)
 		SMW_UTILS_FREE(hash_context);
@@ -204,8 +206,6 @@ static int hash_init(struct smw_op_context *op_context,
 	unsigned int input_length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	smw_crypto_set_ctx_subsystem_id(op_context, SUBSYSTEM_ID_SECO);
 
 	status = set_hash_context(op_context, args->algo_id);
 	if (status != SMW_STATUS_OK)

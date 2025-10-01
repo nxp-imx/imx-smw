@@ -52,6 +52,8 @@ static int set_hash_context(struct smw_op_context *op_context,
 	op_context->subsystem_context = hash_ctx;
 	op_context->op_state = CTX_OP_STATE_INIT;
 
+	smw_crypto_set_ctx_subsystem_id(op_context, SUBSYSTEM_ID_TEE);
+
 	status = SMW_STATUS_OK;
 
 end:
@@ -170,8 +172,6 @@ static int hash(void *args)
 
 	op.params[3].tmpref.buffer = &context;
 	op.params[3].tmpref.size = sizeof(context);
-
-	smw_crypto_set_ctx_subsystem_id(op_context, SUBSYSTEM_ID_TEE);
 
 	/* Invoke TA */
 	status = execute_tee_cmd(cmd_id, &op);

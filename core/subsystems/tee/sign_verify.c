@@ -483,7 +483,7 @@ static int signature_init(struct smw_crypto_sign_verify_args *args)
 	int status = SMW_STATUS_INVALID_PARAM;
 
 	struct smw_crypto_hash_args hash_args = { 0 };
-	struct smw_hash_init_args init_pub = { 0 };
+	struct smw_hash_init_args init_pub = { .version = 1 };
 	struct smw_sign_verify_attributes *sign_attrs = NULL;
 
 	struct smw_op_context *op_context = NULL;

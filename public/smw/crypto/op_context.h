@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #ifndef __OP_CONTEXT_H__
@@ -13,6 +13,7 @@ struct smw_op_context;
  * struct smw_context_args - SMW cryptographic operation context arguments
  * @version: Version of this structure
  * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
+ *                  (**deprecated **)
  * @context: Pointer to an opaque operation context structure
  *
  * The @context parameter allocated by SMW should not be modified by the
@@ -26,9 +27,10 @@ struct smw_op_context;
  *  - In the event of critical failure during the associated operation.
  *  - When smw_cancel_operation() function is invoked.
  *
- * @subsystem_name designates the Secure Subsystem to be used.
- * If this field is NULL, the default configured Secure Subsystem is used.
- *
+ * **Warning**:
+ * @subsystem_name is deprecated and no more used. Subsystem is selected
+ * when initializing the cryptographic operation. If not specified during the
+ * operation initialization, the default configured subsystem will be used.
  */
 struct smw_context_args {
 	unsigned char version;

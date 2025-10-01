@@ -44,7 +44,8 @@ struct smw_hash_args {
 
 /**
  * struct smw_hash_init_args - Hash multi-part initialization arguments
- * @version: Version of this structure
+ * @version: Version of this structure (must be set to 1)
+ * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
  * @algo_name: Algorithm name. See &typedef smw_hash_algo_t
  * @input: Location of the stream to be hashed
  * @input_length: Length of the stream to be hashed
@@ -53,10 +54,13 @@ struct smw_hash_args {
  * @subsystem_name designates the Secure Subsystem to be used.
  * If this field is SMW_SUBSYSTEM_NAME_NONE, the default configured
  * Secure Subsystem is used.
+ *
+ * @version must be set to 1 to support the @subsystem_name field.
  */
 struct smw_hash_init_args {
 	/* Inputs */
 	unsigned char version;
+	smw_subsystem_t subsystem_name;
 	smw_hash_algo_t algo_name;
 	unsigned char *input;
 	unsigned int input_length;

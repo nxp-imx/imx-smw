@@ -23,13 +23,19 @@ inline int smw_crypto_get_ctx_subsystem_id(struct smw_op_context *op_context,
 					   enum subsystem_id *subsystem_id)
 {
 	int status = SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME;
+	enum subsystem_id id = SUBSYSTEM_ID_INVALID;
 
 	if (op_context) {
 		if (op_context->subsystem_id < SUBSYSTEM_ID_NB)
-			*subsystem_id = op_context->subsystem_id;
+			id = op_context->subsystem_id;
 
-		status = SMW_STATUS_OK;
+		if (id == SUBSYSTEM_ID_INVALID)
+			status = SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME;
+		else
+			status = SMW_STATUS_OK;
 	}
+
+	*subsystem_id = id;
 
 	return status;
 }
@@ -62,6 +68,10 @@ enum smw_status_code smw_allocate_context(struct smw_context_args *args)
 		goto end;
 	}
 
+	args->context->op_id = SMW_CRYPTO_OP_ID_INVALID;
+	args->context->subsystem_id = SUBSYSTEM_ID_INVALID;
+
+	/* Keep this part of code for hash multipart backward compatibility */
 	status = smw_config_get_subsystem_id(args->subsystem_name,
 					     &args->context->subsystem_id);
 	if (status != SMW_STATUS_OK) {
@@ -105,6 +115,7 @@ enum smw_status_code smw_copy_context(struct smw_copy_context_args *args)
 
 	struct subsystem_func *subsystem_func = NULL;
 	struct smw_crypto_context_ops *ops = NULL;
+	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	SMW_DBG_TRACE_API_CALL;
 
@@ -116,8 +127,12 @@ enum smw_status_code smw_copy_context(struct smw_copy_context_args *args)
 		goto end;
 	}
 
-	subsystem_func =
-		smw_config_get_subsystem_func(args->src_context->subsystem_id);
+	status = smw_crypto_get_ctx_subsystem_id(args->src_context,
+						 &subsystem_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	subsystem_func = smw_config_get_subsystem_func(subsystem_id);
 	if (!subsystem_func || !subsystem_func->ctx_ops) {
 		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 		goto end;

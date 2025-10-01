@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #include "smw_status.h"
@@ -29,23 +29,26 @@
 static int cancel_and_free_context(struct smw_op_context **op_context,
 				   bool cancel_op)
 {
-	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	int status = SMW_STATUS_OK;
 
 	struct subsystem_func *subsystem_func = NULL;
 	struct smw_crypto_context_ops *ops = NULL;
-
-	enum subsystem_id subsystem_id = (*op_context)->subsystem_id;
+	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	if ((*op_context)->op_state == CTX_OP_STATE_ALLOC) {
 		/* Nothing to cancel, just free the context */
 		SMW_UTILS_FREE(*op_context);
 		*op_context = NULL;
+		goto end;
+	}
+
+	status = smw_crypto_get_ctx_subsystem_id(*op_context, &subsystem_id);
+	if (status == SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME) {
 		status = SMW_STATUS_OK;
 		goto end;
 	}
 
-	if (subsystem_id >= SUBSYSTEM_ID_NB ||
-	    subsystem_id == SUBSYSTEM_ID_INVALID)
+	if (status != SMW_STATUS_OK)
 		goto end;
 
 	subsystem_func = smw_config_get_subsystem_func(subsystem_id);

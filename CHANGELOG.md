@@ -86,6 +86,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Update eddsa tests according to buffer encoding update.
 * Check that user id is set by default if none given.
 * Test TLS signature algorithm with different hash mechanisms.
+* Fix find_ext test unique id get attribute.
 
 ---
 ### <a id ="rel_5_1"></a></br>**Release 5.1**

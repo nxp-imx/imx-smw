@@ -623,7 +623,6 @@ static int check_public_keys(CK_FUNCTION_LIST_PTR pfunc, CK_SESSION_HANDLE sess,
 	int status = TEST_FAIL;
 
 	CK_RV ret = CKR_OK;
-	CK_OBJECT_CLASS key_class = CKO_PUBLIC_KEY;
 	CK_ULONG unique_id_len = 0;
 	CK_UTF8CHAR_PTR unique_id = NULL;
 	unsigned int key_id = 0;
@@ -633,11 +632,16 @@ static int check_public_keys(CK_FUNCTION_LIST_PTR pfunc, CK_SESSION_HANDLE sess,
 		{ CKA_UNIQUE_ID, unique_id, unique_id_len },
 	};
 
-	ret = util_set_unique_id(unique_id, &unique_id_len, key_class, 0);
-	if (ret != CKR_BUFFER_TOO_SMALL) {
-		TEST_OUT("Get unique id len failed\n");
+	/* Get the Unique ID length */
+	ret = pfunc->C_GetAttributeValue(sess, hpubkey, key_attrs,
+					 ARRAY_SIZE(key_attrs));
+	if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
 		goto end;
-	}
+
+	unique_id_len = key_attrs[0].ulValueLen;
+
+	if (CHECK_EXPECTED(unique_id_len, "Unique ID length is zero"))
+		goto end;
 
 	unique_id = calloc(1, unique_id_len);
 	if (CHECK_EXPECTED(unique_id, "Out of memory"))
@@ -701,7 +705,6 @@ static int check_private_keys(CK_FUNCTION_LIST_PTR pfunc,
 	int status = TEST_FAIL;
 
 	CK_RV ret = CKR_OK;
-	CK_OBJECT_CLASS key_class = CKO_PRIVATE_KEY;
 	CK_ULONG unique_id_len = 0;
 	CK_UTF8CHAR_PTR unique_id = NULL;
 	unsigned int key_id = 0;
@@ -711,11 +714,16 @@ static int check_private_keys(CK_FUNCTION_LIST_PTR pfunc,
 		{ CKA_UNIQUE_ID, unique_id, unique_id_len },
 	};
 
-	ret = util_set_unique_id(unique_id, &unique_id_len, key_class, 0);
-	if (ret != CKR_BUFFER_TOO_SMALL) {
-		TEST_OUT("Get unique id len failed\n");
+	/* Get the Unique ID length */
+	ret = pfunc->C_GetAttributeValue(sess, hprivkey, key_attrs,
+					 ARRAY_SIZE(key_attrs));
+	if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
 		goto end;
-	}
+
+	unique_id_len = key_attrs[0].ulValueLen;
+
+	if (CHECK_EXPECTED(unique_id_len, "Unique ID length is zero"))
+		goto end;
 
 	unique_id = calloc(1, unique_id_len);
 	if (CHECK_EXPECTED(unique_id, "Out of memory"))
@@ -781,7 +789,6 @@ static int check_secret_keys(CK_FUNCTION_LIST_PTR pfunc, CK_SESSION_HANDLE sess,
 	int status = TEST_FAIL;
 
 	CK_RV ret = CKR_OK;
-	CK_OBJECT_CLASS key_class = CKO_SECRET_KEY;
 	CK_ULONG unique_id_len = 0;
 	CK_UTF8CHAR_PTR unique_id = NULL;
 	unsigned int key_id = 0;
@@ -791,11 +798,16 @@ static int check_secret_keys(CK_FUNCTION_LIST_PTR pfunc, CK_SESSION_HANDLE sess,
 		{ CKA_UNIQUE_ID, unique_id, unique_id_len },
 	};
 
-	ret = util_set_unique_id(unique_id, &unique_id_len, key_class, 0);
-	if (ret != CKR_BUFFER_TOO_SMALL) {
-		TEST_OUT("Get unique id len failed\n");
+	/* Get the Unique ID length */
+	ret = pfunc->C_GetAttributeValue(sess, hseckey, key_attrs,
+					 ARRAY_SIZE(key_attrs));
+	if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
 		goto end;
-	}
+
+	unique_id_len = key_attrs[0].ulValueLen;
+
+	if (CHECK_EXPECTED(unique_id_len, "Unique ID length is zero"))
+		goto end;
 
 	unique_id = calloc(1, unique_id_len);
 	if (CHECK_EXPECTED(unique_id, "Out of memory"))

@@ -67,6 +67,8 @@ static int set_hash_context(struct smw_op_context *op_context,
 	op_context->subsystem_context = hash_ctx;
 	op_context->op_state = CTX_OP_STATE_INIT;
 
+	smw_crypto_set_ctx_subsystem_id(op_context, SUBSYSTEM_ID_ELE);
+
 	status = SMW_STATUS_OK;
 
 end:
@@ -153,8 +155,6 @@ static int hash_init(struct hdl *hdl, struct smw_crypto_hash_args *hash_args)
 	op_context = smw_crypto_get_hash_op_context(hash_args);
 	if (!op_context)
 		goto end;
-
-	smw_crypto_set_ctx_subsystem_id(op_context, SUBSYSTEM_ID_ELE);
 
 	hash_algo = ele_get_hash_algo(hash_args->algo_id);
 	if (!hash_algo)

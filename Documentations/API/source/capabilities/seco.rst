@@ -97,15 +97,18 @@ Signature
    +--------------------+--------------+--------------------------+--------------------+
 
 Operations supported:
- - Sign [3]_
- - Verify
-
-.. [3] Attribute TLS_MAC_FINISH available only when hardware supports it
+ - Sign One-shot and Multi-part
+ - Verify One-shot and Multi-part
 
 .. note::
-   Message to sign/verify is full or hashed depending on the algorithm 64-bits
-   word definition additional parameters (bits[39:32]).
+  Signature attribute TLS_MAC_FINISH available only when hardware supports it.
 
+.. note::
+  Message to sign/verify is full or hashed depending on the algorithm 64-bits
+  word definition additional parameters (bits[39:32]).
+
+.. caution::
+  Signature Multi-part is supported only if the hash operation is enabled.
 
 Random
 ^^^^^^

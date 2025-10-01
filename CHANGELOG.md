@@ -62,6 +62,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Check if targeted key derivation is already existing.
 * Fix operation context memory leak.
 * Fix coverity 2025.6.0 findings
+* Add signature multi-part operation.
 
 ##### 2. Subsystems
 
@@ -79,6 +80,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 4. OSAL
 
 * Fix coverity 2025.6.0 findings
+* Define the signature multi-part operation in SMW configuration file when
+  subsystem support it.
 
 #### SMW Tests
 
@@ -88,6 +91,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Setup a dedicated secure storage.
 * Enhance the OEM Master key derivation.
 * Fix coverity 2025.6.0 findings
+* Add tests validating the signature multi-part operation.
 
 #### PKCS#11 Library
 
@@ -103,6 +107,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   to prevent conflicts during state restoration.
 * Fix memory leaks.
 * Fix coverity 2025.6.0 findings
+* Call SMW signature multi-part operation call in place of the multi-part hash.
 
 #### PKCS#11 Tests
 
@@ -275,7 +280,7 @@ If the user repeat these kinds of operations several times, the TEE subsystem wi
 
 * Device manager returns the correct status code if the arguments version is
   not supported.
-* Fix SW implementation of the hash multipart when input is a multiple of block.
+* Fix SW implementation of the hash multi-part when input is a multiple of block.
 * Key manager returns the correct status code if the arguments version is
   not supported.
 * The `ENABLE_TLS12` cmake option has been superseded by `ENABLE_TLS`.
@@ -376,7 +381,7 @@ the key descriptor.
 * Disable TLS1.2 tests on i.MX943 platform.
 * ELE tests: Disable HKDF validation.
 * Fix TEE ed25519 key security size in the tests.
-* Validate hash multipart when input is a multiple of block.
+* Validate hash multi-part when input is a multiple of block.
 * Add subtests in U_API_Derive_004 to verify the management of the
   arguments version.
 * ELE tests: Add tests to validate TLS1.3 operations: U_API_Derive_005,

@@ -23,9 +23,9 @@ Key manager
    +--------------------+--------------------------+------+---------+------+--------+
    | RSA                | 2048 / 3072 / 4096       |      |   X     |  X   |  X     |
    +--------------------+--------------------------+------+---------+------+--------+
-   | ED25519            | 255                      |      |   X     |      |  X[1]_ |
+   | ED25519            | 255                      |      |   X     |      |  X [1]_|
    +--------------------+--------------------------+------+---------+------+--------+
-   | ED448              | 448                      |      |   X     |      |  X[1]_ |
+   | ED448              | 448                      |      |   X     |      |  X [1]_|
    +--------------------+--------------------------+------+---------+------+--------+
    | X25519             | 255                      |      |   X     |      |  X     |
    +--------------------+--------------------------+------+---------+------+--------+
@@ -34,10 +34,10 @@ Key manager
    | EL2GO_PROV_OEM_KEY | N/A                      |      |   X     |      |  X     |
    +--------------------+--------------------------+------+---------+------+--------+
 
+.. [1] i.MX95 Pre-Hashed signature is not supported.
+
 .. note:: The `EL2GO_PROV_OEM_KEY` key type is limited to the EdgeLock 2GO
   key import of the OEM Shared secret.
-
-.. [1] i.MX95 Pre-Hashed signature is not supported.
 
 Operations supported:
  - Generate
@@ -287,12 +287,15 @@ Signature
    +--------------------+--------------+--------------------------+-------------------------+
 
 Operations supported:
- - Sign
- - Verify
+ - Sign One-shot and Multi-part
+ - Verify One-shot and Multi-part
 
 .. note::
   Message to sign/verify is full or hashed depending on the algorithm 64-bits
   word definition additional parameters (bits[39:32]).
+
+.. caution::
+  Signature Multi-part is supported only if the hash operation is enabled.
 
 Sign operation
 ^^^^^^^^^^^^^^
@@ -312,11 +315,14 @@ The following key policies must defined:
     - EDDSA Signature with hash or a message already hashed as listed
       in :numref:`ele_signature`. Not supported on i.MX8ULP, i.MX943 and i.MX95.
 
-  - ELE subsystem supports signature generation using either a key ID or a plaintext key buffer.
-    - Signature generation using plaintext key buffer:
-      - For an EC key pair (Secp R1 and Twisted edwards), private key buffer must be set.
-      - For RSA key pair, private key and modulus buffers must be set. ELE subsystem only supports RSA key pairs
-        with default public exponent of 0x010001.
+  - Opaque key or a plaintext key buffer are supported. Signature generation
+    using plaintext key buffer:
+
+    - For an EC key pair (Secp R1 and Twisted edwards), private key buffer
+      must be set.
+    - For RSA key pair, private key and modulus buffers must be set.
+      ELE subsystem only supports RSA key pairs with default public
+      exponent of 0x010001.
 
 Verify operation
 ^^^^^^^^^^^^^^^^
@@ -336,11 +342,14 @@ The following key policies must defined if a key identifier is used:
     - EDDSA Signature with hash or a message already hashed as listed
       in :numref:`ele_signature`. Not supported on i.MX8ULP, i.MX943 and i.MX95.
 
-  - ELE subsystem supports signature verification using either a key ID or a plaintext key buffer.
-    - Signature verification using plaintext key buffer:
-      - For an EC key pair (Secp R1 and Twisted edwards), public key buffer must be set.
-      - For RSA key, public exponent and modulus buffer must be set. ELE subsystem only supports RSA key pairs
-        with default public exponent of 0x010001.
+  - Opaque key or a plaintext key buffer are supported. Signature verification
+    using plaintext key buffer:
+
+    - For an EC key pair (Secp R1 and Twisted edwards), public key buffer
+      must be set.
+    - For RSA key, public exponent and modulus buffer must be set.
+      ELE subsystem only supports RSA key pairs with default public
+      exponent of 0x010001.
 
 Random
 ------

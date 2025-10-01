@@ -180,15 +180,18 @@ Signature
    | EDDSA_CTX          | ED25519      | 255                         | N/A                      |
    +--------------------+--------------+-----------------------------+--------------------------+
 
+.. [4] multiple of 2 bits
+
 Operations supported:
- - Sign
- - Verify
+ - Sign One-shot and Multi-part
+ - Verify One-shot and Multi-part
 
 .. note::
-   Message to sign/verify is full or hashed depending on the algorithm 64-bits
-   word definition additional parameters (bits[39:32]).
+  Message to sign/verify is full or hashed depending on the algorithm 64-bits
+  word definition additional parameters (bits[39:32]).
 
-.. [4] multiple of 2 bits
+.. caution::
+  Signature Multi-part is supported only if the hash operation is enabled.
 
 
 MAC

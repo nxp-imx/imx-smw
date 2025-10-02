@@ -147,6 +147,7 @@ macro(add_tests definition_list cmd)
 		set_tests_properties(${test_name} PROPERTIES LABELS
 				     "${labels_list}")
 		set_tests_properties(${test_name} PROPERTIES SKIP_RETURN_CODE 1)
+		set_tests_properties(${test_name} PROPERTIES FIXTURES_REQUIRED SMW_Test_Fixture)
 	endwhile()
 endmacro()
 

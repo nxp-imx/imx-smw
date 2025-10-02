@@ -1,0 +1,7 @@
+#!/bin/sh
+
+set -u
+
+. @SMW_TESTS_TARGET_SCRIPTS_DIR_FULL_PATH@/test_lib.sh
+
+cleanup_nvm_daemon

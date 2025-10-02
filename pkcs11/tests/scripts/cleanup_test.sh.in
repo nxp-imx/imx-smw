@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -u
+
+. @PKCS11_TARGET_SCRIPTS_DIR_FULL_PATH@/test_lib.sh
+
+cleanup_nvm_daemon
+
+if [ -e ${script_conf} ]; then
+  # Restore the original smw.conf
+  mv ${conf_file}.bak ${conf_file}
+fi

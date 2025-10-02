@@ -1,0 +1,31 @@
+#!/bin/sh
+
+set -u
+
+. @PKCS11_TARGET_SCRIPTS_DIR_FULL_PATH@/test_lib.sh
+
+setup_nvm_daemon
+
+# Update the smw.conf for the test purpose
+if [ -e ${script_conf} ]; then
+  # Save a copy of the original smw.conf
+  cp ${conf_file} ${conf_file}.bak
+
+  # Setup the database
+  res=$(${script_conf} in=${conf_file} conf=setup database=/var/tmp/obj_db_pkcs11_test.dat)
+  if [ "${res}" ]; then
+    exit_err_conf "${res}"
+  fi
+
+  # Setup the seco subsystem
+  res=$(${script_conf} in=${conf_file} conf=seco id=0x504b3131 nonce=0x444546 replay=1000)
+   if [ "${res}" ]; then
+    exit_err_conf "${res}"
+  fi
+
+  # Setup the ele subsystem
+  res=$(${script_conf} in=${conf_file} conf=ele id=0x504b3131 nonce=0x444546)
+   if [ "${res}" ]; then
+    exit_err_conf "${res}"
+  fi
+fi

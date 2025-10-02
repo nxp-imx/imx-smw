@@ -23,6 +23,9 @@ endif()
 set(PKCS11_SHARE_TARGET_DIR share/smw/pkcs11)
 set(PKCS11_TESTS_TARGET_DATA_DIR ${PKCS11_SHARE_TARGET_DIR}/tests)
 set(PKCS11_TARGET_SCRIPTS_DIR ${PKCS11_SHARE_TARGET_DIR}/scripts)
+set(PKCS11_TARGET_SCRIPTS_DIR_FULL_PATH ${CMAKE_INSTALL_PREFIX}/${PKCS11_TARGET_SCRIPTS_DIR})
+set(PKCS11_TEST_SCRIPTS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
+set(PKCS11_TEST_SCRIPTS_BIN ${CMAKE_CURRENT_BINARY_DIR}/scripts)
 
 message(STATUS "Default PKCS11 Library: ${DEFAULT_PKCS11_LIB}")
 
@@ -63,6 +66,10 @@ if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Ele)
 endif()
 
 configure_file(./include/config.h.in ./include/config.h)
+configure_file(${PKCS11_TEST_SCRIPTS_SRC}/setup_test.sh.in
+               ${PKCS11_TEST_SCRIPTS_BIN}/setup_test.sh @ONLY)
+configure_file(${PKCS11_TEST_SCRIPTS_SRC}/cleanup_test.sh.in
+               ${PKCS11_TEST_SCRIPTS_BIN}/cleanup_test.sh @ONLY)
 
 #
 # Installation procedure done as separated make target
@@ -77,9 +84,27 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake
         COMPONENT ${PROJECT_NAME}
         EXCLUDE_FROM_ALL)
 
-install(DIRECTORY scripts
-        DESTINATION ${PKCS11_SHARE_TARGET_DIR}
-        FILE_PERMISSIONS OWNER_READ OWNER_WRITE WORLD_EXECUTE
+install(FILES ${PKCS11_TEST_SCRIPTS_BIN}/setup_test.sh
+        DESTINATION ${PKCS11_TARGET_SCRIPTS_DIR}
+        PERMISSIONS OWNER_READ OWNER_WRITE WORLD_EXECUTE
+        COMPONENT ${PROJECT_NAME}
+        EXCLUDE_FROM_ALL)
+
+install(FILES ${PKCS11_TEST_SCRIPTS_BIN}/cleanup_test.sh
+        DESTINATION ${PKCS11_TARGET_SCRIPTS_DIR}
+        PERMISSIONS OWNER_READ OWNER_WRITE WORLD_EXECUTE
+        COMPONENT ${PROJECT_NAME}
+        EXCLUDE_FROM_ALL)
+
+install(FILES scripts/test_lib.sh
+        DESTINATION ${PKCS11_TARGET_SCRIPTS_DIR}
+        PERMISSIONS OWNER_READ OWNER_WRITE WORLD_EXECUTE
+        COMPONENT ${PROJECT_NAME}
+        EXCLUDE_FROM_ALL)
+
+install(FILES scripts/run_test.sh
+        DESTINATION ${PKCS11_TARGET_SCRIPTS_DIR}
+        PERMISSIONS OWNER_READ OWNER_WRITE WORLD_EXECUTE
         COMPONENT ${PROJECT_NAME}
         EXCLUDE_FROM_ALL)
 
@@ -104,11 +129,15 @@ enable_testing()
 #
 macro(pkcs11_test name)
     add_test(NAME pkcs11_${name}
-             COMMAND ${CMAKE_INSTALL_PREFIX}/${PKCS11_TARGET_SCRIPTS_DIR}/run_test.sh
-                "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/${PROJECT_NAME} -t ${name}")
+             COMMAND ${PKCS11_TARGET_SCRIPTS_DIR_FULL_PATH}/run_test.sh
+               "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/${PROJECT_NAME} -t ${name}")
     set_tests_properties(pkcs11_${name} PROPERTIES LABELS "pkcs11;${name}")
-	set_tests_properties(pkcs11_${name} PROPERTIES SKIP_RETURN_CODE 1)
+    set_tests_properties(pkcs11_${name} PROPERTIES SKIP_RETURN_CODE 1)
+    set_tests_properties(pkcs11_${name} PROPERTIES FIXTURES_REQUIRED PKCS11_Test_Fixture)
 endmacro()
+
+add_test(NAME SetupTest COMMAND "${PKCS11_TARGET_SCRIPTS_DIR_FULL_PATH}/setup_test.sh")
+set_tests_properties(SetupTest PROPERTIES FIXTURES_SETUP PKCS11_Test_Fixture)
 
 pkcs11_test(get_functions)
 pkcs11_test(get_info_ifs)
@@ -145,3 +174,6 @@ pkcs11_test(object_cert)
 pkcs11_test(performance)
 pkcs11_test(derive_key_tls1_3)
 pkcs11_test(derive_key_tls1_2)
+
+add_test(NAME CleanupTest COMMAND "${PKCS11_TARGET_SCRIPTS_DIR_FULL_PATH}/cleanup_test.sh")
+set_tests_properties(CleanupTest PROPERTIES FIXTURES_CLEANUP PKCS11_Test_Fixture)

@@ -25,13 +25,13 @@
 	},
 	"subtest 2": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "ELE",
 		"context_id": 0,
 		"depends": 1
 	},
 	"subtest 3": {
 		"description": "Generate signature multi-part",
 		"command": "SIGN_INIT",
+		"subsystem": "ELE",
 		"sign_attr": [
 			"ECDSA",
 			"HASH=SHA256"
@@ -59,7 +59,6 @@
 	},
 	"subtest 5": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "ELE",
 		"context_id": 1,
 		"depends": 2
 	},

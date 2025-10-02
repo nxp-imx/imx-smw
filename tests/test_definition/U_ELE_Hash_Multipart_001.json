@@ -1,7 +1,6 @@
 {
 	"subtest 1": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "ELE",
 		"context_id": 0,
 		"restriction_list": "imx8ulp"
 	},
@@ -11,6 +10,8 @@
 			"https://tools.ietf.org/html/rfc1321 Appendix A.5"
 		],
 		"command": "HASH_INIT",
+		"version": 1,
+		"subsystem": "ELE",
 		"algo": "MD5",
 		"context_id": 0,
 		"depends": 1
@@ -40,7 +41,6 @@
 	},
 	"subtest 5": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "ELE",
 		"context_id": 1,
 		"restriction_list": "imx8ulp"
 	},
@@ -51,6 +51,8 @@
 			"shabytetestvectors.zip/SHA1LongMsg.rsp"
 		],
 		"command": "HASH_INIT",
+		"version": 1,
+		"subsystem": "ELE",
 		"algo": "SHA1",
 		"context_id": 1,
 		"depends": 5
@@ -94,7 +96,6 @@
 	},
 	"subtest 9": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "ELE",
 		"context_id": 2
 	},
 	"subtest 10": {
@@ -104,6 +105,8 @@
 			"shabytetestvectors.zip/SHA224LongMsg.rsp"
 		],
 		"command": "HASH_INIT",
+		"version": 1,
+		"subsystem": "ELE",
 		"algo": "SHA224",
 		"context_id": 2,
 		"depends": 9
@@ -150,7 +153,6 @@
 	},
 	"subtest 13": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "ELE",
 		"context_id": 3
 	},
 	"subtest 14": {
@@ -160,6 +162,8 @@
 			"shabytetestvectors.zip/SHA256LongMsg.rsp"
 		],
 		"command": "HASH_INIT",
+		"version": 1,
+		"subsystem": "ELE",
 		"algo": "SHA256",
 		"context_id": 3,
 		"depends": 13
@@ -206,7 +210,6 @@
 	},
 	"subtest 17": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "ELE",
 		"context_id": 4
 	},
 	"subtest 18": {
@@ -216,6 +219,8 @@
 			"shabytetestvectors.zip/SHA384LongMsg.rsp"
 		],
 		"command": "HASH_INIT",
+		"version": 1,
+		"subsystem": "ELE",
 		"algo": "SHA384",
 		"context_id": 4,
 		"depends": 17
@@ -267,7 +272,6 @@
 	},
 	"subtest 21": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "ELE",
 		"context_id": 5
 	},
 	"subtest 22": {
@@ -277,6 +281,8 @@
 			"shabytetestvectors.zip/SHA512LongMsg.rsp"
 		],
 		"command": "HASH_INIT",
+		"version": 1,
+		"subsystem": "ELE",
 		"algo": "SHA512",
 		"context_id": 5,
 		"depends": 21
@@ -329,7 +335,6 @@
 	},
 	"subtest 25": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "ELE",
 		"context_id": 6
 	},
 	"subtest 26": {
@@ -339,6 +344,8 @@
 			"shabytetestvectors.zip/SHA512LongMsg.rsp"
 		],
 		"command": "HASH_INIT",
+		"version": 1,
+		"subsystem": "ELE",
 		"algo": "SHA512",
 		"context_id": 6,
 		"depends": 25

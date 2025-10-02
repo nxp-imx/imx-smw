@@ -1,7 +1,6 @@
 {
 	"subtest 1": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "TEE",
 		"context_id": 0
 	},
 	"subtest 2": {
@@ -11,6 +10,8 @@
 			"shabytetestvectors.zip/SHA1ShortMsg.rsp"
 		],
 		"command": "HASH_INIT",
+		"version": 1,
+		"subsystem": "TEE",
 		"algo": "SHA1",
 		"context_id": 0,
 		"depends": 1
@@ -48,7 +49,6 @@
 	},
 	"subtest 5": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "TEE",
 		"context_id": 1
 	},
 	"subtest 6": {
@@ -58,6 +58,8 @@
 			"shabytetestvectors.zip/SHA224ShortMsg.rsp"
 		],
 		"command": "HASH_INIT",
+		"version": 1,
+		"subsystem": "TEE",
 		"algo": "SHA224",
 		"context_id": 1,
 		"depends": 5
@@ -95,7 +97,6 @@
 	},
 	"subtest 9": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "TEE",
 		"context_id": 2
 	},
 	"subtest 10": {
@@ -105,6 +106,8 @@
 			"shabytetestvectors.zip/SHA256ShortMsg.rsp"
 		],
 		"command": "HASH_INIT",
+		"version": 1,
+		"subsystem": "TEE",
 		"algo": "SHA256",
 		"context_id": 2,
 		"depends": 9
@@ -142,7 +145,6 @@
 	},
 	"subtest 13": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "TEE",
 		"context_id": 3
 	},
 	"subtest 14": {
@@ -152,6 +154,8 @@
 			"shabytetestvectors.zip/SHA384ShortMsg.rsp"
 		],
 		"command": "HASH_INIT",
+		"version": 1,
+		"subsystem": "TEE",
 		"algo": "SHA384",
 		"context_id": 3,
 		"depends": 13
@@ -194,7 +198,6 @@
 	},
 	"subtest 17": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "TEE",
 		"context_id": 4
 	},
 	"subtest 18": {
@@ -204,6 +207,8 @@
 			"shabytetestvectors.zip/SHA512ShortMsg.rsp"
 		],
 		"command": "HASH_INIT",
+		"version": 1,
+		"subsystem": "TEE",
 		"algo": "SHA512",
 		"context_id": 4,
 		"depends": 17

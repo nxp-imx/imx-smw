@@ -49,7 +49,6 @@
 	},
 	"subtest 3": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "ELE",
 		"context_id": 0,
 		"depends": 1
 	},
@@ -85,7 +84,6 @@
 	},
 	"subtest 6": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "ELE",
 		"context_id": 1,
 		"depends": 1
 	},
@@ -122,7 +120,6 @@
 	},
 	"subtest 9": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "ELE",
 		"context_id": 2,
 		"depends": 2
 	},
@@ -215,7 +212,6 @@
 	},
 	"subtest 15": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "ELE",
 		"context_id": 3,
 		"depends": 14
 	},
@@ -262,7 +258,6 @@
 	},
 	"subtest 19": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "ELE",
 		"context_id": 4,
 		"depends": 2
 	},
@@ -310,7 +305,6 @@
 	},
 	"subtest 23": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "ELE",
 		"context_id": 5,
 		"depends": 22
 	},

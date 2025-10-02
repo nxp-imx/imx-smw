@@ -1,7 +1,6 @@
 {
 	"subtest 1": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "ELE",
 		"context_id": 0
 	},
 	"subtest 2": {
@@ -11,6 +10,8 @@
 			"sha-3bytetestvectors.zip/SHA3_224LongMsg.rsp"
 		],
 		"command": "HASH_INIT",
+		"version": 1,
+		"subsystem": "ELE",
 		"algo": "SHA3_224",
 		"context_id": 0,
 		"depends": 1,
@@ -66,7 +67,6 @@
 	},
 	"subtest 5": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "ELE",
 		"context_id": 1
 	},
 	"subtest 6": {
@@ -76,6 +76,8 @@
 			"sha-3bytetestvectors.zip/SHA3_256ShortMsg.rsp"
 		],
 		"command": "HASH_INIT",
+		"version": 1,
+		"subsystem": "ELE",
 		"algo": "SHA3_256",
 		"context_id": 1,
 		"depends": 5,
@@ -120,7 +122,6 @@
 	},
 	"subtest 9": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "ELE",
 		"context_id": 2
 	},
 	"subtest 10": {
@@ -130,6 +131,8 @@
 			"sha-3bytetestvectors.zip/SHA3_384ShortMsg.rsp"
 		],
 		"command": "HASH_INIT",
+		"version": 1,
+		"subsystem": "ELE",
 		"algo": "SHA3_384",
 		"context_id": 2,
 		"depends": 9,
@@ -174,7 +177,6 @@
 	},
 	"subtest 13": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "ELE",
 		"context_id": 3
 	},
 	"subtest 14": {
@@ -184,6 +186,8 @@
 			"sha-3bytetestvectors.zip/SHA3_512ShortMsg.rsp"
 		],
 		"command": "HASH_INIT",
+		"version": 1,
+		"subsystem": "ELE",
 		"algo": "SHA3_512",
 		"context_id": 3,
 		"depends": 13,

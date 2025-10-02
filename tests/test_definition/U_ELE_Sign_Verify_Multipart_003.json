@@ -15,7 +15,6 @@
 	},
 	"subtest 1": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "ELE",
 		"context_id": 0,
 		"restriction_list": [
 			"imx8ulp",
@@ -67,7 +66,6 @@
 	},
 	"subtest 4": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "ELE",
 		"context_id": 1,
 		"depends": 3
 	},

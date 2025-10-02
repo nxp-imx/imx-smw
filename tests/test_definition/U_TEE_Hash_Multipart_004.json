@@ -1,7 +1,6 @@
 {
 	"subtest 1": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "TEE",
 		"context_id": 0
 	},
 	"subtest 2": {
@@ -11,6 +10,8 @@
 			"shakebytetestvectors.zip/SHAKE256ShortMsg.rsp"
 		],
 		"command": "HASH_INIT",
+		"version": 1,
+		"subsystem": "TEE",
 		"algo": "SHAKE256",
 		"context_id": 0,
 		"depends": 1

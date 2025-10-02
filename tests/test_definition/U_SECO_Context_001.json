@@ -1,45 +1,59 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			]
+		}
+	},
 	"subtest 1": {
-		"command": "OP_CONTEXT_ALLOCATE",
+		"command": "GENERATE",
 		"subsystem": "SECO",
-		"context_id": 0
+		"key_name": "key 1"
 	},
 	"subtest 2": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "SECO",
-		"context_id": 1
+		"context_id": 0,
+		"depends": 1
 	},
 	"subtest 3": {
+		"command": "CIPHER_INIT",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"context_id": 0,
+		"depends": 2,
+		"result":"SMW_STATUS_OPERATION_NOT_CONFIGURED"
+	},
+	"subtest 4": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 1,
+		"depends": 3
+	},
+	"subtest 5": {
+		"description": [
+			"Cipher initialization should have delete the context",
+			"hence this operation should have source context invalid"
+		],
 		"command": "OP_CONTEXT_COPY",
 		"type": "CIPHER_MULTI_PART",
 		"context_id": [
 			0,
 			1
 		],
-		"depends": [
-			1,
-			2
-		],
-		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
-	},
-	"subtest 4": {
-		"command": "OP_CONTEXT_CANCEL",
-		"subsystem": "SECO",
-		"context_id": 0,
-		"depends": 1
-	},
-	"subtest 5": {
-		"description": "Context is NULL",
-		"command": "OP_CONTEXT_CANCEL",
-		"subsystem": "SECO",
-		"context_id": 0,
-		"depends": 1,
+		"depends": 3,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 6": {
 		"command": "OP_CONTEXT_CANCEL",
-		"subsystem": "SECO",
 		"context_id": 1,
-		"depends": 2
+		"depends": 4
+	},
+	"subtest 7": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
 	}
 }

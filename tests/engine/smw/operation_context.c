@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2024 NXP
+ * Copyright 2021-2025 NXP
  */
 
 #include <stdlib.h>
@@ -143,9 +143,10 @@ static int copy_output_data_node(struct subtest_data *subtest,
 int allocate_context(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(BAD_ARGS);
-	unsigned int ctx_id = 0;
+	unsigned int ctx_id = UINT_MAX;
 	struct smw_context_args args = { 0 };
 	struct smw_context_args *args_ptr = &args;
+	struct smw_op_context *api_ctx = (struct smw_op_context *)INTPTR_MAX;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -155,9 +156,8 @@ int allocate_context(struct subtest_data *subtest)
 	args.version = subtest->version;
 	args.subsystem_name = subtest->subsystem;
 
-	/* Context ID is a mandatory parameter except for API tests */
-	res = util_read_json_type(&ctx_id, CTX_ID_OBJ, t_uint, subtest->params);
-	if (!is_api_test(subtest) && res != ERR_CODE(PASSED))
+	res = util_context_set_op_ctx(subtest, &ctx_id, &args.context, api_ctx);
+	if (res != ERR_CODE(PASSED))
 		return res;
 
 	res = bad_params(subtest->params, (void **)&args_ptr, &args.context,
@@ -175,7 +175,7 @@ int allocate_context(struct subtest_data *subtest)
 	 * Add context in linked list if context allocation succeeds and test isn't
 	 * an API test
 	 */
-	if (!is_api_test(subtest))
+	if (ctx_id != UINT_MAX)
 		res = util_context_add_node(list_op_ctxs(subtest), ctx_id,
 					    args.context);
 
@@ -272,9 +272,7 @@ int copy_context(struct subtest_data *subtest)
 					&args.dst_context);
 		if (res != ERR_CODE(PASSED))
 			return res;
-	}
-
-	if (is_api_test(subtest)) {
+	} else if (is_api_test(subtest)) {
 		args.src_context = (struct smw_op_context *)INTPTR_MAX;
 		args.dst_context = (struct smw_op_context *)INTPTR_MAX;
 	}

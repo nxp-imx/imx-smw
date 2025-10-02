@@ -1,7 +1,6 @@
 {
 	"subtest 1": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "ELE",
 		"context_id": 0,
 		"restriction_list": [
 			"imx8ulp"
@@ -14,6 +13,8 @@
 			"shakebytetestvectors.zip/SHAKE256ShortMsg.rsp"
 		],
 		"command": "HASH_INIT",
+		"version": 1,
+		"subsystem": "ELE",
 		"algo": "SHAKE256",
 		"context_id": 0,
 		"depends": 1

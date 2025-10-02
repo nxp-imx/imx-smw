@@ -24,7 +24,6 @@
 	},
 	"subtest 1": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "TEE",
 		"context_id": 0
 	},
 	"subtest 2": {
@@ -105,7 +104,6 @@
 	},
 	"subtest 7": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "TEE",
 		"context_id": 1,
 		"depends": 6
 	},
@@ -141,7 +139,6 @@
 	},
 	"subtest 11": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "TEE",
 		"context_id": 2
 	},
 	"subtest 12": {
@@ -205,7 +202,6 @@
 	},
 	"subtest 16": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "TEE",
 		"context_id": 3
 	},
 	"subtest 17": {

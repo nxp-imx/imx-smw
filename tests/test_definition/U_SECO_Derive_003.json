@@ -33,12 +33,10 @@
 	},
 	"subtest 1": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "SECO",
 		"context_id": 0
 	},
 	"subtest 2": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "SECO",
 		"context_id": 1
 	},
 	"subtest 3": {

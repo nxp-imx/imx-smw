@@ -425,6 +425,7 @@ int hash_init(struct subtest_data *subtest)
 	}
 
 	args.version = subtest->version;
+	args.subsystem_name = subtest->subsystem;
 
 	if (is_api_test(subtest)) {
 		subtest->smw_status = smw_allocate_context(&ctx_args);

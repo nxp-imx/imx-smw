@@ -56,7 +56,6 @@
 	},
 	"subtest 5": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "TEE",
 		"context_id": 1,
 		"depends": 1
 	},
@@ -93,7 +92,6 @@
 	},
 	"subtest 8": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "TEE",
 		"context_id": 2,
 		"depends": 1
 	},
@@ -186,7 +184,6 @@
 	},
 	"subtest 14": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "TEE",
 		"context_id": 3,
 		"depends": 13
 	},
@@ -233,7 +230,6 @@
 	},
 	"subtest 18": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "TEE",
 		"context_id": 4,
 		"depends": 1
 	},
@@ -281,7 +277,6 @@
 	},
 	"subtest 22": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "TEE",
 		"context_id": 5,
 		"depends": 21
 	},

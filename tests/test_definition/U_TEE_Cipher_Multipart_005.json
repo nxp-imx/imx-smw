@@ -21,7 +21,6 @@
 	},
 	"subtest 2": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "TEE",
 		"context_id": 0,
 		"depends": 1
 	},

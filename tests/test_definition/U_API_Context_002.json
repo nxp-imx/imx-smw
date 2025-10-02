@@ -1,0 +1,42 @@
+{
+	"subtest 1": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 0
+	},
+	"subtest 2": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 1
+	},
+	"subtest 3": {
+		"description": "Copy context where subsystem is not defined",
+		"command": "OP_CONTEXT_COPY",
+		"type": "CIPHER_MULTI_PART",
+		"copy_output": true,
+		"context_id": [
+			0,
+			1
+		],
+		"depends": [
+			1,
+			2
+		],
+		"result": "SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME"
+	},
+	"subtest 4": {
+		"command": "OP_CONTEXT_CANCEL",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 5": {
+		"description": "Context is NULL",
+		"command": "OP_CONTEXT_CANCEL",
+		"context_id": 0,
+		"depends": 1,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 6": {
+		"command": "OP_CONTEXT_CANCEL",
+		"context_id": 1,
+		"depends": 2
+	}
+}

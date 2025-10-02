@@ -56,27 +56,32 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add support for OFB cipher mode.
 * Return subsystem name when calling smw_get_key_attributes() or
   smw_get_data_info()
-* Update the documentation to include the missing object management APIs and the associated structures
-  defined in smw/public/smw/object.h
+* Update the documentation to include the missing object management APIs and
+  the associated structures defined in smw/public/smw/object.h
 * Add SMW_STATUS_KEY_ID_ALREADY_EXIST status when a key is already existing.
 * Check if targeted key derivation is already existing.
 * Fix operation context memory leak.
 * Fix coverity 2025.6.0 findings
 * Add signature multi-part operation.
-* Add a new SMW status code `SMW_STATUS_PERMITTED_ALGO_INVALID` for incomplete permitted algorithm parameters.
-* Add SMW_STATUS_OPERATION_ALREADY_INIT status when an operation is already initialized.
+* Add a new SMW status code `SMW_STATUS_PERMITTED_ALGO_INVALID` for incomplete
+  permitted algorithm parameters.
+* Add `SMW_STATUS_OPERATION_ALREADY_INIT` status when an operation is already
+  initialized.
+* Context allocation argument's subsystem name field is deprecated.
+* Hash initialization context includes subsystem name field.
 
 ##### 2. Subsystems
 
-* TEE: Set the hash buffer length to 0 when the hash buffer is NULL to allow `TEE_DigestDoFinal`
-  report required digest size.
+* TEE: Set the hash buffer length to 0 when the hash buffer is NULL to allow
+  `TEE_DigestDoFinal` report required digest size.
 * ELE: Add support for OFB cipher mode.
 * ELE: Fix memory leaks.
 * TEE: Fix key derived buffer leak.
 * Fix coverity 2025.6.0 findings
-* TEE: Keys intended for asymmetric encryption operations now require permitted algorithm and mode
-  to be specified during key generation and import.
-* TEE: Fix output buffer length handling when output buffer is NULL for asymmetric encrypt/decrypt operations.
+* TEE: Keys intended for asymmetric encryption operations now require permitted
+  algorithm and mode to be specified during key generation and import.
+* TEE: Fix output buffer length handling when output buffer is NULL for
+  asymmetric encrypt/decrypt operations.
 
 ##### 3. ARM PSA APIs
 
@@ -102,6 +107,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add tests for PSA TLS1.2 key derivation: U_PSA_Derive_008, U_PSA_Derive_009 and
   U_PSA_Derive_010.
 * Test error handling when initializing an already initialized operation contexts.
+* Remove subsystem name definition when doing context allocation command.
+* Add subsystem name definition in the hash multi-part init command.
 
 #### PKCS#11 Library
 

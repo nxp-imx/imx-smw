@@ -74,6 +74,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add tests validating OFB cipher mode.
 * Validate subsystem name when calling smw_get_key_attributes() or
   smw_get_data_info()
+* Setup a dedicated secure storage.
 
 #### PKCS#11 Library
 
@@ -97,6 +98,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Test TLS signature algorithm with different hash mechanisms.
 * Fix find_ext test unique id get attribute.
 * Add tests for saving/restoring session state for digest, encrypt, and object search operations.
+* Use a dedicated secure storage
 
 ---
 ### <a id ="rel_5_1"></a></br>**Release 5.1**

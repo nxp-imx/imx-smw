@@ -23,6 +23,7 @@
 	},
 	"subtest 2": {
 		"command": "STORAGE_GET_DATA_INFO",
+		"subsystem_exp": "TEE",
 		"data_name": "data 1",
 		"depends": 1
 	},
@@ -38,6 +39,7 @@
 	},
 	"subtest 5": {
 		"command": "STORAGE_GET_DATA_INFO",
+		"subsystem_exp": "TEE",
 		"data_name": "data 2",
 		"depends": 4
 	},

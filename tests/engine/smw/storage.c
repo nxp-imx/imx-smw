@@ -14,6 +14,7 @@
 #include "key.h"
 #include "mac.h"
 #include "cipher.h"
+#include "util_subsystem.h"
 
 static void free_data(struct smw_data_descriptor *data_descriptor)
 {
@@ -289,6 +290,9 @@ int storage_get_data_info(struct subtest_data *subtest)
 	struct smw_data_descriptor data_ref = { 0 };
 	struct smw_data_descriptor data_test = { 0 };
 	const char *data_name = NULL;
+	const char *subsystem_exp = NULL;
+	smw_subsystem_t subsystem_id_exp = SMW_SUBSYSTEM_NAME_NONE;
+	int error = 0;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -321,10 +325,25 @@ int storage_get_data_info(struct subtest_data *subtest)
 		goto exit;
 	}
 
+	res = util_read_json_type(&subsystem_exp, SUBSYSTEM_EXP_OBJ, t_string,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto exit;
+
+	if (subsystem_exp)
+		util_subsystem_get_name(&subsystem_id_exp, subsystem_exp);
+
 	subtest->smw_status = smw_get_data_info(&args);
 	if (subtest->smw_status != SMW_STATUS_OK) {
 		res = ERR_CODE(API_STATUS_NOK);
 		goto exit;
+	}
+
+	if (subsystem_exp && args.subsystem_name != subsystem_id_exp) {
+		DBG_PRINT("Invalid subsystem name got %s expected %s",
+			  util_subsystem_name_to_string(args.subsystem_name),
+			  subsystem_exp);
+		error++;
 	}
 
 	if ((data_test.attributes.attributes &
@@ -333,8 +352,13 @@ int storage_get_data_info(struct subtest_data *subtest)
 		DBG_PRINT("Invalid storage attribute %08x expected %08x",
 			  data_test.attributes.attributes,
 			  data_ref.attributes.attributes);
-		res = ERR_CODE(FAILED);
+		error++;
 	}
+
+	if (error)
+		res = ERR_CODE(FAILED);
+	else
+		res = ERR_CODE(PASSED);
 
 exit:
 	free_data(&data_ref);

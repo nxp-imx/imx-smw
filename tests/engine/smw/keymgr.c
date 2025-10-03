@@ -15,6 +15,7 @@
 #include "util_key.h"
 #include "util_attr.h"
 #include "util_tlv.h"
+#include "util_subsystem.h"
 
 #include "key.h"
 #include "keymgr.h"
@@ -1237,6 +1238,8 @@ int get_key_attributes(struct subtest_data *subtest)
 	struct smw_key_attributes key_ref_attributes = { 0 };
 	const char *key_name = NULL;
 	struct json_object *okey_params = NULL;
+	const char *subsystem_exp = NULL;
+	smw_subsystem_t subsystem_id_exp = SMW_SUBSYSTEM_NAME_NONE;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -1256,6 +1259,14 @@ int get_key_attributes(struct subtest_data *subtest)
 	res = util_key_get_key_params(subtest, KEY_NAME_OBJ, &okey_params);
 	if (res != ERR_CODE(PASSED))
 		return res;
+
+	res = util_read_json_type(&subsystem_exp, SUBSYSTEM_EXP_OBJ, t_string,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto exit;
+
+	if (subsystem_exp)
+		util_subsystem_get_name(&subsystem_id_exp, subsystem_exp);
 
 	/* Initialize key descriptor, no key buffer */
 	res = key_desc_init(&key_test, NULL);
@@ -1288,6 +1299,13 @@ int get_key_attributes(struct subtest_data *subtest)
 	/*
 	 * Validate the key attributes
 	 */
+	if (subsystem_exp && args.subsystem_name != subsystem_id_exp) {
+		DBG_PRINT("Invalid subsystem name got %s expected %s",
+			  util_subsystem_name_to_string(args.subsystem_name),
+			  subsystem_exp);
+		error++;
+	}
+
 	if (key_test.desc.security_size != key_ref.desc.security_size) {
 		DBG_PRINT("Invalid security size got %u expected %u",
 			  key_test.desc.security_size,

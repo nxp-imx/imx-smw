@@ -43,7 +43,7 @@
 	"subtest 3": {
 		"description": "Get the attributes of key 2",
 		"command": "GET_KEY_ATTRIBUTES",
-		"subsystem": "ELE",
+		"subsystem_exp": "ELE",
 		"key_name": "key 2",
 		"depends": 1
 	},

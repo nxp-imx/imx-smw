@@ -25,10 +25,12 @@
 	},
 	"subtest 1": {
 		"command": "GET_KEY_ATTRIBUTES",
+		"subsystem_exp": "TEE",
 		"key_name": "key 1"
 	},
 	"subtest 2": {
 		"command": "GET_KEY_ATTRIBUTES",
+		"subsystem_exp": "TEE",
 		"key_name": "key 2"
 	},
 	"subtest 3": {

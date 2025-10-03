@@ -66,18 +66,21 @@
 	"subtest 4": {
 		"description": "Check key 1 attributes",
 		"command": "GET_KEY_ATTRIBUTES",
+		"subsystem_exp": "ELE",
 		"key_name": "key 1",
 		"depends": 1
 	},
 	"subtest 5": {
 		"description": "Check key 2 attributes",
 		"command": "GET_KEY_ATTRIBUTES",
+		"subsystem_exp": "ELE",
 		"key_name": "key 2",
 		"depends": 2
 	},
 	"subtest 6": {
 		"command": "STORAGE_GET_DATA_INFO",
 		"data_name": "data 1",
+		"subsystem_exp": "ELE",
 		"depends": 3
 	}
 }

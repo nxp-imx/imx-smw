@@ -109,7 +109,7 @@
 		"Thread 1": {
 			"subtest 1": {
 				"command": "GET_KEY_ATTRIBUTES",
-				"subsystem": "TEE",
+				"subsystem_exp": "TEE",
 				"key_name": "key secp256r1",
 				"wait_before": "sem_a2_t1_start",
 				"post_after": "sem_a2_t2_start"

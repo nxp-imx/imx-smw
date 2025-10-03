@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #include <string.h>
@@ -43,4 +43,20 @@ void util_subsystem_get_name(smw_subsystem_t *subsystem_name,
 	}
 
 	*subsystem_name = SMW_SUBSYSTEM_NAME_NB + 1;
+}
+
+const char *util_subsystem_name_to_string(smw_subsystem_t subsystem_name)
+{
+	const char *name = NULL;
+	unsigned int i = 0;
+
+	for (; i < ARRAY_SIZE(subsystem_names); i++) {
+		if (subsystem_name != subsystem_names[i].name)
+			continue;
+
+		name = subsystem_names[i].string;
+		break;
+	}
+
+	return name;
 }

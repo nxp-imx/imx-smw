@@ -130,7 +130,7 @@
 	"subtest 2": {
 		"description": "Get the attributes of the ELE ECDSA key",
 		"command": "GET_KEY_ATTRIBUTES",
-		"subsystem": "ELE",
+		"subsystem_exp": "ELE",
 		"key_name": "key ECDSA ELE",
 		"restriction_list": [
 			"imx8ulp",

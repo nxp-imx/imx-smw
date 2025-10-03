@@ -39,7 +39,7 @@
 	},
 	"subtest 2": {
 		"command": "GET_KEY_ATTRIBUTES",
-		"subsystem": "ELE",
+		"subsystem_exp": "ELE",
 		"key_name": "key RSA sign",
 		"depends": 1
 	},
@@ -56,7 +56,7 @@
 	},
 	"subtest 5": {
 		"command": "GET_KEY_ATTRIBUTES",
-		"subsystem": "ELE",
+		"subsystem_exp": "ELE",
 		"key_name": "key RSA verify",
 		"depends": 4
 	},

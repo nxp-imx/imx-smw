@@ -67,7 +67,7 @@
 	},
 	"subtest 2": {
 		"command": "GET_KEY_ATTRIBUTES",
-		"subsystem": "ELE",
+		"subsystem_exp": "ELE",
 		"key_name": "key AES",
 		"depends": 1
 	},
@@ -83,7 +83,7 @@
 	},
 	"subtest 5": {
 		"command": "GET_KEY_ATTRIBUTES",
-		"subsystem": "ELE",
+		"subsystem_exp": "ELE",
 		"key_name": "key ECDSA sign",
 		"depends": 4
 	},
@@ -99,7 +99,7 @@
 	},
 	"subtest 8": {
 		"command": "GET_KEY_ATTRIBUTES",
-		"subsystem": "ELE",
+		"subsystem_exp": "ELE",
 		"key_name": "key ECDSA verify",
 		"depends": 7
 	},
@@ -115,7 +115,7 @@
 	},
 	"subtest 11": {
 		"command": "GET_KEY_ATTRIBUTES",
-		"subsystem": "ELE",
+		"subsystem_exp": "ELE",
 		"key_name": "key MAC",
 		"depends": 10
 	},

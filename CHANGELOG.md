@@ -54,6 +54,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 1. SMW APIs
 
 * Add support for OFB cipher mode.
+* Return subsystem name when calling smw_get_key_attributes() or
+  smw_get_data_info()
 
 ##### 2. Subsystems
 
@@ -68,6 +70,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### SMW Tests
 
 * Add tests validating OFB cipher mode.
+* Validate subsystem name when calling smw_get_key_attributes() or
+  smw_get_data_info()
 
 #### PKCS#11 Library
 

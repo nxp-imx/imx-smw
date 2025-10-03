@@ -785,6 +785,9 @@ enum smw_status_code smw_get_data_info(struct smw_data_info_args *args)
 	if (status == SMW_STATUS_OK) {
 		args->data_descriptor->attributes = data_desc->data_attributes;
 
+		args->subsystem_name =
+			smw_config_get_subsystem_name(data_desc->subsystem_id);
+
 		status = data_db_update(&data_info_args.data_descriptor);
 	}
 

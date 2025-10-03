@@ -1951,6 +1951,10 @@ smw_get_key_attributes(struct smw_get_key_attributes_args *args)
 	args->key_privacy_name =
 		smw_keymgr_get_key_privacy_name(key_identifier->privacy_id);
 
+	/* Return the key's subsystem name */
+	args->subsystem_name =
+		smw_config_get_subsystem_name(key_identifier->subsystem_id);
+
 	args->key_descriptor->attributes = key_identifier->key_attributes;
 
 	if (new_key) {

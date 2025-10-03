@@ -327,3 +327,29 @@ void args_attr_get_obj_storage(struct libobj_obj *obj,
 	if (SMW_ATTR_IS_READ_ONLY(attr))
 		set_non_modifiable_obj(obj, storage);
 }
+
+smw_attr_usage_t pkcs11_flag_to_smw_usage(CK_FLAGS op_flag)
+{
+	smw_attr_usage_t usage = SMW_ATTR_USAGE_NONE;
+
+	if (op_flag & CKF_SIGN || op_flag & CKF_MESSAGE_SIGN) {
+		usage |= SMW_ATTR_USAGE_SIGN_MESSAGE;
+		usage |= SMW_ATTR_USAGE_SIGN_HASH;
+	}
+
+	if (op_flag & CKF_VERIFY || op_flag & CKF_MESSAGE_VERIFY) {
+		usage |= SMW_ATTR_USAGE_VERIFY_MESSAGE;
+		usage |= SMW_ATTR_USAGE_VERIFY_HASH;
+	}
+
+	if (op_flag & CKF_ENCRYPT || op_flag & CKF_MESSAGE_ENCRYPT)
+		usage |= SMW_ATTR_USAGE_ENCRYPT;
+
+	if (op_flag & CKF_DECRYPT || op_flag & CKF_MESSAGE_DECRYPT)
+		usage |= SMW_ATTR_USAGE_DECRYPT;
+
+	if (op_flag & CKF_DERIVE)
+		usage |= SMW_ATTR_USAGE_DERIVE;
+
+	return usage;
+}

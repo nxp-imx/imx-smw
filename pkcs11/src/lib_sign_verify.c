@@ -716,13 +716,13 @@ CK_RV lib_sign_verify_reset(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 
 CK_RV lib_sign_verify_copy_operation(void *src, void **dst)
 {
-	CK_RV ret = CKR_OK;
+	CK_RV ret = CKR_HOST_MEMORY;
 	struct lib_signature_ctx *src_ctx = src;
 	struct lib_signature_ctx *dst_ctx = NULL;
 
 	dst_ctx = calloc(1, sizeof(struct lib_signature_ctx));
 	if (!dst_ctx)
-		return CKR_HOST_MEMORY;
+		return ret;
 
 	memcpy(dst_ctx, src_ctx, sizeof(*dst_ctx));
 
@@ -827,7 +827,7 @@ CK_RV lib_sign(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 	}
 
 	/* Run operation */
-	ret = libdev_operate_mechanism(hsession, &mechanism, &params);
+	ret = libdev_operate_mechanism(hsession, &mechanism, &params, op_flag);
 	if (ret != CKR_BUFFER_TOO_SMALL && ret != CKR_OK)
 		goto end;
 
@@ -928,7 +928,7 @@ CK_RV lib_verify(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 	}
 
 	/* Run operation */
-	ret = libdev_operate_mechanism(hsession, &mechanism, &params);
+	ret = libdev_operate_mechanism(hsession, &mechanism, &params, op_flag);
 	if (ret != CKR_OK)
 		goto end;
 
@@ -990,7 +990,7 @@ CK_RV lib_sign_verify_update(CK_SESSION_HANDLE hsession, CK_BYTE_PTR ppart,
 	params.state = OP_UPDATE;
 
 	/* Run operation */
-	ret = libdev_operate_mechanism(hsession, &mechanism, &params);
+	ret = libdev_operate_mechanism(hsession, &mechanism, &params, op_flag);
 	if (ret != CKR_OK)
 		goto end;
 

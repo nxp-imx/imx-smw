@@ -136,7 +136,8 @@ CK_RV lib_digest(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pdata,
 	params.digest_len = pdigest_len ? *pdigest_len : 0;
 	params.state = state;
 
-	ret = libdev_operate_mechanism(hsession, &mechanism, &params);
+	ret = libdev_operate_mechanism(hsession, &mechanism, &params,
+				       CKF_DIGEST);
 	if (ret != CKR_BUFFER_TOO_SMALL && ret != CKR_OK)
 		goto end;
 

@@ -506,7 +506,8 @@ CK_RV key_rsa_keypair_generate(CK_SESSION_HANDLE hsession,
 	if (ret != CKR_OK)
 		goto end;
 
-	ret = libdev_operate_mechanism(hsession, mech, priv_obj);
+	ret = libdev_operate_mechanism(hsession, mech, priv_obj,
+				       CKF_GENERATE_KEY_PAIR);
 	if (ret == CKR_OK) {
 		DBG_TRACE("Key Pair ID 0x%X", get_key_token_id(priv_obj));
 		set_key_token_id(pub_obj, get_key_token_id(priv_obj));

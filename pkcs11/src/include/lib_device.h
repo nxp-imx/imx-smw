@@ -179,6 +179,7 @@ CK_RV libdev_get_mechanisms(CK_SLOT_ID slotid,
  * @slotid: Slot ID
  * @type: Mechanisms type
  * @info: Application reference to the mechanism information
+ * @op_flag: Operation flag to validate mechanism against
  *
  * Return:
  * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
@@ -189,7 +190,7 @@ CK_RV libdev_get_mechanisms(CK_SLOT_ID slotid,
  * CKR_OK                        - Success
  */
 CK_RV libdev_get_mechanism_info(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
-				CK_MECHANISM_INFO_PTR info);
+				CK_MECHANISM_INFO_PTR info, CK_FLAGS op_flag);
 
 /**
  * libdev_validate_mechanism() - Validate mechanism
@@ -216,6 +217,7 @@ CK_RV libdev_validate_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_PTR mech,
  * @hsession: Session handle
  * @mech: Mechanism definition
  * @args: SMW API arguments
+ * @op_flag: Operation flag
  *
  * Function prepare the SMW API argument for the API operation.
  * Other arguments might be set function of the mechanism operation.
@@ -237,7 +239,8 @@ CK_RV libdev_validate_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_PTR mech,
  * CKR_OK                        - Success
  */
 CK_RV libdev_operate_mechanism(CK_SESSION_HANDLE hsession,
-			       CK_MECHANISM_PTR mech, void *args);
+			       CK_MECHANISM_PTR mech, void *args,
+			       CK_FLAGS op_flag);
 
 /**
  * libdev_import_key() - Call SMW import key API

@@ -51,4 +51,13 @@ void args_attr_obj_storage(smw_attr_attributes_t *attr, struct libobj_obj *obj);
 void args_attr_get_obj_storage(struct libobj_obj *obj,
 			       smw_attr_attributes_t attr);
 
+/**
+ * pkcs11_flag_to_smw_usage() - Convert PKCS#11 flags to SMW usage flags
+ * @op_flag: PKCS#11 operation flags
+ *
+ * Return:
+ * SMW usage flags.
+ */
+smw_attr_usage_t pkcs11_flag_to_smw_usage(CK_FLAGS op_flag);
+
 #endif /* __ARGS_ATTR_H__ */

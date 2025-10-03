@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020, 2023-2024 NXP
+ * Copyright 2020, 2023-2025 NXP
  */
 
 #include "lib_context.h"
@@ -93,7 +93,7 @@ CK_RV C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type,
 	if (!pInfo)
 		return CKR_ARGUMENTS_BAD;
 
-	return libdev_get_mechanism_info(slotID, type, pInfo);
+	return libdev_get_mechanism_info(slotID, type, pInfo, 0);
 }
 
 CK_RV C_InitToken(CK_SLOT_ID slotID, CK_UTF8CHAR_PTR pPin, CK_ULONG ulPinLen,

@@ -30,6 +30,8 @@
  * @input_length: Input buffer length
  * @output: Output buffer for TLS one-shot operation
  * @output_length: Output buffer length
+ * @source_data: Source/salt buffer
+ * @source_data_length: @source_data length in bytes
  */
 struct lib_cipher_ctx {
 	CK_OBJECT_HANDLE hkey;
@@ -53,6 +55,9 @@ struct lib_cipher_ctx {
 	CK_ULONG input_length;
 	CK_BYTE_PTR output;
 	CK_ULONG output_length;
+	/* RSA OAEP specific members */
+	CK_BYTE_PTR source_data;
+	CK_ULONG source_data_length;
 };
 
 /**

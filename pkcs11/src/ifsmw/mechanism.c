@@ -103,6 +103,14 @@ static CK_RV info_maead(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 static void check_maead(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 			struct mgroup *mgroup);
 static CK_RV op_maead(CK_SLOT_ID slotid, struct mentry *entry, void *args);
+static void check_masymm_encrypt_rsa(CK_SLOT_ID slotid,
+				     smw_subsystem_t subsystem,
+				     struct mgroup *mgroup);
+static CK_RV info_masymm_encrypt_rsa(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+				     struct mentry *entry,
+				     CK_MECHANISM_INFO_PTR info);
+static CK_RV op_masymm_encrypt_rsa(CK_SLOT_ID slotid, struct mentry *entry,
+				   void *args);
 
 smw_key_type_t smw_ec_name[] = { SMW_KEY_TYPE_NAME_SECP_R1,
 				 SMW_KEY_TYPE_NAME_BRAINPOOL_R1,
@@ -119,13 +127,26 @@ smw_key_type_t smw_ed_name[] = { SMW_KEY_TYPE_NAME_ED448,
  * @smw_hash: SMW hash name for this mechanism, if any
  * @smw_mac: SMW MAC name for this mechanism, if any
  * @smw_cipher_mode: SMW cipher mode name for this mechanism, if any
+ * @smw_kdf: SMW Key Derivation Function name
+ * @smw_aead_mode: SMW AEAD mode name for this mechanism, if any
  * @smw_sign_algo: SMW signature algorithm name for this mechanism, if any
  * @smw_sign_type: SMW signature type name for this mechanism, if any
- * @smw_aead_mode: SMW AEAD mode name for this mechanism, if any
- * @smw_kdf: SMW Key Derivation Function name
+ * @smw_asymm_encrypt_algo: SMW asymmetric encryption algo name for this mechanism, if any
+ * @smw_asymm_encrypt_mode: SMW asymmetric encryption mode name for this mechanism, if any
  * @smw_algo_id: SMW permitted algorithm for this mechanism
+ * @smw_usages: SMW key usage flags for this mechanism
  * @nb_smw_key_types: Number of SMW key types
  * @smw_key_types: SMW key types names for this mechanism, if more than one
+ *
+ * @smw_usages field is used to specify what cryptographic operations (encrypt,
+ * decrypt, sign,verify, etc.) a particular mechanism supports, which is essential
+ * when the same mechanism can be used for different purposes (e.g. CKM_RSA_PKCS
+ * CKM_RSA_PKCS supports both signature and encryption).
+ * Usage validation: PKCS#11 operation flags (e.g., CKF_DECRYPT) are converted
+ * to SMW usage attributes via pkcs11_flag_to_smw_usage(), then matched against
+ * the mechanism's @smw_usages to ensure compatibility.
+ * For key generation mechanisms (M_ECKEYGEN, M_KEYGEN etc), there are
+ * no relevant SMW usage flags, so @smw_usages is set to SMW_ATTR_USAGE_NONE.
  */
 struct mentry {
 	CK_MECHANISM_TYPE type;
@@ -138,7 +159,10 @@ struct mentry {
 	smw_aead_mode_t smw_aead_mode;
 	smw_signature_algo_t smw_sign_algo;
 	smw_signature_type_t smw_sign_type;
+	smw_asymmetric_encryption_algo_t smw_asymm_encrypt_algo;
+	smw_asymmetric_encryption_mode_t smw_asymm_encrypt_mode;
 	smw_attr_algo_t smw_algo_id;
+	smw_attr_usage_t smw_usages;
 	unsigned int nb_smw_key_types;
 	smw_key_type_t *smw_key_types;
 };
@@ -173,7 +197,7 @@ struct mgroup {
 /* Macro filling a struct mentry for a single algo */
 #define M_ALGO(_key_type_name, _hash_name, _mac_name, _cipher_mode_name,       \
 	       _aead_mode_name, _sign_algo_name, _sign_type_name, _kdf_name,   \
-	       _algo_id, _id)                                                  \
+	       _algo_id, _usages, _id)                                         \
 	{                                                                      \
 		.type = CKM_##_id, .slot_flag = 0,                             \
 		.smw_key_type = SMW_KEY_TYPE_NAME_##_key_type_name,            \
@@ -181,15 +205,21 @@ struct mgroup {
 		.smw_cipher_mode = _cipher_mode_name, .smw_kdf = _kdf_name,    \
 		.smw_aead_mode = _aead_mode_name,                              \
 		.smw_sign_algo = _sign_algo_name,                              \
-		.smw_sign_type = _sign_type_name, .smw_algo_id = _algo_id,     \
-		.nb_smw_key_types = 0, .smw_key_types = NULL,                  \
+		.smw_sign_type = _sign_type_name,                              \
+		.smw_asymm_encrypt_algo =                                      \
+			SMW_ASYMMETRIC_ENCRYPTION_ALGO_NAME_NONE,              \
+		.smw_asymm_encrypt_mode =                                      \
+			SMW_ASYMMETRIC_ENCRYPTION_MODE_NAME_NONE,              \
+		.smw_algo_id = _algo_id, .smw_usages = _usages,                \
+		.nb_smw_key_types = 0, .smw_key_types = NULL                   \
 	}
 
 #define M_DIGEST(_hash, _id)                                                   \
 	M_ALGO(NONE, SMW_HASH_ALGO_NAME_##_hash, SMW_MAC_ALGO_NAME_NONE,       \
 	       SMW_CIPHER_MODE_NAME_NONE, SMW_AEAD_MODE_NAME_NONE,             \
 	       SMW_SIGNATURE_ALGO_NAME_NONE, SMW_SIGNATURE_TYPE_NAME_NONE,     \
-	       SMW_KDF_NAME_NONE, SMW_ATTR_HASH_##_hash, _id)
+	       SMW_KDF_NAME_NONE, SMW_ATTR_HASH_##_hash, SMW_ATTR_USAGE_NONE,  \
+	       _id)
 
 /* Macro filling a struct mentry for an algo or a list of algo */
 #define M_ECKEYGEN(_key_types, _nb_key_types, _id)                             \
@@ -202,8 +232,12 @@ struct mgroup {
 		.smw_aead_mode = SMW_AEAD_MODE_NAME_NONE,                      \
 		.smw_sign_algo = SMW_SIGNATURE_ALGO_NAME_NONE,                 \
 		.smw_sign_type = SMW_SIGNATURE_TYPE_NAME_NONE,                 \
-		.smw_algo_id = 0, .nb_smw_key_types = _nb_key_types,           \
-		.smw_key_types = _key_types,                                   \
+		.smw_asymm_encrypt_algo =                                      \
+			SMW_ASYMMETRIC_ENCRYPTION_ALGO_NAME_NONE,              \
+		.smw_asymm_encrypt_mode =                                      \
+			SMW_ASYMMETRIC_ENCRYPTION_MODE_NAME_NONE,              \
+		.smw_algo_id = 0, .smw_usages = SMW_ATTR_USAGE_NONE,           \
+		.nb_smw_key_types = _nb_key_types, .smw_key_types = _key_types \
 	}
 
 #define M_KEYGEN(_key_type, _id)                                               \
@@ -217,8 +251,12 @@ struct mgroup {
 		.smw_aead_mode = SMW_AEAD_MODE_NAME_NONE,                      \
 		.smw_sign_type = SMW_SIGNATURE_TYPE_NAME_NONE,                 \
 		.smw_sign_algo = SMW_SIGNATURE_ALGO_NAME_NONE,                 \
-		.smw_algo_id = 0, .nb_smw_key_types = 1,                       \
-		.smw_key_types = NULL,                                         \
+		.smw_asymm_encrypt_algo =                                      \
+			SMW_ASYMMETRIC_ENCRYPTION_ALGO_NAME_NONE,              \
+		.smw_asymm_encrypt_mode =                                      \
+			SMW_ASYMMETRIC_ENCRYPTION_MODE_NAME_NONE,              \
+		.smw_algo_id = 0, .smw_usages = SMW_ATTR_USAGE_NONE,           \
+		.nb_smw_key_types = 1, .smw_key_types = NULL                   \
 	}
 
 #define M_KEYDERIVE(_key_type, _kdf_id, _algo_id, _id)                         \
@@ -232,8 +270,13 @@ struct mgroup {
 		.smw_aead_mode = SMW_AEAD_MODE_NAME_NONE,                      \
 		.smw_sign_type = SMW_SIGNATURE_TYPE_NAME_NONE,                 \
 		.smw_sign_algo = SMW_SIGNATURE_ALGO_NAME_NONE,                 \
+		.smw_asymm_encrypt_algo =                                      \
+			SMW_ASYMMETRIC_ENCRYPTION_ALGO_NAME_NONE,              \
+		.smw_asymm_encrypt_mode =                                      \
+			SMW_ASYMMETRIC_ENCRYPTION_MODE_NAME_NONE,              \
 		.smw_algo_id = SMW_ATTR_ALGO_KEY_DERIVATION_##_algo_id(),      \
-		.nb_smw_key_types = 1, .smw_key_types = NULL,                  \
+		.smw_usages = SMW_ATTR_USAGE_DERIVE, .nb_smw_key_types = 1,    \
+		.smw_key_types = NULL,                                         \
 	}
 
 #define M_KEYDERIVE_ANY_HASH(_key_type, _kdf_id, _algo_id, _id)                \
@@ -247,9 +290,14 @@ struct mgroup {
 		.smw_aead_mode = SMW_AEAD_MODE_NAME_NONE,                      \
 		.smw_sign_type = SMW_SIGNATURE_TYPE_NAME_NONE,                 \
 		.smw_sign_algo = SMW_SIGNATURE_ALGO_NAME_NONE,                 \
+		.smw_asymm_encrypt_algo =                                      \
+			SMW_ASYMMETRIC_ENCRYPTION_ALGO_NAME_NONE,              \
+		.smw_asymm_encrypt_mode =                                      \
+			SMW_ASYMMETRIC_ENCRYPTION_MODE_NAME_NONE,              \
 		.smw_algo_id = SMW_ATTR_ALGO_KEY_DERIVATION_##_algo_id(        \
 			SMW_ATTR_HASH_ANY),                                    \
-		.nb_smw_key_types = 1, .smw_key_types = NULL,                  \
+		.smw_usages = SMW_ATTR_USAGE_DERIVE, .nb_smw_key_types = 1,    \
+		.smw_key_types = NULL,                                         \
 	}
 
 #define M_KEYDERIVE_TLS12(_key_type, _kdf_id, _hash, _id)                      \
@@ -263,9 +311,14 @@ struct mgroup {
 		.smw_aead_mode = SMW_AEAD_MODE_NAME_NONE,                      \
 		.smw_sign_type = SMW_SIGNATURE_TYPE_NAME_NONE,                 \
 		.smw_sign_algo = SMW_SIGNATURE_ALGO_NAME_NONE,                 \
+		.smw_asymm_encrypt_algo =                                      \
+			SMW_ASYMMETRIC_ENCRYPTION_ALGO_NAME_NONE,              \
+		.smw_asymm_encrypt_mode =                                      \
+			SMW_ASYMMETRIC_ENCRYPTION_MODE_NAME_NONE,              \
 		.smw_algo_id = SMW_ATTR_ALGO_KEY_DERIVATION_TLS12(             \
 			SMW_ATTR_HASH_##_hash),                                \
-		.nb_smw_key_types = 1, .smw_key_types = NULL,                  \
+		.smw_usages = SMW_ATTR_USAGE_DERIVE, .nb_smw_key_types = 1,    \
+		.smw_key_types = NULL,                                         \
 	}
 
 #define M_KEYDERIVE_TLS12_DH(_key_type, _kdf_id, _hash, _id)                   \
@@ -279,9 +332,14 @@ struct mgroup {
 		.smw_aead_mode = SMW_AEAD_MODE_NAME_NONE,                      \
 		.smw_sign_type = SMW_SIGNATURE_TYPE_NAME_NONE,                 \
 		.smw_sign_algo = SMW_SIGNATURE_ALGO_NAME_NONE,                 \
+		.smw_asymm_encrypt_algo =                                      \
+			SMW_ASYMMETRIC_ENCRYPTION_ALGO_NAME_NONE,              \
+		.smw_asymm_encrypt_mode =                                      \
+			SMW_ASYMMETRIC_ENCRYPTION_MODE_NAME_NONE,              \
 		.smw_algo_id = SMW_ATTR_ALGO_KEY_DERIVATION_TLS12(             \
 			SMW_ATTR_HASH_##_hash),                                \
-		.nb_smw_key_types = 1, .smw_key_types = NULL,                  \
+		.smw_usages = SMW_ATTR_USAGE_DERIVE, .nb_smw_key_types = 1,    \
+		.smw_key_types = NULL,                                         \
 	}
 
 #define M_SIGN_ECDSA_ANY_HASH(_id)                                             \
@@ -291,6 +349,9 @@ struct mgroup {
 	       SMW_KDF_NAME_NONE,                                              \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(SMW_ATTR_CURVE_ANY,    \
 							SMW_ATTR_HASH_ANY),    \
+	       SMW_ATTR_USAGE_SIGN_MESSAGE | SMW_ATTR_USAGE_SIGN_HASH |        \
+		       SMW_ATTR_USAGE_VERIFY_MESSAGE |                         \
+		       SMW_ATTR_USAGE_VERIFY_HASH,                             \
 	       _id)
 
 #define M_SIGN_ECDSA(_hash, _id)                                               \
@@ -300,6 +361,9 @@ struct mgroup {
 	       SMW_KDF_NAME_NONE,                                              \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(                       \
 		       SMW_ATTR_CURVE_ANY, SMW_ATTR_HASH_##_hash),             \
+	       SMW_ATTR_USAGE_SIGN_MESSAGE | SMW_ATTR_USAGE_SIGN_HASH |        \
+		       SMW_ATTR_USAGE_VERIFY_MESSAGE |                         \
+		       SMW_ATTR_USAGE_VERIFY_HASH,                             \
 	       _id)
 
 #define M_SIGN_TLS12(_id)                                                      \
@@ -309,13 +373,20 @@ struct mgroup {
 	       SMW_KDF_NAME_NONE,                                              \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_TLS_1_2_NO_LABEL(            \
 		       SMW_ATTR_HASH_ANY),                                     \
+	       SMW_ATTR_USAGE_SIGN_MESSAGE | SMW_ATTR_USAGE_SIGN_HASH |        \
+		       SMW_ATTR_USAGE_VERIFY_MESSAGE |                         \
+		       SMW_ATTR_USAGE_VERIFY_HASH,                             \
 	       _id)
 
 #define M_SIGN_EDDSA_ANY_HASH(_id)                                             \
 	M_ALGO(NONE, SMW_HASH_ALGO_NAME_NONE, SMW_MAC_ALGO_NAME_NONE,          \
 	       SMW_CIPHER_MODE_NAME_NONE, SMW_AEAD_MODE_NAME_NONE,             \
 	       SMW_SIGNATURE_ALGO_NAME_EDDSA, SMW_SIGNATURE_TYPE_NAME_NONE,    \
-	       SMW_KDF_NAME_NONE, SMW_SIGN_EDDSA(ANY, ANY, NONE), _id)
+	       SMW_KDF_NAME_NONE, SMW_SIGN_EDDSA(ANY, ANY, NONE),              \
+	       SMW_ATTR_USAGE_SIGN_MESSAGE | SMW_ATTR_USAGE_SIGN_HASH |        \
+		       SMW_ATTR_USAGE_VERIFY_MESSAGE |                         \
+		       SMW_ATTR_USAGE_VERIFY_HASH,                             \
+	       _id)
 
 #define M_SIGN_RSA_ANY_HASH(_mode, _id)                                        \
 	M_ALGO(NONE, SMW_HASH_ALGO_NAME_NONE, SMW_MAC_ALGO_NAME_NONE,          \
@@ -324,6 +395,9 @@ struct mgroup {
 	       SMW_KDF_NAME_NONE,                                              \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_RSA(SMW_ATTR_MODE_##_mode,   \
 						      SMW_ATTR_HASH_ANY, 0),   \
+	       SMW_ATTR_USAGE_SIGN_MESSAGE | SMW_ATTR_USAGE_SIGN_HASH |        \
+		       SMW_ATTR_USAGE_VERIFY_MESSAGE |                         \
+		       SMW_ATTR_USAGE_VERIFY_HASH,                             \
 	       _id)
 
 #define M_SIGN_RSA(_mode, _hash, _id)                                          \
@@ -334,6 +408,9 @@ struct mgroup {
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_RSA(SMW_ATTR_MODE_##_mode,   \
 						      SMW_ATTR_HASH_##_hash,   \
 						      0),                      \
+	       SMW_ATTR_USAGE_SIGN_MESSAGE | SMW_ATTR_USAGE_SIGN_HASH |        \
+		       SMW_ATTR_USAGE_VERIFY_MESSAGE |                         \
+		       SMW_ATTR_USAGE_VERIFY_HASH,                             \
 	       _id)
 
 #define M_CIPHER(_algo, _mode, _mode_id, _id)                                  \
@@ -343,7 +420,7 @@ struct mgroup {
 	       SMW_KDF_NAME_NONE,                                              \
 	       SMW_ATTR_ALGO_SYMMETRIC_ENCRYPTION(SMW_ATTR_ALGO_##_algo,       \
 						  SMW_ATTR_MODE_##_mode_id),   \
-	       _id)
+	       SMW_ATTR_USAGE_ENCRYPT | SMW_ATTR_USAGE_DECRYPT, _id)
 
 #define M_AEAD(_algo, _mode, _mode_id, _id)                                    \
 	M_ALGO(_algo, SMW_HASH_ALGO_NAME_NONE, SMW_MAC_ALGO_NAME_NONE,         \
@@ -352,7 +429,7 @@ struct mgroup {
 	       SMW_KDF_NAME_NONE,                                              \
 	       SMW_ATTR_ALGO_AEAD(SMW_ATTR_ALGO_##_algo,                       \
 				  SMW_ATTR_MODE_##_mode_id, 0),                \
-	       _id)
+	       SMW_ATTR_USAGE_ENCRYPT | SMW_ATTR_USAGE_DECRYPT, _id)
 
 #define M_MAC(_algo, _mac, _mode_id, _id)                                      \
 	M_ALGO(_algo, SMW_HASH_ALGO_NAME_NONE, SMW_MAC_ALGO_NAME_##_mac,       \
@@ -361,6 +438,9 @@ struct mgroup {
 	       SMW_KDF_NAME_NONE,                                              \
 	       SMW_ATTR_ALGO_MAC(SMW_ATTR_ALGO_##_algo,                        \
 				 SMW_ATTR_MODE_##_mode_id, 0),                 \
+	       SMW_ATTR_USAGE_SIGN_MESSAGE | SMW_ATTR_USAGE_SIGN_HASH |        \
+		       SMW_ATTR_USAGE_VERIFY_MESSAGE |                         \
+		       SMW_ATTR_USAGE_VERIFY_HASH,                             \
 	       _id)
 
 #define M_HMAC(_mac, _hash, _id)                                               \
@@ -368,7 +448,38 @@ struct mgroup {
 	       SMW_CIPHER_MODE_NAME_NONE, SMW_AEAD_MODE_NAME_NONE,             \
 	       SMW_SIGNATURE_ALGO_NAME_NONE, SMW_SIGNATURE_TYPE_NAME_NONE,     \
 	       SMW_KDF_NAME_NONE,                                              \
-	       SMW_ATTR_ALGO_MAC_HMAC(SMW_ATTR_HASH_##_hash, 0), _id)
+	       SMW_ATTR_ALGO_MAC_HMAC(SMW_ATTR_HASH_##_hash, 0),               \
+	       SMW_ATTR_USAGE_SIGN_MESSAGE | SMW_ATTR_USAGE_SIGN_HASH |        \
+		       SMW_ATTR_USAGE_VERIFY_MESSAGE |                         \
+		       SMW_ATTR_USAGE_VERIFY_HASH,                             \
+	       _id)
+
+#define M_ALGO_ASYMM_ENCRYPT_RSA(_mode, _hash_name, _hash_attr, _id)           \
+	{                                                                      \
+		.type = CKM_##_id, .slot_flag = 0, .smw_hash = _hash_name,     \
+		.smw_mac = SMW_MAC_ALGO_NAME_NONE,                             \
+		.smw_cipher_mode = SMW_CIPHER_MODE_NAME_NONE,                  \
+		.smw_kdf = SMW_KDF_NAME_NONE,                                  \
+		.smw_aead_mode = SMW_AEAD_MODE_NAME_NONE,                      \
+		.smw_sign_algo = SMW_SIGNATURE_ALGO_NAME_NONE,                 \
+		.smw_sign_type = SMW_SIGNATURE_TYPE_NAME_NONE,                 \
+		.smw_asymm_encrypt_algo =                                      \
+			SMW_ASYMMETRIC_ENCRYPTION_ALGO_NAME_RSA,               \
+		.smw_asymm_encrypt_mode =                                      \
+			SMW_ASYMMETRIC_ENCRYPTION_MODE_NAME_##_mode,           \
+		.smw_algo_id = SMW_ATTR_ALGO_ASYMMETRIC_ENCRYPTION_RSA(        \
+			SMW_ATTR_MODE_##_mode, _hash_attr),                    \
+		.smw_usages = SMW_ATTR_USAGE_ENCRYPT | SMW_ATTR_USAGE_DECRYPT, \
+		.nb_smw_key_types = 0, .smw_key_types = NULL,                  \
+	}
+
+#define M_ASYMM_ENCRYPT_RSA(_mode, _hash, _id)                                 \
+	M_ALGO_ASYMM_ENCRYPT_RSA(_mode, SMW_HASH_ALGO_NAME_##_hash,            \
+				 SMW_ATTR_HASH_##_hash, _id)
+
+#define M_ASYMM_ENCRYPT_RSA_ANY_HASH(_mode, _id)                               \
+	M_ALGO_ASYMM_ENCRYPT_RSA(_mode, SMW_HASH_ALGO_NAME_NONE,               \
+				 SMW_ATTR_HASH_ANY, _id)
 
 /* Macro filling a group of mechanisms */
 #define M_GROUP(nb, grp)                                                       \
@@ -513,6 +624,17 @@ static struct mentry mhmac[] = {
 	M_HMAC(HMAC_TRUNCATED, SHA3_512, SHA3_512_HMAC_GENERAL),
 };
 
+static struct mentry masymm_encrypt_rsa[] = {
+	M_ASYMM_ENCRYPT_RSA(PKCS1_1_5, NONE, RSA_PKCS),
+	M_ASYMM_ENCRYPT_RSA(OAEP, SHA1, RSA_PKCS_OAEP),
+	M_ASYMM_ENCRYPT_RSA(OAEP, SHA224, RSA_PKCS_OAEP),
+	M_ASYMM_ENCRYPT_RSA(OAEP, SHA256, RSA_PKCS_OAEP),
+	M_ASYMM_ENCRYPT_RSA(OAEP, SHA384, RSA_PKCS_OAEP),
+	M_ASYMM_ENCRYPT_RSA(OAEP, SHA512, RSA_PKCS_OAEP),
+	M_ASYMM_ENCRYPT_RSA_ANY_HASH(OAEP, RSA_PKCS_OAEP),
+	M_ASYMM_ENCRYPT_RSA(NO_PAD, NONE, RSA_X_509),
+};
+
 /*
  * All SMW mechanisms
  */
@@ -529,6 +651,7 @@ static struct mgroup smw_mechanims[] = {
 	M_GROUP(ARRAY_SIZE(maead), maead),
 	M_GROUP(ARRAY_SIZE(mcmac), mcmac),
 	M_GROUP(ARRAY_SIZE(mhmac), mhmac),
+	M_GROUP(ARRAY_SIZE(masymm_encrypt_rsa), masymm_encrypt_rsa),
 	{ 0 }
 };
 
@@ -566,7 +689,8 @@ enum tls12_server_client {
 };
 
 static CK_RV find_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
-			    struct mgroup **group, struct mentry **entry)
+			    struct mgroup **group, struct mentry **entry,
+			    smw_attr_usage_t usage_flags)
 {
 	CK_RV ret = CKR_OK;
 	struct libdevice *dev = NULL;
@@ -574,6 +698,11 @@ static CK_RV find_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	struct mentry *ent = NULL;
 	unsigned int idx = 0;
 	CK_FLAGS slot_flag = 0;
+	smw_attr_usage_t mask_usages = SMW_ATTR_USAGE_COPY |
+				       SMW_ATTR_USAGE_CACHE |
+				       SMW_ATTR_USAGE_EXPORT;
+
+	smw_attr_usage_t mech_usage_flags = usage_flags;
 
 	ret = libdev_get_slotdev(&dev, slotid);
 	if (ret != CKR_OK)
@@ -587,6 +716,13 @@ static CK_RV find_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 
 	DBG_TRACE("Search for mechanism 0x%lx", type);
 
+	/*
+	 * Remove copy, cache, and export usage flags from the usage mask as they
+	 * are related to key management operations. Consider only the
+	 * cryptographic operation flags (encrypt, decrypt, sign, etc.)
+	 */
+	CLEAR_BITS(mech_usage_flags, mask_usages);
+
 	slot_flag = BIT(slotid);
 	for (grp = smw_mechanims; grp->number; grp++) {
 		for (idx = 0, ent = grp->mechanism; idx < grp->number;
@@ -597,8 +733,17 @@ static CK_RV find_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 					DBG_TRACE("0x%lx not supported", type);
 					return CKR_MECHANISM_INVALID;
 				}
+
+				if (mech_usage_flags != SMW_ATTR_USAGE_NONE &&
+				    ent->smw_usages != SMW_ATTR_USAGE_NONE) {
+					if (!(ent->smw_usages &
+					      mech_usage_flags))
+						continue;
+				}
+
 				if (group)
 					*group = grp;
+
 				if (entry)
 					*entry = ent;
 
@@ -656,6 +801,7 @@ static smw_kdf_t get_kdf(CK_MECHANISM_TYPE mech_type)
 }
 
 static CK_RV get_key_permitted_algo(smw_attr_algo_t *permitted_algo,
+				    smw_attr_usage_t usage_flags,
 				    CK_SLOT_ID slotid, struct libobj_obj *obj)
 {
 	CK_RV ret = CKR_OK;
@@ -668,7 +814,8 @@ static CK_RV get_key_permitted_algo(smw_attr_algo_t *permitted_algo,
 	mech_list = get_key_mech_list(obj);
 
 	if (mech_list->number) {
-		ret = find_mechanism(slotid, mech_list->mech[0], NULL, &entry);
+		ret = find_mechanism(slotid, mech_list->mech[0], NULL, &entry,
+				     usage_flags);
 		if (ret != CKR_OK) {
 			DBG_TRACE("Key allowed mechanism 0x%lx error %ld",
 				  mech_list->mech[0], ret);
@@ -687,7 +834,7 @@ static CK_RV get_key_permitted_algo(smw_attr_algo_t *permitted_algo,
 
 		for (; i < mech_list->number; i++) {
 			ret = find_mechanism(slotid, mech_list->mech[i], NULL,
-					     &entry);
+					     &entry, usage_flags);
 			if (ret != CKR_OK)
 				return ret;
 
@@ -842,6 +989,30 @@ static bool get_sign_mech(smw_attr_algo_t perm_algo, CK_MECHANISM_TYPE *mech)
 	return found;
 }
 
+static bool get_asymm_encrypt_mech(smw_attr_algo_t perm_algo,
+				   CK_MECHANISM_TYPE *mech)
+{
+	bool found = false;
+	unsigned int i = 0;
+	smw_attr_algo_t algo = SMW_ATTR_ALGO_NONE;
+
+	algo = SMW_ATTR_GET_ALGO(perm_algo);
+
+	if (algo == SMW_ATTR_ALGO_RSA) {
+		for (; i < ARRAY_SIZE(masymm_encrypt_rsa); i++) {
+			if (perm_algo == masymm_encrypt_rsa[i].smw_algo_id) {
+				*mech = masymm_encrypt_rsa[i].type;
+				found = true;
+				break;
+			}
+		}
+	}
+
+	DBG_TRACE("%s mechanism (0x%08lX)", found ? "Found" : "No", *mech);
+
+	return found;
+}
+
 static bool get_mac_mech(smw_attr_algo_t perm_algo, smw_key_type_t smw_key,
 			 CK_MECHANISM_TYPE *mech)
 {
@@ -988,6 +1159,10 @@ static CK_RV get_key_allowed_algo(struct libobj_obj *obj,
 		case SMW_ATTR_CLASS_SYMMETRIC_ENCRYPTION:
 			found = get_cipher_mech(algo, smw_key_type,
 						key_allowed_mech);
+			break;
+
+		case SMW_ATTR_CLASS_ASYMMETRIC_ENCRYPTION:
+			found = get_asymm_encrypt_mech(algo, key_allowed_mech);
 			break;
 
 		default:
@@ -1407,12 +1582,13 @@ static CK_RV key_desc_to_smw(CK_SLOT_ID slotid, struct smw_key_descriptor *desc,
 		goto end;
 
 	if (attributes) {
+		args_attrs_key_usage(&attributes->usage_flags, obj);
 		ret = get_key_permitted_algo(&attributes->permitted_algo,
-					     slotid, obj);
+					     attributes->usage_flags, slotid,
+					     obj);
 		if (ret != CKR_OK)
 			goto end;
 
-		args_attrs_key_usage(&attributes->usage_flags, obj);
 		args_attr_obj_storage(&attributes->attributes, obj);
 	}
 
@@ -2237,8 +2413,9 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 
 	derive_args.kdf_name = get_kdf(entry->type);
 
-	ret = get_key_permitted_algo(&der_key_attrs->permitted_algo, slotid,
-				     obj);
+	args_attrs_key_usage(&der_key_attrs->usage_flags, obj);
+	ret = get_key_permitted_algo(&der_key_attrs->permitted_algo,
+				     der_key_attrs->usage_flags, slotid, obj);
 	if (ret != CKR_OK)
 		return ret;
 
@@ -2248,7 +2425,6 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 
 	derive_args.store_derived_key = true;
 
-	args_attrs_key_usage(&der_key_attrs->usage_flags, obj);
 	args_attr_obj_storage(&der_key_attrs->attributes, obj);
 
 	switch (entry->type) {
@@ -3713,27 +3889,202 @@ static CK_RV op_mhmac(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	return op_mmac_common(slotid, entry, args);
 }
 
+static void check_masymm_encrypt_rsa(CK_SLOT_ID slotid,
+				     smw_subsystem_t subsystem,
+				     struct mgroup *mgroup)
+{
+	enum smw_status_code status = SMW_STATUS_OK;
+	unsigned int idx = 0;
+	struct mentry *entry = NULL;
+	struct smw_asymmetric_encrypt_info info = { 0 };
+	CK_FLAGS slot_flag = 0;
+
+	slot_flag = BIT(slotid);
+	for (entry = mgroup->mechanism; idx < mgroup->number; idx++, entry++) {
+		info.algo_name = entry->smw_asymm_encrypt_algo;
+		info.mode_name = entry->smw_asymm_encrypt_mode;
+		info.hash_algo_name = entry->smw_hash;
+
+		status = smw_config_check_asymmetric_encrypt(subsystem, &info);
+		DBG_TRACE("Subsystem #%d asymmetric encryption mech %lu: %d",
+			  subsystem, entry->type, status);
+		if (status == SMW_STATUS_OK)
+			SET_BITS(entry->slot_flag, slot_flag);
+
+		status = smw_config_check_asymmetric_decrypt(subsystem, &info);
+		DBG_TRACE("Subsystem #%d asymmetric decryption mech %lu: %d",
+			  subsystem, entry->type, status);
+		if (status == SMW_STATUS_OK)
+			SET_BITS(entry->slot_flag, slot_flag);
+	}
+}
+
+static CK_RV info_masymm_encrypt_rsa(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+				     struct mentry *entry,
+				     CK_MECHANISM_INFO_PTR info)
+{
+	enum smw_status_code status = SMW_STATUS_OK;
+	CK_RV ret = CKR_OK;
+	const struct libdev *devinfo = NULL;
+	struct smw_asymmetric_encrypt_info encrypt_info = { 0 };
+
+	DBG_TRACE("Return info of 0x%lx asymmetric encryption mechanism", type);
+
+	devinfo = libdev_get_devinfo(slotid);
+	if (!devinfo)
+		return CKR_SLOT_ID_INVALID;
+
+	/*
+	 * Global settings.
+	 */
+	info->ulMaxKeySize = 0;
+	info->ulMinKeySize = 0;
+	info->flags = 0;
+
+	encrypt_info.algo_name = entry->smw_asymm_encrypt_algo;
+	encrypt_info.mode_name = entry->smw_asymm_encrypt_mode;
+	encrypt_info.hash_algo_name = entry->smw_hash;
+
+	status = smw_config_check_asymmetric_encrypt(devinfo->name,
+						     &encrypt_info);
+	if (status == SMW_STATUS_OK)
+		info->flags |= CKF_ENCRYPT;
+
+	status = smw_config_check_asymmetric_decrypt(devinfo->name,
+						     &encrypt_info);
+	if (status == SMW_STATUS_OK)
+		info->flags |= CKF_DECRYPT;
+
+	/*
+	 * Call specific device mechanism information function
+	 * to complete the global setting.
+	 */
+	if (dev_mech_info[slotid])
+		ret = dev_mech_info[slotid](type, info);
+
+	return ret;
+}
+
+static CK_RV op_masymm_encrypt_rsa(CK_SLOT_ID slotid, struct mentry *entry,
+				   void *args)
+{
+	CK_RV ret = CKR_FUNCTION_NOT_SUPPORTED;
+	enum smw_status_code status = SMW_STATUS_OK;
+	const struct libdev *devinfo = NULL;
+	struct lib_cipher_params *params = (struct lib_cipher_params *)args;
+	struct lib_cipher_ctx *ctx = params->ctx;
+	struct libobj_obj *obj_key = NULL;
+
+	struct smw_asymmetric_encryption_args smw_args = { 0 };
+	struct smw_key_descriptor key_desc = { 0 };
+	struct smw_keypair_buffer keypair_buffer = { 0 };
+
+	if (params->state != OP_ONE_SHOT || (ctx->current_state != OP_INIT &&
+					     ctx->current_state != OP_ONE_SHOT))
+		goto end;
+
+	devinfo = libdev_get_devinfo(slotid);
+	if (!devinfo)
+		return CKR_SLOT_ID_INVALID;
+
+	obj_key = (struct libobj_obj *)ctx->hkey;
+
+	key_desc.id = get_key_token_id(obj_key);
+	if (!key_desc.id) {
+		key_desc.buffer = &keypair_buffer;
+		ret = key_desc_setup(&key_desc, (struct libobj_obj *)ctx->hkey);
+		if (ret != CKR_OK)
+			return ret;
+	}
+
+	smw_args.subsystem_name = devinfo->name;
+	smw_args.algo = entry->smw_algo_id;
+	smw_args.key_descriptor = &key_desc;
+
+	if (SET_OVERFLOW(params->input_length, smw_args.input_length)) {
+		if (params->op_flag & (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT))
+			ret = CKR_DATA_LEN_RANGE;
+		else
+			ret = CKR_ENCRYPTED_DATA_LEN_RANGE;
+
+		goto end;
+	}
+
+	if (SET_OVERFLOW(params->output_length, smw_args.output_length)) {
+		if (params->op_flag & (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT))
+			ret = CKR_ENCRYPTED_DATA_LEN_RANGE;
+		else
+			ret = CKR_DATA_LEN_RANGE;
+
+		goto end;
+	}
+
+	smw_args.input = params->pinput;
+	smw_args.output = params->poutput;
+
+	if (SET_OVERFLOW(ctx->source_data_length, smw_args.salt_length)) {
+		ret = CKR_ARGUMENTS_BAD;
+		goto end;
+	}
+
+	smw_args.salt = ctx->source_data;
+
+	if (params->op_flag & CKF_ENCRYPT)
+		status = smw_asymmetric_encrypt(&smw_args);
+	else
+		status = smw_asymmetric_decrypt(&smw_args);
+
+	if (status == SMW_STATUS_OK || status == SMW_STATUS_OUTPUT_TOO_SHORT)
+		params->output_length = smw_args.output_length;
+
+	ret = smw_status_to_ck_rv(status);
+
+end:
+	return ret;
+}
+
 CK_RV libdev_get_mechanisms(CK_SLOT_ID slotid,
 			    CK_MECHANISM_TYPE_PTR mechanismlist,
 			    CK_ULONG_PTR count)
 {
-	CK_RV ret = CKR_OK;
+	CK_RV ret = CKR_HOST_MEMORY;
 	struct libdevice *dev = NULL;
 	struct mgroup *group = NULL;
 	struct mentry *entry = NULL;
 	unsigned int idx = 0;
-	CK_MECHANISM_TYPE_PTR item = mechanismlist;
-	CK_ULONG nb_mechanisms = 0;
+	unsigned int i = 0;
 	CK_FLAGS slot_flag = 0;
+	bool already_added = false;
+	CK_ULONG max_mech = 0;
+	CK_MECHANISM_TYPE_PTR unique_mech = NULL;
+	CK_ULONG unique_count = 0;
+
+	/* Calculate total mechanism entries */
+	for (group = smw_mechanims; group->number; group++) {
+		if (ADD_OVERFLOW(max_mech, group->number, &max_mech)) {
+			ret = CKR_GENERAL_ERROR;
+			goto end;
+		}
+	}
+
+	if (mechanismlist) {
+		max_mech = MIN(max_mech, *count);
+		unique_mech = mechanismlist;
+	} else {
+		unique_mech = calloc(max_mech, sizeof(CK_MECHANISM_TYPE));
+		if (!unique_mech)
+			goto end;
+	}
 
 	ret = libdev_get_slotdev(&dev, slotid);
 	if (ret != CKR_OK)
-		return ret;
+		goto end;
 
 	/* Check if the Slot is present */
 	if (!dev->slot.flags & CKF_TOKEN_PRESENT) {
 		DBG_TRACE("Slot %lu is not present", slotid);
-		return CKR_TOKEN_NOT_PRESENT;
+		ret = CKR_TOKEN_NOT_PRESENT;
+		goto end;
 	}
 
 	DBG_TRACE("Get list of mechanisms for slot %lu", slotid);
@@ -3743,38 +4094,56 @@ CK_RV libdev_get_mechanisms(CK_SLOT_ID slotid,
 		DBG_TRACE("Group %p has %u entries", group, group->number);
 		for (idx = 0, entry = group->mechanism; idx < group->number;
 		     idx++, entry++) {
+			already_added = false;
 			DBG_TRACE("Mechanism type 0x%lx", entry->type);
 			if (entry->slot_flag & slot_flag) {
 				DBG_TRACE("Mechanism 0x%lx supported",
 					  entry->type);
 
-				if (INC_OVERFLOW(nb_mechanisms, 1))
-					return CKR_GENERAL_ERROR;
-
-				if (item) {
-					if (*count < nb_mechanisms)
-						return CKR_BUFFER_TOO_SMALL;
-
-					*item = entry->type;
-					item++;
+				for (i = 0; i < unique_count; i++) {
+					if (unique_mech[i] == entry->type) {
+						already_added = true;
+						break;
+					}
 				}
+
+				if (already_added)
+					continue;
+
+				if (max_mech <= unique_count) {
+					if (mechanismlist)
+						ret = CKR_BUFFER_TOO_SMALL;
+					else
+						ret = CKR_GENERAL_ERROR;
+
+					goto end;
+				}
+
+				unique_mech[unique_count] = entry->type;
+				unique_count++;
 			}
 		}
 	}
 
-	*count = nb_mechanisms;
+	*count = unique_count;
 
-	return CKR_OK;
+end:
+	if (!mechanismlist && unique_mech)
+		free(unique_mech);
+
+	return ret;
 }
 
 CK_RV libdev_get_mechanism_info(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
-				CK_MECHANISM_INFO_PTR info)
+				CK_MECHANISM_INFO_PTR info, CK_FLAGS op_flag)
 {
 	CK_RV ret = CKR_OK;
 	struct mgroup *group = NULL;
 	struct mentry *entry = NULL;
 
-	ret = find_mechanism(slotid, type, &group, &entry);
+	smw_attr_usage_t usage = pkcs11_flag_to_smw_usage(op_flag);
+
+	ret = find_mechanism(slotid, type, &group, &entry, usage);
 	if (ret == CKR_OK)
 		ret = group->info(slotid, type, entry, info);
 
@@ -3787,11 +4156,13 @@ CK_RV libdev_validate_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_PTR mech,
 	CK_RV ret = CKR_OK;
 	CK_MECHANISM_INFO info = { 0 };
 
-	ret = find_mechanism(slotid, mech->mechanism, NULL, NULL);
+	ret = find_mechanism(slotid, mech->mechanism, NULL, NULL,
+			     SMW_ATTR_USAGE_NONE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = libdev_get_mechanism_info(slotid, mech->mechanism, &info);
+	ret = libdev_get_mechanism_info(slotid, mech->mechanism, &info,
+					op_flag);
 	if (ret == CKR_OK && !(op_flag & info.flags))
 		ret = CKR_MECHANISM_INVALID;
 
@@ -3799,12 +4170,15 @@ CK_RV libdev_validate_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_PTR mech,
 }
 
 CK_RV libdev_operate_mechanism(CK_SESSION_HANDLE hsession,
-			       CK_MECHANISM_PTR mech, void *args)
+			       CK_MECHANISM_PTR mech, void *args,
+			       CK_FLAGS op_flag)
 {
 	CK_RV ret = CKR_OK;
 	CK_SLOT_ID slotid = 0;
 	struct mgroup *group = NULL;
 	struct mentry *entry = NULL;
+
+	smw_attr_usage_t usage = SMW_ATTR_USAGE_NONE;
 
 	/* Before calling SMW, call the application callback */
 	ret = libsess_callback(hsession, CKN_SURRENDER);
@@ -3815,7 +4189,9 @@ CK_RV libdev_operate_mechanism(CK_SESSION_HANDLE hsession,
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = find_mechanism(slotid, mech->mechanism, &group, &entry);
+	usage = pkcs11_flag_to_smw_usage(op_flag);
+
+	ret = find_mechanism(slotid, mech->mechanism, &group, &entry, usage);
 	if (ret == CKR_OK)
 		ret = group->op(slotid, entry, args);
 

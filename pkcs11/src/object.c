@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021, 2023-2024 NXP
+ * Copyright 2020-2021, 2023-2025 NXP
  */
 
 #include "lib_object.h"
@@ -35,6 +35,12 @@ CK_RV C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject,
 
 CK_RV C_DestroyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject)
 {
+	if (!hSession)
+		return CKR_SESSION_HANDLE_INVALID;
+
+	if (!hObject)
+		return CKR_OBJECT_HANDLE_INVALID;
+
 	return libobj_destroy(hSession, hObject);
 }
 

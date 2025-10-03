@@ -163,6 +163,7 @@ static CK_RV check_cipher_params(CK_MECHANISM_TYPE mechanism,
 	CK_GCM_MESSAGE_PARAMS_PTR gcm_msg_prms = NULL_PTR;
 	CK_CCM_MESSAGE_PARAMS_PTR ccm_msg_prms = NULL_PTR;
 	CK_SALSA20_CHACHA20_POLY1305_MSG_PARAMS_PTR chacha_msg_prms = NULL_PTR;
+	CK_RSA_PKCS_OAEP_PARAMS_PTR rsa_oaep_prms = NULL_PTR;
 
 	switch (mechanism) {
 	case CKM_AES_CBC:
@@ -238,6 +239,8 @@ static CK_RV check_cipher_params(CK_MECHANISM_TYPE mechanism,
 	case CKM_DES_ECB:
 	case CKM_DES3_ECB:
 	case CKM_SM4_ECB:
+	case CKM_RSA_PKCS:
+	case CKM_RSA_X_509:
 		break;
 
 	case CKM_SM4_CBC:
@@ -421,6 +424,25 @@ static CK_RV check_cipher_params(CK_MECHANISM_TYPE mechanism,
 			ctx->aad = chacha_prms->pAAD;
 			ctx->aad_length = chacha_prms->ulAADLen;
 			ctx->tag_length = 16;
+		}
+
+		break;
+
+	case CKM_RSA_PKCS_OAEP:
+		if (ulparameterlen != sizeof(CK_RSA_PKCS_OAEP_PARAMS)) {
+			DBG_TRACE("ulParameterLen error");
+			return CKR_MECHANISM_PARAM_INVALID;
+		}
+
+		rsa_oaep_prms = (CK_RSA_PKCS_OAEP_PARAMS_PTR)pparameter;
+		if (rsa_oaep_prms->source == CKZ_DATA_SPECIFIED) {
+			if (rsa_oaep_prms->ulSourceDataLen > 0 &&
+			    !rsa_oaep_prms->pSourceData)
+				return CKR_MECHANISM_PARAM_INVALID;
+
+			ctx->source_data = rsa_oaep_prms->pSourceData;
+			ctx->source_data_length =
+				rsa_oaep_prms->ulSourceDataLen;
 		}
 
 		break;
@@ -999,7 +1021,7 @@ CK_RV lib_encrypt_decrypt(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 		goto end;
 
 	/* Run operation */
-	ret = libdev_operate_mechanism(hsession, &mechanism, &params);
+	ret = libdev_operate_mechanism(hsession, &mechanism, &params, op_flag);
 	if (ret != CKR_BUFFER_TOO_SMALL && ret != CKR_OK)
 		goto end;
 

@@ -209,7 +209,7 @@ CK_RV key_cipher_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 		goto end;
 
 	/* Generate the secret key with SMW library */
-	ret = libdev_operate_mechanism(hsession, mech, obj);
+	ret = libdev_operate_mechanism(hsession, mech, obj, CKF_GENERATE);
 	DBG_TRACE("Cipher Key ID 0x%X", get_key_token_id(obj));
 
 end:
@@ -246,7 +246,8 @@ CK_RV key_cipher_derive(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 		goto end;
 
 	/* Derive a secret key with SMW library */
-	ret = libdev_operate_mechanism(hsession, mech, derive_params);
+	ret = libdev_operate_mechanism(hsession, mech, derive_params,
+				       CKF_DERIVE);
 	if (ret == CKR_OK && derive_params->ctx &&
 	    derive_params->ctx->shared_buffer) {
 		cipher_key->value.array = derive_params->ctx->shared_buffer;

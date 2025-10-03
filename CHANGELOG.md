@@ -58,6 +58,8 @@ The failure is due to the storage manager which is already loaded and a new inst
   smw_get_data_info()
 * Update the documentation to include the missing object management APIs and the associated structures
   defined in smw/public/smw/object.h
+* Add SMW_STATUS_KEY_ID_ALREADY_EXIST status when a key is already existing.
+* Check if targeted key derivation is already existing.
 
 ##### 2. Subsystems
 
@@ -75,6 +77,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Validate subsystem name when calling smw_get_key_attributes() or
   smw_get_data_info()
 * Setup a dedicated secure storage.
+* Enhance the OEM Master key derivation.
 
 #### PKCS#11 Library
 

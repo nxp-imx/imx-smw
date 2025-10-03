@@ -464,6 +464,15 @@ smw_keymgr_convert_derived_key_desc(struct smw_derived_key_descriptor *in,
 	out->identifier.security_size = in->security_size;
 	out->identifier.key_attributes = in->attributes;
 
+	if (in->id != INVALID_KEY_ID) {
+		/* Verify that key is not present in the database */
+		status = smw_keymgr_db_get_info(in->id, &out->identifier);
+		if (status == SMW_STATUS_OK)
+			status = SMW_STATUS_KEY_ID_ALREADY_EXIST;
+		else if (status == SMW_STATUS_UNKNOWN_ID)
+			status = SMW_STATUS_OK;
+	}
+
 	out->pub = in;
 
 end:
@@ -647,7 +656,7 @@ static int tls12_convert_output(struct smw_derive_key_args *args,
 	key_base = args->key_descriptor_base;
 	key_out = args->key_descriptor_derived;
 
-	if (key_out->id || !conv_args->kdf_args)
+	if (key_out->id != INVALID_KEY_ID || !conv_args->kdf_args)
 		goto end;
 
 	tls_args = conv_args->kdf_args;
@@ -663,7 +672,6 @@ static int tls12_convert_output(struct smw_derive_key_args *args,
 		 * key conversion to ensure that key converted into
 		 * internal object is correct.
 		 */
-		key_out->id = INVALID_KEY_ID;
 
 		/* Input base key defines the key type and size */
 		key_out->type_name = key_base->type_name;
@@ -699,7 +707,7 @@ static int tls13_convert_output(struct smw_derive_key_args *args,
 
 	key_derived = args->key_descriptor_derived;
 
-	if (key_derived->id)
+	if (key_derived->id != INVALID_KEY_ID)
 		goto end;
 
 	status = smw_keymgr_convert_derived_key_desc(key_derived,
@@ -768,11 +776,9 @@ static int hkdf_convert_output(struct smw_derive_key_args *args,
 	if (!conv_args->kdf_args)
 		goto end;
 
-	if (!SMW_ATTR_IS_PERSISTENT(key_derived->attributes.attributes)) {
-		if (key_derived->id)
+	if (SMW_ATTR_IS_TRANSIENT(key_derived->attributes.attributes)) {
+		if (key_derived->id != INVALID_KEY_ID)
 			goto end;
-
-		key_derived->id = INVALID_KEY_ID;
 	}
 
 	desc = &conv_args->key_derived;
@@ -806,8 +812,13 @@ static int ecdh_convert_output(struct smw_derive_key_args *args,
 
 	key_derived = args->key_descriptor_derived;
 
-	if (key_derived->id != INVALID_KEY_ID || !conv_args->kdf_args)
+	if (!conv_args->kdf_args)
 		goto end;
+
+	if (SMW_ATTR_IS_TRANSIENT(key_derived->attributes.attributes)) {
+		if (key_derived->id != INVALID_KEY_ID)
+			goto end;
+	}
 
 	desc = &conv_args->key_derived;
 	status = smw_keymgr_convert_derived_key_desc(key_derived, desc);
@@ -2330,7 +2341,7 @@ enum smw_status_code smw_derive_key(struct smw_derive_key_args *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (args->store_derived_key) {
+	if (derive_key_args.store_key) {
 		status = create_key_in_db(&new_id, &derive_key_args);
 		if (status != SMW_STATUS_OK)
 			goto end;
@@ -2339,7 +2350,7 @@ enum smw_status_code smw_derive_key(struct smw_derive_key_args *args)
 	status = smw_utils_execute_operation(OPERATION_ID_DERIVE_KEY,
 					     &derive_key_args, subsystem_id);
 
-	if (args->store_derived_key)
+	if (derive_key_args.store_key)
 		status = update_key_in_db(status, &new_id, &derive_key_args);
 
 end:

@@ -667,18 +667,22 @@ int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
 
 	switch (status) {
 	case SMW_STATUS_OK:
-		if (*new_key ||
-		    (in->type_name && type_id != out->identifier.type_id) ||
+		if (*new_key) {
+			status = SMW_STATUS_KEY_ID_ALREADY_EXIST;
+			goto end;
+		}
+
+		if ((in->type_name && type_id != out->identifier.type_id) ||
 		    (in->security_size &&
 		     in->security_size != out->identifier.security_size) ||
 		    (subsystem_id && *subsystem_id != SUBSYSTEM_ID_INVALID &&
 		     *subsystem_id != out->identifier.subsystem_id)) {
 			status = SMW_STATUS_INVALID_PARAM;
 			goto end;
-		} else if (subsystem_id &&
-			   *subsystem_id == SUBSYSTEM_ID_INVALID) {
-			*subsystem_id = out->identifier.subsystem_id;
 		}
+
+		if (subsystem_id && *subsystem_id == SUBSYSTEM_ID_INVALID)
+			*subsystem_id = out->identifier.subsystem_id;
 
 		break;
 

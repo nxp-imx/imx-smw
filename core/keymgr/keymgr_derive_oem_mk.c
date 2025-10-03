@@ -244,6 +244,13 @@ int smw_keymgr_oem_mk_convert_input(struct smw_derive_key_args *args,
 	    pub_kdf_args->op != SMW_OEM_MK_OP_NAME_DERIVE)
 		goto end;
 
+	/*
+	 * In case the operation is to prepare the key, the key can't be
+	 * created in the database.
+	 */
+	if (pub_kdf_args->op == SMW_OEM_MK_OP_NAME_PREPARE)
+		conv_args->store_key = false;
+
 	base_key_desc = args->key_descriptor_base;
 
 	/* Get the input key base for the derivation */

@@ -912,22 +912,6 @@ typedef uint32_t smw_attr_storage_id_t;
 	 SMW_ATTR_VALUE(ALGO, algo) | SMW_ATTR_VALUE(MODE, mode))
 
 /**
- * SMW_ATTR_ALGO_ASYMMETRIC_ENCRYPTION() - Build an asymmetric encryption
- * algorithm.
- * @algo: A valid main algorithm for asymmetric encryption. See smw_attr_algo_t.
- * @mode: A valid mode. See smw_attr_algo_t.
- *
- * This macro builds an asymmetric encryption algorithm given
- * the main algorithm @algo and the @mode.
- *
- * Return:
- * A valid asymmetric encryption algorithm.
- */
-#define SMW_ATTR_ALGO_ASYMMETRIC_ENCRYPTION(algo, mode)                        \
-	(SMW_ATTR_NAME(CLASS, ASYMMETRIC_ENCRYPTION) |                         \
-	 SMW_ATTR_VALUE(ALGO, algo) | SMW_ATTR_VALUE(MODE, mode))
-
-/**
  * SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA() - Build an asymmetric signature
  * ECDSA algorithm.
  * @curve: A valid curve. See smw_attr_algo_t.
@@ -1214,6 +1198,23 @@ typedef uint32_t smw_attr_storage_id_t;
 #define SMW_ATTR_ALGO_KEY_AGREEMENT(algo, kdf, hash)                           \
 	(SMW_ATTR_NAME(CLASS, KEY_AGREEMENT) | SMW_ATTR_NAME(ALGO, algo) |     \
 	 SMW_ATTR_VALUE(KDF, kdf) | SMW_ATTR_VALUE(HASH, hash))
+
+/**
+ * SMW_ATTR_ALGO_ASYMMETRIC_ENCRYPTION_RSA() - Build an RSA asymmetric
+ *                                             encryption algorithm.
+ * @mode: A valid mode. See smw_attr_algo_t.
+ * @hash: A valid hash algorithm. See smw_attr_algo_t.
+ *
+ * This macro builds an RSA asymmetric encryption algorithm
+ * given the @mode and the @hash algorithm.
+ *
+ * Return:
+ * A valid RSA asymmetric encryption algorithm.
+ */
+#define SMW_ATTR_ALGO_ASYMMETRIC_ENCRYPTION_RSA(mode, hash)                    \
+	(SMW_ATTR_NAME(CLASS, ASYMMETRIC_ENCRYPTION) |                         \
+	 SMW_ATTR_NAME(ALGO, RSA) | SMW_ATTR_VALUE(MODE, mode) |               \
+	 SMW_ATTR_VALUE(HASH, hash))
 
 /**
  * SMW_ATTR_GET_ALGO() - Get the main algorithm.

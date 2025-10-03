@@ -827,6 +827,9 @@ smw_get_security_size(struct smw_key_descriptor *descriptor);
  * given key identifier.
  * If some key attributes are not supported, the output values are empty.
  *
+ * The @args.subsystem_name field returned is the subsystem name that owns
+ * the key.
+ *
  * Return:
  * See &enum smw_status_code
  *	- Common return codes

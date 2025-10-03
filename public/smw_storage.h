@@ -228,6 +228,9 @@ enum smw_status_code smw_delete_data(struct smw_delete_data_args *args);
  * Returns the data information extracts from the subsystem where data is
  * stored combined with the internal database if data identifier is present.
  *
+ * The @args.subsystem_name field returned is the subsystem name that owns
+ * the data.
+ *
  * Return:
  * See &enum smw_status_code
  *	- Common return codes

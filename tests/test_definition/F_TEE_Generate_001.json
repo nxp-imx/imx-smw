@@ -23,7 +23,7 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_name": "key secp256r1",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"result": "SMW_STATUS_KEY_ID_ALREADY_EXIST"
 	},
 	"subtest 3": {
 		"command": "SIGN",

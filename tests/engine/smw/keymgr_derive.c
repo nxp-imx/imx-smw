@@ -2321,7 +2321,6 @@ static int kdf_oem_mk_prepare_result(struct subtest_data *subtest,
 		 oem_mk_args->payload_length);
 
 	oem_mk_args->op = SMW_OEM_MK_OP_NAME_DERIVE;
-	args->store_derived_key = true;
 
 	return res;
 }

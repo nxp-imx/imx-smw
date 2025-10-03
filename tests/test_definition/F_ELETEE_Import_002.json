@@ -144,6 +144,7 @@
 		"subsystem": "ELE",
 		"op_type": "OEM_MASTER_KEY",
 		"op_input": "key ECDSA ELE",
+		"store_key": true,
 		"op_args": {
 			"peer_public_key": "key ECDSA TEE"
 		},
@@ -270,6 +271,7 @@
 		"subsystem": "ELE",
 		"op_type": "OEM_MASTER_KEY",
 		"op_input": "key ECDSA ELE",
+		"store_key": true,
 		"op_args": {
 			"oem_salt_peer_key": true,
 			"peer_public_key": "key ECDSA TEE"

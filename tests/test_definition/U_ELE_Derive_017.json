@@ -29,11 +29,10 @@
 			]
 		},
 		"key OEM_MK 2": {
-			"id": 10,
 			"type": "DERIVE",
 			"security_size": 256,
 			"attributes_list": [
-				"PERSISTENT"
+				"TRANSIENT"
 			],
 			"usage": [
 				"DERIVE"
@@ -55,7 +54,10 @@
 		]
 	},
 	"subtest 2": {
-		"description": "Derive the OEM Master key",
+		"description": [
+			"Derive a first transient OEM Master key.",
+			"SMW is used to prepare the payload to be signed."
+		],
 		"command": "DERIVE",
 		"subsystem": "ELE",
 		"op_type": "OEM_MASTER_KEY",
@@ -74,12 +76,42 @@
 		"depends": 1
 	},
 	"subtest 3": {
+		"description": [
+			"Derive a second transient OEM Master key.",
+			"SMW is used to prepare the payload to be signed."
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "OEM_MASTER_KEY",
+		"op_input": "key ECDSA",
+		"store_key": true,
+		"op_args": {
+			"peer_public_key": [
+				"d0720dc691aa80096ba32fed1cb97c2b",
+				"620690d06de0317b8618d5ce65eb728f",
+				"9681b517b1cda17d0d83d335d9c4a8a9",
+				"a9b0b1b3c7106d8f3c72bc5093dc275f"
+			],
+			"info": "f0f1f2f3f4f5f6f7f8f9"
+		},
+		"op_output": "key OEM_MK 2",
+		"depends": 2
+	},
+	"subtest 4": {
 		"command": "DELETE",
 		"key_name": "key OEM_MK",
 		"depends": 2
 	},
-	"subtest 4": {
-		"description": "Derive the OEM Master key",
+	"subtest 5": {
+		"command": "DELETE",
+		"key_name": "key OEM_MK 2",
+		"depends": 3
+	},
+	"subtest 6": {
+		"description": [
+			"Derive a first transient OEM Master key.",
+			"Signed payload is given as input."
+		],
 		"command": "DERIVE",
 		"subsystem": "ELE",
 		"op_type": "OEM_MASTER_KEY",
@@ -145,13 +177,11 @@
 		"op_output": "key OEM_MK",
 		"depends": 1
 	},
-	"subtest 5": {
-		"command": "DELETE",
-		"key_name": "key OEM_MK",
-		"depends": 4
-	},
-	"subtest 6": {
-		"description": "Derive the OEM Master key",
+	"subtest 7": {
+		"description": [
+			"Derive a second transient OEM Master key.",
+			"Signed payload is given as input."
+		],
 		"command": "DERIVE",
 		"subsystem": "ELE",
 		"op_type": "OEM_MASTER_KEY",
@@ -164,17 +194,70 @@
 				"9681b517b1cda17d0d83d335d9c4a8a9",
 				"a9b0b1b3c7106d8f3c72bc5093dc275f"
 			],
-			"info": "f0f1f2f3f4f5f6f7f8f9"
+			"info": "f0f1f2f3f4f5f6f7f8f9",
+			"input": [
+				"00e002890200000000000000b0000000",
+				"00000000000000000000000000000000",
+				"00000000000000000000000000000000",
+				"00000000e94700000000470000000000",
+				"000000004707000054574d5309010209",
+				"32000100009200010000000000400000",
+				"090100080000000000000000ffffff6f",
+				"5c4687dcd75527e0b20df46a1eef7b70",
+				"5d7d6b2eda494db8e5123e546b1c90f1",
+				"70c5ac739cb9c558ed0bfa38f04141eb",
+				"a58187eec88f3ee4833a947696b48eee",
+				"0030029000001000c801000000000000",
+				"d7b40142e16c00270102000030003000",
+				"a221997bf1adb503949689aedfe26bf1",
+				"91a5fd31c0a2df5d7bd87ea4f6260654",
+				"fbf9dd824bebcd68fb4f54bb4bda9f94",
+				"00d373270f0930db0ac18b5bc55dc511",
+				"e3d941e8c1440d783e9a89e513647a85",
+				"392635ad36e87085d59b415565232c2f",
+				"e16c0027010200003000300051e0f234",
+				"b3bbadb6380842318fa46e4b3a03f56f",
+				"561d1d6273ca4c8f112f378166c45241",
+				"8bc5035486b819613ba98da854d70d78",
+				"0b364b791d1d37f6d60f96400068e644",
+				"1949da97fabcd890edbbd271ec0557d7",
+				"b7fd852f0a15fda6ca42de45e16c0027",
+				"0102000030003000fdc441343d8b1f4d",
+				"b6b05d91be0775e90e1fd11bddf9c475",
+				"35add333924da8d290c0c152195e5010",
+				"a01c95a5284b3f0f39aa03db32b1ca62",
+				"c8442b6903781b1f1f0cc91311538408",
+				"33f57aacb7312233558ffcc0999a7a28",
+				"3116dc43d1afd2f7e16c002701020000",
+				"30003000f73adf55caed64aa01ab7ada",
+				"3edd5b40217241e95a5bcc800e769271",
+				"2090e0a9b42304071271f6722b5618d0",
+				"938816fa0839acc030e4745d5f18b735",
+				"1b3d0d580154de1f7d701c2f9a3c6560",
+				"a1ab1f4d46b44493a1130d2b000bfe59",
+				"42f2e68900000000006800d800000000",
+				"22c19db09a58b8e3798d74a01822c6e8",
+				"bb0b0632053ec4362b9d692817127ba5",
+				"8f9954902a1727548aa1d25d4db7376a",
+				"5e51b8aa7fb7dbfe41c55575d49a1cd4",
+				"37b42b5b93ee4d53f011ecbd621d9cf9",
+				"68c6a7d9ddf5c978a9e42aaf2cd57c88"
+			]
 		},
 		"op_output": "key OEM_MK 2",
-		"depends": 1
-	},
-	"subtest 7": {
-		"command": "DELETE",
-		"key_name": "key OEM_MK 2",
 		"depends": 6
 	},
 	"subtest 8": {
+		"command": "DELETE",
+		"key_name": "key OEM_MK",
+		"depends": 6
+	},
+	"subtest 9": {
+		"command": "DELETE",
+		"key_name": "key OEM_MK 2",
+		"depends": 7
+	},
+	"subtest 10": {
 		"command": "DELETE",
 		"key_name": "key ECDSA",
 		"depends": 1

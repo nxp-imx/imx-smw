@@ -108,6 +108,7 @@
  * @SMW_STATUS_UNKNOWN_KEY_PRIVACY_NAME: Key privacy name set in the object database is not
  * recognized by SMW.
  * @SMW_STATUS_PUBLIC_EXPONENT_NOT_SUPPORTED: Provided RSA public exponent is unsupported.
+ * @SMW_STATUS_KEY_ID_ALREADY_EXIST: Key identifier already exist.
  *
  * Status code classification:
  *
@@ -197,6 +198,7 @@
  *	- SMW_STATUS_UNKNOWN_TLS12_ENC_NAME
  *	- SMW_STATUS_UNKNOWN_KEY_PRIVACY_NAME
  *	- SMW_STATUS_PUBLIC_EXPONENT_NOT_SUPPORTED
+ *	- SMW_STATUS_KEY_ID_ALREADY_EXIST
  *
  ** Specific return codes - Device manager
  *
@@ -274,7 +276,8 @@ enum smw_status_code {
 	SMW_STATUS_INVALID_IV_SIZE,
 	SMW_STATUS_UNKNOWN_KEY_PRIVACY_NAME,
 	SMW_STATUS_OBJ_DB_FIND,
-	SMW_STATUS_PUBLIC_EXPONENT_NOT_SUPPORTED /* 69 */
+	SMW_STATUS_PUBLIC_EXPONENT_NOT_SUPPORTED,
+	SMW_STATUS_KEY_ID_ALREADY_EXIST /* 70 */
 };
 
 #endif /* __SMW_STATUS_H__ */

@@ -344,6 +344,9 @@ static int object_derive_key_tls12_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 end:
 	util_close_session(pfunc, &sess);
 
+	if (pubkey_attrs[0].pValue)
+		free(pubkey_attrs[0].pValue);
+
 	SUBTEST_END(status);
 	return status;
 }
@@ -613,6 +616,9 @@ static int object_derive_key_tls12(CK_FUNCTION_LIST_PTR pfunc)
 
 end:
 	util_close_session(pfunc, &sess);
+
+	if (pubkey_attrs[0].pValue)
+		free(pubkey_attrs[0].pValue);
 
 	SUBTEST_END(status);
 	return status;

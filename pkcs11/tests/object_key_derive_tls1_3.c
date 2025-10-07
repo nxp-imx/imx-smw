@@ -281,6 +281,9 @@ static int object_derive_key_tls13_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 end:
 	util_close_session(pfunc, &sess);
 
+	if (pubkey_attrs[0].pValue)
+		free(pubkey_attrs[0].pValue);
+
 	SUBTEST_END(status);
 	return status;
 }
@@ -475,6 +478,9 @@ static int object_derive_key_tls13(CK_FUNCTION_LIST_PTR pfunc)
 
 end:
 	util_close_session(pfunc, &sess);
+
+	if (pubkey_attrs[0].pValue)
+		free(pubkey_attrs[0].pValue);
 
 	if (tls13_params.pInfo)
 		free(tls13_params.pInfo);
@@ -742,6 +748,9 @@ end:
 
 	if (tls13_params.pInfo)
 		free(tls13_params.pInfo);
+
+	if (pubkey_attrs[0].pValue)
+		free(pubkey_attrs[0].pValue);
 
 	util_close_session(pfunc, &sess);
 
@@ -1013,6 +1022,9 @@ end:
 	if (tls13_params.pInfo)
 		free(tls13_params.pInfo);
 
+	if (pubkey_attrs[0].pValue)
+		free(pubkey_attrs[0].pValue);
+
 	util_close_session(pfunc, &sess);
 
 	SUBTEST_END(status);
@@ -1230,6 +1242,9 @@ end:
 
 	if (tls13_params.pInfo)
 		free(tls13_params.pInfo);
+
+	if (pubkey_attrs[0].pValue)
+		free(pubkey_attrs[0].pValue);
 
 	util_close_session(pfunc, &sess);
 

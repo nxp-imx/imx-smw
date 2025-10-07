@@ -1121,6 +1121,9 @@ static int sign_verify_eddsa(CK_FUNCTION_LIST_PTR pfunc)
 			free(signature);
 			signature = NULL;
 		}
+
+		free(pubkey_attrs[0].pValue);
+		pubkey_attrs[0].pValue = NULL;
 	}
 
 	status = TEST_PASS;
@@ -1567,6 +1570,9 @@ static int sign_verify_tls(CK_FUNCTION_LIST_PTR pfunc)
 
 end:
 	util_close_session(pfunc, &sess);
+
+	if (pubkey_attrs[0].pValue)
+		free(pubkey_attrs[0].pValue);
 
 	if (signature)
 		free(signature);

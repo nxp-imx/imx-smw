@@ -994,6 +994,9 @@ static int object_derive_key_ecdh_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 end:
 	util_close_session(pfunc, &sess);
 
+	if (base_key_template[5].pValue)
+		free(base_key_template[5].pValue);
+
 	SUBTEST_END(status);
 	return status;
 }
@@ -1122,6 +1125,9 @@ static int object_derive_key_ecdh(CK_FUNCTION_LIST_PTR pfunc)
 
 end:
 	util_close_session(pfunc, &sess);
+
+	if (base_key_template[5].pValue)
+		free(base_key_template[5].pValue);
 
 	SUBTEST_END(status);
 	return status;

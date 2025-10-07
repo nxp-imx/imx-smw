@@ -558,6 +558,9 @@ static int sign_verify_multipart_bad_param(CK_FUNCTION_LIST_3_0_PTR pfunc)
 end:
 	util_close_session((CK_FUNCTION_LIST_PTR)pfunc, &sess);
 
+	if (pubkey_attrs[0].pValue)
+		free(pubkey_attrs[0].pValue);
+
 	SUBTEST_END(status);
 	return status;
 }
@@ -816,6 +819,9 @@ end:
 
 	if (signature)
 		free(signature);
+
+	if (pubkey_attrs[0].pValue)
+		free(pubkey_attrs[0].pValue);
 
 	SUBTEST_END(status);
 	return status;
@@ -1272,6 +1278,9 @@ static int sign_verify_multipart_eddsa(CK_FUNCTION_LIST_3_0_PTR pfunc)
 			free(signature);
 			signature = NULL;
 		}
+
+		free(pubkey_attrs[0].pValue);
+		pubkey_attrs[0].pValue = NULL;
 	}
 
 	status = TEST_PASS;

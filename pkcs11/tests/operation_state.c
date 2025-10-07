@@ -1111,6 +1111,9 @@ static int operation_state_sign_verify_ecdsa(CK_FUNCTION_LIST_PTR pfunc)
 end:
 	util_close_session(pfunc, &session);
 
+	if (pubkey_attrs[0].pValue)
+		free(pubkey_attrs[0].pValue);
+
 	SUBTEST_END(status);
 	return status;
 }

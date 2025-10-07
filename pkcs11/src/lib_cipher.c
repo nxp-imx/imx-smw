@@ -68,12 +68,19 @@ static CK_RV set_iv_value(CK_VOID_PTR iv, CK_ULONG ivlen,
 
 	if (ctx->current_state == OP_INIT ||
 	    ctx->current_state == OP_ONE_SHOT) {
-		ctx->iv = calloc(1, ivlen);
-		if (!ctx->iv)
-			return CKR_HOST_MEMORY;
+		if (ctx->iv && ctx->iv_length != ivlen) {
+			free(ctx->iv);
+			ctx->iv = NULL;
+		}
 
-		ctx->iv_length = ivlen;
-		ctx->fixed_iv_length = ivlen;
+		if (!ctx->iv) {
+			ctx->iv = calloc(1, ivlen);
+			if (!ctx->iv)
+				return CKR_HOST_MEMORY;
+
+			ctx->iv_length = ivlen;
+			ctx->fixed_iv_length = ivlen;
+		}
 	}
 
 	if (ctx->iv_length != ivlen)

@@ -166,6 +166,8 @@ static int operation_state_cipher_encrypt(CK_FUNCTION_LIST_PTR pfunc,
 	status = TEST_PASS;
 
 end:
+	(void)pfunc->C_EncryptInit(session, NULL_PTR, hsecretkey);
+
 	if (encrypted_data_1)
 		free(encrypted_data_1);
 
@@ -323,6 +325,8 @@ static int operation_state_cipher_decrypt(CK_FUNCTION_LIST_PTR pfunc,
 	status = TEST_PASS;
 
 end:
+	(void)pfunc->C_DecryptInit(session, NULL_PTR, hsecretkey);
+
 	if (decrypted_data_1)
 		free(decrypted_data_1);
 
@@ -525,6 +529,9 @@ static int operation_state_sign_verify(CK_FUNCTION_LIST_PTR pfunc,
 	status = TEST_PASS;
 
 end:
+	(void)pfunc->C_SignInit(session, NULL_PTR, hprivkey);
+	(void)pfunc->C_VerifyInit(session, NULL_PTR, hpubkey);
+
 	if (operation_state_2)
 		free(operation_state_2);
 
@@ -1372,6 +1379,8 @@ static int operation_state_digest(CK_FUNCTION_LIST_PTR pfunc)
 	status = TEST_PASS;
 
 end:
+	(void)pfunc->C_DigestInit(session, NULL_PTR);
+
 	util_close_session(pfunc, &session);
 
 	if (operation_state)
@@ -1866,6 +1875,8 @@ static int operation_state_find_digest_encrypt(CK_FUNCTION_LIST_PTR pfunc)
 	status = TEST_PASS;
 
 end:
+	(void)pfunc->C_DigestInit(sess, NULL_PTR);
+
 	for (i = 0; i < NB_KEYS_HDL; i++) {
 		TEST_OUT("Destroy key #%lu\n", hkeys[i]);
 		if (hkeys[i] != CK_INVALID_HANDLE) {

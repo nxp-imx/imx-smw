@@ -89,6 +89,8 @@ static int encrypt_init_bad_params(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	status = TEST_PASS;
 
 end:
+	(void)pfunc->C_MessageEncryptInit(sess, NULL_PTR, aes_hsecretkey);
+
 	util_close_session((CK_FUNCTION_LIST_PTR)pfunc, &sess);
 
 	SUBTEST_END(status);
@@ -172,6 +174,8 @@ static int decrypt_init_bad_params(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	status = TEST_PASS;
 
 end:
+	(void)pfunc->C_MessageDecryptInit(sess, NULL_PTR, secret_key_handle);
+
 	util_close_session((CK_FUNCTION_LIST_PTR)pfunc, &sess);
 
 	SUBTEST_END(status);

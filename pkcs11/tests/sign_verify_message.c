@@ -152,6 +152,8 @@ static int sign_init_bad_params(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	status = TEST_PASS;
 
 end:
+	(void)pfunc->C_MessageSignInit(sess, NULL_PTR, aes_hsecretkey);
+
 	util_close_session((CK_FUNCTION_LIST_PTR)pfunc, &sess);
 
 	SUBTEST_END(status);
@@ -270,6 +272,8 @@ static int verify_init_bad_params(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	status = TEST_PASS;
 
 end:
+	(void)pfunc->C_MessageVerifyInit(sess, NULL_PTR, aes_hsecretkey);
+
 	util_close_session((CK_FUNCTION_LIST_PTR)pfunc, &sess);
 
 	SUBTEST_END(status);

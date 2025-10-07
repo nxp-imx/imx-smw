@@ -707,6 +707,8 @@ static int digest_multipart_key(CK_FUNCTION_LIST_PTR pfunc)
 	status = TEST_PASS;
 
 end:
+	(void)pfunc->C_DigestInit(sess, NULL_PTR);
+
 	if (key_handle) {
 		ret = pfunc->C_DestroyObject(sess, key_handle);
 		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))

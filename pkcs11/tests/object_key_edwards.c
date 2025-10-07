@@ -697,6 +697,9 @@ end:
 	if (unique_id)
 		free(unique_id);
 
+	if (ec_point)
+		free(ec_point);
+
 	SUBTEST_END(status);
 	return status;
 }

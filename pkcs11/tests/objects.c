@@ -246,6 +246,7 @@ static int encrypt_decrypt_aes(CK_FUNCTION_LIST_PTR pfunc)
 
 		/* Destroy the key */
 		psa_destroy_key(psa_id);
+		psa_id = PSA_KEY_ID_NULL;
 
 		free(unique_id);
 		unique_id = NULL_PTR;

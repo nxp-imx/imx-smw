@@ -105,6 +105,8 @@ static void free_device_info_operation(op_dev_getinfo_args_t *op_args)
 		SMW_UTILS_FREE(op_args->sha_fw);
 	if (op_args->oem_srkh)
 		SMW_UTILS_FREE(op_args->oem_srkh);
+	if (op_args->oem_pqc_srkh)
+		SMW_UTILS_FREE(op_args->oem_pqc_srkh);
 }
 
 static int ele_device_uuid(struct subsystem_context *ele_ctx, void *args)

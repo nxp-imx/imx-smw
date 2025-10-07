@@ -425,6 +425,9 @@ static int object_derive_key_tls13(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_DeriveKey"))
 		goto end;
 
+	free(tls13_params.pInfo);
+	tls13_params.pInfo = NULL;
+
 	TEST_OUT("Set CKM_HKDF_DERIVE mechanism parameters\n");
 	tls13_params.prfHashMechanism = CKM_SHA256;
 	tls13_params.bExpand = true;
@@ -443,6 +446,9 @@ static int object_derive_key_tls13(CK_FUNCTION_LIST_PTR pfunc)
 				 ARRAY_SIZE(derived_key_template), &derived_iv);
 	if (CHECK_CK_RV(CKR_OK, "C_DeriveKey"))
 		goto end;
+
+	free(tls13_params.pInfo);
+	tls13_params.pInfo = NULL;
 
 	TEST_OUT("Delete the IV\n");
 	ret = pfunc->C_DestroyObject(sess, derived_iv);
@@ -1178,6 +1184,9 @@ static int object_derive_key_tls13_sign_verify(CK_FUNCTION_LIST_PTR pfunc)
 				 &derived_finished_key);
 	if (CHECK_CK_RV(CKR_OK, "C_DeriveKey"))
 		goto end;
+
+	free(tls13_params.pInfo);
+	tls13_params.pInfo = NULL;
 
 	TEST_OUT("Initialize encrypt operation\n");
 	ret = pfunc->C_SignInit(sess, &sign_verify_mech, derived_finished_key);

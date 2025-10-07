@@ -37,6 +37,9 @@ static void destroy_context(struct lib_cipher_ctx *ctx)
 		if (ctx->tag)
 			free(ctx->tag);
 
+		if (ctx->input)
+			free(ctx->input);
+
 		free(ctx);
 	}
 }
@@ -692,6 +695,7 @@ CK_RV lib_cipher_cancel_operation(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag)
 
 	switch (ctx->current_state) {
 	case OP_INIT:
+	case OP_ONE_SHOT:
 	case OP_BEGIN:
 	case OP_END:
 		ret = libsess_remove_opctx(hsession, op_flag);
@@ -997,28 +1001,11 @@ end:
 	if (!terminate)
 		return ret;
 
-	if (ctx && ctx->key_value) {
-		free(ctx->key_value);
-		ctx->key_value = NULL_PTR;
-	}
-
-	if (obj && get_key_tls(obj))
-		destroy_context(ctx);
-
-	if (ret != CKR_OK) {
-		if (ctx && ctx->context) {
-			/*
-			 * Cancel the on-going multipart operation and
-			 * remove operation context.
-			 */
-			(void)libsess_cancel_opctx(hsession, op_flag,
-						   (void **)&ctx->context);
-		} else {
-			(void)libsess_remove_opctx(hsession, op_flag);
-		}
-	} else {
-		ret = libsess_remove_opctx(hsession, op_flag);
-	}
+	/*
+	 * Cancel the on-going multipart operation and
+	 * remove operation context.
+	 */
+	(void)lib_cipher_cancel_operation(hsession, op_flag);
 
 	return ret;
 }

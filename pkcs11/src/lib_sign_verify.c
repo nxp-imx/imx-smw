@@ -580,6 +580,7 @@ CK_RV lib_sign_verify_cancel_operation(CK_SESSION_HANDLE hsession,
 
 	switch (ctx->current_state) {
 	case OP_INIT:
+	case OP_ONE_SHOT:
 	case OP_BEGIN:
 	case OP_END:
 		ret = libsess_remove_opctx(hsession, op_flag);
@@ -838,7 +839,7 @@ CK_RV lib_sign(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 		ctx->current_state = state;
 
 		if (psignature && (state == OP_ONE_SHOT || state == OP_FINAL))
-			ret = libsess_remove_opctx(hsession, op_flag);
+			goto end;
 	}
 
 	terminate = CK_FALSE;
@@ -934,23 +935,17 @@ CK_RV lib_verify(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 	ctx->current_state = state;
 
 	if (state == OP_ONE_SHOT || state == OP_FINAL)
-		ret = libsess_remove_opctx(hsession, op_flag);
+		goto end;
 
 	terminate = CK_FALSE;
 
 end:
-	if (!terminate)
-		return ret;
-
-	if (ctx && ctx->context) {
+	if (terminate) {
 		/*
 		 * Cancel the on-going multipart operation and
 		 * remove operation context.
 		 */
-		(void)libsess_cancel_opctx(hsession, op_flag,
-					   (void **)&ctx->context);
-	} else {
-		(void)libsess_remove_opctx(hsession, op_flag);
+		(void)lib_sign_verify_cancel_operation(hsession, op_flag);
 	}
 
 	return ret;

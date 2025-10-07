@@ -50,8 +50,7 @@ CK_RV lib_digest_cancel_operation(CK_SESSION_HANDLE hsession)
 		break;
 	}
 
-	if (ctx)
-		free(ctx);
+	free(ctx);
 
 	return ret;
 }

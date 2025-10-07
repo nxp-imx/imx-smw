@@ -888,15 +888,14 @@ CK_RV obj_db_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 				break;
 		}
 
-		if (is_present)
-			continue;
+		if (!is_present) {
+			ret = obj_db_retrieve_obj(hsession, &descriptor,
+						  object_class, NULL, NULL);
+			if (ret != CKR_OK)
+				goto end;
 
-		ret = obj_db_retrieve_obj(hsession, &descriptor, object_class,
-					  NULL, NULL);
-		if (ret != CKR_OK)
-			goto end;
-
-		nb_retrieved++;
+			nb_retrieved++;
+		}
 
 		cleanup_smw_object_descriptor(&descriptor);
 	}

@@ -215,6 +215,8 @@ CK_RV libopctx_check_next_state(enum op_state current_state,
 
 CK_RV libopctx_copy(struct libopctx *src, struct libopctx *dst)
 {
+	CK_RV ret = CKR_OK;
+
 	if (!src || !src->ctx)
 		return CKR_GENERAL_ERROR;
 
@@ -239,21 +241,34 @@ CK_RV libopctx_copy(struct libopctx *src, struct libopctx *dst)
 	case CKF_DECRYPT:
 	case CKF_MESSAGE_ENCRYPT:
 	case CKF_MESSAGE_DECRYPT:
-		return lib_cipher_copy_operation((void *)src->ctx,
-						 (void **)&dst->ctx);
+		ret = lib_cipher_copy_operation((void *)src->ctx,
+						(void **)&dst->ctx);
+		break;
 
 	case CKF_SIGN:
 	case CKF_VERIFY:
 	case CKF_MESSAGE_SIGN:
 	case CKF_MESSAGE_VERIFY:
-		return lib_sign_verify_copy_operation((void *)src->ctx,
-						      (void **)&dst->ctx);
+		ret = lib_sign_verify_copy_operation((void *)src->ctx,
+						     (void **)&dst->ctx);
+		break;
 
 	case CKF_DIGEST:
-		return lib_digest_copy_operation((void *)src->ctx,
-						 (void **)&dst->ctx);
+		ret = lib_digest_copy_operation((void *)src->ctx,
+						(void **)&dst->ctx);
+		break;
 
 	default:
-		return CKR_GENERAL_ERROR;
+		ret = CKR_GENERAL_ERROR;
+		break;
 	}
+
+	if (ret != CKR_OK) {
+		if (dst->mech.pParameter) {
+			free(dst->mech.pParameter);
+			dst->mech.pParameter = NULL;
+		}
+	}
+
+	return ret;
 }

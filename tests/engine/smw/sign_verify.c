@@ -373,6 +373,7 @@ int sign_verify(struct subtest_data *subtest, int operation)
 			goto exit;
 		}
 
+		/* Compare signature with expected signature */
 		if (args.signature && exp_sign) {
 			res = util_compare_buffers(args.signature,
 						   args.signature_length,
@@ -384,14 +385,6 @@ int sign_verify(struct subtest_data *subtest, int operation)
 		/* Store signature */
 		res = util_sign_add_node(list_signatures(subtest), sign_id,
 					 args.signature, args.signature_length);
-		if (res)
-			args.signature = NULL;
-
-		/* Compare signature with expected signature */
-		if (exp_sign && args.signature)
-			res = util_compare_buffers(args.signature,
-						   args.signature_length,
-						   exp_sign, exp_sign_length);
 	}
 
 exit:
@@ -403,7 +396,7 @@ exit:
 	if (context)
 		free(context);
 
-	if (new_sign && new_sign != args.signature)
+	if (new_sign && res != ERR_CODE(PASSED))
 		free(new_sign);
 
 	if (exp_sign)

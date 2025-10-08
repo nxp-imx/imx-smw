@@ -1041,7 +1041,7 @@ int import_key(struct subtest_data *subtest, bool is_blob)
 	int res = ERR_CODE(PASSED);
 	struct keypair_ops key_test = { 0 };
 	struct key_data key_data = { 0 };
-	struct smw_keypair_buffer key_buffer;
+	struct smw_keypair_buffer key_buffer = { 0 };
 	struct smw_import_key_args args = { 0 };
 	struct smw_import_key_args *smw_import_args = &args;
 	const char *key_name = NULL;

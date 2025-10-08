@@ -345,6 +345,9 @@ static void key_free_key_buffers(struct keypair_ops *key_test)
 
 		if (key_test->modulus && *key_modulus(key_test))
 			free(*key_modulus(key_test));
+
+		if (key_test->public_exponent && *key_public_exponent(key_test))
+			free(*key_public_exponent(key_test));
 	}
 }
 

@@ -14,6 +14,8 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
+import os, sys
+sys.path.insert(0, os.path.abspath("${DOC_API_SOURCE_DIR}/_exts"))  # where kdoc_structs.py is
 
 # -- Project information -----------------------------------------------------
 
@@ -31,12 +33,13 @@ release = '${CMAKE_PROJECT_VERSION}'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-  'linuxdoc.rstFlatTable'      # Implementation of the 'flat-table' reST-directive.
-  , 'linuxdoc.rstKernelDoc'    # Implementation of the 'kernel-doc' reST-directive.
-  , 'linuxdoc.kernel_include'  # Implementation of the 'kernel-include' reST-directive.
-  , 'linuxdoc.manKernelDoc'    # Implementation of the 'kernel-doc-man' builder
-  , 'linuxdoc.cdomain'         # Replacement for the sphinx c-domain.
-  , 'linuxdoc.kfigure'         # Sphinx extension which implements scalable image handling.
+  'linuxdoc.rstKernelDoc',    # Implementation of the 'kernel-doc' reST-directive.
+  'kdoc_extension',           # Custom extension from _exts directory
+  'linuxdoc.rstFlatTable',    # Implementation of the 'flat-table' reST-directive.
+  'linuxdoc.kernel_include',  # Implementation of the 'kernel-include' reST-directive.
+  'linuxdoc.manKernelDoc',    # Implementation of the 'kernel-doc-man' builder
+  'linuxdoc.cdomain',         # Replacement for the sphinx c-domain.
+  'linuxdoc.kfigure',         # Sphinx extension which implements scalable image handling.
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -69,26 +72,97 @@ html_css_files = [
 ]
 
 latex_documents = [('index', 'SecurityMiddleware_API.tex', project, author, 'manual')]
+latex_table_style = ['tabularx', 'longtable']
 latex_elements = {
-  'extraclassoptions': 'openany,oneside'
-  , 'papersize': 'a4paper'
-  , 'pointsize': '11pt'
-  , 'preamble': r'''
+
+    # Document settings
+    'extraclassoptions': 'openany,oneside',
+    'papersize': 'a4paper',
+    'pointsize': '11pt',
+
+    # --- MAIN PREAMBLE ---
+    'preamble': r'''
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                FONT AND BASIC SETUP
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \usepackage[none]{hyphenat}
+\usepackage{titlesec}
+
+% Deeper section numbering and ToC
+\setcounter{secnumdepth}{4}
 \setcounter{tocdepth}{3}
-\setcounter{secnumdepth}{5}
+
+% Fonts
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}   % main font
+\usepackage{courier}                        % mono font
+\usepackage[T1]{fontenc}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                PANDOC‑STYLE TABLES + AUTOSIZING
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Professional horizontal rules (Pandoc uses booktabs)
+\usepackage{booktabs}
+
+% % Column stretching + text wrapping
+\usepackage{array}
+\usepackage{tabularx}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+% Enable tabularx autosizing across page breaks
+\usepackage{ltablex}
+\keepXColumns
+
+% Remove Sphinx's alternating row colors (Pandoc has no shading)
+\usepackage{xcolor}
+\AtBeginEnvironment{tabular}{\rowcolors{0}{}{}}
+\AtBeginEnvironment{longtable}{\rowcolors{0}{}{}}
+
+% Slightly increased vertical spacing (Pandoc-like aesthetic)
+\renewcommand{\arraystretch}{1.2}
+
+% Longtable spacing fixes
+\setlength{\LTpre}{0pt}
+\setlength{\LTpost}{0pt}
+
+% Table font size (optional)
+\usepackage{etoolbox}
+\AtBeginEnvironment{tabular}{\small}
+\AtBeginEnvironment{longtable}{\small}
+
+% --- Keep longtable rows from starting without space, safely ---
+\usepackage{needspace}
+
 \makeatletter
-  \fancypagestyle{normal}{
-    \fancyhf{}
-    \fancyfoot[R]{{\py@HeaderFamily\thepage}}
-    \fancyfoot[L]{{\py@HeaderFamily\textcopyright\ Copyright ${PROJECT_COPYRIGHT}}}
-  }
-  \fancypagestyle{plain}{
-    \fancyhf{}
-    \fancyfoot[R]{{\py@HeaderFamily\thepage}}
-    \fancyfoot[L]{{\py@HeaderFamily\textcopyright\ Copyright ${PROJECT_COPYRIGHT}}}
-  }
+% 1) Before every longtable starts, reserve some vertical space
+\pretocmd{\LT@start}{\needspace{12\baselineskip}}{}{}
+
+% 2) Before each *row* (vertical mode), ensure there is room.
+%    Hooking \LT@row is safer than redefining \\ (=\LT@tabularcr).
+\pretocmd{\LT@row}{\noalign{\needspace{8\baselineskip}}}{}{}
 \makeatother
-\renewcommand{\arraystretch}{1.5}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                PAGE FOOTER FIXES (SAFE VERSION)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\makeatletter
+\fancypagestyle{normal}{
+  \fancyhf{}
+  \fancyfoot[R]{{\py@HeaderFamily\thepage}}
+  \fancyfoot[L]{{\py@HeaderFamily\textcopyright\ Copyright ${PROJECT_COPYRIGHT}}}
+}
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \fancyfoot[R]{{\py@HeaderFamily\thepage}}
+  \fancyfoot[L]{{\py@HeaderFamily\textcopyright\ Copyright ${PROJECT_COPYRIGHT}}}
+}
+\makeatother
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 '''
 }

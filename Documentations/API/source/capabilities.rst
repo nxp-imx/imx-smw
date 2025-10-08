@@ -1,9 +1,11 @@
-Subsystems Capabilities
-=======================
+.. _subsystems-capabilities:
+
+Secure Subsystems Capabilities
+==============================
 
 .. toctree::
-   :maxdepth: 1
-   :caption: Contents:
+   :maxdepth: 3
+   :numbered: 3
    :glob:
 
    capabilities/*

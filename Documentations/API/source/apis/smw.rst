@@ -1,10 +1,10 @@
+.. _smw-apis:
+
 SMW APIs
-========
+--------
 
 .. toctree::
-   :maxdepth: 1
-   :caption: Contents:
-   :glob:
+   :maxdepth: 3
 
    smw/information
    smw/config
@@ -13,8 +13,8 @@ SMW APIs
    smw/device
    smw/storage
    smw/object
-   smw/tls
    smw/status
+   smw/algorithm
    smw/attr
    smw/names
    smw/examples

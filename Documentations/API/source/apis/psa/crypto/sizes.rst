@@ -1,4 +1,4 @@
 Sizes
-=====
+"""""
 
-.. kernel-doc:: ../../../../../../public/psa/crypto_sizes.h
+.. kernel-doc:: /public/psa/crypto_sizes.h

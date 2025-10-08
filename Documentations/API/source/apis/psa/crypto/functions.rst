@@ -1,4 +1,4 @@
 Functions
-=========
+"""""""""
 
-.. kernel-doc:: ../../../../../../public/psa/crypto.h
+.. kernel-doc:: /public/psa/crypto.h

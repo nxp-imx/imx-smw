@@ -1,4 +1,4 @@
 Values
-======
+""""""
 
-.. kernel-doc:: ../../../../../../public/psa/crypto_values.h
+.. kernel-doc:: /public/psa/crypto_values.h

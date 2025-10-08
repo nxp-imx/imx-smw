@@ -1,4 +1,4 @@
 Protected storage APIs
-======================
+""""""""""""""""""""""
 
-.. kernel-doc:: ../../../../../../public/psa/protected_storage.h
+.. kernel-doc:: /public/psa/protected_storage.h

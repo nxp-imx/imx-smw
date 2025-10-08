@@ -1,10 +1,10 @@
+.. _psa-apis:
+
 PSA APIs
-========
+--------
 
 .. toctree::
-   :maxdepth: 1
-   :caption: Contents:
-   :glob:
+   :maxdepth: 2
 
    psa/crypto
    psa/initial_attestation

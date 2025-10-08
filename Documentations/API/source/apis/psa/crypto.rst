@@ -1,5 +1,5 @@
 Cryptography APIs
-=================
+^^^^^^^^^^^^^^^^^
 
 .. toctree::
    :maxdepth: 1

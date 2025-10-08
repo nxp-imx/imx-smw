@@ -1,14 +1,14 @@
-User API documentation (release |release|)
-==========================================
+##############################################
+Security Middleware (SMW) (release |release|)
+##############################################
 
 .. toctree::
-   :numbered:
    :maxdepth: 2
    :caption: Contents:
    :glob:
 
    introduction
-   config_file_howto
-   public_apis
+   configuration
+   osal
+   apis_reference
    capabilities
-   osal/osal

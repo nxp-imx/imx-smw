@@ -260,10 +260,6 @@ Operations supported:
   The SHAKE256 is an extendable-output function (XOF) where digest length can
   be any length as detailed in the `FIPS 202<https://doi.org/10.6028/NIST.FIPS.202>`.
 
-.. note::
-  In case of multi-part operation, the ELE Secure Enclave doesn't support
-  additional input data during the final operation.
-
 
 Signature
 ---------
@@ -836,8 +832,9 @@ The command used to sign is `nxpimage <https://spsdk.readthedocs.io/en/latest/ap
 
 
 The SMW library offers the possibility to create the message payload to be
-signed (see :ref:smw_device_reprovision_prepare). The :ref:smw_device_reprovision
-API will take as input the resulting signed message.
+signed (see :c:func:`smw_device_reprovision_prepare`).
+The :c:func:`smw_device_reprovision` API will take as input the resulting
+signed message.
 
 .. note::
   The OEM SRKH must be fused.

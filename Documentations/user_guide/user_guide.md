@@ -362,9 +362,9 @@ and supported by the SMW Library.
 <a name="t_note_3"><sup>3</sup></a> Do nothing, returns always success.<br>
 <a name="t_note_4"><sup>4</sup></a> Retrieve only information from SMW object
                                     database.<br>
-<a name="t_note_5"><sup>5</sup></a> EdgeLock 2GO assets can't be provisioned 
-                                    using PKCS#11 APIs. But it's possible to 
-									use/access provisioned assets with the 
+<a name="t_note_5"><sup>5</sup></a> EdgeLock 2GO assets can't be provisioned
+                                    using PKCS#11 APIs. But it's possible to
+									use/access provisioned assets with the
 									PKCS#11 APIs (see <a href="#5-pkcs11">5. PKCS11</a>).<br>
 <a name="t_note_6"><sup>6</sup></a> Using a vendor algorithm. See the declaration of <code>PSA_ALG_VENDOR_TLS13</code> for more details.<br>
 </p>
@@ -531,7 +531,7 @@ ta_uuid=11b5c4aa-6d20-11ea-bc55-0242ac130003
 For SECO, the NVM Secure Storage configuration is
 ```
 [SECO]
-id=0x534543EF
+id=0x53454300
 nonce=0x534D57
 replay=3000
 ```
@@ -539,7 +539,7 @@ replay=3000
 For ELE, the NVM Secure Storage configuration is
 ```
 [ELE]
-id=0x534543EF
+id=0x53454300
 nonce=0x534D57
 shared=yes
 ```
@@ -598,7 +598,7 @@ $ export SMW_LOG_LEVEL=[0-5]
 # 5. PKCS11
 
 The [PKCS11-Tool User Guide](./pkcs11/pkcs11_tool_user_guide.md) details and
-gives some command lines description to start manipulating keys with 
+gives some command lines description to start manipulating keys with
 `pkcs11-tool`.
 This user guide provides also more information on the PKCS11 APIs and mechanisms
 supported.

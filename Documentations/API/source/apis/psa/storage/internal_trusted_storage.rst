@@ -1,4 +1,4 @@
 Internal trusted storage APIs
-=============================
+"""""""""""""""""""""""""""""
 
-.. kernel-doc:: ../../../../../../public/psa/internal_trusted_storage.h
+.. kernel-doc:: /public/psa/internal_trusted_storage.h

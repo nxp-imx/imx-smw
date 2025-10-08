@@ -1,11 +1,12 @@
 Examples
-========
+^^^^^^^^
 
 Authentication Encryption/Decryption (AEAD)
--------------------------------------------
+"""""""""""""""""""""""""""""""""""""""""""
 
 Example 1: AEAD one-shot encryption operation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. code-block:: c
 
     #define IV_LEN 12
@@ -62,7 +63,8 @@ Example 1: AEAD one-shot encryption operation
     }
 
 Example 2: AEAD one-shot encryption operation (Tag stored in tag field)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. code-block:: c
 
     #define IV_LEN 12
@@ -121,7 +123,8 @@ Example 2: AEAD one-shot encryption operation (Tag stored in tag field)
     }
 
 Example 3: AEAD one-shot decryption operation (Tag stored in tag field)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. code-block:: c
 
     #define IV_LEN 12
@@ -176,8 +179,9 @@ Example 3: AEAD one-shot decryption operation (Tag stored in tag field)
         return res;
     }
 
+
 Example 4: AEAD multi-part encryption operation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: c
 
@@ -282,7 +286,7 @@ Example 4: AEAD multi-part encryption operation
     }
 
 Example 5: AEAD multi-part decryption operation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: c
 

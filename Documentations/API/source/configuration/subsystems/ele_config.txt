@@ -1,0 +1,1 @@
+../../../../../osal/linux/config/ele_config.txt

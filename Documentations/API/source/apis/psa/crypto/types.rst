@@ -1,4 +1,4 @@
 Types
-=====
+"""""
 
-.. kernel-doc:: ../../../../../../public/psa/crypto_types.h
+.. kernel-doc:: /public/psa/crypto_types.h

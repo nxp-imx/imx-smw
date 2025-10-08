@@ -83,11 +83,11 @@ subsystem. A key policy defines one or more key usage.
    +----------------+------------------------------------------------------+
 
 The TEE subsystem has limited algorithm restrictions per key usage:
- - For key generation and import intended for asymmetric encryption operations, 
+ - For key generation and import intended for asymmetric encryption operations,
    the permitted algorithm must be specified. If not specified, the operation
    will fail with the error status `SMW_STATUS_PERMITTED_ALGO_INVALID`.
- - For all other operations, defining permitted algorithm(s) will not be taken 
-   into account and the operation will return the warning status 
+ - For all other operations, defining permitted algorithm(s) will not be taken
+   into account and the operation will return the warning status
    `SMW_STATUS_KEY_POLICY_WARNING_IGNORED`.
 
 Hash

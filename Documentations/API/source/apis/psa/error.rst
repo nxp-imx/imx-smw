@@ -1,4 +1,4 @@
 Return codes
-============
+^^^^^^^^^^^^
 
-.. kernel-doc:: ../../../../../public/psa/error.h
+.. kernel-doc:: /public/psa/error.h

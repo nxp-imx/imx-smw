@@ -2071,6 +2071,9 @@ static void kdf_ecdh_free(struct smw_derive_key_args *args)
 		if (args->kdf_arguments) {
 			ecdh_args = args->kdf_arguments;
 
+			if (ecdh_args->peer_public_buffer)
+				free(ecdh_args->peer_public_buffer);
+
 			free(ecdh_args);
 
 			args->kdf_arguments = NULL;

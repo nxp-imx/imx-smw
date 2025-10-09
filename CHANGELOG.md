@@ -109,6 +109,10 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix memory leaks.
 * Fix coverity 2025.6.0 findings
 * Call SMW signature multi-part operation call in place of the multi-part hash.
+* Add support for RSA asymmetric encryption and decryption.
+* Add proper parameter validation to C_DestroyObject function to ensure appropriate
+  error codes are returned for invalid inputs.
+
 
 #### PKCS#11 Tests
 
@@ -121,6 +125,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add tests for saving/restoring session state for digest, encrypt, and object search operations.
 * Use a dedicated secure storage
 * Fix memory leaks.
+* Add tests to validate asymmetric encryption and decryption operations.
 
 ---
 ### <a id ="rel_5_1"></a></br>**Release 5.1**

@@ -1054,20 +1054,21 @@ end:
 
 static void free_op_state(struct lib_op_state *op_state)
 {
-	if (op_state) {
-		if (op_state->op_ctx) {
-			free(op_state->op_ctx);
-			op_state->op_ctx = NULL;
-		}
+	if (!op_state)
+		return;
 
-		if (op_state->obj_handle) {
-			free(op_state->obj_handle);
-			op_state->obj_handle = NULL;
-		}
-
-		op_state->op_ctx_count = 0;
-		op_state->obj_count = 0;
+	if (op_state->op_ctx) {
+		free(op_state->op_ctx);
+		op_state->op_ctx = NULL;
 	}
+
+	if (op_state->obj_handle) {
+		free(op_state->obj_handle);
+		op_state->obj_handle = NULL;
+	}
+
+	op_state->op_ctx_count = 0;
+	op_state->obj_count = 0;
 }
 
 static CK_RV collect_operation_contexts(CK_SESSION_HANDLE hSession,
@@ -1136,11 +1137,8 @@ static CK_RV collect_operation_contexts(CK_SESSION_HANDLE hSession,
 	}
 
 end:
-	if (ret != CKR_OK && op_state->op_ctx) {
-		free(op_state->op_ctx);
-		op_state->op_ctx = NULL;
-		op_state->op_ctx_count = 0;
-	}
+	if (ret != CKR_OK && op_state->op_ctx)
+		free_op_state(op_state);
 
 	return ret;
 }
@@ -1204,13 +1202,29 @@ static CK_RV collect_search_objects(CK_SESSION_HANDLE hSession,
 	}
 
 end:
-	if (ret != CKR_OK && op_state->obj_handle) {
-		free(op_state->obj_handle);
-		op_state->obj_handle = NULL;
-		op_state->obj_count = 0;
-	}
+	if (ret != CKR_OK && op_state->obj_handle)
+		free_op_state(op_state);
 
 	return ret;
+}
+
+static void release_op_context(struct lib_op_state *op_state)
+{
+	CK_ULONG ctx_index = 0;
+	struct libopctx *opctx = NULL;
+
+	if (!op_state)
+		return;
+
+	if (op_state->op_ctx) {
+		/* Use libopctx_destroy to properly free each context */
+		for (; ctx_index < op_state->op_ctx_count; ctx_index++) {
+			opctx = &op_state->op_ctx[ctx_index];
+
+			if (opctx->mech.pParameter)
+				free(opctx->mech.pParameter);
+		}
+	}
 }
 
 static CK_RV restore_operation_contexts(CK_SESSION_HANDLE hSession,
@@ -1425,6 +1439,7 @@ CK_RV libsess_set_operation_state(CK_SESSION_HANDLE hSession,
 	ret = restore_search_objects(hSession, &op_state);
 
 end:
+	release_op_context(&op_state);
 	free_op_state(&op_state);
 	return ret;
 }

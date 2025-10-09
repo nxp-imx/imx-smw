@@ -543,6 +543,59 @@ exit:
 }
 
 /**
+ * check_asymm_encryption_algo() - Check if permitted algorithm is set for
+ *                                 asymmetric encryption and update usage flags
+ * @perm_algo: Permitted algorithm attribute
+ * @usage: Key Usage
+ *
+ * For asymmetric encryption operation using RSA no padding algo
+ * (TEE_ALG_RSA_NOPAD) has the below usage restriction:
+ * - For encryption operation, the object usage SHALL contain both the
+ *   encrypt and verify flags.
+ * - For decryption operation, the object usage SHALL contain both the
+ *   decrypt and sign flags.
+ *
+ * Return:
+ * SMW_STATUS_OK                     - Success
+ * SMW_STATUS_PERMITTED_ALGO_INVALID - Missing one or more algorithm parameters
+ */
+static int check_asymm_encryption_algo(smw_attr_algo_t perm_algo,
+				       smw_attr_usage_t *usage)
+{
+	int status = SMW_STATUS_OK;
+	smw_attr_algo_t algo = SMW_ATTR_GET_ALGO(perm_algo);
+	smw_attr_algo_t mode = SMW_ATTR_GET_MODE(perm_algo);
+	smw_attr_algo_t class = SMW_ATTR_GET_CLASS(perm_algo);
+	smw_attr_usage_t usage_flags = *usage;
+
+	if (class == SMW_ATTR_CLASS_NONE)
+		return status;
+
+	if (class == SMW_ATTR_CLASS_ASYMMETRIC_ENCRYPTION) {
+		if (!algo || !mode) {
+			SMW_DBG_PRINTF(ERROR,
+				       "Permitted algo required for asymm encr");
+			return SMW_STATUS_PERMITTED_ALGO_INVALID;
+		}
+
+		if (algo == SMW_ATTR_ALGO_RSA &&
+		    (mode == SMW_ATTR_MODE_NO_PAD ||
+		     mode == SMW_ATTR_MODE_ANY)) {
+			if (SMW_ATTR_USAGE_IS_ENCRYPT(usage_flags))
+				SMW_ATTR_USAGE_SET_VERIFY_MESSAGE(usage_flags);
+
+			if (SMW_ATTR_USAGE_IS_DECRYPT(usage_flags))
+				SMW_ATTR_USAGE_SET_SIGN_MESSAGE(usage_flags);
+		}
+
+		*usage = usage_flags;
+		status = SMW_STATUS_OK;
+	}
+
+	return status;
+}
+
+/**
  * generate_key() - Generate a key.
  * @args: Key generation arguments.
  *
@@ -570,6 +623,7 @@ static int generate_key(void *args)
 	smw_attr_usage_t actual_usage_flags = 0;
 	enum smw_config_hash_algo_id hash_id = SMW_CONFIG_HASH_ALGO_ID_INVALID;
 	smw_attr_algo_t perm_algo = 0;
+	smw_attr_usage_t usage_flags = SMW_ATTR_USAGE_NONE;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -607,7 +661,12 @@ static int generate_key(void *args)
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
-	key_usage_to_tee(key_attrs->usage_flags, &shared_params.key_usage);
+	usage_flags = key_attrs->usage_flags;
+	status = check_asymm_encryption_algo(perm_algo, &usage_flags);
+	if (status != SMW_STATUS_OK)
+		goto exit;
+
+	key_usage_to_tee(usage_flags, &shared_params.key_usage);
 	key_usage_to_smw(shared_params.key_usage, &actual_usage_flags);
 
 	op.params[0].tmpref.buffer = &shared_params;
@@ -1110,6 +1169,7 @@ static int import_key(void *args)
 	smw_attr_usage_t actual_usage_flags = SMW_ATTR_USAGE_NONE;
 	enum smw_config_hash_algo_id hash_id = SMW_CONFIG_HASH_ALGO_ID_INVALID;
 	smw_attr_algo_t perm_algo = 0;
+	smw_attr_usage_t usage_flags = SMW_ATTR_USAGE_NONE;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1162,7 +1222,12 @@ static int import_key(void *args)
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
-	key_usage_to_tee(key_attrs->usage_flags, &shared_params.key_usage);
+	usage_flags = key_attrs->usage_flags;
+	status = check_asymm_encryption_algo(perm_algo, &usage_flags);
+	if (status != SMW_STATUS_OK)
+		goto exit;
+
+	key_usage_to_tee(usage_flags, &shared_params.key_usage);
 	key_usage_to_smw(shared_params.key_usage, &actual_usage_flags);
 
 	/*

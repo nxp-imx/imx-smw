@@ -242,6 +242,13 @@ static int asymm_encrypt_decrypt(struct smw_crypto_asymm_enc_args *args,
 	operation.params[3].tmpref.size =
 		smw_crypto_get_asymm_enc_output_len(args);
 
+	/*
+	 * TEE requires an output buffer length set to 0 if output
+	 * buffer is NULL.
+	 */
+	if (!operation.params[3].tmpref.buffer)
+		operation.params[3].tmpref.size = 0;
+
 	/* Invoke TA */
 	status = execute_tee_cmd(cmd_id, &operation);
 	SMW_DBG_PRINTF_COND(ERROR, status != SMW_STATUS_OK,

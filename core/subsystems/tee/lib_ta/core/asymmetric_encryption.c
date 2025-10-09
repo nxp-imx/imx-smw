@@ -52,7 +52,7 @@ static const struct {
  */
 static TEE_Result get_rsa_algo_id(enum tee_asymm_enc_mode mode,
 				  enum tee_algorithm_id hash_algo,
-				  enum tee_algorithm_id *algorithm_id)
+				  uint32_t *algorithm_id)
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	unsigned int i = 0;
@@ -105,7 +105,7 @@ static TEE_Result set_key(uint32_t cmd_id, TEE_Param ta_param,
 			  uint32_t ta_param_type,
 			  struct asymm_enc_shared_params *shared_params,
 			  TEE_ObjectHandle *key_handle, bool *persistent,
-			  enum tee_algorithm_id algo_id)
+			  uint32_t algo_id)
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	unsigned char *pub_key = NULL;
@@ -182,7 +182,7 @@ TEE_Result asymm_encrypt_decrypt(uint32_t param_types,
 	TEE_ObjectInfo key_info = { 0 };
 	uint32_t param0_type = TEE_PARAM_TYPE_GET(param_types, 0);
 	uint32_t mode = 0;
-	enum tee_algorithm_id algorithm_id = 0;
+	uint32_t algorithm_id = 0;
 	bool persistent = false;
 	struct asymm_enc_shared_params *shared_params = NULL;
 	uint32_t op_max_key_size = 0;

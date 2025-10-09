@@ -41,9 +41,10 @@
 			],
 			"usage": [
 				"ENCRYPT",
-				"DECRYPT",
-				"SIGN_MESSAGE",
-				"VERIFY_MESSAGE"
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"RSA_NO_PAD"
 			]
 		}
 	},

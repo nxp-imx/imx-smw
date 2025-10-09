@@ -104,6 +104,40 @@
 			"usage": [
 				"VERIFY_HASH"
 			]
+		},
+		"key 4": {
+			"type": "RSA",
+			"security_size": 2048,
+			"pub_key": [
+				"010001"
+			],
+			"modulus": [
+				"91f4b43229bfd57e6d12bec4340a92e5",
+				"3a252fc6e3af69a375ca1aaed05651dd",
+				"f99457045d82168deb360940e016ecfd",
+				"b381db45267baf72308deb47cba3ff7a",
+				"0c1d7d31e363fb31f8f35cc662e4d410",
+				"b39b6bbac5ed2bfc00b33669aad08cbc",
+				"c277d56337c6dd3af1888ea569a5ae35",
+				"cc28a213639e439ba4c6b90b8e7097c3",
+				"aada01fa04f7b5621cf61044f342672d",
+				"7b5284e1f024c89590b56272749b3b3e",
+				"bd56ce3064f52348ecce80f44b462bbe",
+				"7fcfefaa980310daca6a9d11c7936427",
+				"576b8445f0d5cf5738e294303cb00314",
+				"6568e02115e84ee97bffda9b9b57deb7",
+				"377fbb316f1e69a763b1ec1265454e60",
+				"bf18ea22e64bf5142b3bcb8833800abd"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT"
+			],
+			"permitted_algo": [
+				"RSA_NO_PAD_INCOMPLETE"
+			]
 		}
 	},
 	"subtest 1": {
@@ -138,5 +172,12 @@
 		"command": "DELETE",
 		"key_name": "key 3",
 		"depends": 3
+	},
+	"subtest 7": {
+		"description": "Missing main permitted algo and mode for asymmetric encryption key import",
+		"command": "IMPORT",
+		"subsystem": "TEE",
+		"key_name": "key 4",
+		"result": "SMW_STATUS_PERMITTED_ALGO_INVALID"
 	}
 }

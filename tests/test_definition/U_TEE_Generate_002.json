@@ -109,6 +109,19 @@
 			"usage": [
 				"SIGN_MESSAGE"
 			]
+		},
+		"key 12": {
+			"type": "RSA",
+			"security_size": 4096,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT"
+			],
+			"permitted_algo": [
+				"RSA_NO_PAD_INCOMPLETE"
+			]
 		}
 	},
 	"subtest 1": {
@@ -220,5 +233,12 @@
 		"command": "DELETE",
 		"key_name": "key 11",
 		"depends": 11
+	},
+	"subtest 23": {
+		"description": "Missing main permitted algo and mode for asymmetric encryption key generation",
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key 12",
+		"result": "SMW_STATUS_PERMITTED_ALGO_INVALID"
 	}
 }

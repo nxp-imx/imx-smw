@@ -3,6 +3,8 @@
  * Copyright 2025 NXP
  */
 
+#include <stdlib.h>
+
 #include "derive.h"
 #include "types.h"
 #include "key.h"
@@ -104,6 +106,9 @@ int derive_psa(struct subtest_data *subtest)
 					      &other_secret_key, other_secret);
 		if (res != ERR_CODE(PASSED))
 			goto end;
+
+		if (other_secret_key.data)
+			free(other_secret_key.data);
 	}
 
 	res = util_read_json_type(&peer_public_data, PEER_PUB_KEY_OBJ,
@@ -153,11 +158,15 @@ int derive_psa(struct subtest_data *subtest)
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
-	if (out_key.data)
+	if (out_key.data) {
 		subtest->psa_status =
 			output_bytes(&op, out_key.data, out_key.data_length);
-	else
+
+		free(out_key.data);
+	} else {
 		subtest->psa_status = output_key(&op, &out_key);
+	}
+
 	if (subtest->psa_status != PSA_SUCCESS) {
 		res = ERR_CODE(API_STATUS_NOK);
 		goto end;
@@ -169,6 +178,12 @@ int derive_psa(struct subtest_data *subtest)
 
 end:
 	psa_key_derivation_abort(&op);
+
+	if (peer_public_data.data)
+		free(peer_public_data.data);
+
+	if (info.data)
+		free(info.data);
 
 	return res;
 }

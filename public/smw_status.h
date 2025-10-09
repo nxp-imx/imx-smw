@@ -109,6 +109,7 @@
  * recognized by SMW.
  * @SMW_STATUS_PUBLIC_EXPONENT_NOT_SUPPORTED: Provided RSA public exponent is unsupported.
  * @SMW_STATUS_KEY_ID_ALREADY_EXIST: Key identifier already exist.
+ * @SMW_STATUS_PERMITTED_ALGO_INVALID: Permitted algorithm missing one or more algorithm parameters.
  *
  * Status code classification:
  *
@@ -199,6 +200,7 @@
  *	- SMW_STATUS_UNKNOWN_KEY_PRIVACY_NAME
  *	- SMW_STATUS_PUBLIC_EXPONENT_NOT_SUPPORTED
  *	- SMW_STATUS_KEY_ID_ALREADY_EXIST
+ *	- SMW_STATUS_PERMITTED_ALGO_INVALID
  *
  ** Specific return codes - Device manager
  *
@@ -277,7 +279,8 @@ enum smw_status_code {
 	SMW_STATUS_UNKNOWN_KEY_PRIVACY_NAME,
 	SMW_STATUS_OBJ_DB_FIND,
 	SMW_STATUS_PUBLIC_EXPONENT_NOT_SUPPORTED,
-	SMW_STATUS_KEY_ID_ALREADY_EXIST /* 70 */
+	SMW_STATUS_KEY_ID_ALREADY_EXIST, /* 70 */
+	SMW_STATUS_PERMITTED_ALGO_INVALID
 };
 
 #endif /* __SMW_STATUS_H__ */

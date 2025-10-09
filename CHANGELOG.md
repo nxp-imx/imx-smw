@@ -63,6 +63,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix operation context memory leak.
 * Fix coverity 2025.6.0 findings
 * Add signature multi-part operation.
+* Add a new SMW status code `SMW_STATUS_PERMITTED_ALGO_INVALID` for incomplete permitted algorithm parameters.
 
 ##### 2. Subsystems
 
@@ -72,6 +73,9 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE: Fix memory leaks.
 * TEE: Fix key derived buffer leak.
 * Fix coverity 2025.6.0 findings
+* TEE: Keys intended for asymmetric encryption operations now require permitted algorithm and mode
+  to be specified during key generation and import.
+* TEE: Fix output buffer length handling when output buffer is NULL for asymmetric encrypt/decrypt operations.
 
 ##### 3. ARM PSA APIs
 

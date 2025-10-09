@@ -305,10 +305,10 @@ static int object_derive_key_hkdf_bad_attr(CK_FUNCTION_LIST_PTR pfunc)
 	CK_OBJECT_HANDLE derived_key = CK_INVALID_HANDLE;
 	CK_OBJECT_CLASS secret_key_class = CKO_SECRET_KEY;
 	CK_BBOOL ck_true = CK_TRUE;
-	CK_BBOOL derive = CK_FALSE;
+	CK_BBOOL derive = CK_TRUE;
 
 	CK_OBJECT_HANDLE base_key = CK_INVALID_HANDLE;
-	CK_KEY_TYPE base_key_type = CKK_HKDF;
+	CK_KEY_TYPE base_key_type = CKK_SM4;
 	CK_BYTE base_key_buffer[16] = { 0 };
 	CK_MECHANISM_TYPE base_key_allowed_mech = CKM_HKDF_DERIVE;
 
@@ -353,7 +353,7 @@ static int object_derive_key_hkdf_bad_attr(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
-	TEST_OUT("Create a base key\n");
+	TEST_OUT("Create a base key of type CKK_SM4\n");
 	ret = pfunc->C_CreateObject(sess, base_key_template,
 				    ARRAY_SIZE(base_key_template), &base_key);
 	if (CHECK_CK_RV(CKR_OK, "C_CreateObject"))
@@ -368,28 +368,6 @@ static int object_derive_key_hkdf_bad_attr(CK_FUNCTION_LIST_PTR pfunc)
 	hkdf_params.hSaltKey = CK_INVALID_HANDLE;
 	derive_mech.pParameter = &hkdf_params;
 	derive_mech.ulParameterLen = sizeof(hkdf_params);
-
-	TEST_OUT("Derive usage is not set for base key\n");
-	ret = pfunc->C_DeriveKey(sess, &derive_mech, base_key,
-				 derived_key_template,
-				 ARRAY_SIZE(derived_key_template),
-				 &derived_key);
-	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_DeriveKey"))
-		goto end;
-
-	ret = pfunc->C_DestroyObject(sess, base_key);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	base_key = CK_INVALID_HANDLE;
-
-	derive = CK_TRUE;
-	base_key_type = CKK_SM4;
-	TEST_OUT("Create a base key of type CKK_SM4\n");
-	ret = pfunc->C_CreateObject(sess, base_key_template,
-				    ARRAY_SIZE(base_key_template), &base_key);
-	if (CHECK_CK_RV(CKR_OK, "C_CreateObject"))
-		goto end;
 
 	TEST_OUT("Unsupported base key type for key derivation using HKDF\n");
 	ret = pfunc->C_DeriveKey(sess, &derive_mech, base_key,
@@ -754,6 +732,7 @@ static int object_derive_key_hkdf_step(CK_FUNCTION_LIST_PTR pfunc)
 		{ CKA_CLASS, &secret_key_class, sizeof(secret_key_class) },
 		{ CKA_KEY_TYPE, &prk_key_type, sizeof(prk_key_type) },
 		{ CKA_VALUE_LEN, &prk_key_len, sizeof(prk_key_len) },
+		{ CKA_DERIVE, &ck_true, sizeof(ck_true) },
 		{ CKA_ALLOWED_MECHANISMS, &prk_allowed_mech,
 		  sizeof(prk_allowed_mech) }
 	};

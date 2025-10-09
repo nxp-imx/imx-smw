@@ -110,6 +110,8 @@ static struct smw_mech_def mlist_tee[] = {
 	M(SHA3_512_HMAC_GENERAL),
 	M(EC_EDWARDS_KEY_PAIR_GEN),
 	M(EDDSA),
+	M(RSA_PKCS_OAEP),
+	M(RSA_X_509),
 };
 
 /*

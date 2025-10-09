@@ -81,13 +81,15 @@ static int object_derive_key_tls12_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 	};
 	CK_ULONG derived_key_len = 32;
 	CK_KEY_TYPE derived_key_type = CKK_GENERIC_SECRET;
+	CK_BBOOL encrypt_usage = CK_FALSE;
 	CK_ATTRIBUTE derived_key_template[] = {
 		{ CKA_CLASS, &derive_key_class, sizeof(derive_key_class) },
 		{ CKA_KEY_TYPE, &derived_key_type, sizeof(derived_key_type) },
 		{ CKA_VALUE_LEN, &derived_key_len, sizeof(derived_key_len) },
 		{ CKA_ALLOWED_MECHANISMS, &derived_key_allowed_mech,
 		  sizeof(derived_key_allowed_mech) },
-		{ CKA_DERIVE, &ck_true, sizeof(CK_BBOOL) }
+		{ CKA_DERIVE, &ck_true, sizeof(CK_BBOOL) },
+		{ CKA_ENCRYPT, &encrypt_usage, sizeof(CK_BBOOL) }
 	};
 	CK_MECHANISM_TYPE ecdhe_key_allowed_mech = {
 		CKM_TLS12_MASTER_KEY_DERIVE_DH
@@ -111,6 +113,7 @@ static int object_derive_key_tls12_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	if (!util_lib_is_mech_supported(pfunc, 0, base_key_allowed_mech) ||
+	    !util_lib_is_mech_supported(pfunc, 0, derived_key_allowed_mech) ||
 	    !util_lib_is_mech_supported(pfunc, 0, ecdhe_key_allowed_mech)) {
 		status = TEST_SKIP;
 		goto end;
@@ -263,6 +266,8 @@ static int object_derive_key_tls12_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 	key_material.pIVServer = server_iv;
 
 	derived_key_allowed_mech = CKM_AES_CBC;
+	derived_key_type = CKK_AES;
+	encrypt_usage = CK_TRUE;
 	ret = pfunc->C_DeriveKey(sess, &tls12_mech, derived_key,
 				 derived_key_template,
 				 ARRAY_SIZE(derived_key_template), NULL_PTR);
@@ -403,13 +408,15 @@ static int object_derive_key_tls12(CK_FUNCTION_LIST_PTR pfunc)
 	};
 	CK_ULONG derived_key_len = 32;
 	CK_KEY_TYPE derived_key_type = CKK_GENERIC_SECRET;
+	CK_BBOOL encrypt_usage = CK_FALSE;
 	CK_ATTRIBUTE derived_key_template[] = {
 		{ CKA_CLASS, &derive_key_class, sizeof(derive_key_class) },
 		{ CKA_KEY_TYPE, &derived_key_type, sizeof(derived_key_type) },
 		{ CKA_VALUE_LEN, &derived_key_len, sizeof(derived_key_len) },
 		{ CKA_ALLOWED_MECHANISMS, &derived_key_allowed_mech,
 		  sizeof(derived_key_allowed_mech) },
-		{ CKA_DERIVE, &ck_true, sizeof(CK_BBOOL) }
+		{ CKA_DERIVE, &ck_true, sizeof(CK_BBOOL) },
+		{ CKA_ENCRYPT, &encrypt_usage, sizeof(CK_BBOOL) }
 	};
 	CK_MECHANISM_TYPE ecdhe_key_allowed_mech = {
 		CKM_TLS12_MASTER_KEY_DERIVE_DH
@@ -503,6 +510,7 @@ static int object_derive_key_tls12(CK_FUNCTION_LIST_PTR pfunc)
 
 	derived_key_type = CKK_AES;
 	derived_key_allowed_mech = CKM_AES_CBC;
+	encrypt_usage = CK_TRUE;
 	ret = pfunc->C_DeriveKey(sess, &tls12_block_mech, derived_key,
 				 derived_key_template,
 				 ARRAY_SIZE(derived_key_template), NULL_PTR);
@@ -542,6 +550,7 @@ static int object_derive_key_tls12(CK_FUNCTION_LIST_PTR pfunc)
 
 	derived_key_allowed_mech = CKM_TLS12_KEY_AND_MAC_DERIVE;
 	derived_key_type = CKK_GENERIC_SECRET;
+	encrypt_usage = CK_FALSE;
 	ret = pfunc->C_DeriveKey(sess, &tls12_extended_master_mech, ecdhe_key,
 				 derived_key_template,
 				 ARRAY_SIZE(derived_key_template),
@@ -566,6 +575,7 @@ static int object_derive_key_tls12(CK_FUNCTION_LIST_PTR pfunc)
 
 	derived_key_type = CKK_AES;
 	derived_key_allowed_mech = CKM_AES_CBC;
+	encrypt_usage = CK_TRUE;
 	ret = pfunc->C_DeriveKey(sess, &tls12_block_mech, derived_key,
 				 derived_key_template,
 				 ARRAY_SIZE(derived_key_template), NULL_PTR);

@@ -73,6 +73,8 @@ static int device_repro_prepare(struct subsystem_context *ele_ctx,
 		payload = (void *)msg + msg_block_length;
 
 		SMW_UTILS_MEMSET(payload, 0, PAYLOAD_LENGTH);
+		if (fw_info.chip_unique_id)
+			SMW_UTILS_FREE(fw_info.chip_unique_id);
 
 		payload->monotonic_counter = fw_info.chip_monotonic_counter;
 		payload->user_sab_id = fw_info.user_sab_id;

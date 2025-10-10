@@ -2784,10 +2784,12 @@ exit:
 
 	/*
 	 * Don't free key data if it's present in key linked list
-	 * (ephemeral keys)
+	 * (ephemeral keys) and no errors return by SMW API.
 	 */
-	if (args.key_descriptor_derived && args.key_descriptor_derived->id)
-		free(args.key_descriptor_derived->shared_secret);
+	if (key_derived.shared_secret &&
+	    (subtest->smw_status != SMW_STATUS_OK ||
+	     (args.key_descriptor_derived && args.key_descriptor_derived->id)))
+		free(key_derived.shared_secret);
 
 	kdf_args_free(&args);
 

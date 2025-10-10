@@ -400,8 +400,7 @@ exit:
 		free(new_sign);
 
 	if (exp_sign)
-		if (operation != SIGN_OPERATION || exp_sign != args.signature)
-			free(exp_sign);
+		free(exp_sign);
 
 	return res;
 }

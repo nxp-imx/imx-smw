@@ -337,17 +337,31 @@ static int keypair_read(struct keypair_ops *key_test,
 static void key_free_key_buffers(struct keypair_ops *key_test)
 {
 	if (key_test && key_test->keys) {
-		if (*key_public_data(key_test))
+		if (*key_public_data(key_test)) {
 			free(*key_public_data(key_test));
+			*key_public_data(key_test) = NULL;
+			*key_public_length(key_test) = KEY_LENGTH_NOT_SET;
+		}
 
-		if (*key_private_data(key_test))
+		if (*key_private_data(key_test)) {
 			free(*key_private_data(key_test));
+			*key_private_data(key_test) = NULL;
+			*key_private_length(key_test) = KEY_LENGTH_NOT_SET;
+		}
 
-		if (key_test->modulus && *key_modulus(key_test))
+		if (key_test->modulus && *key_modulus(key_test)) {
 			free(*key_modulus(key_test));
+			*key_modulus(key_test) = NULL;
+			*key_modulus_length(key_test) = KEY_LENGTH_NOT_SET;
+		}
 
-		if (key_test->public_exponent && *key_public_exponent(key_test))
+		if (key_test->public_exponent &&
+		    *key_public_exponent(key_test)) {
 			free(*key_public_exponent(key_test));
+			*key_public_exponent(key_test) = NULL;
+			*key_public_exponent_length(key_test) =
+				KEY_LENGTH_NOT_SET;
+		}
 	}
 }
 

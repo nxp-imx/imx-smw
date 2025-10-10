@@ -86,7 +86,8 @@ static int set_gen_opt_params(struct subtest_data *subtest,
 			}
 		}
 
-		*key_public_data(key_test) = malloc(public_length);
+		if (!*key_public_data(key_test))
+			*key_public_data(key_test) = malloc(public_length);
 
 		if (!*key_public_data(key_test)) {
 			DBG_PRINT_ALLOC_FAILURE();

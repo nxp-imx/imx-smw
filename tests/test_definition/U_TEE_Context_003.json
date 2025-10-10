@@ -227,5 +227,10 @@
 		"output": "30313233343536373839404142434445",
 		"context_id": 6,
 		"depends": 23
+	},
+	"subtest 28": {
+		"command": "OP_CONTEXT_CANCEL",
+		"context_id": 6,
+		"depends": 22
 	}
 }

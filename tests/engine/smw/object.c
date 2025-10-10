@@ -15,6 +15,14 @@
 #include "data.h"
 #include "key.h"
 
+static void free_data(struct smw_data_descriptor *data_descriptor)
+{
+	if (data_descriptor->data) {
+		free(data_descriptor->data);
+		data_descriptor->data = NULL;
+	}
+}
+
 static bool is_data_object(const char *object_name)
 {
 	static const char data_name[] = "data";
@@ -291,6 +299,9 @@ static int object_find_no_test_error(struct subtest_data *subtest)
 
 		if (object_descriptor.user_id)
 			free(object_descriptor.user_id);
+
+		if (object_descriptor.type == SMW_OBJECT_TYPE_NAME_DATA)
+			free_data(&object_descriptor.data);
 	} else {
 		subtest->smw_status = smw_find_object_db_init(&args);
 		if (subtest->smw_status == SMW_STATUS_OK) {
@@ -306,13 +317,17 @@ static int object_find_no_test_error(struct subtest_data *subtest)
 					free(object_descriptor.user_id);
 					object_descriptor.user_id = NULL;
 				}
+
+				if (object_descriptor.type ==
+				    SMW_OBJECT_TYPE_NAME_DATA) {
+					free_data(&object_descriptor.data);
+					memset(&object_descriptor.data, 0,
+					       sizeof(struct smw_data_descriptor));
+				} else {
+					memset(&object_descriptor.key, 0,
+					       sizeof(struct smw_key_descriptor));
+				}
 			}
-
-			if (object_descriptor.label)
-				free(object_descriptor.label);
-
-			if (object_descriptor.user_id)
-				free(object_descriptor.user_id);
 
 			subtest->smw_status = smw_find_object_db_final(&args);
 		}

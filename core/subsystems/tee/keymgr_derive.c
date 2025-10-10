@@ -529,6 +529,10 @@ exit:
 	    hex_key_base)
 		SMW_UTILS_FREE(hex_key_base);
 
+	if (hex_key_derived &&
+	    key_args->key_derived.format_id == SMW_KEYMGR_FORMAT_ID_BASE64)
+		SMW_UTILS_FREE(hex_key_derived);
+
 	if (status != SMW_STATUS_OK) {
 		if (shared_params.derived_key_id)
 			(void)tee_delete_key(shared_params.derived_key_id);
@@ -747,6 +751,10 @@ static int ecdh_derive_key(void *args)
 exit:
 	if (hex_key_base)
 		SMW_UTILS_FREE(hex_key_base);
+
+	if (hex_key_derived &&
+	    key_args->key_derived.format_id == SMW_KEYMGR_FORMAT_ID_BASE64)
+		SMW_UTILS_FREE(hex_key_derived);
 
 	if (status != SMW_STATUS_OK) {
 		if (shared_params.derived_key_id)

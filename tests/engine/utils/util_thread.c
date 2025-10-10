@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2024 NXP
+ * Copyright 2022-2025 NXP
  */
 
 #include <stdlib.h>
@@ -537,10 +537,16 @@ int util_thread_ends_wait(struct app_data *app)
 			DBG_PRINT("Application thread completion error %d",
 				  res);
 
-		if (app->thr_ends->id && app->thr_ends->state != STATE_EXITED) {
-			if (pthread_cancel(app->thr_ends->id))
-				DBG_PRINT("Cancel Thread error: %s",
-					  util_get_strerr());
+		if (app->thr_ends->id) {
+			if (app->thr_ends->state != STATE_EXITED) {
+				if (pthread_cancel(app->thr_ends->id))
+					DBG_PRINT("Cancel Thread error: %s",
+						  util_get_strerr());
+			} else {
+				if (pthread_join(app->thr_ends->id, NULL))
+					DBG_PRINT("Join Thread error: %s",
+						  util_get_strerr());
+			}
 		}
 	}
 

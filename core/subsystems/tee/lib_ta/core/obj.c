@@ -486,5 +486,8 @@ exit:
 	if (res != TEE_SUCCESS)
 		remove_all_objects();
 
+	if (obj_id)
+		TEE_Free(obj_id);
+
 	return res;
 }

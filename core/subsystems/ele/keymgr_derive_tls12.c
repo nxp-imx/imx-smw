@@ -161,7 +161,7 @@ static int tls12_store_key_id(struct smw_keymgr_derive_key_args *args,
 static int tls12_extract_key_ids(struct smw_keymgr_derive_key_args *args,
 				 op_key_exchange_args_t *key_ex_args)
 {
-	enum smw_status_code status = SMW_STATUS_OK;
+	enum smw_status_code status = SMW_STATUS_SUBSYSTEM_FAILURE;
 	struct smw_keymgr_tls12_args *tls12_args = args->kdf_args;
 	struct tls12_ciphersuite cipher = { 0 };
 	uint32_t *key_ids = (uint32_t *)key_ex_args->output;
@@ -169,6 +169,9 @@ static int tls12_extract_key_ids(struct smw_keymgr_derive_key_args *args,
 	uint32_t server_enc_key_id = 0;
 	uint32_t client_mac_key_id = 0;
 	uint32_t server_mac_key_id = 0;
+
+	if (!key_ids)
+		goto end;
 
 	status = get_tls12_ciphersuite(tls12_args, &cipher);
 	if (status != SMW_STATUS_OK)
@@ -235,6 +238,9 @@ static int tls12_extract_ivs(struct smw_keymgr_tls12_args *tls12_args,
 		    cipher->iv_size) {
 		return SMW_STATUS_INVALID_IV_SIZE;
 	}
+
+	if (!key_ex_args->output)
+		return SMW_STATUS_SUBSYSTEM_FAILURE;
 
 	smw_keymgr_tls12_set_client_w_iv_length(tls12_args, cipher->iv_size);
 	smw_keymgr_tls12_set_server_w_iv_length(tls12_args, cipher->iv_size);

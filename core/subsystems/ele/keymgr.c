@@ -232,14 +232,15 @@ static const struct key_def *get_key_def_by_ele_type(unsigned int key_type,
 	return ret_key;
 }
 
-static void get_key_privacy_by_ele_type(unsigned int key_type,
+static void get_key_privacy_by_ele_type(unsigned int type,
 					enum smw_keymgr_privacy_id *privacy)
 {
 	*privacy = SMW_KEYMGR_PRIVACY_ID_PRIVATE;
 
-	if (key_type & ELE_ASYM_KEYPAIR_TYPE_MASK)
+	if ((type & ELE_ASYM_KEYPAIR_TYPE_MASK) == ELE_ASYM_KEYPAIR_TYPE_MASK)
 		*privacy = SMW_KEYMGR_PRIVACY_ID_PAIR;
-	else if (key_type & ELE_ASYM_PUBLIC_KEY_TYPE_MASK)
+	else if ((type & ELE_ASYM_PUBLIC_KEY_TYPE_MASK) ==
+		 ELE_ASYM_PUBLIC_KEY_TYPE_MASK)
 		*privacy = SMW_KEYMGR_PRIVACY_ID_PUBLIC;
 }
 

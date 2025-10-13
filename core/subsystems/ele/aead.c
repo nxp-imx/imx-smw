@@ -130,25 +130,34 @@ static void set_all_outputs_length(struct smw_crypto_aead_args *args,
  * Copy the IV buffer from @op_args->iv_out buffer to output_iv field.
  *
  * Return:
- * None
+ * SMW_STATUS_OK                 - Success
+ * SMW_STATUS_SUBSYSTEM_FAILURE  - Subsystem don't return IV buffer
  */
-static void set_output_iv(struct smw_crypto_aead_args *args,
-			  op_auth_enc_new_args_t *op_args)
+static int set_output_iv(struct smw_crypto_aead_args *args,
+			 op_auth_enc_new_args_t *op_args)
 {
+	int status = SMW_STATUS_OK;
+
 	unsigned int iv_len = smw_crypto_get_aead_user_iv_len(args);
 	unsigned char *output_iv = smw_crypto_get_aead_output_iv(args);
 	unsigned char *iv = smw_crypto_get_aead_user_iv(args);
 
 	if (args->op_type_id == SMW_CONFIG_AEAD_OP_TYPE_ID_DECRYPT)
-		return;
+		return status;
 
 	if (output_iv) {
-		if (iv_len < MAX_IV_LEN)
-			SMW_UTILS_MEMCPY(output_iv, op_args->iv_out,
-					 MAX_IV_LEN);
-		else if (iv)
+		if (iv_len < MAX_IV_LEN) {
+			if (op_args->iv_out)
+				SMW_UTILS_MEMCPY(output_iv, op_args->iv_out,
+						 MAX_IV_LEN);
+			else
+				status = SMW_STATUS_SUBSYSTEM_FAILURE;
+		} else if (iv) {
 			SMW_UTILS_MEMCPY(output_iv, iv, MAX_IV_LEN);
+		}
 	}
+
+	return status;
 }
 
 /**
@@ -489,9 +498,10 @@ static int aead(struct hdl *hdl, void *args)
 		}
 
 		if (status == SMW_STATUS_OK)
-			set_output_iv(aead_args, &op_args);
+			status = set_output_iv(aead_args, &op_args);
 
-		set_all_outputs_length(aead_args, output_length);
+		if (status == SMW_STATUS_OK)
+			set_all_outputs_length(aead_args, output_length);
 	}
 
 end:

@@ -937,6 +937,10 @@ static int tls12_op_derive(struct subsystem_context *seco_ctx,
 		return status;
 
 	partial_data = (struct seco_tls12_partial_data *)ctx->subsystem_context;
+	if (!partial_data) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
 
 	kdf_info = get_tls12_kdf_info_partial(args->kdf_args, partial_data);
 	if (!kdf_info)

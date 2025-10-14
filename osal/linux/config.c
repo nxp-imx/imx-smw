@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #include "local.h"
@@ -175,13 +175,13 @@ static void string_to_lower(char *src, size_t length)
 static int value_to_str_alloc(void *dst, size_t dst_length __maybe_unused,
 			      char *value)
 {
-	int ret = RET_NO_ERROR;
+	int ret = RET_ERROR;
 	char *p = NULL;
 	char **out = NULL;
 	size_t length = 0;
 
 	if (!dst)
-		return RET_ERROR;
+		return ret;
 
 	out = (char **)dst;
 
@@ -202,6 +202,8 @@ static int value_to_str_alloc(void *dst, size_t dst_length __maybe_unused,
 				memcpy(*out, p, length);
 				ret = RET_NO_ERROR;
 			}
+		} else {
+			ret = RET_ERROR;
 		}
 	}
 
@@ -239,6 +241,8 @@ static int value_to_str(void *dst, size_t dst_length, char *value)
 				memcpy(dst, p, MIN(length, dst_length));
 				ret = RET_NO_ERROR;
 			}
+		} else {
+			ret = RET_ERROR;
 		}
 	}
 

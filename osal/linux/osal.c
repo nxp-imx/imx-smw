@@ -391,14 +391,13 @@ static int get_smw_config(char **buffer, unsigned int *size,
 
 	TRACE_FUNCTION_CALL;
 
-	if (!file_name) {
-		if (!(ctx->config.config_flags & CONFIG_SMW_CONFIG_FILE)) {
-			DBG_PRINTF(ERROR, "SMW_CONFIG_FILE not set.\n"
-					  "Use export SMW_CONFIG_FILE=...\n");
-			goto end;
-		}
-
+	if (!file_name && (ctx->config.config_flags & CONFIG_SMW_CONFIG_FILE))
 		file_name = ctx->config.smw_info.smw_config_file;
+
+	if (!file_name) {
+		DBG_PRINTF(ERROR, "SMW_CONFIG_FILE not set.\n"
+				  "Use export SMW_CONFIG_FILE=...\n");
+		goto end;
 	}
 
 	f = fopen(file_name, "r");

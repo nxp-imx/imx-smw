@@ -901,6 +901,11 @@ static int get_mechanismsinfo(CK_FUNCTION_LIST_PTR pfunc)
 				 info.ulMinKeySize);
 			TEST_OUT("\t\tFlags=0x%lx\n", info.flags);
 		}
+
+		if (mechs) {
+			free(mechs);
+			mechs = NULL_PTR;
+		}
 	}
 
 	status = TEST_PASS;

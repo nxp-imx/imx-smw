@@ -60,12 +60,15 @@ The failure is due to the storage manager which is already loaded and a new inst
   defined in smw/public/smw/object.h
 * Add SMW_STATUS_KEY_ID_ALREADY_EXIST status when a key is already existing.
 * Check if targeted key derivation is already existing.
+* Fix operation context memory leak.
 
 ##### 2. Subsystems
 
 * TEE: Set the hash buffer length to 0 when the hash buffer is NULL to allow `TEE_DigestDoFinal`
   report required digest size.
 * ELE: Add support for OFB cipher mode.
+* ELE: Fix memory leaks.
+* TEE: Fix key derived buffer leak.
 
 ##### 3. ARM PSA APIs
 
@@ -91,6 +94,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Save the current object search state during C_GetOperationState and restore it during C_SetOperationState.
 * Cancel the ongoing multi-part cryptographic operation if it matches the type of operation being restored,
   to prevent conflicts during state restoration.
+* Fix memory leaks.
 
 #### PKCS#11 Tests
 
@@ -102,6 +106,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix find_ext test unique id get attribute.
 * Add tests for saving/restoring session state for digest, encrypt, and object search operations.
 * Use a dedicated secure storage
+* Fix memory leaks.
 
 ---
 ### <a id ="rel_5_1"></a></br>**Release 5.1**

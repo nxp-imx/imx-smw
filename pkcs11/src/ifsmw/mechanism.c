@@ -1878,7 +1878,6 @@ static CK_RV set_tls12_args(CK_MECHANISM_TYPE type,
 		return status;
 
 	obj = params->derived_key;
-	mech_list = get_key_mech_list(obj);
 	base_key = derive_args->key_descriptor_base;
 
 	ctx = params->ctx;
@@ -2008,6 +2007,13 @@ static CK_RV set_tls12_args(CK_MECHANISM_TYPE type,
 			goto end;
 
 		ke->random_data = rd;
+
+		mech_list = get_key_mech_list(obj);
+		if (!mech_list || !mech_list->number) {
+			status = CKR_ARGUMENTS_BAD;
+			goto end;
+		}
+
 		ke->encryption_name =
 			get_tls12_encryption_name(mech_list->mech[0],
 						  derived_key->security_size);

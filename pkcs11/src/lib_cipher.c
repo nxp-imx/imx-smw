@@ -83,7 +83,7 @@ static CK_RV set_iv_value(CK_VOID_PTR iv, CK_ULONG ivlen,
 		}
 	}
 
-	if (ctx->iv_length != ivlen)
+	if (!ctx->iv || ctx->iv_length != ivlen)
 		return CKR_MECHANISM_PARAM_INVALID;
 
 	memcpy(ctx->iv, iv, ivlen);
@@ -195,6 +195,11 @@ static CK_RV check_cipher_params(CK_MECHANISM_TYPE mechanism,
 		break;
 
 	case CKM_AES_CTR:
+		if (!pparameter) {
+			DBG_TRACE("CTR mode: Counter Bits is not set");
+			return CKR_MECHANISM_PARAM_INVALID;
+		}
+
 		if (ulparameterlen != sizeof(CK_AES_CTR_PARAMS)) {
 			DBG_TRACE("ulParameterLen error");
 			return CKR_MECHANISM_PARAM_INVALID;
@@ -250,6 +255,11 @@ static CK_RV check_cipher_params(CK_MECHANISM_TYPE mechanism,
 		break;
 
 	case CKM_SM4_CTR:
+		if (!pparameter) {
+			DBG_TRACE("SM4 CTR mode: Counter bits is not set");
+			return CKR_MECHANISM_PARAM_INVALID;
+		}
+
 		if (ulparameterlen != sizeof(CK_SM4_CTR_PARAMS)) {
 			DBG_TRACE("ulParameterLen error");
 			return CKR_MECHANISM_PARAM_INVALID;
@@ -267,6 +277,11 @@ static CK_RV check_cipher_params(CK_MECHANISM_TYPE mechanism,
 		break;
 
 	case CKM_AES_GCM:
+		if (!pparameter) {
+			DBG_TRACE("GCM mode: Parameters not set");
+			return CKR_MECHANISM_PARAM_INVALID;
+		}
+
 		if (op_flag & (CKF_MESSAGE_ENCRYPT | CKF_MESSAGE_DECRYPT)) {
 			if (ulparameterlen != sizeof(CK_GCM_MESSAGE_PARAMS)) {
 				DBG_TRACE("ulParameterLen error");
@@ -325,6 +340,11 @@ static CK_RV check_cipher_params(CK_MECHANISM_TYPE mechanism,
 		break;
 
 	case CKM_AES_CCM:
+		if (!pparameter) {
+			DBG_TRACE("CCM mode: Parameters not set");
+			return CKR_MECHANISM_PARAM_INVALID;
+		}
+
 		if (op_flag & (CKF_MESSAGE_ENCRYPT | CKF_MESSAGE_DECRYPT)) {
 			if (ulparameterlen != sizeof(CK_CCM_MESSAGE_PARAMS)) {
 				DBG_TRACE("ulParameterLen error");
@@ -361,6 +381,11 @@ static CK_RV check_cipher_params(CK_MECHANISM_TYPE mechanism,
 		break;
 
 	case CKM_CHACHA20_POLY1305:
+		if (!pparameter) {
+			DBG_TRACE("ChaCha20-Poly1305 mode: Parameters not set");
+			return CKR_MECHANISM_PARAM_INVALID;
+		}
+
 		if (op_flag & (CKF_MESSAGE_ENCRYPT | CKF_MESSAGE_DECRYPT)) {
 			if (ulparameterlen !=
 			    sizeof(CK_SALSA20_CHACHA20_POLY1305_MSG_PARAMS)) {

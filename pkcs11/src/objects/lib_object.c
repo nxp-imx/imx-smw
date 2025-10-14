@@ -247,9 +247,12 @@ static CK_RV find_lock_token_object(CK_SESSION_HANDLE hsession,
 static CK_RV find_lock_object(CK_SESSION_HANDLE hsession,
 			      struct libobj_obj *obj, struct libobj_list **list)
 {
-	CK_RV ret = CKR_OK;
+	CK_RV ret = CKR_OBJECT_HANDLE_INVALID;
 	struct libdevice *dev = NULL;
 	struct libsess *sess = NULL;
+
+	if (!obj)
+		goto end;
 
 	ret = find_lock_token_object(hsession, obj, list);
 	if (ret == CKR_OK)
@@ -1225,11 +1228,15 @@ static CK_RV libobj_get_profile_attribute(struct libobj_obj *libobj,
 					  CK_ATTRIBUTE_PTR attrs,
 					  CK_ULONG nb_attrs)
 {
-	CK_RV ret = CKR_OK;
-
 	unsigned int i = 0;
 
 	for (; i < nb_attrs; i++) {
+		if (!(attrs + i)->pValue) {
+			DBG_TRACE("Attribute Type 0x%lx not defined",
+				  (attrs + i)->type);
+			return CKR_ATTRIBUTE_VALUE_INVALID;
+		}
+
 		switch ((attrs + i)->type) {
 		case CKA_CLASS:
 			*(CK_OBJECT_CLASS *)(attrs + i)->pValue = CKO_PROFILE;
@@ -1245,11 +1252,13 @@ static CK_RV libobj_get_profile_attribute(struct libobj_obj *libobj,
 			break;
 
 		default:
-			ret = CKR_ATTRIBUTE_TYPE_INVALID;
+			DBG_TRACE("Attribute Type 0x%lx not supported",
+				  (attrs + i)->type);
+			return CKR_ATTRIBUTE_TYPE_INVALID;
 		}
 	}
 
-	return ret;
+	return CKR_OK;
 }
 
 CK_RV libobj_get_attribute(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject,
@@ -1739,6 +1748,11 @@ CK_RV libobj_find_init(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 			attrs_tmp[idx].type = attrs[idx].type;
 			attrs_tmp[idx].ulValueLen = attrs[idx].ulValueLen;
 			if (!attrs_tmp[idx].ulValueLen) {
+				ret = CKR_ATTRIBUTE_VALUE_INVALID;
+				goto end;
+			}
+
+			if (!attrs[idx].pValue) {
 				ret = CKR_ATTRIBUTE_VALUE_INVALID;
 				goto end;
 			}

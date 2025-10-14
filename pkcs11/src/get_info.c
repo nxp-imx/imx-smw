@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020, 2023-2024 NXP
+ * Copyright 2020, 2023-2025 NXP
  */
 
 #include <string.h>
@@ -200,7 +200,7 @@ static const CK_INFO pkcs11smw_info = {
 static const CK_CHAR def_if_name[] = "PKCS 11";
 #define DEFAULT_INTERFACE_ENTRY 0
 
-static struct CK_INTERFACE pkcs11smw_interfaces[] = {
+static const struct CK_INTERFACE pkcs11smw_interfaces[] = {
 	{
 		.pInterfaceName = (CK_CHAR *)def_if_name,
 		.pFunctionList = &pkcs11smw_v2_functions,
@@ -280,7 +280,7 @@ CK_RV C_GetInterface(CK_UTF8CHAR_PTR pInterfaceName, CK_VERSION_PTR pVersion,
 		     CK_INTERFACE_PTR_PTR ppInterface, CK_FLAGS flags)
 {
 	CK_RV ret = CKR_ARGUMENTS_BAD;
-	CK_INTERFACE_PTR entry = pkcs11smw_interfaces;
+	const struct CK_INTERFACE *entry = pkcs11smw_interfaces;
 	CK_FUNCTION_LIST_PTR func_list = NULL_PTR;
 
 	if (!ppInterface)
@@ -318,7 +318,7 @@ CK_RV C_GetInterface(CK_UTF8CHAR_PTR pInterfaceName, CK_VERSION_PTR pVersion,
 
 end:
 	if (ret == CKR_OK) {
-		*ppInterface = entry;
+		*ppInterface = (CK_INTERFACE_PTR)entry;
 		func_list = (CK_FUNCTION_LIST_PTR)entry->pFunctionList;
 		DBG_TRACE("Interface:");
 		DBG_TRACE("    Name: %s", entry->pInterfaceName);

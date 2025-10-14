@@ -618,6 +618,12 @@ CK_RV attr_modify_obj_value(CK_ATTRIBUTE_PTR attr,
 
 	for (; idx < nb_tattrs; idx++, tattr++) {
 		if (attr->type == tattr->type) {
+			if (!attr->pValue) {
+				DBG_TRACE("Attribute Type 0x%lx not defined",
+					  tattr->type);
+				return CKR_ATTRIBUTE_VALUE_INVALID;
+			}
+
 			if (tattr->modify)
 				return tattr->modify(obj + tattr->of_field,
 						     attr);

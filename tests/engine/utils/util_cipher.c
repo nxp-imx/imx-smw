@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2023, 2025 NXP
  */
 
 #include <stdlib.h>
@@ -107,7 +107,8 @@ int util_cipher_cmp_output_data(struct llist *list, unsigned int ctx_id,
 	if (!node_data)
 		return ERR_CODE(INTERNAL);
 
-	if (strncmp((char *)node_data->output, (char *)data, data_len)) {
+	if (!node_data->output ||
+	    strncmp((char *)node_data->output, (char *)data, data_len)) {
 		DBG_PRINT("Output doesn't match expected output");
 		DBG_DHEX("Got output", node_data->output, data_len);
 		DBG_DHEX("Expected output", data, data_len);

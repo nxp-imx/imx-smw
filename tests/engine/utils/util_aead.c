@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include <stdlib.h>
@@ -43,10 +43,10 @@ int util_aead_init(struct llist **list)
 }
 
 static int util_aead_allocate_buffer(unsigned char **data,
-				     unsigned int *data_len)
+				     unsigned int data_len)
 {
 	int res = ERR_CODE(PASSED);
-	*data = malloc(*data_len * sizeof(**data));
+	*data = malloc(data_len * sizeof(**data));
 	if (!*data) {
 		DBG_PRINT_ALLOC_FAILURE();
 		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
@@ -55,11 +55,11 @@ static int util_aead_allocate_buffer(unsigned char **data,
 	return res;
 }
 
-static int util_aead_resize_buffer(unsigned char **data, unsigned int *data_len)
+static int util_aead_resize_buffer(unsigned char **data, unsigned int data_len)
 {
 	int res = ERR_CODE(PASSED);
 
-	*data = realloc(*data, *data_len * sizeof(**data));
+	*data = realloc(*data, data_len * sizeof(**data));
 	if (!*data) {
 		DBG_PRINT_ALLOC_FAILURE();
 		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
@@ -96,9 +96,9 @@ int util_aead_add_output_data(struct llist *list, unsigned int id,
 			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		}
 
-		if (output) {
+		if (output && output_len) {
 			res = util_aead_allocate_buffer(&data->output,
-							&output_len);
+							output_len);
 			if (res != ERR_CODE(PASSED)) {
 				DBG_PRINT_ALLOC_FAILURE();
 				goto error;
@@ -110,8 +110,8 @@ int util_aead_add_output_data(struct llist *list, unsigned int id,
 
 		data->tag_len = tag_len;
 
-		if (tag) {
-			res = util_aead_allocate_buffer(&data->tag, &tag_len);
+		if (tag && tag_len) {
+			res = util_aead_allocate_buffer(&data->tag, tag_len);
 			if (res != ERR_CODE(PASSED)) {
 				DBG_PRINT_ALLOC_FAILURE();
 				goto error;
@@ -120,8 +120,8 @@ int util_aead_add_output_data(struct llist *list, unsigned int id,
 			memcpy(data->tag, tag, data->tag_len);
 		}
 
-		if (iv) {
-			res = util_aead_allocate_buffer(&data->iv, &iv_len);
+		if (iv && iv_len) {
+			res = util_aead_allocate_buffer(&data->iv, iv_len);
 			if (res != ERR_CODE(PASSED)) {
 				DBG_PRINT_ALLOC_FAILURE();
 				goto error;
@@ -142,7 +142,7 @@ int util_aead_add_output_data(struct llist *list, unsigned int id,
 				 &new_output_size))
 			return ERR_CODE(BAD_ARGS);
 
-		res = util_aead_resize_buffer(&data->output, &new_output_size);
+		res = util_aead_resize_buffer(&data->output, new_output_size);
 		if (res != ERR_CODE(PASSED))
 			return res;
 
@@ -153,8 +153,7 @@ int util_aead_add_output_data(struct llist *list, unsigned int id,
 			if (ADD_OVERFLOW(data->tag_len, tag_len, &new_tag_size))
 				return ERR_CODE(BAD_ARGS);
 
-			res = util_aead_resize_buffer(&data->tag,
-						      &new_tag_size);
+			res = util_aead_resize_buffer(&data->tag, new_tag_size);
 			if (res != ERR_CODE(PASSED)) {
 				DBG_PRINT_ALLOC_FAILURE();
 				goto error;
@@ -168,7 +167,7 @@ int util_aead_add_output_data(struct llist *list, unsigned int id,
 			if (ADD_OVERFLOW(data->iv_len, iv_len, &new_iv_size))
 				return ERR_CODE(BAD_ARGS);
 
-			res = util_aead_resize_buffer(&data->iv, &iv_len);
+			res = util_aead_resize_buffer(&data->iv, iv_len);
 			if (res != ERR_CODE(PASSED)) {
 				DBG_PRINT_ALLOC_FAILURE();
 				goto error;
@@ -213,7 +212,8 @@ int util_aead_cmp_output_data(struct llist *list, unsigned int id,
 	if (!node_data)
 		return ERR_CODE(INTERNAL);
 
-	if (strncmp((char *)node_data->output, (char *)data, data_len)) {
+	if (!node_data->output ||
+	    strncmp((char *)node_data->output, (char *)data, data_len)) {
 		DBG_PRINT("Output doesn't match expected output");
 		DBG_DHEX("Got output", node_data->output, data_len);
 		DBG_DHEX("Expected output", data, data_len);

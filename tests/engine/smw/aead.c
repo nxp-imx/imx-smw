@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include <string.h>
@@ -591,8 +591,11 @@ static int compare_tag(struct smw_aead_final_args *args,
 		res = util_compare_buffers(args->tag, args->tag_length,
 					   expected_tag, expected_tag_len);
 	} else {
-		if (!SUB_OVERFLOW(args->data->output_length, args->tag_length,
-				  &index))
+		if (!args->data->output || !args->data->output_length ||
+		    args->tag_length > args->data->output_length)
+			res = ERR_CODE(BAD_ARGS);
+		else if (!SUB_OVERFLOW(args->data->output_length,
+				       args->tag_length, &index))
 			res = util_compare_buffers(&args->data->output[index],
 						   args->tag_length,
 						   expected_tag,

@@ -61,6 +61,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add SMW_STATUS_KEY_ID_ALREADY_EXIST status when a key is already existing.
 * Check if targeted key derivation is already existing.
 * Fix operation context memory leak.
+* Fix coverity 2025.6.0 findings
 
 ##### 2. Subsystems
 
@@ -69,10 +70,15 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE: Add support for OFB cipher mode.
 * ELE: Fix memory leaks.
 * TEE: Fix key derived buffer leak.
+* Fix coverity 2025.6.0 findings
 
 ##### 3. ARM PSA APIs
 
+* Fix coverity 2025.6.0 findings
+
 ##### 4. OSAL
+
+* Fix coverity 2025.6.0 findings
 
 #### SMW Tests
 
@@ -81,6 +87,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   smw_get_data_info()
 * Setup a dedicated secure storage.
 * Enhance the OEM Master key derivation.
+* Fix coverity 2025.6.0 findings
 
 #### PKCS#11 Library
 
@@ -95,6 +102,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Cancel the ongoing multi-part cryptographic operation if it matches the type of operation being restored,
   to prevent conflicts during state restoration.
 * Fix memory leaks.
+* Fix coverity 2025.6.0 findings
 
 #### PKCS#11 Tests
 

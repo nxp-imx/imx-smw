@@ -1618,6 +1618,9 @@ psa_key_derivation_input_bytes(psa_key_derivation_operation_t *operation,
 		if (operation->info || operation->infolen) {
 			psa_status = PSA_ERROR_ALREADY_EXISTS;
 		} else {
+			if (!data || !data_length)
+				return PSA_ERROR_INVALID_ARGUMENT;
+
 			operation->infolen = data_length;
 			operation->info = SMW_UTILS_MALLOC(operation->infolen);
 			if (!operation->info) {

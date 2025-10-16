@@ -54,6 +54,7 @@
  * or set in the user configuration is not recognized by SMW.
  * @SMW_STATUS_OEM_SRKH_NOT_FUSED: Device OEM SRKH is not fused.
  *
+ * @SMW_STATUS_OPERATION_ALREADY_INIT: Operation is already initialized.
  * @SMW_STATUS_OPS_INVALID: OSAL operations structure is invalid.
  * @SMW_STATUS_MUTEX_INIT_FAILURE: Mutex initialization has failed.
  * @SMW_STATUS_MUTEX_DESTROY_FAILURE: Mutex destruction has failed.
@@ -145,6 +146,7 @@
  *	- SMW_STATUS_UNKNOWN_ALGO_NAME
  *	- SMW_STATUS_UNKNOWN_SIGN_ALGO_NAME
  *	- SMW_STATUS_UNKNOWN_SIGN_TYPE_NAME
+ *	- SMW_STATUS_OPERATION_ALREADY_INIT
  *
  ** Specific return codes - Library initialization
  *
@@ -280,7 +282,8 @@ enum smw_status_code {
 	SMW_STATUS_OBJ_DB_FIND,
 	SMW_STATUS_PUBLIC_EXPONENT_NOT_SUPPORTED,
 	SMW_STATUS_KEY_ID_ALREADY_EXIST, /* 70 */
-	SMW_STATUS_PERMITTED_ALGO_INVALID
+	SMW_STATUS_PERMITTED_ALGO_INVALID,
+	SMW_STATUS_OPERATION_ALREADY_INIT
 };
 
 #endif /* __SMW_STATUS_H__ */

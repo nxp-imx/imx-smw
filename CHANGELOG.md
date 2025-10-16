@@ -92,6 +92,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Enhance the OEM Master key derivation.
 * Fix coverity 2025.6.0 findings
 * Add tests validating the signature multi-part operation.
+* Add output saving mechanism for cipher.
 
 #### PKCS#11 Library
 

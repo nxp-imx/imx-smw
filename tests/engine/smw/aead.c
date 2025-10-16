@@ -668,45 +668,6 @@ static int compare_output_and_tag(struct smw_aead_final_args *args,
 	return res;
 }
 
-/**
- * read_decryption_input_buffer() - Read data buffer
- * @subtest: Subtest data
- * @data: Double pointer to the buffer defined in JSON
- * @data_len: Pointer to the buffer length defined in JSON
- * @aead_id: Node id
- * @field: Pointer to field key name
- *
- * This function is used for reading input buffers (input data and iv)
- * defined in JSON for decryption operation.
- * For non API test, if buffer is neither saved in the linked list and nor
- * defined in the test definition file, return MISSING_PARAMS.
- *
- * Return:
- * PASSED           - Success
- * -BAD_ARGS        - One of the argument is bad
- * Error code from util_read_hex_buffer
- */
-static int read_decryption_input_buffer(struct subtest_data *subtest,
-					unsigned char **data,
-					unsigned int *data_len,
-					unsigned int aead_id, char *field)
-{
-	int res = ERR_CODE(PASSED);
-
-	res = util_read_hex_buffer(data, data_len, subtest->params, field);
-	if (res != ERR_CODE(PASSED) && res != ERR_CODE(MISSING_PARAMS)) {
-		DBG_PRINT("Failed to read buffer");
-		res = ERR_CODE(BAD_ARGS);
-	}
-
-	/* Buffer can retrieved from linked list */
-	if (!is_api_test(subtest) && res == ERR_CODE(MISSING_PARAMS) &&
-	    aead_id != UINT_MAX)
-		res = ERR_CODE(PASSED);
-
-	return res;
-}
-
 static int set_final_output_iv_params(struct subtest_data *subtest,
 				      unsigned char **output_iv,
 				      unsigned int *output_iv_len)
@@ -1016,8 +977,8 @@ static int aead_decrypt(struct subtest_data *subtest)
 	 * data buffer saved in the list will be not be utilized.
 	 * The same applies to the iv buffer.
 	 */
-	res = read_decryption_input_buffer(subtest, &input, &input_len, aead_id,
-					   INPUT_OBJ);
+	res = util_read_decryption_input_buffer(subtest, &input, &input_len,
+						aead_id, INPUT_OBJ);
 	if ((!is_api_test(subtest) && res != ERR_CODE(PASSED)) ||
 	    (is_api_test(subtest) && res != ERR_CODE(PASSED) &&
 	     res != ERR_CODE(MISSING_PARAMS)))
@@ -1029,8 +990,8 @@ static int aead_decrypt(struct subtest_data *subtest)
 	}
 
 	/* Read iv buffer, if any  */
-	res = read_decryption_input_buffer(subtest, &iv, &iv_len, aead_id,
-					   IV_OBJ);
+	res = util_read_decryption_input_buffer(subtest, &iv, &iv_len, aead_id,
+						IV_OBJ);
 	if ((!is_api_test(subtest) && res != ERR_CODE(PASSED)) ||
 	    (is_api_test(subtest) && res != ERR_CODE(PASSED) &&
 	     res != ERR_CODE(MISSING_PARAMS)))

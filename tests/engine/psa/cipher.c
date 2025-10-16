@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023, 2025 NXP
  */
 
 #include <stdlib.h>
@@ -9,6 +9,7 @@
 #include <psa/crypto.h>
 
 #include "util.h"
+#include "util_cipher.h"
 
 #include "key.h"
 
@@ -122,6 +123,9 @@ int cipher_psa(struct subtest_data *subtest)
 	uint8_t *expected_output = NULL;
 	size_t expected_output_length = 0;
 	unsigned int length = 0;
+	unsigned int cipher_id = UINT_MAX;
+	bool encrypt_op = false;
+	bool decrypt_op = false;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -168,9 +172,34 @@ int cipher_psa(struct subtest_data *subtest)
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	/* Read input buffer. Could not be set for API tests only */
+	encrypt_op = (!strcmp(operation_name, OP_TYPE_ENCRYPT_STR));
+	decrypt_op = (!strcmp(operation_name, OP_TYPE_DECRYPT_STR));
+
+	res = util_read_json_type(&cipher_id, CIPHER_ID_OBJ, t_uint,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto end;
+
+	if (cipher_id != UINT_MAX) {
+		res = util_cipher_find_node(list_ciphers(subtest), cipher_id,
+					    &input, &length);
+		if ((encrypt_op && res == ERR_CODE(PASSED)) ||
+		    (decrypt_op && res != ERR_CODE(PASSED))) {
+			DBG_PRINT_BAD_PARAM(CIPHER_ID_OBJ);
+			res = ERR_CODE(BAD_PARAM_TYPE);
+			goto end;
+		}
+	}
+
+	/*
+	 * Read input buffer. Could not be set for API tests only.
+	 * If input data buffer is defined in the JSON, use this buffer in the
+	 * decryption operation. Even if 'cipher_id' is set, the input data
+	 * buffer saved in the list will be not be utilized.
+	 */
 	res = util_read_hex_buffer(&input, &length, subtest->params, INPUT_OBJ);
-	if (res != ERR_CODE(PASSED))
+	if (res != ERR_CODE(PASSED) &&
+	    (res != ERR_CODE(MISSING_PARAMS) || cipher_id == UINT_MAX))
 		goto end;
 
 	input_length = length;
@@ -180,13 +209,13 @@ int cipher_psa(struct subtest_data *subtest)
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
-	if (!strcmp(operation_name, OP_TYPE_ENCRYPT_STR)) {
+	if (encrypt_op) {
 		subtest->psa_status =
 			psa_cipher_encrypt(key, alg, input, input_length,
 					   output, output_size, &output_length);
 	}
 
-	else if (!strcmp(operation_name, OP_TYPE_DECRYPT_STR)) {
+	else if (decrypt_op) {
 		subtest->psa_status =
 			psa_cipher_decrypt(key, alg, (uint8_t *)input,
 					   input_length, output, output_size,
@@ -205,6 +234,17 @@ int cipher_psa(struct subtest_data *subtest)
 		goto end;
 	}
 
+	if (encrypt_op && cipher_id != UINT_MAX) {
+		/*
+		 * In case of encryption, if 'cipher_id' is set, save the
+		 * ciphertext to the ciphers list.
+		 */
+		res = util_cipher_add_out_data(list_ciphers(subtest), cipher_id,
+					       output, output_length);
+		if (res != ERR_CODE(PASSED))
+			goto end;
+	}
+
 	/* Optional output comparison */
 	if (output && expected_output)
 		res = util_compare_buffers(output, output_length,
@@ -212,7 +252,7 @@ int cipher_psa(struct subtest_data *subtest)
 					   expected_output_length);
 
 end:
-	if (input)
+	if (input && (encrypt_op || cipher_id == UINT_MAX))
 		free(input);
 
 	if (expected_output)

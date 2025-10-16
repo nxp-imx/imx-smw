@@ -97,21 +97,23 @@
 		"key_name": "key 3"
 	},
 	"subtest 5": {
-		"description": "Encrypt with key ID",
+		"description": "Encrypt with key ID - ciphertext is saved",
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
 		"key_name": "key 3",
 		"input": "ebabce95b14d3c8d6fb350390790311c",
+		"cipher_id": 1,
 		"depends": 4
 	},
 	"subtest 6": {
-		"description": "Decrypt with key ID",
+		"description": "Decrypt with key ID using saved ciphertext",
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "DECRYPT",
 		"key_name": "key 3",
-		"input": "ebabce95b14d3c8d6fb350390790311c",
+		"cipher_id": 1,
+		"output": "ebabce95b14d3c8d6fb350390790311c",
 		"depends": 4
 	},
 	"subtest 7": {
@@ -149,7 +151,7 @@
 		]
 	},
 	"subtest 9": {
-		"description": "Encrypt with 2 key ids",
+		"description": "Encrypt with 2 key ids - ciphertext is saved",
 		"command": "CIPHER",
 		"mode": "XTS",
 		"op_type": "ENCRYPT",
@@ -159,13 +161,14 @@
 		],
 		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"iv": "33333333330000000000000000000000",
+		"cipher_id": 2,
 		"depends": [
 			2,
 			3
 		]
 	},
 	"subtest 10": {
-		"description": "Decrypt with 2 key ids",
+		"description": "Decrypt with 2 key ids using saved ciphertext",
 		"command": "CIPHER",
 		"mode": "XTS",
 		"op_type": "DECRYPT",
@@ -173,8 +176,9 @@
 			"key 1",
 			"key 2"
 		],
-		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"iv": "33333333330000000000000000000000",
+		"cipher_id": 2,
+		"output": "ebabce95b14d3c8d6fb350390790311c",
 		"depends": [
 			2,
 			3

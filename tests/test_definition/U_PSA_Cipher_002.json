@@ -22,26 +22,32 @@
 		"restriction_list": "imx8ulp"
 	},
 	"subtest 2": {
+		"description": "(OFB) Cipher Encryption - ciphertext is saved",
 		"command": "CIPHER",
 		"mode": "OFB",
 		"op_type": "ENCRYPT",
 		"key_name": "key 1",
 		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"iv": "60cc50e0887532e0d4f3d2f20c3c5d58",
+		"cipher_id": 1,
 		"depends": 1
 	},
 	"subtest 3": {
+		"description": "(OFB) Cipher Decryption using saved ciphertext",
 		"command": "CIPHER",
 		"mode": "OFB",
 		"op_type": "DECRYPT",
 		"key_name": "key 1",
-		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"iv": "60cc50e0887532e0d4f3d2f20c3c5d58",
-		"depends": 1
+		"cipher_id": 1,
+		"output": "ebabce95b14d3c8d6fb350390790311c",
+		"depends": [
+			1,
+			2
+		]
 	},
 	"subtest 4": {
 		"command": "DELETE",
-		"api": "PSA",
 		"key_name": "key 1",
 		"depends": 1
 	}

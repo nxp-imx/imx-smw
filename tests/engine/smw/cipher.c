@@ -311,6 +311,9 @@ int cipher(struct subtest_data *subtest)
 	struct smw_cipher_args *cipher_args = &args;
 	struct smw_cipher_init_args *init = &args.init;
 	struct keys keys = { 0 };
+	unsigned int cipher_id = UINT_MAX;
+	bool encrypt_op = false;
+	bool decrypt_op = false;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -324,9 +327,45 @@ int cipher(struct subtest_data *subtest)
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
-	/* Read input buffer. Could not be set for API tests only */
-	res = util_read_hex_buffer(&args.data.input, &args.data.input_length,
-				   subtest->params, INPUT_OBJ);
+	/* Get operation type */
+	encrypt_op = (init->op_type_name == SMW_CIPHER_OP_TYPE_NAME_ENCRYPT);
+	decrypt_op = (init->op_type_name == SMW_CIPHER_OP_TYPE_NAME_DECRYPT);
+
+	/* Get 'cipher_id' parameter, if any */
+	res = util_read_json_type(&cipher_id, CIPHER_ID_OBJ, t_uint,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto end;
+
+	/* Try to get saved data if 'cipher_id' is set */
+	if (cipher_id != UINT_MAX) {
+		res = util_cipher_find_node(list_ciphers(subtest), cipher_id,
+					    &args.data.input,
+					    &args.data.input_length);
+
+		if ((encrypt_op && res == ERR_CODE(PASSED)) ||
+		    (decrypt_op && res != ERR_CODE(PASSED))) {
+			DBG_PRINT_BAD_PARAM(CIPHER_ID_OBJ);
+			res = ERR_CODE(BAD_PARAM_TYPE);
+			goto end;
+		}
+	}
+
+	/*
+	 * Read input buffer. Could not be set for API tests only.
+	 * If input data buffer is defined in the JSON, use this buffer in the
+	 * decryption operation. Even if 'cipher_id' is set, the input data
+	 * buffer saved in the list will be not be utilized.
+	 */
+	if (decrypt_op)
+		res = util_read_decryption_input_buffer(subtest,
+							&args.data.input,
+							&args.data.input_length,
+							cipher_id, INPUT_OBJ);
+	else
+		res = util_read_hex_buffer(&args.data.input,
+					   &args.data.input_length,
+					   subtest->params, INPUT_OBJ);
 	if ((!is_api_test(subtest) && res != ERR_CODE(PASSED)) ||
 	    (is_api_test(subtest) && res != ERR_CODE(PASSED) &&
 	     res != ERR_CODE(MISSING_PARAMS))) {
@@ -365,6 +404,18 @@ int cipher(struct subtest_data *subtest)
 		}
 	}
 
+	if (encrypt_op && cipher_id != UINT_MAX) {
+		/*
+		 * In case of encryption, if 'cipher_id' is set, save the
+		 * ciphertext to the ciphers list.
+		 */
+		res = util_cipher_add_out_data(list_ciphers(subtest), cipher_id,
+					       cipher_args->data.output,
+					       cipher_args->data.output_length);
+		if (res != ERR_CODE(PASSED))
+			goto end;
+	}
+
 	/* Optional output comparison */
 	if (args.data.output && expected_output)
 		res = util_compare_buffers(args.data.output,
@@ -372,7 +423,7 @@ int cipher(struct subtest_data *subtest)
 					   expected_output, expected_out_len);
 
 end:
-	if (args.data.input)
+	if (args.data.input && (encrypt_op || cipher_id == UINT_MAX))
 		free(args.data.input);
 
 	if (args.init.iv)

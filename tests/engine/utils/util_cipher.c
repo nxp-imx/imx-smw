@@ -118,6 +118,27 @@ int util_cipher_cmp_output_data(struct llist *list, unsigned int ctx_id,
 	return ERR_CODE(PASSED);
 }
 
+int util_cipher_find_node(struct llist *list, unsigned int id,
+			  unsigned char **output, unsigned int *output_length)
+{
+	int res = ERR_CODE(BAD_ARGS);
+	struct cipher_output_data *data = NULL;
+
+	if (!list || !output || !output_length)
+		return res;
+
+	res = util_list_find_node(list, id, (void **)&data);
+	if (res == ERR_CODE(PASSED) && !data)
+		return ERR_CODE(FAILED);
+
+	if (res == ERR_CODE(PASSED)) {
+		*output = data->output;
+		*output_length = data->output_len;
+	}
+
+	return res;
+}
+
 int util_cipher_copy_node(struct llist *list, unsigned int dst_ctx_id,
 			  unsigned int src_ctx_id)
 {

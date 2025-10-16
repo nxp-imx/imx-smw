@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #include <assert.h>
@@ -826,4 +826,25 @@ int util_read_obj_value(unsigned char **value, unsigned int *length,
 	}
 
 	return ret;
+}
+
+int util_read_decryption_input_buffer(struct subtest_data *subtest,
+				      unsigned char **data,
+				      unsigned int *data_len, unsigned int id,
+				      char *field)
+{
+	int res = ERR_CODE(PASSED);
+
+	res = util_read_hex_buffer(data, data_len, subtest->params, field);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(MISSING_PARAMS)) {
+		DBG_PRINT("Failed to read buffer");
+		res = ERR_CODE(BAD_ARGS);
+	}
+
+	/* Buffer can retrieved from linked list */
+	if (!is_api_test(subtest) && res == ERR_CODE(MISSING_PARAMS) &&
+	    id != UINT_MAX)
+		res = ERR_CODE(PASSED);
+
+	return res;
 }

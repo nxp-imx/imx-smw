@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #ifndef __UTIL_H__
@@ -397,5 +397,28 @@ char *util_string_to_upper(char *str);
  */
 int util_read_obj_value(unsigned char **value, unsigned int *length,
 			const char *key, struct json_object *params);
+
+/**
+ * util_read_decryption_input_buffer() - Read data buffer for decryption operation
+ * @subtest: Subtest data
+ * @data: Double pointer to the buffer defined in JSON
+ * @data_len: Pointer to the buffer length defined in JSON
+ * @id: Node id
+ * @field: Pointer to field key name
+ *
+ * This function is used for reading input buffers defined in JSON for
+ * decryption operation.
+ * For non API test, if buffer is neither saved in the linked list and nor
+ * defined in the test definition file, return MISSING_PARAMS.
+ *
+ * Return:
+ * PASSED           - Success
+ * -BAD_ARGS        - One of the argument is bad
+ * Error code from util_read_hex_buffer
+ */
+int util_read_decryption_input_buffer(struct subtest_data *subtest,
+				      unsigned char **data,
+				      unsigned int *data_len, unsigned int id,
+				      char *field);
 
 #endif /* __UTIL_H__ */

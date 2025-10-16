@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2022, 2025 NXP
  */
 #ifndef __UTIL_CIPHER_H__
 #define __UTIL_CIPHER_H__
@@ -55,6 +55,24 @@ int util_cipher_add_out_data(struct llist *list, unsigned int ctx_id,
  */
 int util_cipher_cmp_output_data(struct llist *list, unsigned int ctx_id,
 				unsigned char *data, unsigned int data_len);
+
+/**
+ * util_cipher_find_node() - Point to node members, if node exists
+ * @list: Linked list where the search is done.
+ * @id: Id of the node.
+ * @output: Pointer to the output data buffer.
+ * @output_length: @output length in bytes.
+ *
+ * If node id exists, point output and length buffers to the respective members
+ * of the linked list node.
+ *
+ * Return:
+ * PASSED                  - Success.
+ * -BAD_ARG                - Bad argument.
+ * -FAILED                 - @output is NULL or @id is not found.
+ */
+int util_cipher_find_node(struct llist *list, unsigned int id,
+			  unsigned char **output, unsigned int *output_length);
 
 /**
  * util_cipher_copy_node() - Copy a cipher output data node

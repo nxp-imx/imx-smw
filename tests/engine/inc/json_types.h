@@ -17,6 +17,7 @@
 #define CERTIFICATE_ID_OBJ	  "cert_id"
 #define CERTIFICATE_OBJ		  "certificate"
 #define CHALLENGE_OBJ		  "challenge"
+#define CIPHER_ID_OBJ		  "cipher_id"
 #define CLIENT_RANDOM_OBJ	  "client_random"
 #define CLIENT_W_ENC_KEY_NAME_OBJ "client_w_enc_key_name"
 #define CLIENT_W_MAC_KEY_NAME_OBJ "client_w_mac_key_name"

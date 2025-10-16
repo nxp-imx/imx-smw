@@ -151,6 +151,7 @@
 		"key_name": "key 3",
 		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"iv": "60cc50e0887532e0d4f3d2f20c3c5d58",
+		"cipher_id": 1,
 		"depends": 3
 	},
 	"subtest 12": {
@@ -158,8 +159,9 @@
 		"mode": "CFB",
 		"op_type": "DECRYPT",
 		"key_name": "key 3",
-		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"iv": "60cc50e0887532e0d4f3d2f20c3c5d58",
+		"cipher_id": 1,
+		"output": "ebabce95b14d3c8d6fb350390790311c",
 		"depends": 3
 	},
 	"subtest 13": {

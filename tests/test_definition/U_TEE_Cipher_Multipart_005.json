@@ -1,0 +1,58 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT"
+			],
+			"permitted_algo": [
+				"ECB_NO_PADDING"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key 1"
+	},
+	"subtest 2": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "TEE",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 3": {
+		"description": "Cipher encryption init",
+		"command": "CIPHER_INIT",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 4": {
+		"description": "Cipher encryption init on same operation context",
+		"command": "CIPHER_INIT",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"context_id": 0,
+		"depends": 2,
+		"result": "SMW_STATUS_OPERATION_ALREADY_INIT"
+	},
+	"subtest 5": {
+		"description": "Release the context",
+		"command": "OP_CONTEXT_CANCEL",
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 6": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	}
+}

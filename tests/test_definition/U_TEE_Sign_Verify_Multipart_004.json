@@ -1,0 +1,117 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "SECP_R1",
+			"security_size": 192,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			]
+		},
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key 1"
+	},
+	"subtest 2": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "TEE",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 3": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "TEE",
+		"context_id": 1,
+		"depends": 1
+	},
+	"subtest 4": {
+		"description": "Sign init",
+		"command": "SIGN_INIT",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA224"
+		],
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a",
+			"59f8237a1cb51b42f3ded6b202d9af09"
+		],
+		"context_id": 0,
+		"key_name": "key 1",
+		"depends": 2
+	},
+	"subtest 5": {
+		"description": "Sign init on same operation context",
+		"command": "SIGN_INIT",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA224"
+		],
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a",
+			"59f8237a1cb51b42f3ded6b202d9af09"
+		],
+		"context_id": 0,
+		"key_name": "key 1",
+		"depends": 2,
+		"result": "SMW_STATUS_OPERATION_ALREADY_INIT"
+	},
+	"subtest 6": {
+		"description": "Verify init",
+		"command": "VERIFY_INIT",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA256"
+		],
+		"message": [
+			"451101250ec6f26652249d59dc974b73",
+			"61d571a8101cdfd36aba3b5854d3ae08",
+			"6b5fdd4597721b66e3c0dc5d8c606d96"
+		],
+		"context_id": 1,
+		"key_name": "key 1",
+		"depends": 3
+	},
+	"subtest 7": {
+		"description": "Verify init on same operation context",
+		"command": "VERIFY_INIT",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA256"
+		],
+		"message": [
+			"451101250ec6f26652249d59dc974b73",
+			"61d571a8101cdfd36aba3b5854d3ae08",
+			"6b5fdd4597721b66e3c0dc5d8c606d96"
+		],
+		"context_id": 1,
+		"key_name": "key 1",
+		"depends": 3,
+		"result": "SMW_STATUS_OPERATION_ALREADY_INIT"
+	},
+	"subtest 8": {
+		"description": "Release the context",
+		"command": "OP_CONTEXT_CANCEL",
+		"context_id": 1,
+		"depends": 3
+	},
+	"subtest 9": {
+		"description": "Release the context",
+		"command": "OP_CONTEXT_CANCEL",
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 10": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	}
+}

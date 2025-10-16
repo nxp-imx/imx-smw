@@ -377,6 +377,11 @@ enum smw_status_code smw_cipher_init(struct smw_cipher_init_args *args)
 	if (!args || !args->context)
 		goto end;
 
+	if (args->context->op_state != CTX_OP_STATE_ALLOC) {
+		status = SMW_STATUS_OPERATION_ALREADY_INIT;
+		goto end;
+	}
+
 	status = convert_init_args(args, &init_args, &subsystem_id);
 	if (status != SMW_STATUS_OK)
 		goto end;

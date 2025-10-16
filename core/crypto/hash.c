@@ -315,6 +315,11 @@ enum smw_status_code smw_hash_init(struct smw_hash_init_args *args)
 	if (!args || !args->context || !args->input != !args->input_length)
 		goto end;
 
+	if (args->context->op_state != CTX_OP_STATE_ALLOC) {
+		status = SMW_STATUS_OPERATION_ALREADY_INIT;
+		goto end;
+	}
+
 	status = convert_init_args(args, &hash_args);
 	if (status != SMW_STATUS_OK)
 		goto end;

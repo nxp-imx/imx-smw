@@ -1003,6 +1003,11 @@ enum smw_status_code smw_aead_init(struct smw_aead_init_args *args)
 	if (!args || !args->context)
 		goto end;
 
+	if (args->context->op_state != CTX_OP_STATE_ALLOC) {
+		status = SMW_STATUS_OPERATION_ALREADY_INIT;
+		goto end;
+	}
+
 	init_args.op_step = SMW_OP_STEP_INIT;
 
 	status = convert_init_args(args, &init_args, &subsystem_id);

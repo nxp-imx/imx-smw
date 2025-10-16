@@ -319,6 +319,11 @@ static int sign_verify_init(enum operation_id operation_id,
 	if (!args || !args->context || !args->message != !args->message_length)
 		goto end;
 
+	if (args->context->op_state != CTX_OP_STATE_ALLOC) {
+		status = SMW_STATUS_OPERATION_ALREADY_INIT;
+		goto end;
+	}
+
 	status = sign_verify_init_convert_args(args, &sign_verify_args,
 					       &subsystem_id);
 	if (status != SMW_STATUS_OK)

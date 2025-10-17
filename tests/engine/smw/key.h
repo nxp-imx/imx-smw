@@ -304,6 +304,21 @@ int key_read_descriptor(struct llist *keys, struct keypair_ops *key_test,
 			const char *key_name);
 
 /**
+ * read_public_key_descriptor() - Read the public key descriptor definition
+ * @keys: Keys list.
+ * @key_test: Test keypair structure with operations.
+ * @key_name: Key name.
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -FAILED                  - Error in definition file
+ */
+int read_public_key_descriptor(struct llist *keys, struct keypair_ops *key_test,
+			       const char *key_name);
+
+/**
  * key_desc_set_key() - Set a SMW keypair to the key descriptor
  * @key_test: Test keypair structure with operations.
  * @key: SMW keypair buffer.

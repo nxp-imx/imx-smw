@@ -20,6 +20,14 @@
  * get_output_buffer_len() - Return output buffer length
  * @key_desc: Pointer to key descriptor
  *
+ * For RSA asymmetric operations:
+ * - Encryption: Output buffer size equals key's security size in bytes
+ * - Decryption: Output buffer size is ≤ key's security size in bytes
+ *               (depends on padding)
+ *
+ * To ensure adequate output buffer size for both operations, allocate the
+ * full security size of the key.
+ *
  * Return:
  * Output buffer length in bytes.
  * 0 if key type not supported.
@@ -101,6 +109,16 @@ set_asymm_encrypt_decrypt_bad_args(struct subtest_data *subtest,
  * @expected_out_len: Pointer to expected output buffer length
  * @args: SMW asymmetric encryption arguments.
  *
+ * Case 1: Only expected_output_len defined
+ *         - Set args->output = NULL to query required length
+ *
+ * Case 2: expected_output buffer defined
+ *         - Allocate args->output buffer with expected length
+ *
+ * Case 3: Neither expected_output nor expected_output_len defined
+ *         - Call get_output_buffer_len() to determine required size
+ *         - Allocate args->output buffer accordingly
+ *
  * Return:
  * PASSED                   - Success
  * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed
@@ -125,13 +143,21 @@ static int set_output_params(struct subtest_data *subtest,
 	/* Output length is not set by definition file */
 	if (res == ERR_CODE(MISSING_PARAMS) ||
 	    (is_api_test(subtest) && !*expected_out_len && *expected_output)) {
+		if (!args->key_descriptor)
+			return ERR_CODE(BAD_ARGS);
+
 		args->output_length =
 			get_output_buffer_len(args->key_descriptor);
 	} else {
 		args->output_length = *expected_out_len;
 	}
 
-	/* If length is set to 0 by definition file output pointer is NULL */
+	/* Get output length feature */
+	if (res == ERR_CODE(PASSED) && !*expected_output && *expected_out_len) {
+		args->output = NULL;
+		args->output_length = 0;
+	}
+
 	if (args->output_length) {
 		args->output =
 			calloc(1, args->output_length * sizeof(*args->output));
@@ -177,7 +203,12 @@ static int set_key_desc(struct subtest_data *subtest,
 		goto end;
 
 	/* Read the json-c key description */
-	res = key_read_descriptor(list_keys(subtest), key, key_name);
+	if (is_encrypt_op)
+		res = read_public_key_descriptor(list_keys(subtest), key,
+						 key_name);
+	else
+		res = key_read_descriptor(list_keys(subtest), key, key_name);
+
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
@@ -193,6 +224,35 @@ static int set_key_desc(struct subtest_data *subtest,
 	}
 
 end:
+	return res;
+}
+
+static int compare_output(unsigned char *output, unsigned int output_len,
+			  unsigned char *exp_output,
+			  unsigned int exp_output_len)
+{
+	int res = ERR_CODE(PASSED);
+
+	if (!exp_output_len)
+		goto exit;
+
+	/* Validate get output length feature */
+	if (!output) {
+		if (output_len != exp_output_len) {
+			DBG_PRINT("Bad output length got %d expected %d",
+				  output_len, exp_output_len);
+			res = ERR_CODE(SUBSYSTEM);
+		}
+
+		goto exit;
+	}
+
+	/* Optional output buffer comparison */
+	if (exp_output)
+		res = util_compare_buffers(output, output_len, exp_output,
+					   exp_output_len);
+
+exit:
 	return res;
 }
 
@@ -285,10 +345,8 @@ int asymmetric_encrypt(struct subtest_data *subtest)
 			goto exit;
 	}
 
-	/* Optional output comparison */
-	if (args.output && exp_output)
-		res = util_compare_buffers(args.output, args.output_length,
-					   exp_output, exp_output_len);
+	res = compare_output(args.output, args.output_length, exp_output,
+			     exp_output_len);
 
 exit:
 	key_free_key(&key_test);
@@ -385,10 +443,8 @@ int asymmetric_decrypt(struct subtest_data *subtest)
 		goto exit;
 	}
 
-	/* Optional output comparison */
-	if (args.output && exp_output)
-		res = util_compare_buffers(args.output, args.output_length,
-					   exp_output, exp_output_len);
+	res = compare_output(args.output, args.output_length, exp_output,
+			     exp_output_len);
 
 exit:
 	key_free_key(&key_test);

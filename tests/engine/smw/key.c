@@ -101,6 +101,7 @@ static const struct util_attr_info algo_info[] = {
 	/* RSA_NO_PAD_INCOMPLETE to test error handling */
 	ATTR_ALGO(RSA_NO_PAD_INCOMPLETE, ASYMMETRIC_ENCRYPTION, NONE, NONE,
 		  NONE),
+	ATTR_ALGO(RSA_ANY, ASYMMETRIC_ENCRYPTION, RSA, ANY, ANY),
 	ATTR_ALGO_KEY_AGREEMENT(ECDH_HKDF, ECDH, HKDF, ANY),
 	{ .string = NULL }
 };
@@ -553,6 +554,115 @@ int key_read_descriptor(struct llist *keys, struct keypair_ops *key_test,
 	return res;
 }
 
+static bool read_exported_public_key(const struct key_data *data,
+				     const struct smw_key_descriptor *desc)
+{
+	bool read_exported_public_key = true;
+
+	/* Must have no identifier and valid public key data */
+	if (data->identifier || !data->pub_key.data || !data->pub_key.length)
+		read_exported_public_key = false;
+
+	/* For RSA keys, modulus data is also required */
+	if (desc->type_name == SMW_KEY_TYPE_NAME_RSA) {
+		if (!data->modulus_key.data || !data->modulus_key.length)
+			read_exported_public_key = false;
+	}
+
+	/* For non-RSA keys, public key data is sufficient */
+	return read_exported_public_key;
+}
+
+int read_public_key_descriptor(struct llist *keys, struct keypair_ops *key_test,
+			       const char *key_name)
+{
+	int ret = ERR_CODE(PASSED);
+	struct key_data *data = NULL;
+	const char *type_string = NULL;
+	const char *format_string = NULL;
+	struct smw_key_descriptor *desc = &key_test->desc;
+
+	if (!desc || !key_name) {
+		DBG_PRINT_BAD_ARGS();
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	ret = util_list_find_node(keys, (uintptr_t)key_name, (void **)&data);
+	if (ret != ERR_CODE(PASSED))
+		return ret;
+
+	if (!data)
+		return ERR_CODE(KEY_NOTFOUND);
+
+	/*
+	 * For a given key, if the key ID is 0 and a public key buffer is present
+	 * in the key's linked list node, copy the buffer from the node and
+	 * retrieve the key type, size, and format from the test definition file.
+	 * For RSA keys, copy both the public key and modulus data from key's
+	 * linked list node.
+	 * This scenario typically occurs when a public key /modulus buffers are
+	 * exported using the smw_export_key() API, and is later used for signature
+	 * verification or asymmetric encryption.
+	 */
+	if (read_exported_public_key(data, desc)) {
+		/* Read 'type' parameter if defined */
+		ret = util_read_json_type(&type_string, TYPE_OBJ, t_string,
+					  data->okey_params);
+		if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
+			return ret;
+
+		if (ret == ERR_CODE(PASSED))
+			desc->type_name = key_get_type_name(type_string);
+
+		/* Read 'security_size' parameter if defined */
+		ret = util_read_json_type(&desc->security_size, SEC_SIZE_OBJ,
+					  t_int, data->okey_params);
+		if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
+			return ret;
+
+		/* Read 'format' parameter if defined */
+		ret = util_read_json_type(&format_string, FORMAT_OBJ, t_string,
+					  data->okey_params);
+		if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
+			return ret;
+
+		desc->buffer->format_name = key_get_format_name(format_string);
+
+		/* Setup the key ops function of the key type */
+		set_key_ops(key_test);
+
+		*key_public_length(key_test) = data->pub_key.length;
+		*key_public_data(key_test) = malloc(data->pub_key.length);
+		if (!*key_public_data(key_test)) {
+			DBG_PRINT_ALLOC_FAILURE();
+			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		}
+
+		memcpy(*key_public_data(key_test), data->pub_key.data,
+		       data->pub_key.length);
+
+		if (desc->type_name == SMW_KEY_TYPE_NAME_RSA) {
+			*key_modulus_length(key_test) =
+				data->modulus_key.length;
+			*key_modulus(key_test) =
+				malloc(data->modulus_key.length);
+			if (!*key_modulus(key_test)) {
+				DBG_PRINT_ALLOC_FAILURE();
+				return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+			}
+
+			memcpy(*key_modulus(key_test), data->modulus_key.data,
+			       data->modulus_key.length);
+		}
+
+		ret = ERR_CODE(PASSED);
+	} else {
+		ret = key_read_descriptor(keys, key_test, key_name);
+	}
+
+	return ret;
+}
+
 int key_desc_set_key(struct keypair_ops *key_test,
 		     struct smw_keypair_buffer *key)
 {
@@ -582,8 +692,20 @@ void key_prepare_key_data(struct keypair_ops *key_test,
 {
 	key_data->identifier = key_test->desc.id;
 	if (key_test->keys) {
-		key_data->pub_key.data = *key_test->public_data(key_test);
-		key_data->pub_key.length = *key_test->public_length(key_test);
+		if (key_test->public_data && key_test->public_length) {
+			key_data->pub_key.data =
+				*key_test->public_data(key_test);
+			key_data->pub_key.length =
+				*key_test->public_length(key_test);
+		}
+
+		if (key_test->desc.type_name == SMW_KEY_TYPE_NAME_RSA &&
+		    key_test->modulus && key_test->modulus_length) {
+			key_data->modulus_key.data =
+				*key_test->modulus(key_test);
+			key_data->modulus_key.length =
+				*key_test->modulus_length(key_test);
+		}
 	}
 }
 

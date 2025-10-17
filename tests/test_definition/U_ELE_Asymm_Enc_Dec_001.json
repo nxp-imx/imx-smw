@@ -9,6 +9,9 @@
 			"usage": [
 				"ENCRYPT",
 				"DECRYPT"
+			],
+			"permitted_algo": [
+				"ECB_NO_PADDING"
 			]
 		},
 		"key 2": {
@@ -20,6 +23,9 @@
 			"usage": [
 				"ENCRYPT",
 				"DECRYPT"
+			],
+			"permitted_algo": [
+				"RSA_ANY"
 			]
 		},
 		"key 3": {
@@ -68,13 +74,17 @@
 	},
 	"subtest 1": {
 		"command": "GENERATE",
-		"subsystem": "TEE",
-		"key_name": "key 1"
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"restriction_list": [
+			"imx8ulp",
+			"imx943"
+		]
 	},
 	"subtest 2": {
 		"description": "Invalid key type",
 		"command": "ASYMMETRIC_ENCRYPT",
-		"subsystem": "TEE",
+		"subsystem": "ELE",
 		"enc_attr": [
 			"RSA_PKCS1_V15"
 		],
@@ -85,20 +95,25 @@
 		],
 		"output": 256,
 		"key_name": "key 1",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 1
 	},
 	"subtest 3": {
 		"command": "GENERATE",
-		"subsystem": "TEE",
-		"key_name": "key 2"
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"restriction_list": [
+			"imx8ulp",
+			"imx943"
+		]
 	},
 	"subtest 4": {
 		"description": [
-			"Validate get output length feature",
-			"Compare output buffer size with expected output buffer size"
+			"Validate get output buffer length feature",
+			"Compare output size with expected output buffer size"
 		],
 		"command": "ASYMMETRIC_ENCRYPT",
-		"subsystem": "TEE",
+		"subsystem": "ELE",
 		"enc_attr": [
 			"RSA_PKCS1_V15"
 		],
@@ -114,7 +129,7 @@
 	"subtest 5": {
 		"description": "Output length too small",
 		"command": "ASYMMETRIC_ENCRYPT",
-		"subsystem": "TEE",
+		"subsystem": "ELE",
 		"enc_attr": [
 			"RSA_PKCS1_V15"
 		],
@@ -129,16 +144,21 @@
 		"depends": 3
 	},
 	"subtest 6": {
-		"description": "Perform asymmetric encryption",
+		"description": "Perform asymmetric encryption operation",
 		"command": "ASYMMETRIC_ENCRYPT",
-		"subsystem": "TEE",
+		"subsystem": "ELE",
 		"enc_attr": [
 			"RSA_PKCS1_V15"
 		],
 		"input": [
 			"54657374206d65737361676520666f72",
 			"20525341207369676e6174757265732e",
-			"0a"
+			"54657374206d65737361676520666f72",
+			"20525341207369676e6174757265732e",
+			"54657374206d65737361676520666f72",
+			"20525341207369676e6174757265732e",
+			"54657374206d65737361676520666f72",
+			"20525341207369676e6174757265732e",
 		],
 		"key_name": "key 2",
 		"enc_id": 0,
@@ -147,7 +167,7 @@
 	"subtest 7": {
 		"description": "Output length too small",
 		"command": "ASYMMETRIC_DECRYPT",
-		"subsystem": "TEE",
+		"subsystem": "ELE",
 		"enc_attr": [
 			"RSA_PKCS1_V15"
 		],
@@ -160,7 +180,7 @@
 	"subtest 8": {
 		"description": "Salt length is set while salt buffer is not set",
 		"command": "ASYMMETRIC_ENCRYPT",
-		"subsystem": "TEE",
+		"subsystem": "ELE",
 		"enc_attr": [
 			"RSA_OAEP",
 			"HASH=SHA256"
@@ -168,16 +188,22 @@
 		"input": [
 			"54657374206d65737361676520666f72",
 			"20525341207369676e6174757265732e",
-			"0a"
+			"54657374206d65737361676520666f72",
+			"20525341207369676e6174757265732e",
+			"54657374206d65737361676520666f72",
+			"20525341207369676e6174757265732e",
+			"54657374206d65737361676520666f72",
+			"20525341207369676e6174757265732e",
 		],
 		"salt": 10,
 		"key_name": "key 2",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 3
 	},
 	"subtest 9": {
 		"description": "Salt length is set while salt buffer is not set",
 		"command": "ASYMMETRIC_DECRYPT",
-		"subsystem": "TEE",
+		"subsystem": "ELE",
 		"enc_attr": [
 			"RSA_OAEP",
 			"HASH=SHA256"
@@ -189,7 +215,8 @@
 		],
 		"salt": 10,
 		"key_name": "key 2",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 3
 	},
 	"subtest 10": {
 		"description": "Hash algo is not set for RSA OAEP mode",
@@ -199,7 +226,8 @@
 			"RSA_OAEP"
 		],
 		"input": "0123456789abcdef1011121314151617",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 3
 	},
 	"subtest 11": {
 		"description": [
@@ -208,7 +236,7 @@
 			"Compare output buffer size with expected output buffer size"
 		],
 		"command": "ASYMMETRIC_ENCRYPT",
-		"subsystem": "TEE",
+		"subsystem": "ELE",
 		"enc_attr": [
 			"RSA_PKCS1_V15"
 		],

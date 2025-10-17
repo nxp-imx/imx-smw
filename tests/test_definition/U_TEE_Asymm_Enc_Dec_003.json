@@ -176,6 +176,63 @@
 				"84f5125f5200eb57868cce6b74c58334",
 				"17990e318372c9239a36dca1a0b28809"
 			]
+		},
+		"key 4": {
+			"type": "RSA",
+			"security_size": 2048,
+			"priv_key": [
+				"58f7f8fac9e55ffb2101af7e2223a58a",
+				"ee61cb1bf77352264401a3d129c18adc",
+				"cce81dbcefebac1244dc4db708a2cbdf",
+				"01f012b3897c267664f8ed29c78ba2d7",
+				"6b46bedeb26cf05f4cebc9b6a92fba04",
+				"271b635284ea5d353b4d0099a741f2d8",
+				"d0f54c66ad309e3f5793c8bcecf796b5",
+				"1e8385fb4aa2dcc1f172f010050f0c26",
+				"cd942c7d232d8c74d58c1c41e8928e11",
+				"eba852eaace66d21eb93c8b338038d94",
+				"24c91e0d36d9ad028a6725d158f46812",
+				"c0f1681067be644a30f385358196d95d",
+				"61a8368a963b88af8af497c63155af57",
+				"9633f5ed24e3132e39e27db6dd05c3d3",
+				"0532abbbb655cd7cb2c211a708935334",
+				"e16840df9e6e04fded7d23d22506f897"
+			],
+			"pub_key": [
+				"3432563e5c37e78f1d9cc0c6c5ccfa9d",
+				"2954d79680ea59086d3c6ea61f913b02",
+				"3369caaaa169ce0f7fec2be6abc1d66d",
+				"ff512639d5e64d588e3a6143543a799a",
+				"239cc571c20ee95eb2307b6809a677d4",
+				"b83c95398bc7d07ddb2c021fe9ef715d",
+				"e99b66de48e791578d5b285247901acd",
+				"1352c83f42a1922e814c48bbdb95b94a",
+				"7d304d6628c01f2a3abd74ccf75ee9a4",
+				"7d857fcab7bc4ebab27c94742ae1d486",
+				"622ec92ad54501ad740938c97c7859f6",
+				"4ed5cdd95e040dd50516c360699e073f",
+				"33cc3e4cc1b25c55218ee19a46dbd92f",
+				"3bc6676fd417a39afa130c153ecfe873",
+				"772e6996fd117ab2c34da147"
+			],
+			"modulus": [
+				"dacf6b379186d92a38e18adf394dd56b",
+				"2cfdbdb41b22d7c4c6171bc994df4d37",
+				"edfcbc58f25a6ebf9ce9c4e979ca750f",
+				"5a5243fcedcf97fbb6c78721028a1b6d",
+				"6b6ce82d336dc1d8227531fd33103f31",
+				"66d82fa55e5402459b12f79433c23900",
+				"78e593a62493ec863622613a9bcba7fb",
+				"dc09611decc074e4e46a8b657cfeb640",
+				"c43c3f2a6d89ebc797fa0ee76eb78214",
+				"5e8a983eb6f63d4613087b5c8f5a025b",
+				"fd3580887a6bc3215ffbfb594a3dfde2",
+				"1fc07c8813ff97ff5613d26e4b6f0db3",
+				"33bb706b2194718e86aa22238d645177",
+				"32b9cb6a203a9937bc960b0e81d695ce",
+				"ff4b1c52120d6905e010a7b191c9caff",
+				"a2da694faa6e8c3cbe41660de6f46e93"
+			]
 		}
 	},
 	"subtest 1": {
@@ -193,7 +250,6 @@
 			"20525341207369676e6174757265732e",
 			"0a"
 		],
-		"output": 256,
 		"enc_id": 0,
 		"key_name": "key 1"
 	},
@@ -231,7 +287,6 @@
 			"42c5ea617a25f019329ee172e4932485",
 			"20525341207369676e"
 		],
-		"output": 256,
 		"enc_id": 1,
 		"key_name": "key 1"
 	},
@@ -269,7 +324,6 @@
 			"42c5ea617a25f019329ee172e4932485",
 			"20525341207369676e"
 		],
-		"output": 256,
 		"enc_id": 2,
 		"key_name": "key 1"
 	},
@@ -307,7 +361,6 @@
 			"42c5ea617a25f019329ee172e4932485",
 			"20525341207369676e"
 		],
-		"output": 256,
 		"enc_id": 3,
 		"key_name": "key 1"
 	},
@@ -333,7 +386,7 @@
 	"subtest 9": {
 		"description": [
 			"Encrypt data using 3072 RSA key buffer,",
-			"PKCS1V15 padding and SHA-384 hashing"
+			"PKCS1V15 padding"
 		],
 		"command": "ASYMMETRIC_ENCRYPT",
 		"subsystem": "TEE",
@@ -345,14 +398,13 @@
 			"20525341207369676e6174757265732e",
 			"0a"
 		],
-		"output": 384,
 		"enc_id": 4,
 		"key_name": "key 2"
 	},
 	"subtest 10": {
 		"description": [
 			"Decrypt ciphertext using 3072 RSA key buffer,",
-			"PKCS1V15 padding and SHA-384 hashing"
+			"PKCS1V15 padding"
 		],
 		"command": "ASYMMETRIC_DECRYPT",
 		"subsystem": "TEE",
@@ -383,7 +435,6 @@
 			"42c5ea617a25f019329ee172e4932485",
 			"518dabd01983249189597473b4a6616c"
 		],
-		"output": 384,
 		"enc_id": 5,
 		"key_name": "key 2"
 	},
@@ -409,7 +460,7 @@
 	"subtest 13": {
 		"description": [
 			"Encrypt data using 4096 RSA key buffer,",
-			"PKCS1V15 padding and SHA-512 hashing"
+			"OAEP padding and SHA-512 hashing"
 		],
 		"command": "ASYMMETRIC_ENCRYPT",
 		"subsystem": "TEE",
@@ -427,14 +478,13 @@
 			"5ead7fb72fd85e3f6fd284d2edfc5e77",
 			"a03ec5f73c4c2f420728220fe9e9efc3"
 		],
-		"output": 512,
 		"enc_id": 6,
 		"key_name": "key 3"
 	},
 	"subtest 14": {
 		"description": [
 			"Decrypt ciphertext using 4096 RSA key buffer,",
-			"PKCS1V15 padding and SHA-512 hashing"
+			"OAEP padding and SHA-512 hashing"
 		],
 		"command": "ASYMMETRIC_DECRYPT",
 		"subsystem": "TEE",
@@ -625,4 +675,103 @@
 		"key_name": "key 3",
 		"depends": 19
 	},
+	"subtest 21": {
+		"description": [
+			"https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/components/RSADPtestvectors.zip",
+			"RSA Key Modulus 2048 - COUNT = 3",
+			"Encrypt data using 2048 RSA key buffer,",
+			"RSA no padding"
+		],
+		"command": "ASYMMETRIC_ENCRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_NO_PAD"
+		],
+		"input": [
+			"c47710d3fd466cf4d5de5475e0e21c02",
+			"91f316445550808b1a28580d9c033080",
+			"3683b6ccaef0825f1ff07a60676013e7",
+			"eebc7539ba4323cc09a806811fc56878",
+			"789a5bae30f179fc40c7de1751590090",
+			"e7ab54d8fe20994dc52606401e18e199",
+			"e5fe546a7f90c9a4b730992d3dad6316",
+			"199462fc67462484f3aab85d76d438ef",
+			"988134761aa13cd51c1a6419461ea634",
+			"bfa9b1600a738e9be44004846c0b368d",
+			"051303922629bea38b95ab24011fc6c7",
+			"207056da08c45229b15b58ce4bb433d2",
+			"fe184ef242b712b4c246f755a7e3b68e",
+			"18d137010081c82ff3af7f115919d0ee",
+			"d2b5c806ca71c4b2a44b4318de600a04",
+			"ab7c8e748ca7cad1eb034be6a04342be"
+		],
+		"output": [
+			"42e599cfa9578874a7dbc3b1638a4d90",
+			"94d131fd4321681dd1e8fce23bc16edd",
+			"9de75653f5f049922ab8ff854d9bb587",
+			"1ee7d175d290c5071326356049055ce3",
+			"18ccac492910b4f02e514776202cdb87",
+			"cbd32ff38dbb31045b941e0e047eeb47",
+			"ba7ae4d9ce1e9336bb8ee3ac66a78539",
+			"a47d93a0fd0873bcb01aff15f694e2b1",
+			"8bda452d6b84ac0cd9571a4ea6737c44",
+			"b0cd44a4a9e055d91aa01f9ca7b00bc8",
+			"94d4196a88a9c7189194368569f88852",
+			"f8ac8c2619ac9d00a10ec7cc9e382c35",
+			"dc51a6bbaef5ae05ea2d7d78369e7008",
+			"8200b14ed6d214db4e4c3fcd63960ea0",
+			"6b37364663d02879ed0a385095cdfe10",
+			"58b3fc4567bc82122843cfc67e3079af"
+		],
+		"key_name": "key 4"
+	},
+	"subtest 22": {
+		"description": [
+			"Decrypt ciphertext using 2048 RSA key buffer,",
+			"RSA no padding"
+		],
+		"command": "ASYMMETRIC_DECRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_NO_PAD"
+		],
+		"input": [
+			"42e599cfa9578874a7dbc3b1638a4d90",
+			"94d131fd4321681dd1e8fce23bc16edd",
+			"9de75653f5f049922ab8ff854d9bb587",
+			"1ee7d175d290c5071326356049055ce3",
+			"18ccac492910b4f02e514776202cdb87",
+			"cbd32ff38dbb31045b941e0e047eeb47",
+			"ba7ae4d9ce1e9336bb8ee3ac66a78539",
+			"a47d93a0fd0873bcb01aff15f694e2b1",
+			"8bda452d6b84ac0cd9571a4ea6737c44",
+			"b0cd44a4a9e055d91aa01f9ca7b00bc8",
+			"94d4196a88a9c7189194368569f88852",
+			"f8ac8c2619ac9d00a10ec7cc9e382c35",
+			"dc51a6bbaef5ae05ea2d7d78369e7008",
+			"8200b14ed6d214db4e4c3fcd63960ea0",
+			"6b37364663d02879ed0a385095cdfe10",
+			"58b3fc4567bc82122843cfc67e3079af"
+		],
+		"output": [
+			"c47710d3fd466cf4d5de5475e0e21c02",
+			"91f316445550808b1a28580d9c033080",
+			"3683b6ccaef0825f1ff07a60676013e7",
+			"eebc7539ba4323cc09a806811fc56878",
+			"789a5bae30f179fc40c7de1751590090",
+			"e7ab54d8fe20994dc52606401e18e199",
+			"e5fe546a7f90c9a4b730992d3dad6316",
+			"199462fc67462484f3aab85d76d438ef",
+			"988134761aa13cd51c1a6419461ea634",
+			"bfa9b1600a738e9be44004846c0b368d",
+			"051303922629bea38b95ab24011fc6c7",
+			"207056da08c45229b15b58ce4bb433d2",
+			"fe184ef242b712b4c246f755a7e3b68e",
+			"18d137010081c82ff3af7f115919d0ee",
+			"d2b5c806ca71c4b2a44b4318de600a04",
+			"ab7c8e748ca7cad1eb034be6a04342be"
+		],
+		"key_name": "key 4",
+		"depends": 21
+	}
 }

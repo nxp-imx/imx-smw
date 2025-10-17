@@ -1,0 +1,245 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "RSA",
+			"security_size": 2048,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"RSA_ANY"
+			]
+		},
+		"key 2": {
+			"type": "RSA",
+			"security_size": 2048,
+			"key_name": "key 1",
+			"pub_key": 256
+		},
+		"key 3": {
+			"type": "RSA",
+			"security_size": 2048,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			]
+		},
+		"key 4": {
+			"type": "RSA",
+			"security_size": 2048,
+			"key_name": "key 3",
+			"pub_key": 256
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"restriction_list": [
+			"imx8ulp",
+			"imx943"
+		]
+	},
+	"subtest 2": {
+		"description": "Export public key and modulus buffers.",
+		"command": "EXPORT_PUBLIC",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"save_output": true,
+		"depends": 1
+	},
+	"subtest 3": {
+		"description": [
+			"Encrypt the data on TEE subsystem",
+			"Use public key and modulus buffers previously exported from a key (key 1) stored in ELE."
+		],
+		"command": "ASYMMETRIC_ENCRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_OAEP",
+			"HASH=SHA256"
+		],
+		"input": [
+			"54686973207068726173652069732033",
+			"32206279746573206c6f6e6720212121"
+		],
+		"enc_id": 0,
+		"key_name": "key 2",
+		"depends": 1
+	},
+	"subtest 4": {
+		"description": [
+			"Decrypt ciphertext (encrypted by TEE) on the ELE subsystem",
+			"Use the key (key 1) stored in ELE."
+		],
+		"command": "ASYMMETRIC_DECRYPT",
+		"subsystem": "ELE",
+		"enc_attr": [
+			"RSA_OAEP",
+			"HASH=SHA256"
+		],
+		"output": [
+			"54686973207068726173652069732033",
+			"32206279746573206c6f6e6720212121"
+		],
+		"enc_id": 0,
+		"key_name": "key 1",
+		"depends": [
+			1,
+			3
+		]
+	},
+	"subtest 5": {
+		"description": [
+			"Encrypt the data on TEE subsystem",
+			"Use public key and modulus buffers previously exported from a key (key 1) stored in ELE."
+		],
+		"command": "ASYMMETRIC_ENCRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_PKCS1_V15"
+		],
+		"input": [
+			"54686973207068726173652069732033",
+			"32206279746573206c6f6e6720212121"
+		],
+		"enc_id": 1,
+		"key_name": "key 2",
+		"depends": 2
+	},
+	"subtest 6": {
+		"description": [
+			"Decrypt ciphertext (encrypted by TEE) on the ELE subsystem",
+			"Use the key (key 1) stored in ELE."
+		],
+		"command": "ASYMMETRIC_DECRYPT",
+		"subsystem": "ELE",
+		"enc_attr": [
+			"RSA_PKCS1_V15"
+		],
+		"output": [
+			"54686973207068726173652069732033",
+			"32206279746573206c6f6e6720212121"
+		],
+		"enc_id": 1,
+		"key_name": "key 1",
+		"depends": [
+			1,
+			5
+		]
+	},
+	"subtest 7": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 8": {
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key 3",
+		"restriction_list": [
+			"imx8ulp",
+			"imx943"
+		]
+	},
+	"subtest 9": {
+		"description": "Export public key and modulus buffers.",
+		"command": "EXPORT_PUBLIC",
+		"subsystem": "TEE",
+		"key_name": "key 4",
+		"save_output": true,
+		"depends": 8
+	},
+	"subtest 10": {
+		"description": [
+			"Encrypt the data on ELE subsystem",
+			"Use public key and modulus previously exported from a key (key 3) stored in TEE."
+		],
+		"command": "ASYMMETRIC_ENCRYPT",
+		"subsystem": "ELE",
+		"enc_attr": [
+			"RSA_OAEP",
+			"HASH=SHA384"
+		],
+		"input": [
+			"54686973207068726173652069732033",
+			"32206279746573206c6f6e6720212121"
+		],
+		"enc_id": 2,
+		"key_name": "key 4",
+		"depends": 9
+	},
+	"subtest 11": {
+		"description": [
+			"Decrypt ciphertext (encrypted by ELE) on the TEE subsystem",
+			"Use the key (key 3) stored in TEE subsystem."
+		],
+		"command": "ASYMMETRIC_DECRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_OAEP",
+			"HASH=SHA384"
+		],
+		"output": [
+			"54686973207068726173652069732033",
+			"32206279746573206c6f6e6720212121"
+		],
+		"enc_id": 2,
+		"key_name": "key 3",
+		"depends": [
+			8,
+			10
+		]
+	},
+	"subtest 12": {
+		"description": [
+			"Encrypt the data on ELE subsystem",
+			"Use public key and modulus previously exported from a key (key 3) stored in TEE."
+		],
+		"command": "ASYMMETRIC_ENCRYPT",
+		"subsystem": "ELE",
+		"enc_attr": [
+			"RSA_PKCS1_V15"
+		],
+		"input": [
+			"54686973207068726173652069732033",
+			"32206279746573206c6f6e6720212121"
+		],
+		"enc_id": 3,
+		"key_name": "key 4",
+		"depends": 9
+	},
+	"subtest 13": {
+		"description": [
+			"Decrypt ciphertext (encrypted by ELE) on the TEE subsystem",
+			"Use the key (key 3) stored in TEE subsystem."
+		],
+		"command": "ASYMMETRIC_DECRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_PKCS1_V15"
+		],
+		"output": [
+			"54686973207068726173652069732033",
+			"32206279746573206c6f6e6720212121"
+		],
+		"enc_id": 3,
+		"key_name": "key 3",
+		"depends": [
+			8,
+			12
+		]
+	},
+	"subtest 14": {
+		"command": "DELETE",
+		"key_name": "key 3",
+		"depends": 8
+	}
+}

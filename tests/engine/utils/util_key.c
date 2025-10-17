@@ -20,6 +20,9 @@ static void key_free_data(void *data)
 		if (key_data->pub_key.data)
 			free(key_data->pub_key.data);
 
+		if (key_data->modulus_key.data)
+			free(key_data->modulus_key.data);
+
 		free(data);
 	}
 }
@@ -400,14 +403,21 @@ int util_key_update_node(struct llist *keys, const char *key_name,
 		if (data->pub_key.data)
 			free(data->pub_key.data);
 
+		if (data->modulus_key.data)
+			free(data->modulus_key.data);
+
 		/*
 		 * Key is ephemeral. Save public key data to be able to use it
 		 * later
 		 */
 		data->pub_key.data = key_data->pub_key.data;
 		data->pub_key.length = key_data->pub_key.length;
+
+		data->modulus_key.data = key_data->modulus_key.data;
+		data->modulus_key.length = key_data->modulus_key.length;
 	} else {
 		data->pub_key.data = NULL;
+		data->modulus_key.data = NULL;
 	}
 
 	return res;

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2024 NXP
+ * Copyright 2021-2025 NXP
  */
 
 #ifndef __UTIL_KEY_H__
@@ -14,11 +14,13 @@
  * struct key_data - Data of key linked list node.
  * @identifier: Key identifier assigned by SMW.
  * @pub_key: Public key data buffer structure. Used for ephemeral keys.
+ * @modulus_key: Modulus key data buffer structure for RSA keys.
  * @okey_params: Pointer to the JSON-C object of key parameters.
  */
 struct key_data {
 	unsigned int identifier;
 	struct tbuffer pub_key;
+	struct tbuffer modulus_key;
 	struct json_object *okey_params;
 };
 

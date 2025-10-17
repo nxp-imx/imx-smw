@@ -85,6 +85,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * TEE: Fix output buffer length handling when output buffer is NULL for
   asymmetric encrypt/decrypt operations.
 * Rename utility key functions to be prefixed by smw_utils_key_XXX
+* ELE: Add support for asymmetric encryption and decryption operations using RSA
+  algorithm.
 
 ##### 3. ARM PSA APIs
 
@@ -112,6 +114,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Test error handling when initializing an already initialized operation contexts.
 * Remove subsystem name definition when doing context allocation command.
 * Add subsystem name definition in the hash multi-part init command.
+* Add tests for validating asymmetric encryption and decryption operations.
 
 #### PKCS#11 Library
 

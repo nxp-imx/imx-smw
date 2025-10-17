@@ -569,6 +569,33 @@ One-shot operations supported:
  - AEAD Encryption
  - AEAD Decryption
 
+Asymmetric encryption and decryption
+------------------------------------
+
+.. table:: ELE Asymmetric encryption and decryption
+   :align: center
+   :widths: 20 13 35 32
+   :width: 100%
+   :class: wrap-table
+
+   +--------------------+--------------+-----------------------------+--------------------------+
+   |**Encryption mode** | **Key type** | **Key security size(s)**    | **Hash algorithm**       |
+   +====================+==============+=============================+==========================+
+   | OAEP               | RSA          |  2048 / 3072 / 4096         | - SHA1                   |
+   |                    |              |                             | - SHA224                 |
+   |                    |              |                             | - SHA256                 |
+   |                    |              |                             | - SHA384                 |
+   |                    |              |                             | - SHA512                 |
+   +--------------------+--------------+-----------------------------+--------------------------+
+   | PKCS1V15           | RSA          |  2048 / 3072 / 4096         |  N/A                     |
+   +--------------------+--------------+-----------------------------+--------------------------+
+
+Operations supported:
+ - Encryption
+ - Decryption
+
+.. note::
+  - Asymmetric encryption and decryption operations are not supported on i.MX8ULP and i.MX943.
 
 Device management
 -----------------

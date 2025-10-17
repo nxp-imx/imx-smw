@@ -261,7 +261,7 @@ and supported by the SMW Library.
   <td colspan="3">Asymmetric Encryption</td>
 	<td>❌</td>
 	<td>✔️</td>
-	<td>❌</td>
+	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
 	<td>❌</td>

@@ -42,7 +42,8 @@ set(ele_srcs
     $<$<BOOL:${ENABLE_STORAGE_MODULE}>:storage.c>
     $<$<BOOL:${ENABLE_TLS}>:keymgr_derive_tls12.c>
     $<$<BOOL:${ENABLE_TLS}>:sign_verify_tls12.c>
-    $<$<BOOL:${ENABLE_TLS}>:keymgr_derive_tls13.c>)
+    $<$<BOOL:${ENABLE_TLS}>:keymgr_derive_tls13.c>
+    $<$<BOOL:${ENABLE_ASYMMETRIC_ENCRYPTION}>:asymmetric_encryption.c>)
 
 if (ENABLE_DEVMGR_MODULE)
     add_subdirectory(devmgr)

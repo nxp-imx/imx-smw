@@ -302,6 +302,25 @@ int ele_derive_key(struct subsystem_context *ele_ctx,
 		   struct smw_keymgr_derive_key_args *args);
 
 /**
+ * ele_asymmetric_encryption_handle() - Handle the asymmetric encryption and
+ *                                      decryption operations.
+ * @ele_ctx: Pointer to the ELE subsystem context structure.
+ * @operation_id: Security Operation ID.
+ * @args: Pointer to a structure of arguments defined by the internal API.
+ * @status: Error code set only if the Security Operation is handled.
+ *
+ * This function handles the asymmetric encryption and decryption operations.
+ * @status is set only if the function returns true.
+ *
+ * Return:
+ * * true:	- the Security Operation has been handled.
+ * * false:	- the Security Operation has not been handled.
+ */
+bool ele_asymmetric_encryption_handle(struct subsystem_context *ele_ctx,
+				      enum operation_id operation_id,
+				      void *args, int *status);
+
+/**
  * ele_convert_err() - Convert ELE error into SMW status.
  * @err: ELE error code.
  *
@@ -639,5 +658,20 @@ int check_and_convert_endian(struct subsystem_context *ele_ctx,
  * SMW_STATUS_SUBSYSTEM_FAILURE		- Subsystem failure
  */
 int tls_mac_finish(struct hdl *hdl, void *args);
+
+/**
+ * is_rsa_pub_expo_default() - Checks if RSA public exponent is default value
+ * @key_desc: Pointer to the key descriptor structure.
+ *
+ * This function checks if the RSA public exponent in the key descriptor
+ * is set to the default value (65537).
+ *
+ * Return:
+ * SMW_STATUS_OK                            - Success
+ * SMW_STATUS_INVALID_PARAM                 - One of the parameter is invalid.
+ * SMW_STATUS_PUBLIC_EXPONENT_NOT_SUPPORTED - Unsupported RSA public exponent.
+ * SMW_STATUS_ALLOC_FAILURE	                - Memory allocation failed.
+ */
+int is_rsa_pub_expo_default(struct smw_keymgr_descriptor *key_desc);
 
 #endif /* __COMMON_H__ */

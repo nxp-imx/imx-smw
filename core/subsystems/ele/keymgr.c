@@ -1364,6 +1364,48 @@ end:
 	return status;
 }
 
+int is_rsa_pub_expo_default(struct smw_keymgr_descriptor *key_desc)
+{
+	int status = SMW_STATUS_OK;
+
+	unsigned char *hex_pub_data = NULL;
+	unsigned int hex_pub_len = 0;
+	unsigned char *public_data = NULL;
+	unsigned int public_len = 0;
+	unsigned int i = 0;
+
+	public_len = smw_keymgr_get_public_length(key_desc);
+	public_data = smw_keymgr_get_public_data(key_desc);
+
+	status = smw_utils_key_set_hex_buffer(key_desc->format_id, public_data,
+					      public_len, &hex_pub_data,
+					      &hex_pub_len);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	if (hex_pub_len != DEFAULT_RSA_PUB_EXP_LEN) {
+		status = SMW_STATUS_PUBLIC_EXPONENT_NOT_SUPPORTED;
+		SMW_DBG_PRINTF(DEBUG, "Unsupported RSA public exponent.\n");
+		goto end;
+	}
+
+	for (; i < DEFAULT_RSA_PUB_EXP_LEN; i++) {
+		if (hex_pub_data[i] !=
+		    ((DEFAULT_RSA_PUB_EXP >> (i * 8)) & UCHAR_MAX)) {
+			status = SMW_STATUS_PUBLIC_EXPONENT_NOT_SUPPORTED;
+			SMW_DBG_PRINTF(DEBUG,
+				       "Unsupported RSA public exponent.\n");
+			break;
+		}
+	}
+
+end:
+	if (key_desc->format_id == SMW_KEYMGR_FORMAT_ID_BASE64 && hex_pub_data)
+		SMW_UTILS_FREE(hex_pub_data);
+
+	return status;
+}
+
 bool ele_key_handle(struct subsystem_context *ele_ctx,
 		    enum operation_id operation_id, void *args, int *status)
 {

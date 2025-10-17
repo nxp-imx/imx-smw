@@ -148,6 +148,15 @@ smw_asymmetric_encrypt_decrypt(enum operation_id operation_id,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	if (asymm_enc_args.attrs.mode_id == SMW_CONFIG_ASYMM_ENC_MODE_ID_OAEP) {
+		if (!args->salt != !args->salt_length) {
+			SMW_DBG_PRINTF(ERROR,
+				       "OAEP salt buffer/length mismatch\n");
+			status = SMW_STATUS_INVALID_PARAM;
+			goto end;
+		}
+	}
+
 	status = check_key(&asymm_enc_args, subsystem_id);
 	if (status != SMW_STATUS_OK)
 		goto end;

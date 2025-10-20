@@ -64,6 +64,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix coverity 2025.6.0 findings
 * Add signature multi-part operation.
 * Add a new SMW status code `SMW_STATUS_PERMITTED_ALGO_INVALID` for incomplete permitted algorithm parameters.
+* Add SMW_STATUS_OPERATION_ALREADY_INIT status when an operation is already initialized.
 
 ##### 2. Subsystems
 
@@ -100,6 +101,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add output saving mechanism for cipher.
 * Add tests for PSA TLS1.2 key derivation: U_PSA_Derive_008, U_PSA_Derive_009 and
   U_PSA_Derive_010.
+* Test error handling when initializing an already initialized operation contexts.
 
 #### PKCS#11 Library
 

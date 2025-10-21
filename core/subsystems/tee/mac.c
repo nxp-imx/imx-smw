@@ -44,10 +44,9 @@ static int get_private_key_buffer(struct smw_keymgr_descriptor *key_desc,
 	unsigned int private_buf_len = smw_keymgr_get_private_length(key_desc);
 	unsigned char *private_buffer = smw_keymgr_get_private_data(key_desc);
 
-	return smw_keymgr_set_hex_key_buffer(key_desc->format_id,
-					     private_buffer, private_buf_len,
-					     hex_private_buffer,
-					     hex_private_buf_len);
+	return smw_utils_key_set_hex_buffer(key_desc->format_id, private_buffer,
+					    private_buf_len, hex_private_buffer,
+					    hex_private_buf_len);
 }
 
 /**

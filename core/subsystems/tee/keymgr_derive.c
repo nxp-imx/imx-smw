@@ -124,7 +124,7 @@ static bool is_base_key_type_supported(enum smw_config_key_type_id type_id,
  * Return:
  * SMW_STATUS_OK             - Success.
  * SMW_STATUS_INVALID_PARAM  - One of the parameters is invalid.
- * Error code from smw_keymgr_set_hex_key_buffer()
+ * SMW_STATUS_ALLOC_FAILURE  - Memory allocation failed.
  */
 static int get_base_key_public_buffer(struct smw_keymgr_descriptor *key_desc,
 				      unsigned char **hex_key,
@@ -140,8 +140,8 @@ static int get_base_key_public_buffer(struct smw_keymgr_descriptor *key_desc,
 	if (!key || !key_len)
 		goto exit;
 
-	status = smw_keymgr_set_hex_key_buffer(key_desc->format_id, key,
-					       key_len, hex_key, hex_key_len);
+	status = smw_utils_key_set_hex_buffer(key_desc->format_id, key, key_len,
+					      hex_key, hex_key_len);
 
 exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -157,7 +157,7 @@ exit:
  * Return:
  * SMW_STATUS_OK             - Success.
  * SMW_STATUS_INVALID_PARAM  - One of the parameters is invalid.
- * Error code from smw_keymgr_set_hex_key_buffer()
+ * SMW_STATUS_ALLOC_FAILURE  - Memory allocation failed.
  */
 static int get_base_key_private_buffer(struct smw_keymgr_descriptor *key_desc,
 				       unsigned char **hex_key,
@@ -173,8 +173,8 @@ static int get_base_key_private_buffer(struct smw_keymgr_descriptor *key_desc,
 	if (!key || !key_len)
 		goto exit;
 
-	status = smw_keymgr_set_hex_key_buffer(key_desc->format_id, key,
-					       key_len, hex_key, hex_key_len);
+	status = smw_utils_key_set_hex_buffer(key_desc->format_id, key, key_len,
+					      hex_key, hex_key_len);
 
 exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -182,7 +182,7 @@ exit:
 }
 
 /**
- * get_base_key_pair__buffer() - Get the base key pair buffers in HEX format.
+ * get_base_key_pair_buffer() - Get the base key pair buffers in HEX format.
  * @key_desc: Pointer to internal Key descriptor structure
  * @hex_key: Pointer to the HEX buffer to update
  * @hex_key_len: @hex_key length to update
@@ -190,7 +190,7 @@ exit:
  * Return:
  * SMW_STATUS_OK             - Success.
  * SMW_STATUS_INVALID_PARAM  - One of the parameters is invalid.
- * Error code from smw_keymgr_set_hex_key_buffer()
+ * SMW_STATUS_ALLOC_FAILURE  - Memory allocation failed.
  */
 static int get_base_key_pair_buffer(struct smw_keymgr_descriptor *key_desc,
 				    unsigned char **hex_key,
@@ -253,7 +253,7 @@ exit:
  * Return:
  * SMW_STATUS_OK             - Success.
  * SMW_STATUS_INVALID_PARAM  - One of the parameters is invalid.
- * Error code from smw_keymgr_set_hex_key_buffer()
+ * SMW_STATUS_ALLOC_FAILURE  - Memory allocation failed.
  */
 static int get_derived_key_buffer(struct smw_keymgr_derived_key_desc *key_desc,
 				  unsigned char **hex_key,
@@ -270,9 +270,9 @@ static int get_derived_key_buffer(struct smw_keymgr_derived_key_desc *key_desc,
 	if ((!key && key_len) || (key && !key_len))
 		goto exit;
 	else if (key && key_len)
-		status = smw_keymgr_set_hex_key_buffer(key_desc->format_id, key,
-						       key_len, hex_key,
-						       hex_key_len);
+		status = smw_utils_key_set_hex_buffer(key_desc->format_id, key,
+						      key_len, hex_key,
+						      hex_key_len);
 	else
 		status = SMW_STATUS_OK;
 

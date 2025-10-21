@@ -67,9 +67,9 @@ static int get_pub_key_buffer_len(enum smw_keymgr_format_id format_id,
 	if (format_id == SMW_KEYMGR_FORMAT_ID_INVALID)
 		goto exit;
 
-	status = smw_keymgr_get_hex_key_buffer_len(format_id, pub_key_buffer,
-						   pub_key_buffer_len,
-						   hex_pub_buffer_len);
+	status = smw_utils_key_get_hex_buffer_len(format_id, pub_key_buffer,
+						  pub_key_buffer_len,
+						  hex_pub_buffer_len);
 
 exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

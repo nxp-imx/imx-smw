@@ -513,11 +513,11 @@ static int set_params_gen_key(struct smw_keymgr_generate_key_args *key_args,
 
 	/* RSA public exponent is set by the user */
 	if (public_exponent) {
-		status = smw_keymgr_set_hex_key_buffer(format_id,
-						       public_exponent,
-						       public_exponent_length,
-						       &hex_pub_exp,
-						       &hex_pub_exp_len);
+		status =
+			smw_utils_key_set_hex_buffer(format_id, public_exponent,
+						     public_exponent_length,
+						     &hex_pub_exp,
+						     &hex_pub_exp_len);
 		if (status != SMW_STATUS_OK)
 			goto exit;
 
@@ -900,8 +900,7 @@ static int check_export_key_config(struct smw_keymgr_descriptor *key_descriptor)
  * Return:
  * SMW_STATUS_OK		- Success.
  * SMW_STATUS_INVALID_PARAM	- Private key buffer length invalid.
- * Error code from smw_keymgr_set_hex_key_buffer().
- * Error code from set_tmpref_buffer().
+ * SMW_STATUS_ALLOC_FAILURE	- Memory allocation failed.
  */
 static int
 set_params_import_pub_key(struct smw_keymgr_descriptor *key_descriptor,
@@ -924,9 +923,9 @@ set_params_import_pub_key(struct smw_keymgr_descriptor *key_descriptor,
 		goto exit;
 	}
 
-	status = smw_keymgr_set_hex_key_buffer(key_descriptor->format_id,
-					       pub_data, pub_data_len,
-					       &hex_pub_data, &hex_pub_len);
+	status = smw_utils_key_set_hex_buffer(key_descriptor->format_id,
+					      pub_data, pub_data_len,
+					      &hex_pub_data, &hex_pub_len);
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
@@ -972,8 +971,7 @@ exit:
  * Return:
  * SMW_STATUS_OK		- Success.
  * SMW_STATUS_INVALID_PARAM	- Private key buffer length invalid.
- * Error code from smw_keymgr_set_hex_key_buffer().
- * Error code from set_tmpref_buffer().
+ * SMW_STATUS_ALLOC_FAILURE	- Memory allocation failed.
  */
 static int
 set_params_import_priv_key(enum tee_key_type key_type,
@@ -992,9 +990,9 @@ set_params_import_priv_key(enum tee_key_type key_type,
 	if (!priv_data_len)
 		goto exit;
 
-	status = smw_keymgr_set_hex_key_buffer(key_descriptor->format_id,
-					       priv_data, priv_data_len,
-					       &hex_priv_data, &hex_priv_len);
+	status = smw_utils_key_set_hex_buffer(key_descriptor->format_id,
+					      priv_data, priv_data_len,
+					      &hex_priv_data, &hex_priv_len);
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
@@ -1034,8 +1032,7 @@ exit:
  * Return:
  * SMW_STATUS_OK		- Success.
  * SMW_STATUS_INVALID_PARAM	- Modulus buffer length invalid.
- * Error code from smw_keymgr_set_hex_key_buffer().
- * Error code from set_tmpref_buffer().
+ * SMW_STATUS_ALLOC_FAILURE	- Memory allocation failed.
  */
 static int
 set_params_import_modulus(struct smw_keymgr_descriptor *key_descriptor,
@@ -1050,9 +1047,9 @@ set_params_import_modulus(struct smw_keymgr_descriptor *key_descriptor,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = smw_keymgr_set_hex_key_buffer(key_descriptor->format_id,
-					       modulus, modulus_len,
-					       &hex_modulus, &hex_modulus_len);
+	status = smw_utils_key_set_hex_buffer(key_descriptor->format_id,
+					      modulus, modulus_len,
+					      &hex_modulus, &hex_modulus_len);
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
@@ -1619,16 +1616,16 @@ static int get_shared_key_size(struct smw_keymgr_descriptor *key_desc,
 		if (!pub_buffer || !priv_buffer || !pub_size || !priv_size)
 			goto exit;
 
-		status = smw_keymgr_get_hex_key_buffer_len(key_desc->format_id,
-							   pub_buffer, pub_size,
-							   &hex_pub_size);
+		status = smw_utils_key_get_hex_buffer_len(key_desc->format_id,
+							  pub_buffer, pub_size,
+							  &hex_pub_size);
 		if (status != SMW_STATUS_OK)
 			goto exit;
 
-		status = smw_keymgr_get_hex_key_buffer_len(key_desc->format_id,
-							   priv_buffer,
-							   priv_size,
-							   &hex_priv_size);
+		status =
+			smw_utils_key_get_hex_buffer_len(key_desc->format_id,
+							 priv_buffer, priv_size,
+							 &hex_priv_size);
 		if (status != SMW_STATUS_OK)
 			goto exit;
 
@@ -1640,10 +1637,10 @@ static int get_shared_key_size(struct smw_keymgr_descriptor *key_desc,
 		if (!priv_buffer || !priv_size)
 			goto exit;
 
-		status = smw_keymgr_get_hex_key_buffer_len(key_desc->format_id,
-							   priv_buffer,
-							   priv_size,
-							   &hex_priv_size);
+		status =
+			smw_utils_key_get_hex_buffer_len(key_desc->format_id,
+							 priv_buffer, priv_size,
+							 &hex_priv_size);
 		if (status != SMW_STATUS_OK)
 			goto exit;
 
@@ -1655,9 +1652,9 @@ static int get_shared_key_size(struct smw_keymgr_descriptor *key_desc,
 		if (!pub_buffer || !pub_size)
 			goto exit;
 
-		status = smw_keymgr_get_hex_key_buffer_len(key_desc->format_id,
-							   pub_buffer, pub_size,
-							   &hex_pub_size);
+		status = smw_utils_key_get_hex_buffer_len(key_desc->format_id,
+							  pub_buffer, pub_size,
+							  &hex_pub_size);
 		if (status != SMW_STATUS_OK)
 			goto exit;
 
@@ -1670,9 +1667,9 @@ static int get_shared_key_size(struct smw_keymgr_descriptor *key_desc,
 	mod_size = smw_keymgr_get_modulus_length(key_desc);
 	mod_buffer = smw_keymgr_get_modulus(key_desc);
 	if (mod_size && mod_buffer) {
-		status = smw_keymgr_get_hex_key_buffer_len(key_desc->format_id,
-							   mod_buffer, mod_size,
-							   &hex_mod_size);
+		status = smw_utils_key_get_hex_buffer_len(key_desc->format_id,
+							  mod_buffer, mod_size,
+							  &hex_mod_size);
 		if (status != SMW_STATUS_OK)
 			goto exit;
 	}
@@ -1697,8 +1694,8 @@ static int copy_key_buffer(enum smw_keymgr_format_id format_id,
 	unsigned char *hex_key = NULL;
 	unsigned int hex_key_len = 0;
 
-	status = smw_keymgr_set_hex_key_buffer(format_id, buffer, buffer_len,
-					       &hex_key, &hex_key_len);
+	status = smw_utils_key_set_hex_buffer(format_id, buffer, buffer_len,
+					      &hex_key, &hex_key_len);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -1905,9 +1902,9 @@ int tee_import_key_buffer(struct smw_keymgr_descriptor *key,
 	import_shared_params.security_size = key->identifier.security_size;
 	import_shared_params.key_usage = key_usage;
 
-	status = smw_keymgr_set_hex_key_buffer(key->format_id, priv_key,
-					       priv_key_len, &hex_priv_key,
-					       &hex_priv_len);
+	status = smw_utils_key_set_hex_buffer(key->format_id, priv_key,
+					      priv_key_len, &hex_priv_key,
+					      &hex_priv_len);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

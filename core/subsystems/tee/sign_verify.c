@@ -75,9 +75,9 @@ static int set_public_key_buffer(struct smw_keymgr_descriptor *key_desc,
 	if (!public_key_len || !public_key)
 		goto end;
 
-	status = smw_keymgr_set_hex_key_buffer(key_desc->format_id, public_key,
-					       public_key_len, hex_public_key,
-					       &hex_public_key_len);
+	status = smw_utils_key_set_hex_buffer(key_desc->format_id, public_key,
+					      public_key_len, hex_public_key,
+					      &hex_public_key_len);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -98,9 +98,8 @@ static int get_pub_key_hex_len(struct smw_keymgr_descriptor *key_desc,
 	unsigned int pub_size = smw_keymgr_get_public_length(key_desc);
 	unsigned char *pub_buffer = smw_keymgr_get_public_data(key_desc);
 
-	return smw_keymgr_get_hex_key_buffer_len(key_desc->format_id,
-						 pub_buffer, pub_size,
-						 hex_buffer_len);
+	return smw_utils_key_get_hex_buffer_len(key_desc->format_id, pub_buffer,
+						pub_size, hex_buffer_len);
 }
 
 static void get_eddsa_context(unsigned char **ctx, unsigned int *ctx_length,
@@ -454,8 +453,8 @@ static int set_sign_context(struct smw_op_context *op_context,
 
 	ctx->attributes = args->attributes;
 
-	status = smw_keymgr_copy_key(&ctx->key_descriptor,
-				     &args->key_descriptor);
+	status =
+		smw_utils_key_copy(&ctx->key_descriptor, &args->key_descriptor);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -765,7 +764,7 @@ void tee_free_sign_context(struct smw_op_context *ctx)
 
 		sign_ctx->hash_ctx.subsystem_context = NULL;
 
-		smw_keymgr_free_key(&sign_ctx->key_descriptor);
+		smw_utils_key_free(&sign_ctx->key_descriptor);
 	}
 }
 
@@ -809,8 +808,8 @@ int tee_copy_sign_context(struct smw_op_context *src_context,
 	dst_hash_ctx->tee_handle = tee_dst_ctx->handle;
 	dst_sign_ctx->hash_ctx.subsystem_context = dst_hash_ctx;
 
-	status = smw_keymgr_copy_key(&dst_sign_ctx->key_descriptor,
-				     &src_sign_ctx->key_descriptor);
+	status = smw_utils_key_copy(&dst_sign_ctx->key_descriptor,
+				    &src_sign_ctx->key_descriptor);
 
 end:
 	if (dst_context)

@@ -14,6 +14,27 @@
 #include "util.h"
 #include "util_context.h"
 
+/**
+ * struct smw_hash_init_args_v0 - Hash multi-part initialization arguments V0
+ * @version: Version of this structure (must be set to 0)
+ * @algo_name: Algorithm name. See &typedef smw_hash_algo_t
+ * @input: Location of the stream to be hashed
+ * @input_length: Length of the stream to be hashed
+ * @context: Pointer to an opaque operation context structure
+ *
+ * This structure is defined to be backward compatible with version 0
+ * of hash initialization arguments.
+ */
+struct smw_hash_init_args_v0 {
+	/* Inputs */
+	unsigned char version;
+	smw_hash_algo_t algo_name;
+	unsigned char *input;
+	unsigned int input_length;
+	/* Outputs */
+	struct smw_op_context *context;
+};
+
 #define HASH_DEF(_name, _len, _is_xof)                                         \
 	{                                                                      \
 		.name = SMW_HASH_ALGO_NAME_##_name, .string = #_name,          \
@@ -170,8 +191,7 @@ static int set_hash_bad_args(struct subtest_data *subtest,
  * -BAD_ARGS			- One of the arguments is bad.
  * -BAD_PARAM_TYPE		- A parameter value is undefined.
  */
-static int set_hash_init_bad_args(struct subtest_data *subtest,
-				  struct smw_hash_init_args **args)
+static int set_hash_init_bad_args(struct subtest_data *subtest, void **args)
 {
 	int ret = ERR_CODE(PASSED);
 	enum arguments_test_err_case error = NOT_DEFINED;
@@ -413,19 +433,26 @@ int hash_init(struct subtest_data *subtest)
 	enum smw_status_code smw_status = SMW_STATUS_OK;
 	unsigned int ctx_id = UINT_MAX;
 	const char *algo_string = NULL;
-	struct smw_hash_init_args args = { 0 };
-	struct smw_hash_init_args *smw_hash_args = &args;
 	struct smw_context_args ctx_args = { 0 };
+	union hash_init_args {
+		struct smw_hash_init_args_v0 v0;
+		struct smw_hash_init_args latest;
+	} args = { 0 };
+	void *smw_hash_args = &args;
+	struct smw_op_context *context = NULL;
 	unsigned int input_len = 0;
 	unsigned char *input_hex = NULL;
+	smw_hash_algo_t algo_name = SMW_HASH_ALGO_NAME_NONE;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	args.version = subtest->version;
-	args.subsystem_name = subtest->subsystem;
+	if (subtest->version > 0) {
+		args.latest.version = subtest->version;
+		args.latest.subsystem_name = subtest->subsystem;
+	}
 
 	if (is_api_test(subtest)) {
 		subtest->smw_status = smw_allocate_context(&ctx_args);
@@ -435,7 +462,7 @@ int hash_init(struct subtest_data *subtest)
 		}
 	}
 
-	res = util_context_set_op_ctx(subtest, &ctx_id, &args.context,
+	res = util_context_set_op_ctx(subtest, &ctx_id, &context,
 				      ctx_args.context);
 	if (res != ERR_CODE(PASSED))
 		return res;
@@ -447,7 +474,7 @@ int hash_init(struct subtest_data *subtest)
 	    (!is_api_test(subtest) || res != ERR_CODE(VALUE_NOTFOUND)))
 		goto exit;
 
-	args.algo_name = hash_get_algo_name(algo_string);
+	algo_name = hash_get_algo_name(algo_string);
 
 	res = util_read_hex_buffer(&input_hex, &input_len, subtest->params,
 				   INPUT_OBJ);
@@ -456,8 +483,17 @@ int hash_init(struct subtest_data *subtest)
 		goto exit;
 	}
 
-	args.input = input_hex;
-	args.input_length = input_len;
+	if (subtest->version == 0) {
+		args.v0.algo_name = algo_name;
+		args.v0.input = input_hex;
+		args.v0.input_length = input_len;
+		args.v0.context = context;
+	} else {
+		args.latest.algo_name = algo_name;
+		args.latest.input = input_hex;
+		args.latest.input_length = input_len;
+		args.latest.context = context;
+	}
 
 	/* Specific test cases */
 	res = set_hash_init_bad_args(subtest, &smw_hash_args);

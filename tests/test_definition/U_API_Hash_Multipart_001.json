@@ -13,6 +13,7 @@
 	},
 	"subtest 3": {
 		"description": "Algo is undefined",
+		"version": 1,
 		"command": "HASH_INIT",
 		"algo": "UNDEFINED",
 		"result": "SMW_STATUS_UNKNOWN_ALGO_NAME"

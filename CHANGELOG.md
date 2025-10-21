@@ -69,6 +69,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   initialized.
 * Context allocation argument's subsystem name field is deprecated.
 * Hash initialization context includes subsystem name field.
+* Rename utility key functions to be prefixed by smw_utils_key_XXX
 
 ##### 2. Subsystems
 
@@ -82,6 +83,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   algorithm and mode to be specified during key generation and import.
 * TEE: Fix output buffer length handling when output buffer is NULL for
   asymmetric encrypt/decrypt operations.
+* Rename utility key functions to be prefixed by smw_utils_key_XXX
 
 ##### 3. ARM PSA APIs
 

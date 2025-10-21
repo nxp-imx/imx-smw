@@ -110,10 +110,10 @@ static int get_private_key_buffer(op_mac_one_go_args_t *op_args,
 	if (!private_buf_len || !private_buffer)
 		goto end;
 
-	status = smw_keymgr_set_hex_key_buffer(key_desc->format_id,
-					       private_buffer, private_buf_len,
-					       hex_private_buffer,
-					       &hex_private_len);
+	status = smw_utils_key_set_hex_buffer(key_desc->format_id,
+					      private_buffer, private_buf_len,
+					      hex_private_buffer,
+					      &hex_private_len);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

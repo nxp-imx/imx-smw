@@ -212,9 +212,9 @@ static int get_private_key_buffer(op_auth_enc_new_args_t *op_args,
 	if (!private_buf_len || !private_buffer)
 		goto end;
 
-	status = smw_keymgr_set_hex_key_buffer(key_desc->format_id,
-					       private_buffer, private_buf_len,
-					       &op_args->key, &hex_private_len);
+	status = smw_utils_key_set_hex_buffer(key_desc->format_id,
+					      private_buffer, private_buf_len,
+					      &op_args->key, &hex_private_len);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

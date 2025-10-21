@@ -931,9 +931,9 @@ static int import_key(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	status = smw_keymgr_set_hex_key_buffer(key_desc->format_id, priv_key,
-					       priv_key_len, &hex_priv_key,
-					       &hex_priv_key_len);
+	status = smw_utils_key_set_hex_buffer(key_desc->format_id, priv_key,
+					      priv_key_len, &hex_priv_key,
+					      &hex_priv_key_len);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

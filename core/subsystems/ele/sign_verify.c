@@ -181,9 +181,9 @@ static int check_rsa_pub_expo(struct smw_keymgr_descriptor *key_desc)
 	public_len = smw_keymgr_get_public_length(key_desc);
 	public_data = smw_keymgr_get_public_data(key_desc);
 
-	status = smw_keymgr_set_hex_key_buffer(key_desc->format_id, public_data,
-					       public_len, &hex_pub_data,
-					       &hex_pub_len);
+	status = smw_utils_key_set_hex_buffer(key_desc->format_id, public_data,
+					      public_len, &hex_pub_data,
+					      &hex_pub_len);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -230,10 +230,10 @@ static int get_private_key_buffer(op_generate_sign_args_t *op_args,
 	if (!private_buf_len || !private_buffer)
 		goto end;
 
-	status = smw_keymgr_set_hex_key_buffer(key_desc->format_id,
-					       private_buffer, private_buf_len,
-					       hex_private_buffer,
-					       &hex_private_len);
+	status = smw_utils_key_set_hex_buffer(key_desc->format_id,
+					      private_buffer, private_buf_len,
+					      hex_private_buffer,
+					      &hex_private_len);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -246,10 +246,10 @@ static int get_private_key_buffer(op_generate_sign_args_t *op_args,
 			goto end;
 		}
 
-		status = smw_keymgr_set_hex_key_buffer(key_desc->format_id,
-						       modulus_buffer,
-						       modulus_len, hex_modulus,
-						       &hex_modulus_len);
+		status = smw_utils_key_set_hex_buffer(key_desc->format_id,
+						      modulus_buffer,
+						      modulus_len, hex_modulus,
+						      &hex_modulus_len);
 		if (status != SMW_STATUS_OK)
 			goto end;
 
@@ -572,8 +572,7 @@ static int verify(struct subsystem_context *ele_ctx, void *args)
 			key_size = smw_keymgr_get_modulus_length(key_desc);
 			key_buf = smw_keymgr_get_modulus(key_desc);
 
-			status =
-				smw_keymgr_set_hex_key_buffer(format_id,
+			status = smw_utils_key_set_hex_buffer(format_id,
 							      key_buf, key_size,
 							      &hex_key_buf,
 							      &hex_key_size);
@@ -584,8 +583,7 @@ static int verify(struct subsystem_context *ele_ctx, void *args)
 			key_size = smw_keymgr_get_public_length(key_desc);
 			key_buf = smw_keymgr_get_public_data(key_desc);
 
-			status =
-				smw_keymgr_set_hex_key_buffer(format_id,
+			status = smw_utils_key_set_hex_buffer(format_id,
 							      key_buf, key_size,
 							      &hex_key_buf,
 							      &hex_key_size);
@@ -757,8 +755,8 @@ static int set_sign_context(struct smw_op_context *op_context,
 
 	ctx->attributes = args->attributes;
 
-	status = smw_keymgr_copy_key(&ctx->key_descriptor,
-				     &args->key_descriptor);
+	status =
+		smw_utils_key_copy(&ctx->key_descriptor, &args->key_descriptor);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -1080,7 +1078,7 @@ void ele_free_sign_context(struct smw_op_context *ctx)
 			sign_ctx->hash_ctx.subsystem_context = NULL;
 		}
 
-		smw_keymgr_free_key(&sign_ctx->key_descriptor);
+		smw_utils_key_free(&sign_ctx->key_descriptor);
 	}
 }
 
@@ -1111,8 +1109,8 @@ int ele_copy_sign_context(struct smw_op_context *src_ctx,
 
 	dst_sign_ctx->attributes = src_sign_ctx->attributes;
 
-	status = smw_keymgr_copy_key(&dst_sign_ctx->key_descriptor,
-				     &src_sign_ctx->key_descriptor);
+	status = smw_utils_key_copy(&dst_sign_ctx->key_descriptor,
+				    &src_sign_ctx->key_descriptor);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

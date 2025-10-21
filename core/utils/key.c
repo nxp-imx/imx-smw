@@ -183,27 +183,7 @@ static void free_keypair_buffer(struct smw_keypair_buffer *buf,
 	SMW_UTILS_FREE(buf);
 }
 
-int smw_keymgr_get_key_privacy_id(smw_key_privacy_t name,
-				  enum smw_keymgr_privacy_id *id)
-{
-	int status = SMW_STATUS_UNKNOWN_KEY_PRIVACY_NAME;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (name == SMW_KEY_PRIVACY_NAME_NONE) {
-		*id = SMW_KEYMGR_PRIVACY_ID_INVALID;
-		status = SMW_STATUS_OK;
-	} else if (name < SMW_KEY_PRIVACY_NAME_NB) {
-		if (!SUB_OVERFLOW(name, SMW_KEYMGR_PRIVACY_ID_OFFSET,
-				  (int *)id))
-			status = SMW_STATUS_OK;
-	}
-
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-smw_key_privacy_t smw_keymgr_get_key_privacy_name(enum smw_keymgr_privacy_id id)
+smw_key_privacy_t smw_utils_key_get_privacy_name(enum smw_keymgr_privacy_id id)
 {
 	smw_key_privacy_t name = SMW_KEY_PRIVACY_NAME_NONE;
 
@@ -217,8 +197,8 @@ smw_key_privacy_t smw_keymgr_get_key_privacy_name(enum smw_keymgr_privacy_id id)
 	return name;
 }
 
-int smw_keymgr_get_key_format_id(smw_key_format_t name,
-				 enum smw_keymgr_format_id *id)
+int smw_utils_key_get_format_id(smw_key_format_t name,
+				enum smw_keymgr_format_id *id)
 {
 	int status = SMW_STATUS_UNKNOWN_FORMAT_NAME;
 
@@ -236,7 +216,7 @@ int smw_keymgr_get_key_format_id(smw_key_format_t name,
 	return status;
 }
 
-smw_key_format_t smw_keymgr_get_key_format_name(enum smw_keymgr_format_id id)
+smw_key_format_t smw_utils_key_get_format_name(enum smw_keymgr_format_id id)
 {
 	smw_key_format_t name = SMW_KEY_FORMAT_NAME_NONE;
 
@@ -248,11 +228,10 @@ smw_key_format_t smw_keymgr_get_key_format_name(enum smw_keymgr_format_id id)
 	return name;
 }
 
-int smw_keymgr_set_hex_key_buffer(enum smw_keymgr_format_id format_id,
-				  unsigned char *buffer,
-				  unsigned int buffer_len,
-				  unsigned char **hex_buffer,
-				  unsigned int *hex_buffer_len)
+int smw_utils_key_set_hex_buffer(enum smw_keymgr_format_id format_id,
+				 unsigned char *buffer, unsigned int buffer_len,
+				 unsigned char **hex_buffer,
+				 unsigned int *hex_buffer_len)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 
@@ -281,10 +260,10 @@ exit:
 	return status;
 }
 
-int smw_keymgr_get_hex_key_buffer_len(enum smw_keymgr_format_id format_id,
-				      unsigned char *buffer,
-				      unsigned int buffer_len,
-				      unsigned int *hex_buffer_len)
+int smw_utils_key_get_hex_buffer_len(enum smw_keymgr_format_id format_id,
+				     unsigned char *buffer,
+				     unsigned int buffer_len,
+				     unsigned int *hex_buffer_len)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 
@@ -305,8 +284,8 @@ exit:
 	return status;
 }
 
-int smw_keymgr_copy_key(struct smw_keymgr_descriptor *out,
-			struct smw_keymgr_descriptor *in)
+int smw_utils_key_copy(struct smw_keymgr_descriptor *out,
+		       struct smw_keymgr_descriptor *in)
 {
 	int status = SMW_STATUS_OK;
 	struct smw_key_descriptor *pub = NULL;
@@ -369,7 +348,7 @@ end:
 	return status;
 }
 
-void smw_keymgr_free_key(struct smw_keymgr_descriptor *desc)
+void smw_utils_key_free(struct smw_keymgr_descriptor *desc)
 {
 	if (!desc)
 		return;

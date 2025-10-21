@@ -646,8 +646,8 @@ int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
 	if (!in->buffer) {
 		out->format_id = SMW_KEYMGR_FORMAT_ID_INVALID;
 	} else {
-		status = smw_keymgr_get_key_format_id(in->buffer->format_name,
-						      &out->format_id);
+		status = smw_utils_key_get_format_id(in->buffer->format_name,
+						     &out->format_id);
 		if (status != SMW_STATUS_OK)
 			goto end;
 	}
@@ -1452,7 +1452,7 @@ static void set_key_buffer_format(struct smw_keymgr_descriptor *descriptor)
 		return;
 
 	descriptor->pub->buffer->format_name =
-		smw_keymgr_get_key_format_name(descriptor->format_id);
+		smw_utils_key_get_format_name(descriptor->format_id);
 }
 
 static bool import_el2go_data(struct smw_import_key_args *args, int *status)
@@ -1953,7 +1953,7 @@ smw_get_key_attributes(struct smw_get_key_attributes_args *args)
 
 	/* Convert the key privacy */
 	args->key_privacy_name =
-		smw_keymgr_get_key_privacy_name(key_identifier->privacy_id);
+		smw_utils_key_get_privacy_name(key_identifier->privacy_id);
 
 	/* Return the key's subsystem name */
 	args->subsystem_name =

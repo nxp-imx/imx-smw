@@ -104,20 +104,7 @@ struct smw_keymgr_descriptor {
 };
 
 /**
- * smw_keymgr_get_key_privacy_id() - Get the ID associated to a Key privacy name.
- * @name: Name of the Key privacy.
- * @id: Pointer where the ID is written.
- *
- * This function gets the ID associated to a Key privacy name.
- *
- * Return:
- * error code.
- */
-int smw_keymgr_get_key_privacy_id(smw_key_privacy_t name,
-				  enum smw_keymgr_privacy_id *id);
-
-/**
- * smw_keymgr_get_key_privacy_name() - Get the name associated to a Key privacy ID.
+ * smw_utils_key_get_privacy_name() - Get the name associated to a Key privacy ID.
  * @id: Key privacy ID.
  *
  * This function gets the name associated to a Key privacy ID.
@@ -125,11 +112,10 @@ int smw_keymgr_get_key_privacy_id(smw_key_privacy_t name,
  * Return:
  * Key privacy name.
  */
-smw_key_privacy_t
-smw_keymgr_get_key_privacy_name(enum smw_keymgr_privacy_id id);
+smw_key_privacy_t smw_utils_key_get_privacy_name(enum smw_keymgr_privacy_id id);
 
 /**
- * smw_keymgr_get_key_format_id() - Get the ID associated to a key format name.
+ * smw_utils_key_get_format_id() - Get the ID associated to a key format name.
  * @name: Name as a string.
  * @id: Pointer where the ID is written.
  *
@@ -138,11 +124,11 @@ smw_keymgr_get_key_privacy_name(enum smw_keymgr_privacy_id id);
  * Return:
  * error code.
  */
-int smw_keymgr_get_key_format_id(smw_key_format_t name,
-				 enum smw_keymgr_format_id *id);
+int smw_utils_key_get_format_id(smw_key_format_t name,
+				enum smw_keymgr_format_id *id);
 
 /**
- * smw_keymgr_get_key_format_name() - Get the key format name.
+ * smw_utils_key_get_format_name() - Get the key format name.
  * @id: Pointer to key format ID.
  *
  * This function gets the Key format name associated to an ID.
@@ -150,10 +136,10 @@ int smw_keymgr_get_key_format_id(smw_key_format_t name,
  * Return:
  * Key format name.
  */
-smw_key_format_t smw_keymgr_get_key_format_name(enum smw_keymgr_format_id id);
+smw_key_format_t smw_utils_key_get_format_name(enum smw_keymgr_format_id id);
 
 /**
- * smw_keymgr_set_hex_key_buffer() - Set HEX buffer.
+ * smw_utils_key_set_hex_buffer() - Set HEX buffer.
  * @format_id: Format of the input buffer.
  * @buffer: Pointer to the input buffer.
  * @buffer_len: @buffer length in bytes.
@@ -168,14 +154,13 @@ smw_key_format_t smw_keymgr_get_key_format_name(enum smw_keymgr_format_id id);
  * SMW_STATUS_OK  - Success.
  * Error code from smw_utils_base64_decode().
  */
-int smw_keymgr_set_hex_key_buffer(enum smw_keymgr_format_id format_id,
-				  unsigned char *buffer,
-				  unsigned int buffer_len,
-				  unsigned char **hex_buffer,
-				  unsigned int *hex_buffer_len);
+int smw_utils_key_set_hex_buffer(enum smw_keymgr_format_id format_id,
+				 unsigned char *buffer, unsigned int buffer_len,
+				 unsigned char **hex_buffer,
+				 unsigned int *hex_buffer_len);
 
 /**
- * smw_keymgr_get_hex_key_buffer_len() - Calculate the hex length of a buffer.
+ * smw_utils_key_get_hex_buffer_len() - Calculate the hex length of a buffer.
  * @format_id: Format of the input buffer.
  * @buffer: Pointer to the input buffer.
  * @buffer_len: @buffer length in bytes.
@@ -185,13 +170,13 @@ int smw_keymgr_set_hex_key_buffer(enum smw_keymgr_format_id format_id,
  * SMW_STATUS_OK            - Success.
  * SMW_STATUS_INVALID_PARAM - One of the parameter is invalid.
  */
-int smw_keymgr_get_hex_key_buffer_len(enum smw_keymgr_format_id format_id,
-				      unsigned char *buffer,
-				      unsigned int buffer_len,
-				      unsigned int *hex_buffer_len);
+int smw_utils_key_get_hex_buffer_len(enum smw_keymgr_format_id format_id,
+				     unsigned char *buffer,
+				     unsigned int buffer_len,
+				     unsigned int *hex_buffer_len);
 
 /**
- * smw_keymgr_copy_key() - Copy keymgr descriptor
+ * smw_utils_key_copy() - Copy keymgr descriptor
  * @out: Output keymgr descriptor
  * @in: Input keymgr descriptor
  *
@@ -204,16 +189,16 @@ int smw_keymgr_get_hex_key_buffer_len(enum smw_keymgr_format_id format_id,
  * SMW_STATUS_INVALID_PARAM - One of the parameter is invalid.
  * SMW_STATUS_ALLOC_FAILURE - Memory allocation error.
  */
-int smw_keymgr_copy_key(struct smw_keymgr_descriptor *out,
-			struct smw_keymgr_descriptor *in);
+int smw_utils_key_copy(struct smw_keymgr_descriptor *out,
+		       struct smw_keymgr_descriptor *in);
 
 /**
- * smw_keymgr_free_key() - Free keymgr descriptor
+ * smw_utils_key_free() - Free keymgr descriptor
  * @desc: Keymgr descriptor to free
  *
  * The function frees the @desc->oub->buffer and @desc->pub public key
  * descriptor.
  */
-void smw_keymgr_free_key(struct smw_keymgr_descriptor *desc);
+void smw_utils_key_free(struct smw_keymgr_descriptor *desc);
 
 #endif /* __KEY_H__ */

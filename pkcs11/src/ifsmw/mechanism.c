@@ -1326,7 +1326,7 @@ static CK_RV op_mdigest(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	struct lib_digest_ctx *ctx = params->ctx;
 
 	struct smw_hash_args oneshot_args = { 0 };
-	struct smw_hash_init_args init_args = { 0 };
+	struct smw_hash_init_args init_args = { .version = 1 };
 	struct smw_hash_update_args update_args = { 0 };
 	struct smw_hash_final_args final_args = { 0 };
 

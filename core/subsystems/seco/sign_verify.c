@@ -277,8 +277,7 @@ static int verify(struct hdl *hdl, void *args)
 		key_size = smw_keymgr_get_public_length(key_descriptor);
 		key_buf = smw_keymgr_get_public_data(key_descriptor);
 
-		status =
-			smw_keymgr_set_hex_key_buffer(key_descriptor->format_id,
+		status = smw_utils_key_set_hex_buffer(key_descriptor->format_id,
 						      key_buf, key_size,
 						      &hex_key_buf,
 						      &hex_key_size);
@@ -420,8 +419,8 @@ static int set_sign_context(struct smw_op_context *op_context,
 
 	ctx->attributes = args->attributes;
 
-	status = smw_keymgr_copy_key(&ctx->key_descriptor,
-				     &args->key_descriptor);
+	status =
+		smw_utils_key_copy(&ctx->key_descriptor, &args->key_descriptor);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -706,7 +705,7 @@ void seco_free_sign_context(struct smw_op_context *ctx)
 		SMW_UTILS_FREE(sign_ctx->hash_ctx.subsystem_context);
 		sign_ctx->hash_ctx.subsystem_context = NULL;
 
-		smw_keymgr_free_key(&sign_ctx->key_descriptor);
+		smw_utils_key_free(&sign_ctx->key_descriptor);
 	}
 }
 
@@ -737,8 +736,8 @@ int seco_copy_sign_context(struct smw_op_context *src_ctx,
 
 	dst_sign_ctx->attributes = src_sign_ctx->attributes;
 
-	status = smw_keymgr_copy_key(&dst_sign_ctx->key_descriptor,
-				     &src_sign_ctx->key_descriptor);
+	status = smw_utils_key_copy(&dst_sign_ctx->key_descriptor,
+				    &src_sign_ctx->key_descriptor);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

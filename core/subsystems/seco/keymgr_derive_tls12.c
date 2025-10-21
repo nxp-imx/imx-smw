@@ -877,10 +877,10 @@ static int tls12_op_copy_partial_data(struct smw_keymgr_derive_key_args *args)
 	if (!partial_data->peer_public_buffer)
 		goto end;
 
-	status = smw_keymgr_set_hex_key_buffer(args->key_base.format_id,
-					       public_key, public_key_len,
-					       &hex_public_key,
-					       &hex_public_key_len);
+	status = smw_utils_key_set_hex_buffer(args->key_base.format_id,
+					      public_key, public_key_len,
+					      &hex_public_key,
+					      &hex_public_key_len);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

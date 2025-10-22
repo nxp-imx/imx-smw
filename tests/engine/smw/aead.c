@@ -1095,14 +1095,14 @@ int aead(struct subtest_data *subtest)
 int aead_init(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(BAD_ARGS);
-
+	enum smw_status_code smw_status = SMW_STATUS_OK;
 	unsigned int ctx_id = UINT_MAX;
 	struct smw_aead_init_args args = { 0 };
 	struct smw_aead_init_args *aead_args = &args;
+	struct smw_context_args ctx_args = { 0 };
 	struct keypair_ops key = { 0 };
 	struct smw_keypair_buffer key_buffer = { 0 };
 	struct tbuffer iv = { 0 };
-	struct smw_op_context *api_ctx = (struct smw_op_context *)INTPTR_MAX;
 	unsigned int iv_len = 0;
 
 	if (!subtest) {
@@ -1112,7 +1112,16 @@ int aead_init(struct subtest_data *subtest)
 
 	args.version = subtest->version;
 
-	res = util_context_set_op_ctx(subtest, &ctx_id, &args.context, api_ctx);
+	if (is_api_test(subtest)) {
+		subtest->smw_status = smw_allocate_context(&ctx_args);
+		if (subtest->smw_status != SMW_STATUS_OK) {
+			res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+			goto end;
+		}
+	}
+
+	res = util_context_set_op_ctx(subtest, &ctx_id, &args.context,
+				      ctx_args.context);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -1169,6 +1178,15 @@ int aead_init(struct subtest_data *subtest)
 	}
 
 end:
+	if (is_api_test(subtest)) {
+		smw_status = smw_cancel_operation(&ctx_args);
+		if (subtest->smw_status == SMW_STATUS_OK &&
+		    smw_status != SMW_STATUS_OK) {
+			subtest->smw_status = smw_status;
+			res = ERR_CODE(API_STATUS_NOK);
+		}
+	}
+
 	if (iv.data)
 		free(iv.data);
 

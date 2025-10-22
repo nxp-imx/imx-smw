@@ -410,11 +410,12 @@ exit:
 int hash_init(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(PASSED);
+	enum smw_status_code smw_status = SMW_STATUS_OK;
 	unsigned int ctx_id = UINT_MAX;
 	const char *algo_string = NULL;
 	struct smw_hash_init_args args = { 0 };
 	struct smw_hash_init_args *smw_hash_args = &args;
-	struct smw_op_context *api_ctx = (struct smw_op_context *)INTPTR_MAX;
+	struct smw_context_args ctx_args = { 0 };
 	unsigned int input_len = 0;
 	unsigned char *input_hex = NULL;
 
@@ -425,7 +426,16 @@ int hash_init(struct subtest_data *subtest)
 
 	args.version = subtest->version;
 
-	res = util_context_set_op_ctx(subtest, &ctx_id, &args.context, api_ctx);
+	if (is_api_test(subtest)) {
+		subtest->smw_status = smw_allocate_context(&ctx_args);
+		if (subtest->smw_status != SMW_STATUS_OK) {
+			res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+			goto exit;
+		}
+	}
+
+	res = util_context_set_op_ctx(subtest, &ctx_id, &args.context,
+				      ctx_args.context);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -461,6 +471,15 @@ int hash_init(struct subtest_data *subtest)
 	}
 
 exit:
+	if (is_api_test(subtest)) {
+		smw_status = smw_cancel_operation(&ctx_args);
+		if (subtest->smw_status == SMW_STATUS_OK &&
+		    smw_status != SMW_STATUS_OK) {
+			subtest->smw_status = smw_status;
+			res = ERR_CODE(API_STATUS_NOK);
+		}
+	}
+
 	return res;
 }
 

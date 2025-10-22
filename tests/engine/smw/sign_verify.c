@@ -518,9 +518,10 @@ exit:
 int sign_verify_init(struct subtest_data *subtest, int operation)
 {
 	int res = ERR_CODE(BAD_ARGS);
-
+	enum smw_status_code smw_status = SMW_STATUS_OK;
 	struct keypair_ops key_test = { 0 };
 	struct smw_keypair_buffer key_buffer = { 0 };
+	struct smw_context_args ctx_args = { 0 };
 	unsigned int ctx_id = UINT_MAX;
 	unsigned char *message = NULL;
 	unsigned int message_length = 0;
@@ -529,7 +530,6 @@ int sign_verify_init(struct subtest_data *subtest, int operation)
 
 	struct smw_sign_verify_init_args args = { 0 };
 	struct smw_sign_verify_init_args *smw_args = &args;
-	struct smw_op_context *api_ctx = (struct smw_op_context *)INTPTR_MAX;
 	struct smw_eddsa_params eddsa_params = { 0 };
 
 	if (!subtest) {
@@ -549,7 +549,16 @@ int sign_verify_init(struct subtest_data *subtest, int operation)
 
 	args.key_descriptor = &key_test.desc;
 
-	res = util_context_set_op_ctx(subtest, &ctx_id, &args.context, api_ctx);
+	if (is_api_test(subtest)) {
+		subtest->smw_status = smw_allocate_context(&ctx_args);
+		if (subtest->smw_status != SMW_STATUS_OK) {
+			res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+			goto end;
+		}
+	}
+
+	res = util_context_set_op_ctx(subtest, &ctx_id, &args.context,
+				      ctx_args.context);
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
@@ -606,6 +615,15 @@ int sign_verify_init(struct subtest_data *subtest, int operation)
 	}
 
 end:
+	if (is_api_test(subtest)) {
+		smw_status = smw_cancel_operation(&ctx_args);
+		if (subtest->smw_status == SMW_STATUS_OK &&
+		    smw_status != SMW_STATUS_OK) {
+			subtest->smw_status = smw_status;
+			res = ERR_CODE(API_STATUS_NOK);
+		}
+	}
+
 	key_free_key(&key_test);
 
 	if (message)

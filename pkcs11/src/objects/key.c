@@ -4,6 +4,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "attributes.h"
 #include "key.h"
@@ -18,8 +19,18 @@
 #include "libobj_types.h"
 
 #include "util.h"
+#include "compiler.h"
 
 #include "trace.h"
+
+/*
+ * TLS 1.3 expanded_label is composed of:
+ * - 2 bytes: args->length as uint16_t
+ * - 1 byte: prefix_length (6) + args->label_length
+ * - 6 bytes: the prefix ("tls13 ")
+ * - `args->label_length` bytes: the input args->label
+ */
+#define TLS13_LABEL_OFFSET (2 + 1 + 6)
 
 enum attr_key_common_list {
 	KEY_TYPE = 0,
@@ -2308,12 +2319,16 @@ CK_RV derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 		 struct libattr_list *attrs)
 {
 	CK_RV ret = CKR_GENERAL_ERROR;
+	CK_BYTE_PTR label = NULL;
 	CK_KEY_TYPE key_type = 0;
 	CK_KEY_TYPE base_key_type = 0;
 	CK_MECHANISM find_mech = { 0 };
 	struct lib_derive_ctx *ctx = NULL;
 	struct libdevice *device = NULL;
 	struct libobj_key_derive_params derive_params = { 0 };
+	struct libmech_list *mech_list = NULL;
+	/* ASCII: "finished", in hex for EBCDIC compatibility */
+	static const char finishedlabel[] = "\x66\x69\x6E\x69\x73\x68\x65\x64";
 
 	DBG_TRACE("Derive a secret key from base key object");
 
@@ -2361,27 +2376,41 @@ CK_RV derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	if (ret != CKR_OK)
 		goto end;
 
-	if (mech->mechanism == CKM_ECDH1_DERIVE) {
-		/* Remove previous operation context */
-		ret = libdev_find_opctx(device, CKF_DERIVE, &find_mech,
-					(void **)&ctx);
-		if (ret == CKR_OK) {
-			(void)libdev_remove_opctx(device, CKF_DERIVE);
-			destroy_context(ctx);
+	mech_list = get_key_mech_list(derived_key);
+	if (mech_list && mech_list->number) {
+		switch (mech_list->mech[0]) {
+		case CKM_TLS12_MASTER_KEY_DERIVE_DH:
+		case CKM_TLS12_EXTENDED_MASTER_KEY_DERIVE_DH:
+		case CKM_HKDF_DERIVE:
+			if (mech->mechanism == CKM_ECDH1_DERIVE) {
+				/* Remove previous operation context */
+				ret = libdev_find_opctx(device, CKF_DERIVE,
+							&find_mech,
+							(void **)&ctx);
+				if (ret == CKR_OK) {
+					(void)libdev_remove_opctx(device,
+								  CKF_DERIVE);
+					destroy_context(ctx);
+				}
+
+				ctx = calloc(1, sizeof(*ctx));
+				if (!ctx) {
+					ret = CKR_HOST_MEMORY;
+					goto end;
+				}
+
+				/* Set current operation context */
+				ret = libdev_add_opctx(device, CKF_DERIVE, mech,
+						       ctx);
+				if (ret != CKR_OK)
+					goto end;
+
+				derive_params.ctx = ctx;
+			}
+			break;
+		default:
+			break;
 		}
-
-		ctx = calloc(1, sizeof(*ctx));
-		if (!ctx) {
-			ret = CKR_HOST_MEMORY;
-			goto end;
-		}
-
-		/* Set current operation context */
-		ret = libdev_add_opctx(device, CKF_DERIVE, mech, ctx);
-		if (ret != CKR_OK)
-			goto end;
-
-		derive_params.ctx = ctx;
 	}
 
 	derive_params.hsession = hsession;
@@ -2429,6 +2458,36 @@ end:
 		if (mech->mechanism == CKM_ECDH1_DERIVE && ctx) {
 			(void)libdev_remove_opctx(device, CKF_DERIVE);
 			destroy_context(ctx);
+		}
+	} else {
+		switch (mech->mechanism) {
+		case CKM_HKDF_DERIVE:
+			if (!derive_params.hkdf_params.info ||
+			    derive_params.hkdf_params.info_len !=
+				    TLS13_LABEL_OFFSET + sizeof(finishedlabel))
+				break;
+
+			label = &derive_params.hkdf_params
+					 .info[TLS13_LABEL_OFFSET];
+			if (strncmp((char *)label, finishedlabel,
+				    sizeof(finishedlabel)))
+				break;
+
+			__fallthrough;
+
+		case CKM_TLS12_KEY_AND_MAC_DERIVE:
+			if (!ctx)
+				break;
+
+			if (ctx->context)
+				(void)libdev_cancel_operation(&ctx->context);
+
+			(void)libdev_remove_opctx(device, CKF_DERIVE);
+			destroy_context(ctx);
+			break;
+
+		default:
+			break;
 		}
 	}
 

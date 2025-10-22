@@ -1984,6 +1984,10 @@ static CK_RV set_ecdh_args(struct libobj_key_derive_params *derive_params,
 	if (!derive_params || !derive_args)
 		return status;
 
+	if (!derive_params->ecdh_params.pPublicData ||
+	    !derive_params->ecdh_params.ulPublicDataLen)
+		return status;
+
 	if (derive_params->ecdh_params.kdf != CKD_NULL ||
 	    derive_params->ecdh_params.pSharedData ||
 	    derive_params->ecdh_params.ulSharedDataLen)
@@ -2370,7 +2374,7 @@ static CK_RV set_tls13_args(struct libobj_key_derive_params *derive_params,
 	/* Check if we are doing early secret derivation */
 	if (!strncmp(derived_secret_label, (char *)label,
 		     strlen(derived_secret_label))) {
-		derive_params->ctx->skipped = true;
+		ctx->skipped = true;
 		return CKR_OK;
 	}
 
@@ -2394,6 +2398,7 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	struct smw_kdf_tls13_args tls13_args = { 0 };
 	struct smw_kdf_tls12_op_args tls12_args = { 0 };
 	struct libobj_key_derive_params *derive_params = args;
+	struct lib_derive_ctx *ctx = derive_params->ctx;
 	struct libobj_obj *obj = derive_params->derived_key;
 
 	devinfo = libdev_get_devinfo(slotid);
@@ -2429,7 +2434,7 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 
 	switch (entry->type) {
 	case CKM_HKDF_DERIVE:
-		if (derive_params->ctx) {
+		if (ctx) {
 			if (!(derive_params->hkdf_params.extract ^
 			      derive_params->hkdf_params.expand))
 				return CKR_ARGUMENTS_BAD;
@@ -2446,7 +2451,7 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 
 			set_key_tls(obj, TLS13_KEY);
 
-			if (derive_params->ctx->skipped)
+			if (ctx->skipped)
 				return CKR_OK;
 		} else {
 			derive_args.kdf_arguments = &hkdf_args;
@@ -2467,7 +2472,7 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 		case SMW_ATTR_ALGO_HKDF:
 		case SMW_ATTR_ALGO_TLS_1_2:
 			DBG_TRACE("ECDH Derive Key for TLS detected");
-			derive_params->ctx->skipped = true;
+			ctx->skipped = true;
 			return CKR_OK;
 
 		default:
@@ -2510,6 +2515,7 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	case CKM_HKDF_DERIVE:
 		if (derive_params->ctx && tls13_args.psk)
 			free(tls13_args.psk);
+
 		break;
 
 	case CKM_TLS12_KEY_AND_MAC_DERIVE:

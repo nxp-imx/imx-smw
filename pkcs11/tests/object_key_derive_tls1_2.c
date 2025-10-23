@@ -344,6 +344,73 @@ static int object_derive_key_tls12_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_DeriveKey"))
 		goto end;
 
+	TEST_OUT("Set CKM_TLS12_KEY_AND_MAC_DERIVE mechanism parameters\n");
+	tls12_mech.mechanism = CKM_TLS12_KEY_AND_MAC_DERIVE;
+	tls12_mech.pParameter = &tls12_block_params;
+	tls12_mech.ulParameterLen = sizeof(tls12_block_params);
+	tls12_block_params.prfHashMechanism = CKM_SHA256;
+	tls12_block_params.bIsExport = false;
+	tls12_block_params.RandomInfo.pClientRandom = client_random;
+	tls12_block_params.RandomInfo.pServerRandom = server_random;
+	tls12_block_params.RandomInfo.ulClientRandomLen = sizeof(client_random);
+	tls12_block_params.RandomInfo.ulServerRandomLen = sizeof(server_random);
+	tls12_block_params.ulIVSizeInBits =
+		BYTES_TO_BITS(ARRAY_SIZE(client_iv));
+	tls12_block_params.ulKeySizeInBits = 160;
+	tls12_block_params.ulMacSizeInBits = 256;
+	tls12_block_params.pReturnedKeyMaterial = &key_material;
+	key_material.pIVClient = client_iv;
+	key_material.pIVServer = server_iv;
+
+	derived_key_type = CKK_AES;
+	derived_key_allowed_mech = CKM_AES_CBC;
+	encrypt_usage = CK_TRUE;
+	ret = pfunc->C_DeriveKey(sess, &tls12_mech, derived_key,
+				 derived_key_template,
+				 ARRAY_SIZE(derived_key_template), NULL_PTR);
+	if (CHECK_CK_RV(CKR_OK, "C_DeriveKey"))
+		goto end;
+
+	TEST_OUT("Delete the client key\n");
+	ret = pfunc->C_DestroyObject(sess, key_material.hClientKey);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	TEST_OUT("Delete the client MAC key\n");
+	ret = pfunc->C_DestroyObject(sess, key_material.hClientMacSecret);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	TEST_OUT("Delete the server key\n");
+	ret = pfunc->C_DestroyObject(sess, key_material.hServerKey);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	TEST_OUT("Delete the server MAC key\n");
+	ret = pfunc->C_DestroyObject(sess, key_material.hServerMacSecret);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	TEST_OUT("Delete the derived key\n");
+	ret = pfunc->C_DestroyObject(sess, derived_key);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	TEST_OUT("Delete the ecdhe key\n");
+	ret = pfunc->C_DestroyObject(sess, ecdhe_key);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	TEST_OUT("Key Destroy #%lu\n", hpubkey);
+	ret = pfunc->C_DestroyObject(sess, hpubkey);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	TEST_OUT("Key Destroy #%lu\n", hprivkey);
+	ret = pfunc->C_DestroyObject(sess, hprivkey);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
 	status = TEST_PASS;
 
 end:
@@ -356,7 +423,7 @@ end:
 	return status;
 }
 
-static int object_derive_key_tls12(CK_FUNCTION_LIST_PTR pfunc)
+static int object_derive_key_tls12_master_secret(CK_FUNCTION_LIST_PTR pfunc)
 {
 	int status = TEST_FAIL;
 
@@ -383,16 +450,9 @@ static int object_derive_key_tls12(CK_FUNCTION_LIST_PTR pfunc)
 	};
 
 	CK_TLS12_MASTER_KEY_DERIVE_PARAMS tls12_master_params = { 0 };
-	CK_TLS12_EXTENDED_MASTER_KEY_DERIVE_PARAMS
-	tls12_extended_master_params = { 0 };
 	CK_MECHANISM tls12_master_mech = { CKM_TLS12_MASTER_KEY_DERIVE_DH,
 					   (void *)&tls12_master_params,
 					   sizeof(tls12_master_params) };
-	CK_MECHANISM tls12_extended_master_mech = {
-		CKM_TLS12_EXTENDED_MASTER_KEY_DERIVE_DH,
-		(void *)&tls12_extended_master_params,
-		sizeof(tls12_extended_master_params)
-	};
 	CK_TLS12_KEY_MAT_PARAMS tls12_block_params = { 0 };
 	CK_SSL3_KEY_MAT_OUT key_material = { 0 };
 	CK_BYTE client_iv[20] = { 0 };
@@ -542,6 +602,150 @@ static int object_derive_key_tls12(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
 		goto end;
 
+	TEST_OUT("Delete the ecdhe key\n");
+	ret = pfunc->C_DestroyObject(sess, ecdhe_key);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	TEST_OUT("Key Destroy #%lu\n", hpubkey);
+	ret = pfunc->C_DestroyObject(sess, hpubkey);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	TEST_OUT("Key Destroy #%lu\n", hprivkey);
+	ret = pfunc->C_DestroyObject(sess, hprivkey);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	status = TEST_PASS;
+
+end:
+	util_close_session(pfunc, &sess);
+
+	if (pubkey_attrs[0].pValue)
+		free(pubkey_attrs[0].pValue);
+
+	SUBTEST_END(status);
+	return status;
+}
+
+static int
+object_derive_key_tls12_extended_master_secret(CK_FUNCTION_LIST_PTR pfunc)
+{
+	int status = TEST_FAIL;
+
+	CK_RV ret = CKR_OK;
+	CK_SESSION_HANDLE sess = 0;
+	CK_BBOOL ck_true = CK_TRUE;
+
+	CK_OBJECT_HANDLE hpubkey = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hprivkey = CK_INVALID_HANDLE;
+	CK_MECHANISM genmech = { .mechanism = CKM_EC_KEY_PAIR_GEN };
+	CK_MECHANISM_TYPE base_key_allowed_mech = {
+		CKM_TLS12_MASTER_KEY_DERIVE_DH
+	};
+	CK_ATTRIBUTE pubkey_attrs[] = {
+		{ CKA_EC_PARAMS, NULL_PTR, 0 },
+		{ CKA_DERIVE, &ck_true, sizeof(CK_BBOOL) },
+		{ CKA_ALLOWED_MECHANISMS, &base_key_allowed_mech,
+		  sizeof(base_key_allowed_mech) },
+	};
+	CK_ATTRIBUTE privkey_attrs[] = {
+		{ CKA_DERIVE, &ck_true, sizeof(CK_BBOOL) },
+		{ CKA_ALLOWED_MECHANISMS, &base_key_allowed_mech,
+		  sizeof(base_key_allowed_mech) },
+	};
+
+	CK_TLS12_EXTENDED_MASTER_KEY_DERIVE_PARAMS
+	tls12_extended_master_params = { 0 };
+	CK_MECHANISM tls12_extended_master_mech = {
+		CKM_TLS12_EXTENDED_MASTER_KEY_DERIVE_DH,
+		(void *)&tls12_extended_master_params,
+		sizeof(tls12_extended_master_params)
+	};
+	CK_TLS12_KEY_MAT_PARAMS tls12_block_params = { 0 };
+	CK_SSL3_KEY_MAT_OUT key_material = { 0 };
+	CK_BYTE client_iv[20] = { 0 };
+	CK_BYTE server_iv[20] = { 0 };
+	CK_MECHANISM tls12_block_mech = { CKM_TLS12_KEY_AND_MAC_DERIVE,
+					  (void *)&tls12_block_params,
+					  sizeof(tls12_block_params) };
+
+	CK_OBJECT_CLASS derive_key_class = CKO_SECRET_KEY;
+	CK_OBJECT_HANDLE derived_key = CK_INVALID_HANDLE;
+	CK_MECHANISM_TYPE derived_key_allowed_mech = {
+		CKM_TLS12_KEY_AND_MAC_DERIVE
+	};
+	CK_ULONG derived_key_len = 32;
+	CK_KEY_TYPE derived_key_type = CKK_GENERIC_SECRET;
+	CK_BBOOL encrypt_usage = CK_FALSE;
+	CK_ATTRIBUTE derived_key_template[] = {
+		{ CKA_CLASS, &derive_key_class, sizeof(derive_key_class) },
+		{ CKA_KEY_TYPE, &derived_key_type, sizeof(derived_key_type) },
+		{ CKA_VALUE_LEN, &derived_key_len, sizeof(derived_key_len) },
+		{ CKA_ALLOWED_MECHANISMS, &derived_key_allowed_mech,
+		  sizeof(derived_key_allowed_mech) },
+		{ CKA_DERIVE, &ck_true, sizeof(CK_BBOOL) },
+		{ CKA_ENCRYPT, &encrypt_usage, sizeof(CK_BBOOL) }
+	};
+	CK_MECHANISM_TYPE ecdhe_key_allowed_mech = {
+		CKM_TLS12_MASTER_KEY_DERIVE_DH
+	};
+	CK_ECDH1_DERIVE_PARAMS ecdh_params = { 0 };
+	CK_MECHANISM ecdh_mech = { CKM_ECDH1_DERIVE, (void *)&ecdh_params,
+				   sizeof(ecdh_params) };
+	CK_OBJECT_HANDLE ecdhe_key = CK_INVALID_HANDLE;
+	CK_ATTRIBUTE ecdhe_key_template[] = {
+		{ CKA_CLASS, &derive_key_class, sizeof(derive_key_class) },
+		{ CKA_KEY_TYPE, &derived_key_type, sizeof(derived_key_type) },
+		{ CKA_VALUE_LEN, &derived_key_len, sizeof(derived_key_len) },
+		{ CKA_ALLOWED_MECHANISMS, &ecdhe_key_allowed_mech,
+		  sizeof(ecdhe_key_allowed_mech) },
+		{ CKA_DERIVE, &ck_true, sizeof(CK_BBOOL) },
+	};
+
+	SUBTEST_START();
+
+	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
+		goto end;
+
+	if (!util_lib_is_mech_supported(pfunc, 0, base_key_allowed_mech) ||
+	    !util_lib_is_mech_supported(pfunc, 0, derived_key_allowed_mech) ||
+	    !util_lib_is_mech_supported(pfunc, 0, ecdhe_key_allowed_mech)) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
+	TEST_OUT("Login to R/W Session as User\n");
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_Login"))
+		goto end;
+
+	if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
+					       &ec_curves[SECP_R1_256]),
+			   "ASN1 Conversion"))
+		goto end;
+
+	TEST_OUT("Generate a base key\n");
+	ret = pfunc->C_GenerateKeyPair(sess, &genmech, pubkey_attrs,
+				       ARRAY_SIZE(pubkey_attrs), privkey_attrs,
+				       ARRAY_SIZE(privkey_attrs), &hpubkey,
+				       &hprivkey);
+	if (CHECK_CK_RV(CKR_OK, "C_GenerateKeyPair"))
+		goto end;
+
+	TEST_OUT("Set CKM_ECDH1_DERIVE mechanism parameters\n");
+	ecdh_params.kdf = CKD_NULL;
+	ecdh_params.pSharedData = NULL;
+	ecdh_params.ulSharedDataLen = 0;
+	ecdh_params.pPublicData = peer_buffer;
+	ecdh_params.ulPublicDataLen = ARRAY_SIZE(peer_buffer);
+
+	ret = pfunc->C_DeriveKey(sess, &ecdh_mech, hprivkey, ecdhe_key_template,
+				 ARRAY_SIZE(ecdhe_key_template), &ecdhe_key);
+	if (CHECK_CK_RV(CKR_OK, "C_DeriveKey"))
+		goto end;
+
 	TEST_OUT("Set CKM_TLS12_EXTENDED_MASTER_KEY_DERIVE_DH mech params\n");
 	tls12_extended_master_params.prfHashMechanism = CKM_SHA256;
 	tls12_extended_master_params.pVersion = NULL;
@@ -656,7 +860,10 @@ void tests_pkcs11_derive_key_tls1_2(void *lib_hdl, CK_VOID_PTR pfunc)
 	if (object_derive_key_tls12_bad_param(pfunc) == TEST_FAIL)
 		goto end;
 
-	status = object_derive_key_tls12(pfunc);
+	if (object_derive_key_tls12_master_secret(pfunc) == TEST_FAIL)
+		goto end;
+
+	status = object_derive_key_tls12_extended_master_secret(pfunc);
 
 end:
 	ret = ((CK_FUNCTION_LIST_PTR)pfunc)->C_Finalize(NULL_PTR);

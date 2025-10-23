@@ -131,7 +131,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add support for RSA asymmetric encryption and decryption.
 * Add proper parameter validation to C_DestroyObject function to ensure appropriate
   error codes are returned for invalid inputs.
-
+* Release the ECDH peer public buffer when the TLS key exchange is finished.
 
 #### PKCS#11 Tests
 
@@ -145,6 +145,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Use a dedicated secure storage
 * Fix memory leaks.
 * Add tests to validate asymmetric encryption and decryption operations.
+* Update TLS 1.2 tests to include peer public buffer release scenarios.
 
 ---
 ### <a id ="rel_5_1"></a></br>**Release 5.1**

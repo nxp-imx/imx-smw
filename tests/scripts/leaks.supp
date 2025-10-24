@@ -1,0 +1,90 @@
+{
+   app_data_list leak
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   fun:json_object_new_object
+   fun:json_tokener_parse_ex
+   fun:json_tokener_parse_verbose
+   fun:json_tokener_parse
+   fun:util_read_json_file
+   fun:build_data_list
+   fun:build_data_list
+   fun:util_data_build_data_list
+   fun:app_register
+   fun:util_app_create
+   fun:run_multiapp
+}
+{
+   app_keys_list leak
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   fun:json_object_new_object
+   fun:json_tokener_parse_ex
+   fun:json_tokener_parse_verbose
+   fun:json_tokener_parse
+   fun:util_read_json_file
+   fun:build_keys_list
+   fun:build_keys_list
+   fun:util_key_build_keys_list
+   fun:app_register
+   fun:util_app_create
+   fun:run_multiapp
+}
+{
+   pthread_start leak
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create@@GLIBC_2.34
+   fun:util_thread_start
+   fun:run_multithread
+   fun:process_app
+   fun:util_app_fork
+   fun:run_apps
+   fun:run_multiapp
+   fun:run_test
+   fun:main
+}
+{
+   thread_ends_start leak
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create@@GLIBC_2.34
+   fun:thread_ends_start
+   fun:util_thread_ends_wait
+   fun:run_multithread
+   fun:process_app
+   fun:util_app_fork
+   fun:run_apps
+   fun:run_multiapp
+   fun:run_test
+}
+{
+   util_ipc_start leak
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create@@GLIBC_2.34
+   fun:util_ipc_start
+   fun:process_app
+   fun:util_app_fork
+   fun:run_apps
+   fun:run_multiapp
+   fun:run_test
+   fun:main
+}

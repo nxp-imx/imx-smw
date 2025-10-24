@@ -108,6 +108,12 @@ install(FILES scripts/run_test.sh
         COMPONENT ${PROJECT_NAME}
         EXCLUDE_FROM_ALL)
 
+install(FILES scripts/valgrind.supp
+        DESTINATION ${PKCS11_TARGET_SCRIPTS_DIR}
+        PERMISSIONS WORLD_READ OWNER_READ GROUP_READ
+        COMPONENT ${PROJECT_NAME}
+        EXCLUDE_FROM_ALL)
+
 add_custom_target(install_${PROJECT_NAME}
         COMMAND "${CMAKE_COMMAND}" -DCOMPONENT=${PROJECT_NAME}
                 -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_install.cmake"

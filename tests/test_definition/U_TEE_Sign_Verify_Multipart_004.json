@@ -59,7 +59,7 @@
 		],
 		"context_id": 0,
 		"key_name": "key 1",
-		"depends": 2,
+		"depends": 4,
 		"result": "SMW_STATUS_OPERATION_ALREADY_INIT"
 	},
 	"subtest 6": {
@@ -92,7 +92,7 @@
 		],
 		"context_id": 1,
 		"key_name": "key 1",
-		"depends": 3,
+		"depends": 6,
 		"result": "SMW_STATUS_OPERATION_ALREADY_INIT"
 	},
 	"subtest 8": {

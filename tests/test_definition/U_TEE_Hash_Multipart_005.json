@@ -6,6 +6,7 @@
 	"subtest 2": {
 		"description": "Hash init",
 		"command": "HASH_INIT",
+		"subsystem": "TEE",
 		"algo": "MD5",
 		"context_id": 0,
 		"depends": 1
@@ -13,9 +14,10 @@
 	"subtest 3": {
 		"description": "Hash init on same operation context",
 		"command": "HASH_INIT",
+		"subsystem": "TEE",
 		"algo": "MD5",
 		"context_id": 0,
-		"depends": 1,
+		"depends": 2,
 		"result": "SMW_STATUS_OPERATION_ALREADY_INIT"
 	},
 	"subtest 4": {

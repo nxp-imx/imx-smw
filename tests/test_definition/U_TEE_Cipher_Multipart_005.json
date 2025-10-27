@@ -40,7 +40,7 @@
 		"op_type": "ENCRYPT",
 		"key_name": "key 1",
 		"context_id": 0,
-		"depends": 2,
+		"depends": 3,
 		"result": "SMW_STATUS_OPERATION_ALREADY_INIT"
 	},
 	"subtest 5": {

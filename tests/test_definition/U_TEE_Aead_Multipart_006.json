@@ -16,6 +16,7 @@
 	"subtest 2": {
 		"description": "AEAD encryption init",
 		"command": "AEAD_INIT",
+		"subsystem": "TEE",
 		"key_name": "key 1",
 		"mode": "CCM",
 		"op_type": "ENCRYPT",
@@ -29,6 +30,7 @@
 	"subtest 3": {
 		"description": "AEAD encryption init on same operation context",
 		"command": "AEAD_INIT",
+		"subsystem": "TEE",
 		"key_name": "key 1",
 		"mode": "CCM",
 		"op_type": "ENCRYPT",
@@ -37,7 +39,7 @@
 		"tag": 16,
 		"aad": 12,
 		"context_id": 0,
-		"depends": 1,
+		"depends": 2,
 		"result": "SMW_STATUS_OPERATION_ALREADY_INIT"
 	},
 	"subtest 4": {

@@ -39,7 +39,11 @@ fi
 
 for def in "$@"
 do
-  @PROJECT_NAME@ -d "${def}"
+  if [ -z ${VALGRIND+x} ]; then
+    @PROJECT_NAME@ -d "${def}"
+  else
+    valgrind --undef-value-errors=no --error-exitcode=2 --suppressions=./scripts/leaks.supp @PROJECT_NAME@ -d "${def}"
+  fi
   res=$?
 
   if [ -n "${final_status_file}" ]; then

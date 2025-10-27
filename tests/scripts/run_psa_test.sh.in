@@ -17,7 +17,11 @@ if [ -e /etc/systemd/system/nvm_daemon.service ]; then
   fi
 fi
 
-@PROJECT_NAME@ -t @CMAKE_INSTALL_PREFIX@/@SMW_TESTS_TARGET_PSA_DIR@/@PSA_ARCH_TESTS@/@PSA_ARCH_TESTS_API_DIR@/@PSA_CUSTOM_TEST_LIST@
+if [ -z ${VALGRIND+x} ]; then
+  @PROJECT_NAME@ -t @CMAKE_INSTALL_PREFIX@/@SMW_TESTS_TARGET_PSA_DIR@/@PSA_ARCH_TESTS@/@PSA_ARCH_TESTS_API_DIR@/@PSA_CUSTOM_TEST_LIST@
+else
+  valgrind --undef-value-errors=no --error-exitcode=2 --suppressions=./scripts/leaks.supp @PROJECT_NAME@ -t @CMAKE_INSTALL_PREFIX@/@SMW_TESTS_TARGET_PSA_DIR@/@PSA_ARCH_TESTS@/@PSA_ARCH_TESTS_API_DIR@/@PSA_CUSTOM_TEST_LIST@
+fi
 res=$?
 if [ "${res}" -ne 0 ]
 then

@@ -17,7 +17,11 @@ if [ -e /etc/systemd/system/nvm_daemon.service ]; then
   fi
 fi
 
-eval "$*"
+if [ -z ${VALGRIND+x} ]; then
+  eval "$*"
+else
+  valgrind --undef-value-errors=no --error-exitcode=2 --suppressions=./scripts/valgrind.supp $*
+fi
 error=$?
 
 exit ${error}

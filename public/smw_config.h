@@ -79,34 +79,6 @@ enum smw_status_code smw_config_check_digest(smw_subsystem_t subsystem,
 					     smw_hash_algo_t algo);
 
 /**
- * smw_config_check_digest_multi_part() - Check if a digest multi part @algo
- * is supported
- * @subsystem: Name of the subsystem.
- * @algo: Digest algorithm name.
- *
- * Function checks if the digest multi part @algo is supported on the given
- * @subsystem.
- * If @subsystem is SMW_SUBSYSTEM_NAME_NONE, default subsystem digest
- * multi-part capability is checked.
- *
- * Return:
- * See &enum smw_status_code
- *	- SMW_STATUS_OK:
- *		@algo is supported
- *	- SMW_STATUS_INVALID_PARAM:
- *		@algo is SMW_HASH_ALGO_NAME_NONE
- *	- SMW_STATUS_UNKNOWN_ALGO_NAME:
- *		@algo is not valid
- *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
- *		@algo is not supported
- *	- SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME:
- *		@subsystem is not valid
- */
-enum smw_status_code
-smw_config_check_digest_multi_part(smw_subsystem_t subsystem,
-				   smw_hash_algo_t algo);
-
-/**
  * struct smw_key_info - Key information
  * @key_type_name: Key type name. See &typedef smw_key_type_t
  * @security_size: Key security size in bits

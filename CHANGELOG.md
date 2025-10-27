@@ -69,7 +69,8 @@ The failure is due to the storage manager which is already loaded and a new inst
   initialized.
 * Context allocation argument's subsystem name field is deprecated.
 * Hash initialization context includes subsystem name field.
-* Rename utility key functions to be prefixed by smw_utils_key_XXX
+* Rename utility key functions to be prefixed by smw_utils_key_XXX.
+* Remove the unimplemented smw_config_check_digest_multi_part() API.
 
 ##### 2. Subsystems
 

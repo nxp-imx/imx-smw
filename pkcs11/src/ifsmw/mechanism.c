@@ -2077,7 +2077,9 @@ static CK_RV set_tls12_args(CK_MECHANISM_TYPE type,
 	    type == CKM_TLS12_KEY_AND_MAC_DERIVE) {
 		random_info = &params->tls12_params.RandomInfo;
 
-		if (!random_info->ulClientRandomLen ||
+		if (!random_info->pClientRandom ||
+		    !random_info->pServerRandom ||
+		    !random_info->ulClientRandomLen ||
 		    !random_info->ulServerRandomLen)
 			return status;
 
@@ -2090,6 +2092,10 @@ static CK_RV set_tls12_args(CK_MECHANISM_TYPE type,
 		rd->server_random = random_info->pServerRandom;
 		rd->server_random_length = random_info->ulServerRandomLen;
 	} else if (type == CKM_TLS12_EXTENDED_MASTER_KEY_DERIVE_DH) {
+		if (!params->tls12_params.pSessionHash ||
+		    !params->tls12_params.ulSessionHashLen)
+			return status;
+
 		sh = calloc(1, sizeof(*sh));
 		if (!sh)
 			return CKR_HOST_MEMORY;

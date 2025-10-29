@@ -873,7 +873,7 @@ static int find_keys_attrs(CK_FUNCTION_LIST_PTR pfunc, CK_SESSION_HANDLE sess,
 	if (INC_OVERFLOW(hkeys_max, 1))
 		goto end;
 
-	hkeys_match = calloc(1, hkeys_max);
+	hkeys_match = calloc(hkeys_max, sizeof(*hkeys_match));
 	if (CHECK_EXPECTED(hkeys_match, "Allocation error"))
 		goto end;
 

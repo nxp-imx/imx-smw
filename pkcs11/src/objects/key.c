@@ -19,7 +19,6 @@
 #include "libobj_types.h"
 
 #include "util.h"
-#include "compiler.h"
 
 #include "trace.h"
 
@@ -2462,6 +2461,9 @@ end:
 	} else {
 		switch (mech->mechanism) {
 		case CKM_HKDF_DERIVE:
+			if (!ctx)
+				break;
+
 			if (!derive_params.hkdf_params.info ||
 			    derive_params.hkdf_params.info_len !=
 				    TLS13_LABEL_OFFSET + sizeof(finishedlabel))
@@ -2473,14 +2475,16 @@ end:
 				    sizeof(finishedlabel)))
 				break;
 
-			__fallthrough;
+			if (ctx->context)
+				(void)libdev_cancel_operation(&ctx->context);
+
+			(void)libdev_remove_opctx(device, CKF_DERIVE);
+			destroy_context(ctx);
+			break;
 
 		case CKM_TLS12_KEY_AND_MAC_DERIVE:
 			if (!ctx)
 				break;
-
-			if (ctx->context)
-				(void)libdev_cancel_operation(&ctx->context);
 
 			(void)libdev_remove_opctx(device, CKF_DERIVE);
 			destroy_context(ctx);

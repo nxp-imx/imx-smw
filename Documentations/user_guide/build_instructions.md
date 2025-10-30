@@ -900,10 +900,14 @@ super-user privilege.
     `-- <span style="color:orange">share</span>
         `-- <span style="color:orange">smw</span>
             |-- <span style="color:orange">pkcs11</span>
-            |   |-- <span style="color:orange">scripts</span>
-            |   |   `-- run_test.sh
             |   `-- <span style="color:orange">tests</span>
-            |       `-- CTestTestfile.cmake
+            |       |-- CTestTestfile.cmake
+            |       `-- <span style="color:orange">scripts</span>
+            |           |-- cleanup_test.sh
+            |           |-- run_test.sh
+            |           |-- setup_test.sh
+            |           |-- test_lib.sh
+            |           `-- valgrind.supp                                        Valgrind suppression file for memory checks
             `-- <span style="color:orange">tests</span>
                 |-- CTestTestfile.cmake
                 |-- <span style="color:orange">config</span>                     Test specific library configuration
@@ -911,8 +915,12 @@ super-user privilege.
                 |-- <span style="color:orange">cst</span>                        Signed message template for specific ELE based device test
                 |-- <span style="color:orange">psa</span>                        ARM PSA specific test (function of the device)
                 |-- <span style="color:orange">scripts</span>
-                |   `-- run_psa_test.sh        ARM PSA specific test (function of the device)
-                |   `-- run_simple_test.sh
+                |   |-- cleanup_test.sh
+                |   |-- leaks.supp             Valgrind suppression file for memory leak checks
+                |   |-- run_psa_test.sh        ARM PSA specific test (function of the device)
+                |   |-- run_simple_test.sh
+                |   |-- setup_test.sh
+                |   `-- test_lib.sh
                 `-- <span style="color:orange">test_definition</span>
                     |-- F_TEE_App_001.json
                     `-- ...

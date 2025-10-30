@@ -115,6 +115,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Remove subsystem name definition when doing context allocation command.
 * Add subsystem name definition in the hash multi-part init command.
 * Add tests for validating asymmetric encryption and decryption operations.
+* Script: Add Valgrind support
 
 #### PKCS#11 Library
 
@@ -135,6 +136,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add proper parameter validation to C_DestroyObject function to ensure appropriate
   error codes are returned for invalid inputs.
 * Release the ECDH peer public buffer when the TLS key exchange is finished.
+* Remove duplicate cancel operation when the TLS key exchange is finished.
 
 #### PKCS#11 Tests
 
@@ -149,6 +151,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix memory leaks.
 * Add tests to validate asymmetric encryption and decryption operations.
 * Update TLS 1.2 tests to include peer public buffer release scenarios.
+* Script: Add Valgrind support
 
 ---
 ### <a id ="rel_5_1"></a></br>**Release 5.1**

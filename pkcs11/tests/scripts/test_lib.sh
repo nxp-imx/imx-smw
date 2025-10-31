@@ -1,7 +1,12 @@
 #!/bin/sh
+set -u
 
 conf_file=/etc/opt/smw/smw.conf
 script_conf=/etc/opt/smw/smw_system_conf.sh
+
+info_msg() {
+  printf "INFO: %s\n" "$@"
+}
 
 pr_err()
 {
@@ -12,14 +17,25 @@ pr_err()
 
 exit_err()
 {
-  pr_err "$@"
 
-  if [ -e ${script_conf} ]; then
+  if [ "$@" -ne 0 ]; then pr_err "$@"; fi
+
+  if [ -e ${conf_file}.bak ]; then
     # Restore the original smw.conf
     mv ${conf_file}.bak ${conf_file}
   fi
 
-  exit 2
+  exit "$@"
+}
+
+exit_on_fail()
+{
+  ret="$?"
+  if [ ${ret} -ne 0 ]; then
+    exit_err ${ret} "$@ FAIL"
+  else
+    info_msg "$@ PASS"
+  fi
 }
 
 setup_nvm_daemon() {

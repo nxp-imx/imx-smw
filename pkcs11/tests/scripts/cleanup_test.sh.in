@@ -6,7 +6,7 @@ set -u
 
 cleanup_nvm_daemon
 
-if [ -e ${script_conf} ]; then
+if [ -e ${conf_file}.bak ]; then
   # Restore the original smw.conf
   mv ${conf_file}.bak ${conf_file}
 fi

@@ -87,6 +87,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Rename utility key functions to be prefixed by smw_utils_key_XXX
 * ELE: Add support for asymmetric encryption and decryption operations using RSA
   algorithm.
+* ELE: Stored TLS 1.2 and TLS 1.3 derived key group set to undefined
 
 ##### 3. ARM PSA APIs
 
@@ -116,6 +117,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add subsystem name definition in the hash multi-part init command.
 * Add tests for validating asymmetric encryption and decryption operations.
 * Script: Add Valgrind support
+* Add U_ELE_Derive_003 and U_ELE_Derive_004: Delete stored TLS derived key.
+* Update U_ELE_Derive_005 to U_ELE_Derive_011 and U_ELE_Derive_013 to U_ELE_Derive_015: Delete TLS derived key.
 
 #### PKCS#11 Library
 
@@ -137,6 +140,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   error codes are returned for invalid inputs.
 * Release the ECDH peer public buffer when the TLS key exchange is finished.
 * Remove duplicate cancel operation when the TLS key exchange is finished.
+* Keep the ECDH peer public buffer when doing TLS 1.3 key exchange.
 
 #### PKCS#11 Tests
 

@@ -11,6 +11,7 @@
 #include "subsystems.h"
 
 #include "common.h"
+#include "key_group.h"
 
 /**
  * struct tls13_ele_payload - Key Exchange input content (TLS1.3)
@@ -339,6 +340,11 @@ tls13_set_derived_identifier(struct smw_keymgr_derive_key_args *args,
 		return;
 
 	args->key_derived.identifier.s_id = key_id;
+	/*
+	 * In case of key derivation, the key group is unknown.
+	 * The FW selects the key group.
+	 */
+	args->key_derived.identifier.group = ELE_UNDEFINED_KEY_GROUP;
 	args->key_derived.identifier.security_size = payload->key_bits;
 	args->key_derived.identifier.subsystem_id = SUBSYSTEM_ID_ELE;
 

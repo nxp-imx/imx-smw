@@ -14,6 +14,7 @@
 #include "keymgr_db.h"
 
 #include "common.h"
+#include "key_group.h"
 
 #define TLS12_ALGO(_hashid, _op_id)                                            \
 	{                                                                      \
@@ -149,6 +150,11 @@ static int tls12_store_key_id(struct smw_keymgr_derive_key_args *args,
 
 	key_identifier.type_id = type_id;
 	key_identifier.s_id = *key_id;
+	/*
+	 * In case of key derivation, the key group is unknown.
+	 * The FW selects the key group.
+	 */
+	key_identifier.group = ELE_UNDEFINED_KEY_GROUP;
 	key_identifier.subsystem_id = SUBSYSTEM_ID_ELE;
 	key_identifier.security_size = bits;
 	key_attributes->attributes =
@@ -436,6 +442,11 @@ tls12_op_derive_master_secret(struct smw_keymgr_derive_key_args *args,
 		goto end;
 
 	args->key_derived.identifier.s_id = key_ex_args.out_derived_key_id;
+	/*
+	 * In case of key derivation, the key group is unknown.
+	 * The FW selects the key group.
+	 */
+	args->key_derived.identifier.group = ELE_UNDEFINED_KEY_GROUP;
 	args->key_derived.identifier.security_size =
 		TLS12_MASTER_SECRET_SEC_SIZE;
 	args->key_derived.identifier.subsystem_id = SUBSYSTEM_ID_ELE;

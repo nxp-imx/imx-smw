@@ -180,8 +180,7 @@ static int perform_asymm_encrypt_decrypt(CK_FUNCTION_LIST_PTR pfunc,
 	if (CHECK_CK_RV(CKR_OK, "C_Decrypt"))
 		goto end;
 
-	TEST_OUT("Recovered_data = %s recovered_data_len = 0x%lx\n",
-		 recovered_data, recovered_data_len);
+	TEST_DUMP_HEX("Recovered_data", recovered_data, recovered_data_len);
 
 	if (!util_compare_buffers(data, data_len, recovered_data,
 				  recovered_data_len)) {

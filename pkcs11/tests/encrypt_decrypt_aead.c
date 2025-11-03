@@ -578,8 +578,8 @@ static int encrypt_decrypt_aead(CK_FUNCTION_LIST_PTR pfunc)
 		free(encrypted_data);
 		encrypted_data = NULL_PTR;
 
-		TEST_OUT("Recovered_data = %s recovered_data_len = 0x%lx\n",
-			 recovered_data, recovered_data_len);
+		TEST_DUMP_HEX("Recovered_data", recovered_data,
+			      recovered_data_len);
 
 		if (!util_compare_buffers(data, sizeof(data), recovered_data,
 					  recovered_data_len)) {

@@ -706,8 +706,7 @@ static int encrypt_decrypt_iv_param(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_DecryptMessage"))
 		goto end;
 
-	TEST_OUT("Recovered_data = %s recovered_data_len = 0x%lx\n",
-		 recovered_data, recovered_data_len);
+	TEST_DUMP_HEX("Recovered_data", recovered_data, recovered_data_len);
 
 	if (!util_compare_buffers(data, data_len, recovered_data,
 				  recovered_data_len)) {
@@ -889,8 +888,8 @@ static int encrypt_decrypt_generate_iv(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		if (CHECK_CK_RV(CKR_OK, "C_DecryptMessage"))
 			goto end;
 
-		TEST_OUT("Recovered_data = %s recovered_data_len = 0x%lx\n",
-			 recovered_data, recovered_data_len);
+		TEST_DUMP_HEX("Recovered_data", recovered_data,
+			      recovered_data_len);
 
 		if (!util_compare_buffers(data, data_len, recovered_data,
 					  recovered_data_len)) {
@@ -1181,8 +1180,8 @@ static int encrypt_decrypt_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		if (CHECK_CK_RV(CKR_OK, "C_DecryptMessage"))
 			goto end;
 
-		TEST_OUT("Recovered_data = %s recovered_data_len = 0x%lx\n",
-			 recovered_data, recovered_data_len);
+		TEST_DUMP_HEX("Recovered_data", recovered_data,
+			      recovered_data_len);
 
 		if (!util_compare_buffers(data, data_len, recovered_data,
 					  recovered_data_len)) {
@@ -1336,8 +1335,8 @@ static int encrypt_decrypt_des(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		if (CHECK_CK_RV(CKR_OK, "C_DecryptMessage"))
 			goto end;
 
-		TEST_OUT("Recovered_data = %s recovered_data_len = 0x%lx\n",
-			 recovered_data, recovered_data_len);
+		TEST_DUMP_HEX("Recovered_data", recovered_data,
+			      recovered_data_len);
 
 		if (!util_compare_buffers(data, data_len, recovered_data,
 					  recovered_data_len)) {
@@ -1490,8 +1489,8 @@ static int encrypt_decrypt_des3(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		if (CHECK_CK_RV(CKR_OK, "C_DecryptMessage"))
 			goto end;
 
-		TEST_OUT("Recovered_data = %s recovered_data_len = 0x%lx\n",
-			 recovered_data, recovered_data_len);
+		TEST_DUMP_HEX("Recovered_data", recovered_data,
+			      recovered_data_len);
 
 		if (!util_compare_buffers(data, data_len, recovered_data,
 					  recovered_data_len)) {

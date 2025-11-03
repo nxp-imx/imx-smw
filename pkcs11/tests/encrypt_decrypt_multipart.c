@@ -891,10 +891,9 @@ static int encrypt_decrypt_multipart_aes(CK_FUNCTION_LIST_PTR pfunc)
 		if (CHECK_CK_RV(CKR_OK, "C_DecryptFinal"))
 			goto end;
 
-		TEST_OUT("Plaintext data = %s Plaintext data len = 0x%lx\n",
-			 data, data_len);
-		TEST_OUT("Recovered_data = %s total_recovered_len = 0x%lx\n",
-			 recovered_data, total_recovered_len);
+		TEST_DUMP_HEX("Plaintext data", data, data_len);
+		TEST_DUMP_HEX("Recovered_data", recovered_data,
+			      total_recovered_len);
 
 		if (!util_compare_buffers(data, data_len, recovered_data,
 					  total_recovered_len)) {
@@ -1051,10 +1050,9 @@ static int encrypt_decrypt_multipart_des(CK_FUNCTION_LIST_PTR pfunc)
 		if (CHECK_CK_RV(CKR_OK, "C_DecryptFinal"))
 			goto end;
 
-		TEST_OUT("Plaintext data = %s Plaintext data len = 0x%lx\n",
-			 data, data_len);
-		TEST_OUT("Recovered_data = %s total_recovered_len = 0x%lx\n",
-			 recovered_data, total_recovered_len);
+		TEST_DUMP_HEX("Plaintext data", data, data_len);
+		TEST_DUMP_HEX("Recovered_data", recovered_data,
+			      total_recovered_len);
 
 		if (!util_compare_buffers(data, data_len, recovered_data,
 					  total_recovered_len)) {
@@ -1206,10 +1204,9 @@ static int encrypt_decrypt_multipart_des3(CK_FUNCTION_LIST_PTR pfunc)
 		if (CHECK_CK_RV(CKR_OK, "C_DecryptFinal"))
 			goto end;
 
-		TEST_OUT("Plaintext data = %s Plaintext data len = 0x%lx\n",
-			 data, data_len);
-		TEST_OUT("Recovered_data = %s total_recovered_len = 0x%lx\n",
-			 recovered_data, total_recovered_len);
+		TEST_DUMP_HEX("Plaintext data", data, data_len);
+		TEST_DUMP_HEX("Recovered_data", recovered_data,
+			      total_recovered_len);
 
 		if (!util_compare_buffers(data, data_len, recovered_data,
 					  total_recovered_len)) {
@@ -1376,10 +1373,9 @@ static int encrypt_decrypt_multipart_sm4(CK_FUNCTION_LIST_PTR pfunc)
 		if (CHECK_CK_RV(CKR_OK, "C_DecryptFinal"))
 			goto end;
 
-		TEST_OUT("Plaintext data = %s Plaintext data len = 0x%lx\n",
-			 data, data_len);
-		TEST_OUT("Recovered_data = %s total_recovered_len = 0x%lx\n",
-			 recovered_data, total_recovered_len);
+		TEST_DUMP_HEX("Plaintext data", data, data_len);
+		TEST_DUMP_HEX("Recovered_data", recovered_data,
+			      total_recovered_len);
 
 		if (!util_compare_buffers(data, data_len, recovered_data,
 					  total_recovered_len)) {

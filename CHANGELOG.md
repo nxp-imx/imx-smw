@@ -152,6 +152,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add tests to validate asymmetric encryption and decryption operations.
 * Update TLS 1.2 tests to include peer public buffer release scenarios.
 * Script: Add Valgrind support
+* Add TEST_DUMP_HEX macro for hexadecimal output logging.
+* Update valgrind suppressions file.
 
 ---
 ### <a id ="rel_5_1"></a></br>**Release 5.1**

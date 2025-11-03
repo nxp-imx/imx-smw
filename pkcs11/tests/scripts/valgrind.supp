@@ -1,24 +1,4 @@
 {
-   strlen_invalid_read
-   Memcheck:Addr1
-   fun:__GI_strlen
-   fun:__printf_buffer
-   fun:__vsnprintf_internal
-   fun:vsnprintf
-   fun:test_printf
-   ...
-}
-{
-   strlen_invalid_read
-   Memcheck:Addr1
-   fun:strlen
-   fun:__printf_buffer
-   fun:__vsnprintf_internal
-   fun:vsnprintf
-   fun:test_printf
-   ...
-}
-{
    iv_overlap
    Memcheck:Overlap
    fun:__GI_memcpy

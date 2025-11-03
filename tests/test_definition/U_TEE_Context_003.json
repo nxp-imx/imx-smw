@@ -221,7 +221,7 @@
 		"context_id": 6,
 		"depends": 23
 	},
-	"subtest 28": {
+	"subtest 26": {
 		"command": "OP_CONTEXT_CANCEL",
 		"context_id": 6,
 		"depends": 22

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023-2024 NXP
+ * Copyright 2021, 2023-2025 NXP
  */
 
 #include <stdarg.h>
@@ -117,4 +117,35 @@ void test_printf(const char *format, ...)
 	}
 
 	(void)fprintf(stdout, "%s", buf);
+}
+
+void test_dump_hex(char *msg, void *buf, size_t len)
+{
+	size_t idx = 0;
+	char out[256] = { 0 };
+	int off = 0;
+	int nb_char = 0;
+
+	test_printf(" %s (%p-%zu)\n", msg, buf, len);
+
+	if (buf) {
+		for (idx = 0; idx < len; idx++) {
+			if ((!(idx % 16) && idx > 0) ||
+			    off == (sizeof(out) - 1)) {
+				test_printf("%s\n", out);
+				off = 0;
+			}
+
+			nb_char =
+				snprintf(out + off, (sizeof(out) - off),
+					 "%02X ", ((unsigned char *)buf)[idx]);
+			if (nb_char < 0)
+				break;
+
+			off += nb_char;
+		}
+
+		if (off > 0)
+			test_printf("%s\n", out);
+	}
 }

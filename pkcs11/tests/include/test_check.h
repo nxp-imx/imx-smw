@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021, 2023-2024 NXP
+ * Copyright 2021, 2023-2025 NXP
  */
 #ifndef __TEST_CHECK_H__
 #define __TEST_CHECK_H__
@@ -29,12 +29,14 @@ int check_ckrv(CK_RV got, CK_RV exp, const char *func, int line,
 	       const char *const str, int *status);
 void print_failure(const char *func, int line, const char *format, ...);
 void test_printf(const char *format, ...) __printf(1, 2);
+void test_dump_hex(char *msg, void *buf, size_t len);
 
 #define TEST_FAIL 0xBAD
 #define TEST_PASS 0xCAFE
 #define TEST_SKIP 0xFEED
 
 #define TEST_OUT(format, ...) test_printf(format, ##__VA_ARGS__)
+#define TEST_DUMP_HEX(msg, buffer, len) test_dump_hex(msg, buffer, len)
 
 #define TEST_STATUS(_status) test_status_string(_status)
 

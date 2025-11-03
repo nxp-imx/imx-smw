@@ -1,15 +1,25 @@
 {
 	"keys": {
-		"ext binder key": {},
-		"res binder key": {},
-		"c e traffic key": {},
-		"e exp master key": {},
-		"c hs traffic key": {},
-		"s hs traffic key": {},
-		"c ap traffic key": {},
-		"s ap traffic key": {},
-		"exp master key": {},
-		"res master key": {},
+		"ext binder key 1": {},
+		"ext binder key 2": {},
+		"res binder key 1": {},
+		"res binder key 2": {},
+		"c e traffic key 1": {},
+		"c e traffic key 2": {},
+		"e exp master key 1": {},
+		"e exp master key 2": {},
+		"c hs traffic key 1": {},
+		"c hs traffic key 2": {},
+		"s hs traffic key 1": {},
+		"s hs traffic key 2": {},
+		"c ap traffic key 1": {},
+		"c ap traffic key 2": {},
+		"s ap traffic key 1": {},
+		"s ap traffic key 2": {},
+		"exp master key 1": {},
+		"exp master key 2": {},
+		"res master key 1": {},
+		"res master key 2": {},
 		"self 256-bit ecdh key": {
 			"type": "SECP_R1",
 			"security_size": 256,
@@ -65,7 +75,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "ext binder key",
+		"op_output": "ext binder key 1",
 		"depends": 1
 	},
 	"subtest 4": {
@@ -84,7 +94,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "res binder key",
+		"op_output": "res binder key 1",
 		"depends": 1
 	},
 	"subtest 5": {
@@ -103,7 +113,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "c e traffic key",
+		"op_output": "c e traffic key 1",
 		"depends": 1
 	},
 	"subtest 6": {
@@ -122,7 +132,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "e exp master key",
+		"op_output": "e exp master key 1",
 		"depends": 1
 	},
 	"subtest 7": {
@@ -147,7 +157,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "c hs traffic key",
+		"op_output": "c hs traffic key 1",
 		"op_input": "self 256-bit ecdh key",
 		"depends": 1
 	},
@@ -173,7 +183,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "s hs traffic key",
+		"op_output": "s hs traffic key 1",
 		"op_input": "self 256-bit ecdh key",
 		"depends": 1
 	},
@@ -199,7 +209,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "c ap traffic key",
+		"op_output": "c ap traffic key 1",
 		"op_input": "self 256-bit ecdh key",
 		"depends": 1
 	},
@@ -225,7 +235,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "s ap traffic key",
+		"op_output": "s ap traffic key 1",
 		"op_input": "self 256-bit ecdh key",
 		"depends": 1
 	},
@@ -251,7 +261,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "exp master key",
+		"op_output": "exp master key 1",
 		"op_input": "self 256-bit ecdh key",
 		"depends": 1
 	},
@@ -277,7 +287,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "res master key",
+		"op_output": "res master key 1",
 		"op_input": "self 256-bit ecdh key",
 		"depends": 1
 	},
@@ -298,7 +308,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "ext binder key",
+		"op_output": "ext binder key 2",
 		"depends": 2
 	},
 	"subtest 14": {
@@ -318,7 +328,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "res binder key",
+		"op_output": "res binder key 2",
 		"depends": 2
 	},
 	"subtest 15": {
@@ -338,7 +348,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "c e traffic key",
+		"op_output": "c e traffic key 2",
 		"depends": 2
 	},
 	"subtest 16": {
@@ -358,7 +368,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "e exp master key",
+		"op_output": "e exp master key 2",
 		"depends": 2
 	},
 	"subtest 17": {
@@ -386,7 +396,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "c hs traffic key",
+		"op_output": "c hs traffic key 2",
 		"op_input": "self 384-bit ecdh key",
 		"depends": 2
 	},
@@ -415,7 +425,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "s hs traffic key",
+		"op_output": "s hs traffic key 2",
 		"op_input": "self 384-bit ecdh key",
 		"depends": 2
 	},
@@ -444,7 +454,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "c ap traffic key",
+		"op_output": "c ap traffic key 2",
 		"op_input": "self 384-bit ecdh key",
 		"depends": 2
 	},
@@ -473,7 +483,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "s ap traffic key",
+		"op_output": "s ap traffic key 2",
 		"op_input": "self 384-bit ecdh key",
 		"depends": 2
 	},
@@ -502,7 +512,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "exp master key",
+		"op_output": "exp master key 2",
 		"op_input": "self 384-bit ecdh key",
 		"depends": 2
 	},
@@ -531,7 +541,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "res master key",
+		"op_output": "res master key 2",
 		"op_input": "self 384-bit ecdh key",
 		"depends": 2
 	},
@@ -544,5 +554,105 @@
 		"command": "DELETE",
 		"key_name": "self 256-bit ecdh key",
 		"depends": 1
+	},
+	"subtest 25": {
+		"command": "DELETE",
+		"key_name": "ext binder key 1",
+		"depends": 3
+	},
+	"subtest 26": {
+		"command": "DELETE",
+		"key_name": "ext binder key 2",
+		"depends": 13
+	},
+	"subtest 27": {
+		"command": "DELETE",
+		"key_name": "res binder key 1",
+		"depends": 4
+	},
+	"subtest 28": {
+		"command": "DELETE",
+		"key_name": "res binder key 2",
+		"depends": 14
+	},
+	"subtest 29": {
+		"command": "DELETE",
+		"key_name": "c e traffic key 1",
+		"depends": 5
+	},
+	"subtest 30": {
+		"command": "DELETE",
+		"key_name": "c e traffic key 2",
+		"depends": 15
+	},
+	"subtest 31": {
+		"command": "DELETE",
+		"key_name": "e exp master key 1",
+		"depends": 6
+	},
+	"subtest 32": {
+		"command": "DELETE",
+		"key_name": "e exp master key 2",
+		"depends": 16
+	},
+	"subtest 33": {
+		"command": "DELETE",
+		"key_name": "c hs traffic key 1",
+		"depends": 7
+	},
+	"subtest 34": {
+		"command": "DELETE",
+		"key_name": "c hs traffic key 2",
+		"depends": 17
+	},
+	"subtest 35": {
+		"command": "DELETE",
+		"key_name": "s hs traffic key 1",
+		"depends": 8
+	},
+	"subtest 36": {
+		"command": "DELETE",
+		"key_name": "s hs traffic key 2",
+		"depends": 18
+	},
+	"subtest 37": {
+		"command": "DELETE",
+		"key_name": "c ap traffic key 1",
+		"depends": 9
+	},
+	"subtest 38": {
+		"command": "DELETE",
+		"key_name": "c ap traffic key 2",
+		"depends": 19
+	},
+	"subtest 39": {
+		"command": "DELETE",
+		"key_name": "s ap traffic key 1",
+		"depends": 10
+	},
+	"subtest 40": {
+		"command": "DELETE",
+		"key_name": "s ap traffic key 2",
+		"depends": 20
+	},
+	"subtest 41": {
+		"command": "DELETE",
+		"key_name": "exp master key 1",
+		"depends": 11
+	},
+	"subtest 42": {
+		"command": "DELETE",
+		"key_name": "exp master key 2",
+		"depends": 21
+	},
+	"subtest 43": {
+		"command": "DELETE",
+		"key_name": "res master key 1",
+		"depends": 12
+	},
+	"subtest 44": {
+		"command": "DELETE",
+		"key_name": "res master key 2",
+		"depends": 22
 	}
 }

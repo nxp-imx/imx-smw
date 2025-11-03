@@ -1,0 +1,125 @@
+{
+	"keys": {
+		"master secret 256": {},
+		"key expansion 256": {},
+		"client write enc key": {},
+		"server write enc key": {},
+		"self 256-bit ecdh key": {
+			"type": "SECP_R1",
+			"security_size": 256,
+			"pub_key": 64,
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"usage": [
+				"DERIVE"
+			],
+			"permitted_algo": [
+				"TLS_1_2",
+				"HASH=SHA256"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "self 256-bit ecdh key",
+		"restriction_list": [
+			"imx8ulp",
+			"imx943"
+		]
+	},
+	"subtest 2": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 0,
+		"restriction_list": [
+			"imx8ulp",
+			"imx943"
+		]
+	},
+	"subtest 3": {
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "MASTER_SECRET",
+			"key_exchange_name": "ECDH_ECDSA",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"session_hash": {
+				"hash": [
+					"000102030405060708090a0b0c0d0e0f",
+					"000102030405060708090a0b0c0d0e0f"
+				]
+			},
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			]
+		},
+		"store_key": true,
+		"op_output": "master secret 256",
+		"op_input": "self 256-bit ecdh key",
+		"context_id": 0,
+		"depends": [
+			1,
+			2
+		]
+	},
+	"subtest 4": {
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "KEY_EXPANSION",
+			"encryption_name": "AES_128_CCM",
+			"prf_name": "SHA256",
+			"random_data" : {
+				"client_random": [
+					"000102030405060708090a0b0c0d0e0f",
+					"000102030405060708090a0b0c0d0e0f"
+				],
+				"server_random": [
+					"000102030405060708090a0b0c0d0e0f",
+					"000102030405060708090a0b0c0d0e0f"
+				]
+			},
+			"client_write_iv": "000000000000000000000000",
+			"server_write_iv": "000000000000000000000000",
+			"client_w_enc_key_name": "client write enc key",
+			"server_w_enc_key_name": "server write enc key"
+		},
+		"store_key": true,
+		"op_output": "key expansion 256",
+		"op_input": "master secret 256",
+		"context_id": 0,
+		"depends": 3
+	},
+	"subtest 5": {
+		"command": "DELETE",
+		"key_name": "client write enc key",
+		"depends": 4
+	},
+	"subtest 6": {
+		"command": "DELETE",
+		"key_name": "server write enc key",
+		"depends": 4
+	},
+	"subtest 7": {
+		"command": "DELETE",
+		"key_name": "master secret 256",
+		"depends": 3
+	},
+	"subtest 8": {
+		"command": "OP_CONTEXT_CANCEL",
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 9": {
+		"command": "DELETE",
+		"key_name": "self 256-bit ecdh key",
+		"depends": 1
+	}
+}

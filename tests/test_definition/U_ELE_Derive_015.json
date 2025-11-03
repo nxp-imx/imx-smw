@@ -1,15 +1,25 @@
 {
 	"keys": {
-		"ext binder key": {},
-		"res binder key": {},
-		"c e traffic key": {},
-		"e exp master key": {},
-		"c hs traffic key": {},
-		"s hs traffic key": {},
-		"c ap traffic key": {},
-		"s ap traffic key": {},
-		"exp master key": {},
-		"res master key": {},
+		"ext binder key 1": {},
+		"ext binder key 2": {},
+		"res binder key 1": {},
+		"res binder key 2": {},
+		"c e traffic key 1": {},
+		"c e traffic key 2": {},
+		"e exp master key 1": {},
+		"e exp master key 2": {},
+		"c hs traffic key 1": {},
+		"c hs traffic key 2": {},
+		"s hs traffic key 1": {},
+		"s hs traffic key 2": {},
+		"c ap traffic key 1": {},
+		"c ap traffic key 2": {},
+		"s ap traffic key 1": {},
+		"s ap traffic key 2": {},
+		"exp master key 1": {},
+		"exp master key 2": {},
+		"res master key 1": {},
+		"res master key 2": {},
 		"self x448 key": {
 			"type": "X448",
 			"security_size": 448,
@@ -46,7 +56,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "ext binder key",
+		"op_output": "ext binder key 1",
 		"depends": 1
 	},
 	"subtest 3": {
@@ -65,7 +75,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "res binder key",
+		"op_output": "res binder key 1",
 		"depends": 1
 	},
 	"subtest 4": {
@@ -84,7 +94,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "c e traffic key",
+		"op_output": "c e traffic key 1",
 		"depends": 1
 	},
 	"subtest 5": {
@@ -103,7 +113,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "e exp master key",
+		"op_output": "e exp master key 1",
 		"depends": 1
 	},
 	"subtest 6": {
@@ -128,7 +138,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "c hs traffic key",
+		"op_output": "c hs traffic key 1",
 		"op_input": "self x448 key",
 		"depends": 1
 	},
@@ -154,7 +164,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "s hs traffic key",
+		"op_output": "s hs traffic key 1",
 		"op_input": "self x448 key",
 		"depends": 1
 	},
@@ -180,7 +190,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "c ap traffic key",
+		"op_output": "c ap traffic key 1",
 		"op_input": "self x448 key",
 		"depends": 1
 	},
@@ -206,7 +216,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "s ap traffic key",
+		"op_output": "s ap traffic key 1",
 		"op_input": "self x448 key",
 		"depends": 1
 	},
@@ -232,7 +242,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "exp master key",
+		"op_output": "exp master key 1",
 		"op_input": "self x448 key",
 		"depends": 1
 	},
@@ -258,7 +268,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "res master key",
+		"op_output": "res master key 1",
 		"op_input": "self x448 key",
 		"depends": 1
 	},
@@ -279,7 +289,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "ext binder key",
+		"op_output": "ext binder key 2",
 		"depends": 1
 	},
 	"subtest 13": {
@@ -299,7 +309,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "res binder key",
+		"op_output": "res binder key 2",
 		"depends": 1
 	},
 	"subtest 14": {
@@ -319,7 +329,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "c e traffic key",
+		"op_output": "c e traffic key 2",
 		"depends": 1
 	},
 	"subtest 15": {
@@ -339,7 +349,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "e exp master key",
+		"op_output": "e exp master key 2",
 		"depends": 1
 	},
 	"subtest 16": {
@@ -367,7 +377,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "c hs traffic key",
+		"op_output": "c hs traffic key 2",
 		"op_input": "self x448 key",
 		"depends": 1
 	},
@@ -396,7 +406,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "s hs traffic key",
+		"op_output": "s hs traffic key 2",
 		"op_input": "self x448 key",
 		"depends": 1
 	},
@@ -425,7 +435,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "c ap traffic key",
+		"op_output": "c ap traffic key 2",
 		"op_input": "self x448 key",
 		"depends": 1
 	},
@@ -454,7 +464,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "s ap traffic key",
+		"op_output": "s ap traffic key 2",
 		"op_input": "self x448 key",
 		"depends": 1
 	},
@@ -483,7 +493,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "exp master key",
+		"op_output": "exp master key 2",
 		"op_input": "self x448 key",
 		"depends": 1
 	},
@@ -512,7 +522,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "res master key",
+		"op_output": "res master key 2",
 		"op_input": "self x448 key",
 		"depends": 1
 	},
@@ -520,5 +530,165 @@
 		"command": "DELETE",
 		"key_name": "self x448 key",
 		"depends": 1
+	},
+	"subtest 23": {
+		"description": [
+			"Delete derived ext binder key 1"
+		],
+		"command": "DELETE",
+		"key_name": "ext binder key 1",
+		"depends": 2
+	},
+	"subtest 24": {
+		"description": [
+			"Delete derived res binder key 1"
+		],
+		"command": "DELETE",
+		"key_name": "res binder key 1",
+		"depends": 3
+	},
+	"subtest 25": {
+		"description": [
+			"Delete derived c e traffic key 1"
+		],
+		"command": "DELETE",
+		"key_name": "c e traffic key 1",
+		"depends": 4
+	},
+	"subtest 26": {
+		"description": [
+			"Delete derived e exp master key 1"
+		],
+		"command": "DELETE",
+		"key_name": "e exp master key 1",
+		"depends": 5
+	},
+	"subtest 27": {
+		"description": [
+			"Delete derived c hs traffic key 1"
+		],
+		"command": "DELETE",
+		"key_name": "c hs traffic key 1",
+		"depends": 6
+	},
+	"subtest 28": {
+		"description": [
+			"Delete derived s hs traffic key 1"
+		],
+		"command": "DELETE",
+		"key_name": "s hs traffic key 1",
+		"depends": 7
+	},
+	"subtest 29": {
+		"description": [
+			"Delete derived c ap traffic key 1"
+		],
+		"command": "DELETE",
+		"key_name": "c ap traffic key 1",
+		"depends": 8
+	},
+	"subtest 30": {
+		"description": [
+			"Delete derived s ap traffic key 1"
+		],
+		"command": "DELETE",
+		"key_name": "s ap traffic key 1",
+		"depends": 9
+	},
+	"subtest 31": {
+		"description": [
+			"Delete derived exp master key 1"
+		],
+		"command": "DELETE",
+		"key_name": "exp master key 1",
+		"depends": 10
+	},
+	"subtest 32": {
+		"description": [
+			"Delete derived res master key 1"
+		],
+		"command": "DELETE",
+		"key_name": "res master key 1",
+		"depends": 11
+	},
+	"subtest 33": {
+		"description": [
+			"Delete derived ext binder key 2"
+		],
+		"command": "DELETE",
+		"key_name": "ext binder key 2",
+		"depends": 12
+	},
+	"subtest 34": {
+		"description": [
+			"Delete derived res binder key 2"
+		],
+		"command": "DELETE",
+		"key_name": "res binder key 2",
+		"depends": 13
+	},
+	"subtest 35": {
+		"description": [
+			"Delete derived c e traffic key 2"
+		],
+		"command": "DELETE",
+		"key_name": "c e traffic key 2",
+		"depends": 14
+	},
+	"subtest 36": {
+		"description": [
+			"Delete derived e exp master key 2"
+		],
+		"command": "DELETE",
+		"key_name": "e exp master key 2",
+		"depends": 15
+	},
+	"subtest 37": {
+		"description": [
+			"Delete derived c hs traffic key 2"
+		],
+		"command": "DELETE",
+		"key_name": "c hs traffic key 2",
+		"depends": 16
+	},
+	"subtest 38": {
+		"description": [
+			"Delete derived s hs traffic key 2"
+		],
+		"command": "DELETE",
+		"key_name": "s hs traffic key 2",
+		"depends": 17
+	},
+	"subtest 39": {
+		"description": [
+			"Delete derived c ap traffic key 2"
+		],
+		"command": "DELETE",
+		"key_name": "c ap traffic key 2",
+		"depends": 18
+	},
+	"subtest 40": {
+		"description": [
+			"Delete derived s ap traffic key 2"
+		],
+		"command": "DELETE",
+		"key_name": "s ap traffic key 2",
+		"depends": 19
+	},
+	"subtest 41": {
+		"description": [
+			"Delete derived exp master key 2"
+		],
+		"command": "DELETE",
+		"key_name": "exp master key 2",
+		"depends": 20
+	},
+	"subtest 42": {
+		"description": [
+			"Delete derived res master key 2"
+		],
+		"command": "DELETE",
+		"key_name": "res master key 2",
+		"depends": 21
 	}
 }

@@ -1,16 +1,59 @@
 {
 	"keys": {
-		"ext binder key": {},
-		"res binder key": {},
-		"c e traffic key": {},
-		"e exp master key": {},
-		"c hs traffic key": {},
-		"s hs traffic key": {},
-		"c ap traffic key": {},
-		"s ap traffic key": {},
-		"exp master key": {},
-		"res master key": {},
-		"derived encryption key": {
+		"ext binder key 1": {},
+		"ext binder key 2": {},
+		"res binder key 1": {},
+		"res binder key 2": {},
+		"c e traffic key 1": {},
+		"c e traffic key 2": {},
+		"e exp master key 1": {},
+		"e exp master key 2": {},
+		"c hs traffic key 1": {},
+		"c hs traffic key 2": {},
+		"s hs traffic key 1": {},
+		"s hs traffic key 2": {},
+		"c ap traffic key 1": {},
+		"c ap traffic key 2": {},
+		"s ap traffic key 1": {},
+		"s ap traffic key 2": {},
+		"exp master key 1": {},
+		"exp master key 2": {},
+		"res master key 1": {},
+		"res master key 2": {},
+		"derived encryption key 1": {
+			"type": "AES",
+			"security_size": 256,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"GCM"
+			]
+		},
+		"derived encryption key 2": {
+			"type": "AES",
+			"security_size": 256,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"GCM"
+			]
+		},
+		"derived encryption key 3": {
+			"type": "AES",
+			"security_size": 256,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"GCM"
+			]
+		},
+		"derived encryption key 4": {
 			"type": "AES",
 			"security_size": 256,
 			"usage": [
@@ -24,7 +67,43 @@
 		"derived encryption IV": {
 			"shared_secret": "000000000000000000000000"
 		},
-		"derived finished key": {
+		"derived finished key 1": {
+			"type": "HMAC",
+			"security_size": 384,
+			"usage": [
+				"SIGN_MESSAGE",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"HMAC",
+				"HASH=SHA384"
+			]
+		},
+		"derived finished key 2": {
+			"type": "HMAC",
+			"security_size": 384,
+			"usage": [
+				"SIGN_MESSAGE",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"HMAC",
+				"HASH=SHA384"
+			]
+		},
+		"derived finished key 3": {
+			"type": "HMAC",
+			"security_size": 384,
+			"usage": [
+				"SIGN_MESSAGE",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"HMAC",
+				"HASH=SHA384"
+			]
+		},
+		"derived finished key 4": {
 			"type": "HMAC",
 			"security_size": 384,
 			"usage": [
@@ -85,7 +164,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "ext binder key",
+		"op_output": "ext binder key 1",
 		"depends": 1
 	},
 	"subtest 3": {
@@ -105,7 +184,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "res binder key",
+		"op_output": "res binder key 1",
 		"depends": 1
 	},
 	"subtest 4": {
@@ -125,7 +204,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "c e traffic key",
+		"op_output": "c e traffic key 1",
 		"depends": 1
 	},
 	"subtest 5": {
@@ -145,7 +224,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "e exp master key",
+		"op_output": "e exp master key 1",
 		"depends": 1
 	},
 	"subtest 6": {
@@ -174,7 +253,7 @@
 			]
 		},
 		"store_key": true,
-		"op_output": "c hs traffic key",
+		"op_output": "c hs traffic key 1",
 		"op_input": "self 384-bit ecdh key",
 		"depends": 1
 	},
@@ -190,8 +269,8 @@
 			"length": 32,
 			"label": "key"
 		},
-		"op_output": "derived encryption key",
-		"op_input": "c hs traffic key",
+		"op_output": "derived encryption key 1",
+		"op_input": "c hs traffic key 1",
 		"depends": 6
 	},
 	"subtest 8": {
@@ -200,7 +279,7 @@
 		],
 		"command": "AEAD",
 		"subsystem": "ELE",
-		"key_name": "derived encryption key",
+		"key_name": "derived encryption key 1",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
 		"iv": "60cc50e0887532e0d4f3d2f2",
@@ -217,7 +296,7 @@
 		],
 		"command": "AEAD",
 		"subsystem": "ELE",
-		"key_name": "derived encryption key",
+		"key_name": "derived encryption key 1",
 		"mode": "GCM",
 		"op_type": "DECRYPT",
 		"tag_field_set": true,
@@ -240,7 +319,7 @@
 			"label": "iv"
 		},
 		"op_output": "derived encryption IV",
-		"op_input": "c hs traffic key",
+		"op_input": "c hs traffic key 1",
 		"depends": 6
 	},
 	"subtest 11": {
@@ -255,8 +334,8 @@
 			"length": 48,
 			"label": "finished"
 		},
-		"op_output": "derived finished key",
-		"op_input": "c hs traffic key",
+		"op_output": "derived finished key 1",
+		"op_input": "c hs traffic key 1",
 		"depends": 6
 	},
 	"subtest 12": {
@@ -267,7 +346,7 @@
 		"subsystem": "ELE",
 		"algo": "HMAC",
 		"hash": "SHA384",
-		"key_name": "derived finished key",
+		"key_name": "derived finished key 1",
 		"input": "6bc1bee22e409f96e93d7e117393172a",
 		"output": 48,
 		"mac_id": 1,
@@ -281,7 +360,7 @@
 		"subsystem": "ELE",
 		"algo": "HMAC",
 		"hash": "SHA384",
-		"key_name": "derived finished key",
+		"key_name": "derived finished key 1",
 		"input": "6bc1bee22e409f96e93d7e117393172a",
 		"mac_id": 1,
 		"depends": 12
@@ -312,7 +391,7 @@
 			]
 		},
 		"store_key": true,
-		"op_output": "s hs traffic key",
+		"op_output": "s hs traffic key 1",
 		"op_input": "self 384-bit ecdh key",
 		"depends": 1
 	},
@@ -328,8 +407,8 @@
 			"length": 32,
 			"label": "key"
 		},
-		"op_output": "derived encryption key",
-		"op_input": "s hs traffic key",
+		"op_output": "derived encryption key 2",
+		"op_input": "s hs traffic key 1",
 		"depends": 14
 	},
 	"subtest 16": {
@@ -338,7 +417,7 @@
 		],
 		"command": "AEAD",
 		"subsystem": "ELE",
-		"key_name": "derived encryption key",
+		"key_name": "derived encryption key 2",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
 		"iv": "60cc50e0887532e0d4f3d2f2",
@@ -355,7 +434,7 @@
 		],
 		"command": "AEAD",
 		"subsystem": "ELE",
-		"key_name": "derived encryption key",
+		"key_name": "derived encryption key 2",
 		"mode": "GCM",
 		"op_type": "DECRYPT",
 		"tag_field_set": true,
@@ -378,7 +457,7 @@
 			"label": "iv"
 		},
 		"op_output": "derived encryption IV",
-		"op_input": "s hs traffic key",
+		"op_input": "s hs traffic key 1",
 		"depends": 14
 	},
 	"subtest 19": {
@@ -393,8 +472,8 @@
 			"length": 48,
 			"label": "finished"
 		},
-		"op_output": "derived finished key",
-		"op_input": "s hs traffic key",
+		"op_output": "derived finished key 2",
+		"op_input": "s hs traffic key 1",
 		"depends": 14
 	},
 	"subtest 20": {
@@ -405,7 +484,7 @@
 		"subsystem": "ELE",
 		"algo": "HMAC",
 		"hash": "SHA384",
-		"key_name": "derived finished key",
+		"key_name": "derived finished key 2",
 		"input": "6bc1bee22e409f96e93d7e117393172a",
 		"output": 48,
 		"mac_id": 2,
@@ -419,7 +498,7 @@
 		"subsystem": "ELE",
 		"algo": "HMAC",
 		"hash": "SHA384",
-		"key_name": "derived finished key",
+		"key_name": "derived finished key 2",
 		"input": "6bc1bee22e409f96e93d7e117393172a",
 		"mac_id": 2,
 		"depends": 20
@@ -450,7 +529,7 @@
 			]
 		},
 		"store_key": true,
-		"op_output": "c ap traffic key",
+		"op_output": "c ap traffic key 1",
 		"op_input": "self 384-bit ecdh key",
 		"depends": 1
 	},
@@ -466,8 +545,8 @@
 			"length": 32,
 			"label": "key"
 		},
-		"op_output": "derived encryption key",
-		"op_input": "c ap traffic key",
+		"op_output": "derived encryption key 3",
+		"op_input": "c ap traffic key 1",
 		"depends": 22
 	},
 	"subtest 24": {
@@ -476,7 +555,7 @@
 		],
 		"command": "AEAD",
 		"subsystem": "ELE",
-		"key_name": "derived encryption key",
+		"key_name": "derived encryption key 3",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
 		"iv": "60cc50e0887532e0d4f3d2f2",
@@ -493,7 +572,7 @@
 		],
 		"command": "AEAD",
 		"subsystem": "ELE",
-		"key_name": "derived encryption key",
+		"key_name": "derived encryption key 3",
 		"mode": "GCM",
 		"op_type": "DECRYPT",
 		"tag_field_set": true,
@@ -516,7 +595,7 @@
 			"label": "iv"
 		},
 		"op_output": "derived encryption IV",
-		"op_input": "c ap traffic key",
+		"op_input": "c ap traffic key 1",
 		"depends": 22
 	},
 	"subtest 27": {
@@ -531,8 +610,8 @@
 			"length": 48,
 			"label": "finished"
 		},
-		"op_output": "derived finished key",
-		"op_input": "c ap traffic key",
+		"op_output": "derived finished key 3",
+		"op_input": "c ap traffic key 1",
 		"depends": 22
 	},
 	"subtest 28": {
@@ -543,7 +622,7 @@
 		"subsystem": "ELE",
 		"algo": "HMAC",
 		"hash": "SHA384",
-		"key_name": "derived finished key",
+		"key_name": "derived finished key 3",
 		"input": "6bc1bee22e409f96e93d7e117393172a",
 		"output": 48,
 		"mac_id": 3,
@@ -557,7 +636,7 @@
 		"subsystem": "ELE",
 		"algo": "HMAC",
 		"hash": "SHA384",
-		"key_name": "derived finished key",
+		"key_name": "derived finished key 3",
 		"input": "6bc1bee22e409f96e93d7e117393172a",
 		"mac_id": 3,
 		"depends": 28
@@ -588,7 +667,7 @@
 			]
 		},
 		"store_key": true,
-		"op_output": "s ap traffic key",
+		"op_output": "s ap traffic key 1",
 		"op_input": "self 384-bit ecdh key",
 		"depends": 1
 	},
@@ -604,8 +683,8 @@
 			"length": 32,
 			"label": "key"
 		},
-		"op_output": "derived encryption key",
-		"op_input": "s ap traffic key",
+		"op_output": "derived encryption key 4",
+		"op_input": "s ap traffic key 1",
 		"depends": 30
 	},
 	"subtest 32": {
@@ -614,7 +693,7 @@
 		],
 		"command": "AEAD",
 		"subsystem": "ELE",
-		"key_name": "derived encryption key",
+		"key_name": "derived encryption key 4",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
 		"iv": "60cc50e0887532e0d4f3d2f2",
@@ -631,7 +710,7 @@
 		],
 		"command": "AEAD",
 		"subsystem": "ELE",
-		"key_name": "derived encryption key",
+		"key_name": "derived encryption key 4",
 		"mode": "GCM",
 		"op_type": "DECRYPT",
 		"tag_field_set": true,
@@ -654,7 +733,7 @@
 			"label": "iv"
 		},
 		"op_output": "derived encryption IV",
-		"op_input": "s ap traffic key",
+		"op_input": "s ap traffic key 1",
 		"depends": 30
 	},
 	"subtest 35": {
@@ -669,8 +748,8 @@
 			"length": 48,
 			"label": "finished"
 		},
-		"op_output": "derived finished key",
-		"op_input": "s ap traffic key",
+		"op_output": "derived finished key 4",
+		"op_input": "s ap traffic key 1",
 		"depends": 30
 	},
 	"subtest 36": {
@@ -681,7 +760,7 @@
 		"subsystem": "ELE",
 		"algo": "HMAC",
 		"hash": "SHA384",
-		"key_name": "derived finished key",
+		"key_name": "derived finished key 4",
 		"input": "6bc1bee22e409f96e93d7e117393172a",
 		"output": 48,
 		"mac_id": 4,
@@ -695,7 +774,7 @@
 		"subsystem": "ELE",
 		"algo": "HMAC",
 		"hash": "SHA384",
-		"key_name": "derived finished key",
+		"key_name": "derived finished key 4",
 		"input": "6bc1bee22e409f96e93d7e117393172a",
 		"mac_id": 4,
 		"depends": 36
@@ -725,7 +804,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "exp master key",
+		"op_output": "exp master key 1",
 		"op_input": "self 384-bit ecdh key",
 		"depends": 1
 	},
@@ -755,7 +834,7 @@
 			]
 		},
 		"store_key": true,
-		"op_output": "res master key",
+		"op_output": "res master key 1",
 		"op_input": "self 384-bit ecdh key",
 		"depends": 1
 	},
@@ -773,7 +852,7 @@
 		},
 		"store_key": true,
 		"op_output": "derived PSK",
-		"op_input": "res master key",
+		"op_input": "res master key 1",
 		"depends": 39
 	},
 	"subtest 41": {
@@ -794,7 +873,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "ext binder key",
+		"op_output": "ext binder key 2",
 		"depends": 40
 	},
 	"subtest 42": {
@@ -815,7 +894,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "res binder key",
+		"op_output": "res binder key 2",
 		"depends": 40
 	},
 	"subtest 43": {
@@ -836,7 +915,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "c e traffic key",
+		"op_output": "c e traffic key 2",
 		"depends": 40
 	},
 	"subtest 44": {
@@ -857,7 +936,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "e exp master key",
+		"op_output": "e exp master key 2",
 		"depends": 40
 	},
 	"subtest 45": {
@@ -886,7 +965,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "c hs traffic key",
+		"op_output": "c hs traffic key 2",
 		"op_input": "self 384-bit ecdh key",
 		"depends": 40
 	},
@@ -916,7 +995,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "s hs traffic key",
+		"op_output": "s hs traffic key 2",
 		"op_input": "self 384-bit ecdh key",
 		"depends": 40
 	},
@@ -946,7 +1025,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "c ap traffic key",
+		"op_output": "c ap traffic key 2",
 		"op_input": "self 384-bit ecdh key",
 		"depends": 40
 	},
@@ -976,7 +1055,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "s ap traffic key",
+		"op_output": "s ap traffic key 2",
 		"op_input": "self 384-bit ecdh key",
 		"depends": 40
 	},
@@ -1006,7 +1085,7 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "exp master key",
+		"op_output": "exp master key 2",
 		"op_input": "self 384-bit ecdh key",
 		"depends": 40
 	},
@@ -1036,13 +1115,248 @@
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
-		"op_output": "res master key",
+		"op_output": "res master key 2",
 		"op_input": "self 384-bit ecdh key",
 		"depends": 40
 	},
 	"subtest 51": {
+		"description": [
+			"Delete self 384-bit ecdh key"
+		],
 		"command": "DELETE",
 		"key_name": "self 384-bit ecdh key",
 		"depends": 1
+	},
+	"subtest 52": {
+		"description": [
+			"Delete c hs traffic key 1"
+		],
+		"command": "DELETE",
+		"key_name": "c hs traffic key 1",
+		"depends": 6
+	},
+	"subtest 53": {
+		"description": [
+			"Delete derived encryption key 1"
+		],
+		"command": "DELETE",
+		"key_name": "derived encryption key 1",
+		"depends": 7
+	},
+	"subtest 54": {
+		"description": [
+			"Delete derived finished key 1"
+		],
+		"command": "DELETE",
+		"key_name": "derived finished key 1",
+		"depends": 11
+	},
+	"subtest 55": {
+		"description": [
+			"Delete s hs traffic key 1"
+		],
+		"command": "DELETE",
+		"key_name": "s hs traffic key 1",
+		"depends": 14
+	},
+	"subtest 56": {
+		"description": [
+			"Delete derived encryption key 2"
+		],
+		"command": "DELETE",
+		"key_name": "derived encryption key 2",
+		"depends": 15
+	},
+	"subtest 57": {
+		"description": [
+			"Delete derived finished key 2"
+		],
+		"command": "DELETE",
+		"key_name": "derived finished key 2",
+		"depends": 19
+	},
+	"subtest 58": {
+		"description": [
+			"Delete c ap traffic key 1"
+		],
+		"command": "DELETE",
+		"key_name": "c ap traffic key 1",
+		"depends": 22
+	},
+	"subtest 59": {
+		"description": [
+			"Delete derived encryption key 3"
+		],
+		"command": "DELETE",
+		"key_name": "derived encryption key 3",
+		"depends": 23
+	},
+	"subtest 60": {
+		"description": [
+			"Delete derived finished key 3"
+		],
+		"command": "DELETE",
+		"key_name": "derived finished key 3",
+		"depends": 27
+	},
+	"subtest 61": {
+		"description": [
+			"Delete s ap traffic key 1"
+		],
+		"command": "DELETE",
+		"key_name": "s ap traffic key 1",
+		"depends": 30
+	},
+	"subtest 62": {
+		"description": [
+			"Delete derived encryption key 4"
+		],
+		"command": "DELETE",
+		"key_name": "derived encryption key 4",
+		"depends": 31
+	},
+	"subtest 63": {
+		"description": [
+			"Delete derived finished key 4"
+		],
+		"command": "DELETE",
+		"key_name": "derived finished key 4",
+		"depends": 35
+	},
+	"subtest 64": {
+		"description": [
+			"Delete res master key 1"
+		],
+		"command": "DELETE",
+		"key_name": "res master key 1",
+		"depends": 39
+	},
+	"subtest 65": {
+		"description": [
+			"Delete derived PSK"
+		],
+		"command": "DELETE",
+		"key_name": "derived PSK",
+		"depends": 40
+	},
+	"subtest 66": {
+		"description": [
+			"Delete ext binder key 1"
+		],
+		"command": "DELETE",
+		"key_name": "ext binder key 1",
+		"depends": 2
+	},
+	"subtest 67": {
+		"description": [
+			"Delete res binder key 1"
+		],
+		"command": "DELETE",
+		"key_name": "res binder key 1",
+		"depends": 3
+	},
+	"subtest 68": {
+		"description": [
+			"Delete c e traffic key 1"
+		],
+		"command": "DELETE",
+		"key_name": "c e traffic key 1",
+		"depends": 4
+	},
+	"subtest 69": {
+		"description": [
+			"Delete e exp master key 1"
+		],
+		"command": "DELETE",
+		"key_name": "e exp master key 1",
+		"depends": 5
+	},
+	"subtest 70": {
+		"description": [
+			"Delete exp master key 1"
+		],
+		"command": "DELETE",
+		"key_name": "exp master key 1",
+		"depends": 38
+	},
+	"subtest 71": {
+		"description": [
+			"Delete ext binder key 2"
+		],
+		"command": "DELETE",
+		"key_name": "ext binder key 2",
+		"depends": 41
+	},
+	"subtest 72": {
+		"description": [
+			"Delete res binder key 2"
+		],
+		"command": "DELETE",
+		"key_name": "res binder key 2",
+		"depends": 42
+	},
+	"subtest 73": {
+		"description": [
+			"Delete c e traffic key 2"
+		],
+		"command": "DELETE",
+		"key_name": "c e traffic key 2",
+		"depends": 43
+	},
+	"subtest 74": {
+		"description": [
+			"Delete e exp master key 2"
+		],
+		"command": "DELETE",
+		"key_name": "e exp master key 2",
+		"depends": 44
+	},
+	"subtest 75": {
+		"description": [
+			"Delete c hs traffic key 2"
+		],
+		"command": "DELETE",
+		"key_name": "c hs traffic key 2",
+		"depends": 45
+	},
+	"subtest 76": {
+		"description": [
+			"Delete s hs traffic key 2"
+		],
+		"command": "DELETE",
+		"key_name": "s hs traffic key 2",
+		"depends": 46
+	},
+	"subtest 77": {
+		"description": [
+			"Delete c ap traffic key 2"
+		],
+		"command": "DELETE",
+		"key_name": "c ap traffic key 2",
+		"depends": 47
+	},
+	"subtest 78": {
+		"description": [
+			"Delete s ap traffic key 2"
+		],
+		"command": "DELETE",
+		"key_name": "s ap traffic key 2",
+		"depends": 48
+	},
+	"subtest 79": {
+		"description": [
+			"Delete exp master key 2"
+		],
+		"command": "DELETE",
+		"key_name": "exp master key 2",
+		"depends": 49
+	},
+	"subtest 80": {
+		"description": [
+			"Delete res master key 2"
+		],
+		"command": "DELETE",
+		"key_name": "res master key 2",
+		"depends": 50
 	}
 }

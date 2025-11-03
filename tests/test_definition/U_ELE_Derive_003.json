@@ -1,0 +1,178 @@
+{
+	"keys": {
+		"ext binder key": {},
+		"res binder key": {},
+		"c e traffic key": {},
+		"e exp master key": {},
+		"c hs traffic key": {},
+		"derived encryption key": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"GCM"
+			]
+		},
+		"self 256-bit ecdh key": {
+			"type": "SECP_R1",
+			"security_size": 256,
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"usage": [
+				"DERIVE"
+			],
+			"permitted_algo": [
+				"TLS_1_3",
+				"HASH=SHA256"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "self 256-bit ecdh key",
+		"restriction_list": [
+			"imx8ulp",
+			"imx943"
+		]
+	},
+	"subtest 2": {
+		"description": [
+			"Derive `ext binder` using TLS1.3 API"
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"length": 32,
+			"label": "ext binder",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "ext binder key",
+		"depends": 1
+	},
+	"subtest 3": {
+		"description": [
+			"Derive `res binder` using TLS1.3 API"
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"length": 32,
+			"label": "res binder",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "res binder key",
+		"depends": 1
+	},
+	"subtest 4": {
+		"description": [
+			"Derive `c e traffic` using TLS1.3 API"
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"length": 32,
+			"label": "c e traffic",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "c e traffic key",
+		"depends": 1
+	},
+	"subtest 5": {
+		"description": [
+			"Derive `e exp master` using TLS1.3 API"
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"length": 32,
+			"label": "e exp master",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "e exp master key",
+		"depends": 1
+	},
+	"subtest 6": {
+		"description": [
+			"Derive `c hs traffic` using TLS1.3 API"
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"peer_public_key": [
+				"60fed4ba255a9d31c961eb74c6356d68",
+				"c049b8923b61fa6ce669622e60f29fb6",
+				"7903fe1008b8bc99a41ae9e95628bc64",
+				"f2f1b20c2d7e9f5177a3c294d4462299"
+			],
+			"length": 32,
+			"label": "c hs traffic",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"store_key": true,
+		"op_output": "c hs traffic key",
+		"op_input": "self 256-bit ecdh key",
+		"depends": 1
+	},
+	"subtest 7": {
+		"description": [
+			"Derive encryption key from `c hs traffic`"
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"length": 16,
+			"label": "key"
+		},
+		"store_key": true,
+		"op_output": "derived encryption key",
+		"op_input": "c hs traffic key",
+		"depends": 6
+	},
+	"subtest 8": {
+		"command": "DELETE",
+		"key_name": "derived encryption key",
+		"depends": 7
+	},
+	"subtest 9": {
+		"command": "DELETE",
+		"key_name": "c hs traffic key",
+		"depends": 6
+	},
+	"subtest 10": {
+		"command": "DELETE",
+		"key_name": "self 256-bit ecdh key",
+		"depends": 1
+	}
+}

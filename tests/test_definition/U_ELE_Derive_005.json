@@ -1,13 +1,31 @@
 {
 	"keys": {
-		"master secret 256": {},
-		"master secret 384": {},
+		"master secret 256 1": {},
+		"master secret 256 2": {},
+		"master secret 256 3": {},
+		"master secret 256 4": {},
+		"master secret 384 1": {},
+		"master secret 384 2": {},
+		"master secret 384 3": {},
+		"master secret 384 4": {},
 		"key expansion 256": {},
 		"key expansion 384": {},
-		"client write enc key": {},
-		"server write enc key": {},
-		"client write mac key": {},
-		"server write mac key": {},
+		"client write enc key 1": {},
+		"client write enc key 2": {},
+		"client write enc key 3": {},
+		"client write enc key 4": {},
+		"client write enc key 5": {},
+		"client write enc key 6": {},
+		"server write enc key 1": {},
+		"server write enc key 2": {},
+		"server write enc key 3": {},
+		"server write enc key 4": {},
+		"server write enc key 5": {},
+		"server write enc key 6": {},
+		"client write mac key 1": {},
+		"client write mac key 2": {},
+		"server write mac key 1": {},
+		"server write mac key 2": {},
 		"self 256-bit ecdh key": {
 			"type": "SECP_R1",
 			"security_size": 256,
@@ -89,7 +107,7 @@
 				"5af3369ef67443a72c741115e70f7b55"
 			]
 		},
-		"op_output": "master secret 256",
+		"op_output": "master secret 256 1",
 		"op_input": "self 256-bit ecdh key",
 		"context_id": 0,
 		"depends": [
@@ -122,7 +140,7 @@
 				"5af3369ef67443a72c741115e70f7b55"
 			]
 		},
-		"op_output": "master secret 256",
+		"op_output": "master secret 256 2",
 		"op_input": "self 256-bit ecdh key",
 		"context_id": 0,
 		"depends": [
@@ -152,7 +170,7 @@
 				"5af3369ef67443a72c741115e70f7b55"
 			]
 		},
-		"op_output": "master secret 256",
+		"op_output": "master secret 256 3",
 		"op_input": "self 256-bit ecdh key",
 		"context_id": 0,
 		"depends": [
@@ -185,7 +203,7 @@
 				"5af3369ef67443a72c741115e70f7b55"
 			]
 		},
-		"op_output": "master secret 256",
+		"op_output": "master secret 256 4",
 		"op_input": "self 256-bit ecdh key",
 		"context_id": 0,
 		"depends": [
@@ -218,7 +236,7 @@
 				"f484aec5acfd2b03f1afe811eb75d61f"
 			]
 		},
-		"op_output": "master secret 384",
+		"op_output": "master secret 384 1",
 		"op_input": "self 384-bit ecdh key",
 		"context_id": 1,
 		"depends": [
@@ -253,7 +271,7 @@
 				"f484aec5acfd2b03f1afe811eb75d61f"
 			]
 		},
-		"op_output": "master secret 384",
+		"op_output": "master secret 384 2",
 		"op_input": "self 384-bit ecdh key",
 		"context_id": 1,
 		"depends": [
@@ -286,7 +304,7 @@
 				"f484aec5acfd2b03f1afe811eb75d61f"
 			]
 		},
-		"op_output": "master secret 384",
+		"op_output": "master secret 384 3",
 		"op_input": "self 384-bit ecdh key",
 		"context_id": 1,
 		"depends": [
@@ -321,7 +339,7 @@
 				"f484aec5acfd2b03f1afe811eb75d61f"
 			]
 		},
-		"op_output": "master secret 384",
+		"op_output": "master secret 384 4",
 		"op_input": "self 384-bit ecdh key",
 		"context_id": 1,
 		"depends": [
@@ -349,11 +367,11 @@
 			},
 			"client_write_iv": "000000000000000000000000",
 			"server_write_iv": "000000000000000000000000",
-			"client_w_enc_key_name": "client write enc key",
-			"server_w_enc_key_name": "server write enc key"
+			"client_w_enc_key_name": "client write enc key 1",
+			"server_w_enc_key_name": "server write enc key 1"
 		},
 		"op_output": "key expansion 256",
-		"op_input": "master secret 256",
+		"op_input": "master secret 256 4",
 		"context_id": 0,
 		"depends": [
 			1,
@@ -380,11 +398,11 @@
 			},
 			"client_write_iv": "000000000000000000000000",
 			"server_write_iv": "000000000000000000000000",
-			"client_w_enc_key_name": "client write enc key",
-			"server_w_enc_key_name": "server write enc key"
+			"client_w_enc_key_name": "client write enc key 2",
+			"server_w_enc_key_name": "server write enc key 2"
 		},
 		"op_output": "key expansion 256",
-		"op_input": "master secret 256",
+		"op_input": "master secret 256 4",
 		"context_id": 0,
 		"depends": [
 			1,
@@ -411,13 +429,13 @@
 			},
 			"client_write_iv": "00000000000000000000000000000000",
 			"server_write_iv": "00000000000000000000000000000000",
-			"client_w_enc_key_name": "client write enc key",
-			"server_w_enc_key_name": "server write enc key",
-			"client_w_mac_key_name": "client write mac key",
-			"server_w_mac_key_name": "server write mac key"
+			"client_w_enc_key_name": "client write enc key 3",
+			"server_w_enc_key_name": "server write enc key 3",
+			"client_w_mac_key_name": "client write mac key 1",
+			"server_w_mac_key_name": "server write mac key 1"
 		},
 		"op_output": "key expansion 256",
-		"op_input": "master secret 256",
+		"op_input": "master secret 256 4",
 		"context_id": 0,
 		"depends": [
 			1,
@@ -444,11 +462,11 @@
 			},
 			"client_write_iv": "000000000000000000000000",
 			"server_write_iv": "000000000000000000000000",
-			"client_w_enc_key_name": "client write enc key",
-			"server_w_enc_key_name": "server write enc key"
+			"client_w_enc_key_name": "client write enc key 4",
+			"server_w_enc_key_name": "server write enc key 4"
 		},
 		"op_output": "key expansion 384",
-		"op_input": "master secret 384",
+		"op_input": "master secret 384 4",
 		"context_id": 1,
 		"depends": [
 			2,
@@ -475,11 +493,11 @@
 			},
 			"client_write_iv": "000000000000000000000000",
 			"server_write_iv": "000000000000000000000000",
-			"client_w_enc_key_name": "client write enc key",
-			"server_w_enc_key_name": "server write enc key"
+			"client_w_enc_key_name": "client write enc key 5",
+			"server_w_enc_key_name": "server write enc key 5"
 		},
 		"op_output": "key expansion 384",
-		"op_input": "master secret 384",
+		"op_input": "master secret 384 4",
 		"context_id": 1,
 		"depends": [
 			2,
@@ -506,13 +524,13 @@
 			},
 			"client_write_iv": "00000000000000000000000000000000",
 			"server_write_iv": "00000000000000000000000000000000",
-			"client_w_enc_key_name": "client write enc key",
-			"server_w_enc_key_name": "server write enc key",
-			"client_w_mac_key_name": "client write mac key",
-			"server_w_mac_key_name": "server write mac key"
+			"client_w_enc_key_name": "client write enc key 6",
+			"server_w_enc_key_name": "server write enc key 6",
+			"client_w_mac_key_name": "client write mac key 2",
+			"server_w_mac_key_name": "server write mac key 2"
 		},
 		"op_output": "key expansion 384",
-		"op_input": "master secret 384",
+		"op_input": "master secret 384 4",
 		"context_id": 1,
 		"depends": [
 			2,
@@ -530,7 +548,7 @@
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a"
 		],
-		"key_name": "master secret 256",
+		"key_name": "master secret 256 4",
 		"sign_id": 0,
 		"depends": 5
 	},
@@ -545,7 +563,7 @@
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a"
 		],
-		"key_name": "master secret 256",
+		"key_name": "master secret 256 4",
 		"sign_id": 1,
 		"depends": 5
 	},
@@ -560,7 +578,7 @@
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a"
 		],
-		"key_name": "master secret 384",
+		"key_name": "master secret 384 4",
 		"sign_id": 2,
 		"depends": 9
 	},
@@ -575,7 +593,7 @@
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a"
 		],
-		"key_name": "master secret 384",
+		"key_name": "master secret 384 4",
 		"sign_id": 3,
 		"depends": 9
 	},
@@ -601,5 +619,149 @@
 		"command": "DELETE",
 		"key_name": "self 256-bit ecdh key",
 		"depends": 1
+	},
+	"subtest 27": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "master secret 256 1",
+		"depends": 5
+	},
+	"subtest 28": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "master secret 256 2",
+		"depends": 6
+	},
+	"subtest 29": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "master secret 256 3",
+		"depends": 7
+	},
+	"subtest 30": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "master secret 256 4",
+		"depends": 8
+	},
+	"subtest 31": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "master secret 384 1",
+		"depends": 9
+	},
+	"subtest 32": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "master secret 384 2",
+		"depends": 10
+	},
+	"subtest 33": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "master secret 384 3",
+		"depends": 11
+	},
+	"subtest 34": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "master secret 384 4",
+		"depends": 12
+	},
+	"subtest 35": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "client write enc key 1",
+		"depends": 13
+	},
+	"subtest 36": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "client write enc key 2",
+		"depends": 14
+	},
+	"subtest 37": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "client write enc key 3",
+		"depends": 15
+	},
+	"subtest 38": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "client write enc key 4",
+		"depends": 16
+	},
+	"subtest 39": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "client write enc key 5",
+		"depends": 17
+	},
+	"subtest 40": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "client write enc key 6",
+		"depends": 18
+	},
+	"subtest 41": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "server write enc key 1",
+		"depends": 13
+	},
+	"subtest 42": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "server write enc key 2",
+		"depends": 14
+	},
+	"subtest 43": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "server write enc key 3",
+		"depends": 15
+	},
+	"subtest 44": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "server write enc key 4",
+		"depends": 16
+	},
+	"subtest 45": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "server write enc key 5",
+		"depends": 17
+	},
+	"subtest 46": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "server write enc key 6",
+		"depends": 18
+	},
+	"subtest 47": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "client write mac key 1",
+		"depends": 15
+	},
+	"subtest 48": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "client write mac key 2",
+		"depends": 18
+	},
+	"subtest 49": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "server write mac key 1",
+		"depends": 15
+	},
+	"subtest 50": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "server write mac key 2",
+		"depends": 18
 	}
 }

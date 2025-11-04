@@ -2318,7 +2318,6 @@ CK_RV derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 		 struct libattr_list *attrs)
 {
 	CK_RV ret = CKR_GENERAL_ERROR;
-	CK_BYTE_PTR label = NULL;
 	CK_KEY_TYPE key_type = 0;
 	CK_KEY_TYPE base_key_type = 0;
 	CK_MECHANISM find_mech = { 0 };
@@ -2326,8 +2325,6 @@ CK_RV derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	struct libdevice *device = NULL;
 	struct libobj_key_derive_params derive_params = { 0 };
 	struct libmech_list *mech_list = NULL;
-	/* ASCII: "finished", in hex for EBCDIC compatibility */
-	static const char finishedlabel[] = "\x66\x69\x6E\x69\x73\x68\x65\x64";
 
 	DBG_TRACE("Derive a secret key from base key object");
 
@@ -2459,39 +2456,9 @@ end:
 			destroy_context(ctx);
 		}
 	} else {
-		switch (mech->mechanism) {
-		case CKM_HKDF_DERIVE:
-			if (!ctx)
-				break;
-
-			if (!derive_params.hkdf_params.info ||
-			    derive_params.hkdf_params.info_len !=
-				    TLS13_LABEL_OFFSET + sizeof(finishedlabel))
-				break;
-
-			label = &derive_params.hkdf_params
-					 .info[TLS13_LABEL_OFFSET];
-			if (strncmp((char *)label, finishedlabel,
-				    sizeof(finishedlabel)))
-				break;
-
-			if (ctx->context)
-				(void)libdev_cancel_operation(&ctx->context);
-
+		if (ctx && mech->mechanism == CKM_TLS12_KEY_AND_MAC_DERIVE) {
 			(void)libdev_remove_opctx(device, CKF_DERIVE);
 			destroy_context(ctx);
-			break;
-
-		case CKM_TLS12_KEY_AND_MAC_DERIVE:
-			if (!ctx)
-				break;
-
-			(void)libdev_remove_opctx(device, CKF_DERIVE);
-			destroy_context(ctx);
-			break;
-
-		default:
-			break;
 		}
 	}
 

@@ -14,3 +14,17 @@
    fun:libdev_operate_mechanism
    fun:lib_encrypt_decrypt
 }
+{
+   tls_1_3_ecdh_leak
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:calloc
+   obj:*
+   obj:*
+   obj:*
+   fun:object_derive_key_tls13_sign_verify
+   fun:tests_pkcs11_derive_key_tls1_3
+   fun:tests_pkcs11
+   fun:run_tests
+   fun:main
+}

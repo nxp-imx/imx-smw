@@ -56,6 +56,7 @@ static int open_key_store_service(hsm_hdl_t session_hdl,
 	hsm_err_t err = HSM_NO_ERROR;
 	open_svc_key_store_args_t open_svc_key_store_args = { 0 };
 	struct se_info info = { 0 };
+	uint8_t flags = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -65,20 +66,76 @@ static int open_key_store_service(hsm_hdl_t session_hdl,
 	open_svc_key_store_args.key_store_identifier = info.storage_id;
 	open_svc_key_store_args.authentication_nonce = info.storage_nonce;
 
-	/* Key store may already exists. */
-	open_svc_key_store_args.flags = 0;
+	/* Key store may already exist */
+	if (info.storage_shared)
+		open_svc_key_store_args.flags = HSM_SVC_KEY_STORE_FLAGS_SHARED;
+
+	SMW_DBG_PRINTF(VERBOSE,
+		       "[%s (%d)] Call hsm_open_key_store_service()\n"
+		       "open_svc_key_store_args_t\n"
+		       "    session_hdl: %x\n"
+		       "    key_store_identifier: %x\n"
+		       "    authentication_nonce: %x\n"
+		       "    flags: %x\n",
+		       __func__, __LINE__, session_hdl,
+		       open_svc_key_store_args.key_store_identifier,
+		       open_svc_key_store_args.authentication_nonce,
+		       open_svc_key_store_args.flags);
+
 	err = hsm_open_key_store_service(session_hdl, &open_svc_key_store_args,
 					 key_store_hdl);
-	if (err != HSM_NO_ERROR) {
-		/* Key store does not exists. Try to create it */
-		open_svc_key_store_args.flags = HSM_SVC_KEY_STORE_FLAGS_CREATE;
-		err = hsm_open_key_store_service(session_hdl,
-						 &open_svc_key_store_args,
-						 key_store_hdl);
-	}
 
+	SMW_DBG_PRINTF(DEBUG, "hsm_open_key_store_service returned %d\n", err);
+
+	if (err == HSM_NO_ERROR)
+		goto finish;
+
+	/* Key store does not exist. Try to create it */
+	flags = open_svc_key_store_args.flags;
+	open_svc_key_store_args.flags |= HSM_SVC_KEY_STORE_FLAGS_CREATE;
+
+	SMW_DBG_PRINTF(VERBOSE,
+		       "[%s (%d)] Call hsm_open_key_store_service()\n"
+		       "open_svc_key_store_args_t\n"
+		       "    session_hdl: %x\n"
+		       "    key_store_identifier: %x\n"
+		       "    authentication_nonce: %x\n"
+		       "    flags: %x\n",
+		       __func__, __LINE__, session_hdl,
+		       open_svc_key_store_args.key_store_identifier,
+		       open_svc_key_store_args.authentication_nonce,
+		       open_svc_key_store_args.flags);
+
+	err = hsm_open_key_store_service(session_hdl, &open_svc_key_store_args,
+					 key_store_hdl);
+
+	SMW_DBG_PRINTF(DEBUG, "hsm_open_key_store_service returned %d\n", err);
+
+	if (err == HSM_NO_ERROR)
+		goto finish;
+
+	/* Another application or thread may have created the key store in the meantime */
+	open_svc_key_store_args.flags = flags;
+
+	SMW_DBG_PRINTF(VERBOSE,
+		       "[%s (%d)] Call hsm_open_key_store_service()\n"
+		       "open_svc_key_store_args_t\n"
+		       "    session_hdl: %x\n"
+		       "    key_store_identifier: %x\n"
+		       "    authentication_nonce: %x\n"
+		       "    flags: %x\n",
+		       __func__, __LINE__, session_hdl,
+		       open_svc_key_store_args.key_store_identifier,
+		       open_svc_key_store_args.authentication_nonce,
+		       open_svc_key_store_args.flags);
+
+	err = hsm_open_key_store_service(session_hdl, &open_svc_key_store_args,
+					 key_store_hdl);
+
+	SMW_DBG_PRINTF(DEBUG, "hsm_open_key_store_service returned %d\n", err);
+
+finish:
 	status = ele_convert_err(err);
-	SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
 
 	SMW_DBG_PRINTF(DEBUG, "key_store_hdl: %u\n", *key_store_hdl);
 

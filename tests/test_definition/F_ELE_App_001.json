@@ -1,0 +1,14 @@
+{
+	"App 1": {
+		"obj_db": {
+			"filepath": "/var/tmp/obj_db_smw_test_F_ELE_App_001_App1.dat"
+		},
+		"filepath": "F_ELE_Thread_001.json"
+	},
+	"App 2": {
+		"obj_db": {
+			"filepath": "/var/tmp/obj_db_smw_test_F_ELE_App_001_App2.dat"
+		},
+		"filepath": "F_ELE_Thread_002.json"
+	}
+}

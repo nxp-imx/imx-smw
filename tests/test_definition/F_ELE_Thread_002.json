@@ -1,6 +1,6 @@
 {
 	"keys": {
-		"key 1": {
+		"key 3": {
 			"type": "AES",
 			"security_size": 256,
 			"attributes_list": [
@@ -13,7 +13,7 @@
 				"ECB_NO_PADDING"
 			]
 		},
-		"key 2": {
+		"key 4": {
 			"type": "SECP_R1",
 			"security_size": 256,
 			"attributes_list": [
@@ -32,18 +32,18 @@
 		"subtest 1": {
 			"command": "GENERATE",
 			"subsystem": "ELE",
-			"key_name": "key 1"
+			"key_name": "key 3"
 		},
 		"subtest 2": {
 			"post_after": "sem_t2",
 			"command": "GENERATE",
 			"subsystem": "ELE",
-			"key_name": "key 2"
+			"key_name": "key 4"
 		},
 		"subtest 3": {
 			"wait_before": "sem_t1",
 			"command": "DELETE",
-			"key_name": "key 1",
+			"key_name": "key 3",
 			"result": "SMW_STATUS_UNKNOWN_ID",
 			"depends": [
 				1,
@@ -52,7 +52,7 @@
 		},
 		"subtest 4": {
 			"command": "DELETE",
-			"key_name": "key 2",
+			"key_name": "key 4",
 			"depends": 2
 		}
 	},
@@ -71,12 +71,12 @@
 				"32206279746573206c6f6e6720212121"
 			],
 			"sign_id": 0,
-			"key_name": "key 2"
+			"key_name": "key 4"
 		},
 		"subtest 2": {
 			"post_after": "sem_t1",
 			"command": "DELETE",
-			"key_name": "key 1"
+			"key_name": "key 3"
 		}
 	}
 }

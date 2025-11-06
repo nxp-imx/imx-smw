@@ -52,7 +52,7 @@
 		"subtest 1": {
 			"command": "GENERATE",
 			"subsystem": "ELE",
-			"key_name": "key 2",
+			"key_name": "key 2"
 		},
 		"subtest 2": {
 			"command": "SIGN",

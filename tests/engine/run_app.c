@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #include <json.h>
@@ -20,8 +20,10 @@
 
 #define DEFAULT_OBJ_DB "/var/tmp/obj_db_smw_test.dat"
 
-static const struct se_info se_default_info = { 0x534d5754, 0x444546,
-						1000 }; // SMWT, DEF
+static const struct se_info se_default_info = { .storage_id = 0x534d5754,
+						.storage_nonce = 0x444546,
+						.storage_replay = 1000,
+						.storage_shared = true };
 
 static int run_singlethread(struct app_data *app);
 static int run_multithread(struct app_data *app);
@@ -148,6 +150,11 @@ static int setup_seco_ele_info(struct json_object *test_def, int is_ele)
 			return res;
 
 		res = UTIL_READ_JSON_ST_FIELD(&info, storage_replay, int,
+					      oinfo);
+		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+			return res;
+
+		res = UTIL_READ_JSON_ST_FIELD(&info, storage_shared, boolean,
 					      oinfo);
 		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 			return res;

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2024 NXP
+ * Copyright 2022-2025 NXP
  */
 
 #include <stdarg.h>
@@ -109,11 +109,10 @@ int main(int argc, char **argv)
 	char *custom_test_list = NULL;
 	char *custom_test_list_file_name = NULL;
 
-	struct se_info {
-		unsigned int storage_id;
-		unsigned int storage_nonce;
-		unsigned short storage_replay;
-	} se_default_info = { 0x50534154, 0x444546, 1000 }; // PSA, DEF
+	struct se_info se_default_info = { .storage_id = 0x50534154,  /* PSAT */
+					   .storage_nonce = 0x444546, /* DEF */
+					   .storage_replay = 1000,
+					   .storage_shared = false };
 
 	if (argc > 1) {
 		/* Parse command line argument to get the options. */

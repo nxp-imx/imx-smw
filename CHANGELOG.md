@@ -68,7 +68,11 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 #### PKCS#11 Library
 
+* Release all operations specific context on C_Finalize.
+
 #### PKCS#11 Tests
+
+* Update valgrind suppressions file.
 
 ---
 ### <a id ="rel_5_2"></a></br>**Release 5.2**
@@ -186,6 +190,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Release the ECDH peer public buffer when the TLS key exchange is finished.
 * Remove duplicate cancel operation when the TLS key exchange is finished.
 * Keep the ECDH peer public buffer when doing TLS 1.3 key exchange.
+* Release all operations specific context on C_Finalize.
 
 #### PKCS#11 Tests
 

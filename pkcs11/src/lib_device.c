@@ -103,7 +103,7 @@ static CK_RV clean_token(struct libdevice *device, CK_SLOT_ID slotid)
 	if (ret == CKR_OK) {
 		ret = libobj_list_destroy(&device->objects);
 		if (ret == CKR_OK)
-			ret = libopctx_list_destroy(&device->opctx);
+			ret = libdev_remove_all_opctx(device);
 
 		if (ret == CKR_OK)
 			CLEAR_BITS(device->token.flags, CKF_TOKEN_INITIALIZED);
@@ -550,26 +550,31 @@ end:
 	return ret;
 }
 
-CK_RV libdev_remove_opctx(struct libdevice *device, CK_FLAGS op_flag)
+CK_RV libdev_remove_all_opctx(struct libdevice *device)
 {
 	CK_RV ret = CKR_OK;
+
+	struct libopctx_list *list = NULL;
 	struct libopctx *opctx = NULL;
 
-	DBG_TRACE("Remove operation context (device: %p, op: %lx)", device,
-		  op_flag);
+	DBG_TRACE("Remove all operation contexts (device: %p)", device);
 
-	ret = LLIST_LOCK(&device->opctx);
+	list = &device->opctx;
+
+	/* Lock the list until the end of the destruction */
+	ret = LLIST_LOCK(list);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = libopctx_find(&device->opctx, op_flag, &opctx);
-	if (ret != CKR_OK)
-		goto end;
+	while (!LLIST_EMPTY(list)) {
+		opctx = LLIST_FIRST(list);
 
-	if (opctx)
-		ret = libopctx_destroy(&device->opctx, opctx);
+		ret = opctx->cancel_operation(device, opctx);
+		if (ret != CKR_OK)
+			break;
+	}
 
-end:
-	LLIST_UNLOCK(&device->opctx);
+	LLIST_CLOSE(list);
+
 	return ret;
 }

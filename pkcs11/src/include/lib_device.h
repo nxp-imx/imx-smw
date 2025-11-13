@@ -448,7 +448,7 @@ CK_RV libdev_add_opctx(struct libdevice *device, CK_FLAGS op_flag,
 						 struct libopctx *opctx));
 
 /**
- * libsess_find_opctx() - Find an active session operation
+ * libdev_find_opctx() - Find an active device operation
  * @device: Reference to the library device
  * @op_flag: Operation flag
  * @mech: Mechanism definition
@@ -462,7 +462,6 @@ CK_RV libdev_add_opctx(struct libdevice *device, CK_FLAGS op_flag,
  * Return:
  * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
  * CKR_GENERAL_ERROR                  - No context available
- * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
  * CKR_OPERATION_NOT_INITIALIZED      - Operation not initialized
  * CKR_OK                             - Success
  */
@@ -470,16 +469,14 @@ CK_RV libdev_find_opctx(struct libdevice *device, CK_FLAGS op_flag,
 			CK_MECHANISM_PTR mech, void **ctx);
 
 /**
- * libsess_remove_opctx() - Remove an active session operation
+ * libdev_remove_all_opctx() - Remove all active device operation
  * @device: Reference to the library device
- * @op_flag: Operation flag
  *
  * Return:
  * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
  * CKR_GENERAL_ERROR                  - No context available
- * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
  * CKR_OK                             - Success
  */
-CK_RV libdev_remove_opctx(struct libdevice *device, CK_FLAGS op_flag);
+CK_RV libdev_remove_all_opctx(struct libdevice *device);
 
 #endif /* __LIB_DEVICE_H__ */

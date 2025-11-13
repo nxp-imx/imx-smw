@@ -52,6 +52,7 @@ CK_RV libopctx_add(struct libopctx_list *list, struct libopctx *opctx)
 		new->mech.pParameter = NULL;
 	}
 	new->ctx = opctx->ctx;
+	new->cancel_operation = opctx->cancel_operation;
 	new->prev = NULL;
 	new->next = NULL;
 
@@ -235,6 +236,7 @@ CK_RV libopctx_copy(struct libopctx *src, struct libopctx *dst)
 	dst->mech.ulParameterLen = src->mech.ulParameterLen;
 
 	dst->op_flag = src->op_flag;
+	dst->cancel_operation = src->cancel_operation;
 
 	switch (src->op_flag) {
 	case CKF_ENCRYPT:

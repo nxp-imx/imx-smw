@@ -483,7 +483,10 @@ CK_RV libdev_destroy(struct libdevice **devices)
 }
 
 CK_RV libdev_add_opctx(struct libdevice *device, CK_FLAGS op_flag,
-		       CK_MECHANISM_PTR mech, void *ctx)
+		       CK_MECHANISM_PTR mech, void *ctx,
+		       CK_RV (*cancel_operation)(void *container,
+						 struct libopctx *opctx))
+
 {
 	CK_RV ret = CKR_OK;
 	struct libopctx *opctx_find = NULL;
@@ -508,6 +511,7 @@ CK_RV libdev_add_opctx(struct libdevice *device, CK_FLAGS op_flag,
 	opctx_add.op_flag = op_flag;
 	opctx_add.mech = *mech;
 	opctx_add.ctx = ctx;
+	opctx_add.cancel_operation = cancel_operation;
 	ret = libopctx_add(&device->opctx, &opctx_add);
 
 end:

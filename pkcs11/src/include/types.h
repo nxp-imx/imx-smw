@@ -260,6 +260,7 @@ struct libmech_list {
  * @ctx: Operation specific context
  * @prev: Previous element of the list
  * @next: Next element of the list
+ * @cancel_operation: Function pointer to cancel the current operation
  *
  */
 struct libopctx {
@@ -268,6 +269,8 @@ struct libopctx {
 	void *ctx;
 	struct libopctx *prev;
 	struct libopctx *next;
+	CK_RV(*cancel_operation)
+	(void *container, struct libopctx *this);
 };
 
 #endif /* __TYPES_H__ */

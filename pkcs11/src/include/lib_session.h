@@ -274,6 +274,7 @@ CK_RV libsess_callback(CK_SESSION_HANDLE hsession, CK_NOTIFICATION event);
  * @op_flag: Operation flag
  * @mech: Mechanism definition
  * @ctx: Operation context
+ * @cancel_operation: Pointer to cancel operation function
  *
  * Return:
  * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
@@ -284,7 +285,9 @@ CK_RV libsess_callback(CK_SESSION_HANDLE hsession, CK_NOTIFICATION event);
  * CKR_OK                             - Success
  */
 CK_RV libsess_add_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag,
-			CK_MECHANISM_PTR mech, void *ctx);
+			CK_MECHANISM_PTR mech, void *ctx,
+			CK_RV (*cancel_operation)(void *container,
+						  struct libopctx *opctx));
 
 /**
  * libsess_find_opctx() - Find an active session operation

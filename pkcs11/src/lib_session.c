@@ -703,7 +703,9 @@ CK_RV libsess_callback(CK_SESSION_HANDLE hsession, CK_NOTIFICATION event)
 }
 
 CK_RV libsess_add_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag,
-			CK_MECHANISM_PTR mech, void *ctx)
+			CK_MECHANISM_PTR mech, void *ctx,
+			CK_RV (*cancel_operation)(void *container,
+						  struct libopctx *opctx))
 {
 	CK_RV ret = CKR_OK;
 	struct libsess *sess = (struct libsess *)hsession;
@@ -733,6 +735,7 @@ CK_RV libsess_add_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag,
 	opctx_add.op_flag = op_flag;
 	opctx_add.mech = *mech;
 	opctx_add.ctx = ctx;
+	opctx_add.cancel_operation = cancel_operation;
 	ret = libopctx_add(&sess->opctx, &opctx_add);
 
 end:
@@ -1264,7 +1267,7 @@ static CK_RV restore_operation_contexts(CK_SESSION_HANDLE hSession,
 		}
 
 		ret = libsess_add_opctx(hSession, ctx->op_flag, &ctx->mech,
-					ctx->ctx);
+					ctx->ctx, ctx->cancel_operation);
 		if (ret != CKR_OK)
 			break;
 

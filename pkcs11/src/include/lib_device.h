@@ -433,17 +433,19 @@ CK_RV libdev_copy_operation(void *src, void **dst);
  * @op_flag: Operation flag
  * @mech: Mechanism definition
  * @ctx: Operation context
+ * @cancel_operation: Pointer to cancel operation function
  *
  * Return:
  * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
  * CKR_GENERAL_ERROR                  - No context available
- * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
  * CKR_OPERATION_ACTIVE               - Operation is already initialized
  * CKR_HOST_MEMORY                    - Allocation error
  * CKR_OK                             - Success
  */
 CK_RV libdev_add_opctx(struct libdevice *device, CK_FLAGS op_flag,
-		       CK_MECHANISM_PTR mech, void *ctx);
+		       CK_MECHANISM_PTR mech, void *ctx,
+		       CK_RV (*cancel_operation)(void *container,
+						 struct libopctx *opctx));
 
 /**
  * libsess_find_opctx() - Find an active session operation

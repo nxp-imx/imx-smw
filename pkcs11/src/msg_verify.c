@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020, 2024 NXP
+ * Copyright 2020, 2024-2025 NXP
  */
 
 #include "lib_sign_verify.h"
+#include "lib_session.h"
 
 CK_RV C_MessageVerifyInit(CK_SESSION_HANDLE hSession,
 			  CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
@@ -63,5 +64,5 @@ CK_RV C_VerifyMessageNext(CK_SESSION_HANDLE hSession, CK_VOID_PTR pParameter,
 
 CK_RV C_MessageVerifyFinal(CK_SESSION_HANDLE hSession)
 {
-	return lib_sign_verify_cancel_operation(hSession, CKF_MESSAGE_VERIFY);
+	return libsess_cancel_opctx(hSession, CKF_MESSAGE_VERIFY);
 }

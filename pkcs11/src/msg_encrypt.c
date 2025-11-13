@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020, 2024 NXP
+ * Copyright 2020, 2024-2025 NXP
  */
 
 #include "lib_cipher.h"
+#include "lib_session.h"
 
 CK_RV C_MessageEncryptInit(CK_SESSION_HANDLE hSession,
 			   CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
@@ -72,5 +73,5 @@ CK_RV C_EncryptMessageNext(CK_SESSION_HANDLE hSession, CK_VOID_PTR pParameter,
 
 CK_RV C_MessageEncryptFinal(CK_SESSION_HANDLE hSession)
 {
-	return lib_cipher_cancel_operation(hSession, CKF_MESSAGE_ENCRYPT);
+	return libsess_cancel_opctx(hSession, CKF_MESSAGE_ENCRYPT);
 }

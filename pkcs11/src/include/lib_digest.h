@@ -108,21 +108,4 @@ CK_RV lib_digest_key(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hkey);
  */
 CK_RV lib_digest_copy_operation(void *src, void **dst);
 
-/**
- * lib_digest_cancel_operation() - Cancel the multi-part digest operation,
- *                                 if active
- * @hsession: Session handle
- *
- * If a multi-part digest operation is active, cancel the operation
- * and remove the operation context.
- *
- * Return:
- * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
- * CKR_GENERAL_ERROR                  - No context available
- * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
- * CKR_DEVICE_ERROR                   - Device failure
- * CKR_OK                             - Success
- */
-CK_RV lib_digest_cancel_operation(CK_SESSION_HANDLE hsession);
-
 #endif /* __LIB_DIGEST_H__ */

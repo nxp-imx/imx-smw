@@ -13,10 +13,6 @@
 #include "lib_opctx.h"
 #include "lib_session.h"
 
-#include "lib_cipher.h"
-#include "lib_digest.h"
-#include "lib_sign_verify.h"
-
 #include "trace.h"
 #include "list.h"
 
@@ -101,7 +97,7 @@ static CK_RV close_rw_session(struct libdevice *dev, struct libsess *session)
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = libopctx_list_destroy(&session->opctx);
+	ret = libsess_cancel_all_opctx((CK_SESSION_HANDLE)session);
 	if (ret == CKR_OK) {
 		LIST_REMOVE(&dev->rw_sessions, session);
 
@@ -124,7 +120,7 @@ static CK_RV close_ro_session(struct libdevice *dev, struct libsess *session)
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = libopctx_list_destroy(&session->opctx);
+	ret = libsess_cancel_all_opctx((CK_SESSION_HANDLE)session);
 	if (ret == CKR_OK) {
 		LIST_REMOVE(&dev->ro_sessions, session);
 
@@ -274,7 +270,7 @@ end:
 	/* Unlock session mutex */
 	libmutex_unlock(dev->mutex_session);
 
-	DBG_TRACE("Closing Session %p return %ld", sess, ret);
+	DBG_TRACE("Closing Session return %ld", ret);
 	return ret;
 }
 
@@ -779,37 +775,7 @@ end:
 	return ret;
 }
 
-CK_RV libsess_remove_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag)
-{
-	CK_RV ret = CKR_OK;
-	struct libsess *sess = (struct libsess *)hsession;
-	struct libopctx *opctx = NULL;
-
-	DBG_TRACE("Remove operation context (sess: %p, op: %lx)", sess,
-		  op_flag);
-
-	ret = libsess_validate(hsession);
-	if (ret != CKR_OK)
-		return ret;
-
-	ret = LLIST_LOCK(&sess->opctx);
-	if (ret != CKR_OK)
-		return ret;
-
-	ret = libopctx_find(&sess->opctx, op_flag, &opctx);
-	if (ret != CKR_OK)
-		goto end;
-
-	if (opctx)
-		ret = libopctx_destroy(&sess->opctx, opctx);
-
-end:
-	LLIST_UNLOCK(&sess->opctx);
-	return ret;
-}
-
-CK_RV libsess_cancel_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag,
-			   void **context)
+CK_RV libsess_cancel_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag)
 {
 	CK_RV ret;
 	struct libsess *sess = (struct libsess *)hsession;
@@ -831,41 +797,12 @@ CK_RV libsess_cancel_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag,
 		goto end;
 
 	if (opctx)
-		ret = libopctx_cancel(&sess->opctx, opctx, context);
+		ret = opctx->cancel_operation(sess, opctx);
+	else
+		ret = CKR_OPERATION_NOT_INITIALIZED;
 
 end:
 	LLIST_UNLOCK(&sess->opctx);
-	return ret;
-}
-
-static CK_RV cancel_op(CK_SESSION_HANDLE hSession, CK_FLAGS op_flag)
-{
-	CK_RV ret = CKR_OK;
-
-	switch (op_flag) {
-	case CKF_ENCRYPT:
-	case CKF_DECRYPT:
-	case CKF_MESSAGE_ENCRYPT:
-	case CKF_MESSAGE_DECRYPT:
-		ret = lib_cipher_cancel_operation(hSession, op_flag);
-		break;
-
-	case CKF_SIGN:
-	case CKF_VERIFY:
-	case CKF_MESSAGE_SIGN:
-	case CKF_MESSAGE_VERIFY:
-		ret = lib_sign_verify_cancel_operation(hSession, op_flag);
-		break;
-
-	case CKF_DIGEST:
-		ret = lib_digest_cancel_operation(hSession);
-		break;
-
-	default:
-		ret = CKR_GENERAL_ERROR;
-		break;
-	}
-
 	return ret;
 }
 
@@ -1261,7 +1198,7 @@ static CK_RV restore_operation_contexts(CK_SESSION_HANDLE hSession,
 		 * PKCS#11 specification.
 		 */
 		if (ret == CKR_OK && active_ctx.ctx) {
-			ret = cancel_op(hSession, ctx->op_flag);
+			ret = libsess_cancel_opctx(hSession, ctx->op_flag);
 			if (ret != CKR_OK)
 				break;
 		}
@@ -1444,5 +1381,35 @@ CK_RV libsess_set_operation_state(CK_SESSION_HANDLE hSession,
 end:
 	release_op_context(&op_state);
 	free_op_state(&op_state);
+	return ret;
+}
+
+CK_RV libsess_cancel_all_opctx(CK_SESSION_HANDLE hsession)
+{
+	CK_RV ret = CKR_OK;
+
+	struct libsess *sess = (struct libsess *)hsession;
+	struct libopctx_list *list = NULL;
+	struct libopctx *opctx = NULL;
+
+	DBG_TRACE("Cancel all operation context (sess: %p)", sess);
+
+	list = &sess->opctx;
+
+	/* Lock the list until the end of the destruction */
+	ret = LLIST_LOCK(list);
+	if (ret != CKR_OK)
+		return ret;
+
+	while (!LLIST_EMPTY(list)) {
+		opctx = LLIST_FIRST(list);
+
+		ret = opctx->cancel_operation(sess, opctx);
+		if (ret != CKR_OK)
+			break;
+	}
+
+	LLIST_CLOSE(list);
+
 	return ret;
 }

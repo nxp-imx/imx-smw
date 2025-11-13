@@ -312,23 +312,9 @@ CK_RV libsess_find_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag,
 			 CK_MECHANISM_PTR mech, void **ctx);
 
 /**
- * libsess_remove_opctx() - Remove an active session operation
- * @hsession: Session handle
- * @op_flag: Operation flag
- *
- * Return:
- * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
- * CKR_GENERAL_ERROR                  - No context available
- * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
- * CKR_OK                             - Success
- */
-CK_RV libsess_remove_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag);
-
-/**
  * libsess_cancel_opctx() - Cancel an on-going multipart operation
  * @hsession: Session handle
  * @op_flag: Operation flag
- * @context: Pointer to multi-part operation context
  *
  * Return:
  * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
@@ -337,8 +323,20 @@ CK_RV libsess_remove_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag);
  * CKR_DEVICE_ERROR	                  - Device failure
  * CKR_OK                             - Success
  */
-CK_RV libsess_cancel_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag,
-			   void **context);
+CK_RV libsess_cancel_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag);
+
+/**
+ * libsess_cancel_all_opctx() - Cancel all on-going multipart operation
+ * @hsession: Session handle
+ *
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
+ * CKR_GENERAL_ERROR                  - No context available
+ * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
+ * CKR_DEVICE_ERROR	                  - Device failure
+ * CKR_OK                             - Success
+ */
+CK_RV libsess_cancel_all_opctx(CK_SESSION_HANDLE hsession);
 
 /**
  * libsess_get_operation_state() - Obtain a copy of the cryptographic operations

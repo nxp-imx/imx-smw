@@ -14,8 +14,10 @@
 #include "key_rsa.h"
 
 #include "lib_device.h"
-#include "lib_session.h"
+#include "lib_mutex.h"
 #include "lib_object.h"
+#include "lib_opctx.h"
+#include "lib_session.h"
 #include "libobj_types.h"
 
 #include "util.h"
@@ -2313,6 +2315,52 @@ static void destroy_context(struct lib_derive_ctx *ctx)
 	}
 }
 
+static CK_RV cancel_operation(void *dev, struct libopctx *opctx)
+{
+	CK_RV ret = CKR_OK;
+
+	struct libdevice *device = (struct libdevice *)dev;
+	struct lib_derive_ctx *ctx = NULL;
+
+	if (!opctx)
+		return CKR_ARGUMENTS_BAD;
+
+	ctx = opctx->ctx;
+
+	ret = libopctx_destroy(&device->opctx, opctx);
+	if (ret != CKR_OK)
+		return ret;
+
+	if (ctx)
+		destroy_context(ctx);
+
+	return ret;
+}
+
+static CK_RV cancel_derive_operation(struct libdevice *device)
+{
+	CK_RV ret = CKR_OK;
+
+	struct libopctx *opctx = NULL;
+
+	ret = LLIST_LOCK(&device->opctx);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = libopctx_find(&device->opctx, CKF_DERIVE, &opctx);
+	if (ret != CKR_OK)
+		goto end;
+
+	if (!opctx)
+		goto end;
+
+	ret = opctx->cancel_operation(device, opctx);
+
+end:
+	LLIST_UNLOCK(&device->opctx);
+	return ret;
+}
+
 CK_RV derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 		 CK_OBJECT_HANDLE base_key, struct libobj_obj *derived_key,
 		 struct libattr_list *attrs)
@@ -2380,14 +2428,9 @@ CK_RV derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 		case CKM_HKDF_DERIVE:
 			if (mech->mechanism == CKM_ECDH1_DERIVE) {
 				/* Remove previous operation context */
-				ret = libdev_find_opctx(device, CKF_DERIVE,
-							&find_mech,
-							(void **)&ctx);
-				if (ret == CKR_OK) {
-					(void)libdev_remove_opctx(device,
-								  CKF_DERIVE);
-					destroy_context(ctx);
-				}
+				ret = cancel_derive_operation(device);
+				if (ret != CKR_OK)
+					goto end;
 
 				ctx = calloc(1, sizeof(*ctx));
 				if (!ctx) {
@@ -2397,9 +2440,11 @@ CK_RV derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 
 				/* Set current operation context */
 				ret = libdev_add_opctx(device, CKF_DERIVE, mech,
-						       ctx);
-				if (ret != CKR_OK)
+						       ctx, cancel_operation);
+				if (ret != CKR_OK) {
+					free(ctx);
 					goto end;
+				}
 
 				derive_params.ctx = ctx;
 			}
@@ -2444,24 +2489,21 @@ CK_RV derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	}
 
 	if (ret != CKR_OK)
-		goto end;
+		goto cleanup;
 
 	ret = set_derived_key_attr(hsession, &derive_params, mech->mechanism,
 				   attrs);
 
-end:
+cleanup:
 	if (ret != CKR_OK) {
-		if (mech->mechanism == CKM_ECDH1_DERIVE && ctx) {
-			(void)libdev_remove_opctx(device, CKF_DERIVE);
-			destroy_context(ctx);
-		}
+		if (mech->mechanism == CKM_ECDH1_DERIVE && ctx)
+			(void)cancel_derive_operation(device);
 	} else {
-		if (ctx && mech->mechanism == CKM_TLS12_KEY_AND_MAC_DERIVE) {
-			(void)libdev_remove_opctx(device, CKF_DERIVE);
-			destroy_context(ctx);
-		}
+		if (ctx && mech->mechanism == CKM_TLS12_KEY_AND_MAC_DERIVE)
+			(void)cancel_derive_operation(device);
 	}
 
+end:
 	DBG_TRACE("Derive secret Key object (%p) return %ld",
 		  derive_params.derived_key, ret);
 	return ret;

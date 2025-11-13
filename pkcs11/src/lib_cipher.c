@@ -730,20 +730,20 @@ end:
 	return ret;
 }
 
-CK_RV lib_cipher_cancel_operation(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag)
+static CK_RV cancel_operation(void *session, struct libopctx *opctx)
 {
 	CK_RV ret = CKR_OK;
 
+	struct libsess *sess = (struct libsess *)session;
 	struct lib_cipher_ctx *ctx = NULL;
 
-	CK_MECHANISM mechanism = { 0 };
+	if (!opctx)
+		return CKR_ARGUMENTS_BAD;
 
-	ret = libsess_find_opctx(hsession, op_flag, &mechanism, (void **)&ctx);
-	if (ret != CKR_OK)
-		return ret;
+	ctx = opctx->ctx;
 
 	if (!ctx) {
-		ret = libsess_remove_opctx(hsession, op_flag);
+		ret = libopctx_destroy(&sess->opctx, opctx);
 		return ret;
 	}
 
@@ -752,17 +752,17 @@ CK_RV lib_cipher_cancel_operation(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag)
 	case OP_ONE_SHOT:
 	case OP_BEGIN:
 	case OP_END:
-		ret = libsess_remove_opctx(hsession, op_flag);
+		ret = libopctx_destroy(&sess->opctx, opctx);
 		break;
 
 	case OP_UPDATE:
 	case OP_NEXT:
 	case OP_FINAL:
 		if (ctx->context)
-			ret = libsess_cancel_opctx(hsession, op_flag,
-						   (void **)&ctx->context);
+			ret = libopctx_cancel(&sess->opctx, opctx,
+					      (void **)&ctx->context);
 		else
-			ret = libsess_remove_opctx(hsession, op_flag);
+			ret = libopctx_destroy(&sess->opctx, opctx);
 
 		break;
 
@@ -830,7 +830,7 @@ CK_RV lib_encrypt_decrypt_init(CK_SESSION_HANDLE hsession,
 		 * If a multi-part operation is active, cancel the operation
 		 * and remove the operation context.
 		 */
-		ret = lib_cipher_cancel_operation(hsession, op_flag);
+		ret = libsess_cancel_opctx(hsession, op_flag);
 		if (ret == CKR_OPERATION_NOT_INITIALIZED)
 			ret = CKR_OK;
 
@@ -885,7 +885,8 @@ CK_RV lib_encrypt_decrypt_init(CK_SESSION_HANDLE hsession,
 		goto end;
 
 	/* Add operation context to list */
-	ret = libsess_add_opctx(hsession, op_flag, pmechanism, ctx);
+	ret = libsess_add_opctx(hsession, op_flag, pmechanism, ctx,
+				cancel_operation);
 
 end:
 	if (ret != CKR_OK)
@@ -1059,7 +1060,7 @@ end:
 	 * Cancel the on-going multipart operation and
 	 * remove operation context.
 	 */
-	(void)lib_cipher_cancel_operation(hsession, op_flag);
+	(void)libsess_cancel_opctx(hsession, op_flag);
 
 	return ret;
 }

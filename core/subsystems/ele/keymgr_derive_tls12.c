@@ -159,6 +159,8 @@ static int tls12_store_key_id(struct smw_keymgr_derive_key_args *args,
 	key_identifier.security_size = bits;
 	key_attributes->attributes =
 		SMW_ATTR_SET_TRANSIENT(key_attributes->attributes);
+	key_attributes->attributes =
+		SMW_ATTR_SET_SENSITIVE(key_attributes->attributes);
 	key_identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_PRIVATE;
 
 	return smw_keymgr_db_create(key_id, &key_identifier);
@@ -349,6 +351,10 @@ tls12_op_derive_master_secret(struct smw_keymgr_derive_key_args *args,
 	struct tls12_ms_ele_op_payload *payload = NULL;
 	op_key_exchange_args_t key_ex_args = { 0 };
 	struct smw_keymgr_tls12_args *tls_args = args->kdf_args;
+	struct smw_keymgr_identifier *key_derived_identifier =
+		&args->key_derived.identifier;
+	struct smw_key_attributes *key_derived_attributes =
+		&key_derived_identifier->key_attributes;
 	hsm_err_t err = HSM_NO_ERROR;
 
 	unsigned char *session_hash = NULL;
@@ -441,22 +447,23 @@ tls12_op_derive_master_secret(struct smw_keymgr_derive_key_args *args,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	args->key_derived.identifier.s_id = key_ex_args.out_derived_key_id;
+	key_derived_identifier->s_id = key_ex_args.out_derived_key_id;
 	/*
 	 * In case of key derivation, the key group is unknown.
 	 * The FW selects the key group.
 	 */
-	args->key_derived.identifier.group = ELE_UNDEFINED_KEY_GROUP;
-	args->key_derived.identifier.security_size =
-		TLS12_MASTER_SECRET_SEC_SIZE;
-	args->key_derived.identifier.subsystem_id = SUBSYSTEM_ID_ELE;
-	args->key_derived.identifier.type_id =
-		SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER;
+	key_derived_identifier->group = ELE_UNDEFINED_KEY_GROUP;
+	key_derived_identifier->security_size = TLS12_MASTER_SECRET_SEC_SIZE;
+	key_derived_identifier->subsystem_id = SUBSYSTEM_ID_ELE;
+	key_derived_identifier->type_id = SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER;
 
 	args->key_derived.pub->format_name = SMW_KEY_FORMAT_NAME_HEX;
 	args->key_derived.pub->id = key_ex_args.out_derived_key_id;
 	args->key_derived.pub->security_size = TLS12_MASTER_SECRET_SEC_SIZE;
 	args->key_derived.pub->type_name = SMW_KEY_TYPE_NAME_TLS_MASTER;
+
+	key_derived_attributes->attributes =
+		SMW_ATTR_SET_SENSITIVE(key_derived_attributes->attributes);
 
 end:
 	if (key_ex_args.user_fixed_info)

@@ -841,6 +841,10 @@ static int generate_key(struct subsystem_context *ele_ctx, void *args)
 
 	SMW_DBG_PRINTF(DEBUG, "Key identifier: 0x%08X\n", key_id);
 
+	if (key_identifier->privacy_id != SMW_KEYMGR_PRIVACY_ID_PUBLIC)
+		key_attributes->attributes =
+			SMW_ATTR_SET_SENSITIVE(key_attributes->attributes);
+
 	if (public_data) {
 		/*
 		 * On some device (e.g. i.MX93 and i.MX91), the
@@ -1278,6 +1282,10 @@ int ele_get_key_attributes(struct hdl *hdl,
 	key_attributes->storage_id =
 		ELE_KEY_LIFETIME_LOCATION_GET(op_key_attrs.key_lifetime);
 	key_attributes->attributes = key_identifier->key_attributes.attributes;
+
+	if (key_identifier->privacy_id != SMW_KEYMGR_PRIVACY_ID_PUBLIC)
+		key_attributes->attributes =
+			SMW_ATTR_SET_SENSITIVE(key_attributes->attributes);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

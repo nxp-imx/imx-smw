@@ -336,17 +336,25 @@ static void
 tls13_set_derived_identifier(struct smw_keymgr_derive_key_args *args,
 			     uint32_t key_id, struct tls13_ele_payload *payload)
 {
+	struct smw_keymgr_identifier *key_derived_identifier =
+		&args->key_derived.identifier;
+	struct smw_key_attributes *key_derived_attributes =
+		&key_derived_identifier->key_attributes;
+
 	if (is_iv(payload->tls1_3_algo))
 		return;
 
-	args->key_derived.identifier.s_id = key_id;
+	key_derived_identifier->s_id = key_id;
 	/*
 	 * In case of key derivation, the key group is unknown.
 	 * The FW selects the key group.
 	 */
-	args->key_derived.identifier.group = ELE_UNDEFINED_KEY_GROUP;
-	args->key_derived.identifier.security_size = payload->key_bits;
-	args->key_derived.identifier.subsystem_id = SUBSYSTEM_ID_ELE;
+	key_derived_identifier->group = ELE_UNDEFINED_KEY_GROUP;
+	key_derived_identifier->security_size = payload->key_bits;
+	key_derived_identifier->subsystem_id = SUBSYSTEM_ID_ELE;
+
+	key_derived_attributes->attributes =
+		SMW_ATTR_SET_SENSITIVE(key_derived_attributes->attributes);
 
 	/*
 	 * Here, both handshake secrets and master secrets are considered
@@ -356,11 +364,11 @@ tls13_set_derived_identifier(struct smw_keymgr_derive_key_args *args,
 	 */
 	if (is_master_secret(payload->tls1_3_algo) ||
 	    is_handshake_secret(payload->tls1_3_algo))
-		args->key_derived.identifier.type_id =
+		key_derived_identifier->type_id =
 			SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER;
 
 	/* Hardcoded by ELE */
-	args->key_derived.identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_PRIVATE;
+	key_derived_identifier->privacy_id = SMW_KEYMGR_PRIVACY_ID_PRIVATE;
 
 	if (smw_keymgr_is_store_key_set(args))
 		return;

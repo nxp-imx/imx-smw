@@ -1182,6 +1182,37 @@ static CK_RV get_key_allowed_algo(struct libobj_obj *obj,
 	return ret;
 }
 
+static CK_RV get_key_attributes(const struct libdev *devinfo,
+				struct libobj_obj *obj)
+{
+	CK_RV ret = CKR_OK;
+	enum smw_status_code status = SMW_STATUS_OK;
+	struct smw_key_descriptor key_desc = { 0 };
+	struct smw_get_key_attributes_args attr_args = { 0 };
+
+	DBG_TRACE("Get Key attributes");
+
+	key_desc.id = get_key_token_id(obj);
+
+	attr_args.subsystem_name = devinfo->name;
+	attr_args.key_descriptor = &key_desc;
+
+	status = smw_get_key_attributes(&attr_args);
+	ret = smw_status_to_ck_rv(status);
+	if (ret != CKR_OK)
+		goto end;
+
+	args_attr_get_key_sensitivity(obj, key_desc.attributes.attributes);
+	args_attr_get_key_usage(obj, key_desc.attributes.usage_flags);
+	args_attr_get_obj_storage(obj, key_desc.attributes.attributes);
+
+end:
+	DBG_TRACE("Get Key attributes from SMW status %d return %ld", status,
+		  ret);
+
+	return ret;
+}
+
 static CK_RV get_transient_secret_key(CK_SESSION_HANDLE hsession,
 				      unsigned int id,
 				      CK_OBJECT_HANDLE_PTR hobj)
@@ -1622,8 +1653,10 @@ static CK_RV op_keygen_common(CK_SLOT_ID slotid, struct libobj_obj *obj)
 	DBG_TRACE("Generate Key on subsystem #%d SMW status %d return 0x%lx",
 		  devinfo->name, status, ret);
 
-	if (ret == CKR_OK)
+	if (ret == CKR_OK) {
 		set_key_token_id(obj, key.id);
+		ret = get_key_attributes(devinfo, obj);
+	}
 
 	return ret;
 }
@@ -2515,6 +2548,8 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 
 		if (entry->type == CKM_TLS12_KEY_AND_MAC_DERIVE)
 			ret = get_tls12_objects(derive_params, &derive_args);
+		else if (der_key_desc.id)
+			ret = get_key_attributes(devinfo, obj);
 	}
 
 	switch (entry->type) {
@@ -4295,6 +4330,7 @@ CK_RV libdev_get_key_attributes(CK_SESSION_HANDLE hsession,
 	if (ret != CKR_OK)
 		goto end;
 
+	args_attr_get_key_sensitivity(obj, key_desc.attributes.attributes);
 	args_attr_get_key_usage(obj, key_desc.attributes.usage_flags);
 	args_attr_get_obj_storage(obj, key_desc.attributes.attributes);
 

@@ -52,6 +52,17 @@ void args_attr_get_obj_storage(struct libobj_obj *obj,
 			       smw_attr_attributes_t attr);
 
 /**
+ * args_attr_get_key_sensitivity() - Get the key sensitive attributes
+ * @obj: Object
+ * @attr: Attributes
+ *
+ * Return:
+ * None.
+ */
+void args_attr_get_key_sensitivity(struct libobj_obj *obj,
+				   smw_attr_attributes_t attr);
+
+/**
  * pkcs11_flag_to_smw_usage() - Convert PKCS#11 flags to SMW usage flags
  * @op_flag: PKCS#11 operation flags
  *

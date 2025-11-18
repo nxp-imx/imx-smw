@@ -87,8 +87,10 @@ static void get_private_key_usage(struct libobj_obj *obj,
 	    SMW_ATTR_USAGE_IS_SIGN_HASH(usage_flags))
 		key->sign = true;
 
-	if (!key->sensitive && SMW_ATTR_USAGE_IS_EXPORT(usage_flags))
+	if (!key->sensitive && SMW_ATTR_USAGE_IS_EXPORT(usage_flags)) {
 		key->extractable = true;
+		key->never_extractable = false;
+	}
 }
 
 static void set_secret_key_usage(smw_attr_usage_t *usage_flags,
@@ -130,8 +132,10 @@ static void get_secret_key_usage(struct libobj_obj *obj,
 	if (SMW_ATTR_USAGE_IS_VERIFY_MESSAGE(usage_flags))
 		key->verify = true;
 
-	if (!key->sensitive && SMW_ATTR_USAGE_IS_EXPORT(usage_flags))
+	if (!key->sensitive && SMW_ATTR_USAGE_IS_EXPORT(usage_flags)) {
 		key->extractable = true;
+		key->never_extractable = false;
+	}
 }
 
 static void set_ec_key_usage(smw_attr_usage_t *usage_flags,
@@ -232,6 +236,30 @@ static void get_rsa_key_usage(struct libobj_obj *obj,
 	}
 }
 
+static void get_secret_key_sensitivity(struct libobj_obj *obj,
+				       smw_attr_attributes_t attr)
+
+{
+	struct libobj_key_secret *key = get_key_from(obj);
+
+	if (key && SMW_ATTR_IS_SENSITIVE(attr)) {
+		key->sensitive = true;
+		key->always_sensitive = true;
+	}
+}
+
+static void get_private_key_sensitivity(struct libobj_obj *obj,
+					smw_attr_attributes_t attr)
+
+{
+	struct libobj_key_private *key = get_key_from(obj);
+
+	if (key && SMW_ATTR_IS_SENSITIVE(attr)) {
+		key->sensitive = true;
+		key->always_sensitive = true;
+	}
+}
+
 void args_attrs_key_usage(smw_attr_usage_t *usage_flags, struct libobj_obj *obj)
 {
 	switch (get_key_type(obj)) {
@@ -326,6 +354,40 @@ void args_attr_get_obj_storage(struct libobj_obj *obj,
 
 	if (SMW_ATTR_IS_READ_ONLY(attr))
 		set_non_modifiable_obj(obj, storage);
+}
+
+void args_attr_get_key_sensitivity(struct libobj_obj *obj,
+				   smw_attr_attributes_t attr)
+{
+	switch (get_key_type(obj)) {
+	case CKK_AES:
+	case CKK_DES:
+	case CKK_DES3:
+	case CKK_SM4:
+	case CKK_MD5_HMAC:
+	case CKK_SHA_1_HMAC:
+	case CKK_SHA224_HMAC:
+	case CKK_SHA256_HMAC:
+	case CKK_SHA384_HMAC:
+	case CKK_SHA512_HMAC:
+	case CKK_SHA3_224_HMAC:
+	case CKK_SHA3_256_HMAC:
+	case CKK_SHA3_384_HMAC:
+	case CKK_SHA3_512_HMAC:
+	case CKK_GENERIC_SECRET:
+	case CKK_HKDF:
+		get_secret_key_sensitivity(obj, attr);
+		break;
+
+	case CKK_EC:
+	case CKK_EC_EDWARDS:
+	case CKK_RSA:
+		get_private_key_sensitivity(obj, attr);
+		break;
+
+	default:
+		break;
+	}
 }
 
 smw_attr_usage_t pkcs11_flag_to_smw_usage(CK_FLAGS op_flag)

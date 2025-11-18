@@ -1078,7 +1078,7 @@ static CK_RV subkey_private_get_attribute(CK_ATTRIBUTE_PTR attr,
 				      ARRAY_SIZE(attr_key_private), priv_key,
 				      protect);
 	if (ret != CKR_ATTRIBUTE_TYPE_INVALID)
-		return ret;
+		goto end;
 
 	/*
 	 * Attribute not present in the private key object attributes,
@@ -1098,6 +1098,7 @@ static CK_RV subkey_private_get_attribute(CK_ATTRIBUTE_PTR attr,
 		ret = CKR_FUNCTION_FAILED;
 	}
 
+end:
 	DBG_TRACE("Get attribute type=%#lx ret %ld", attr->type, ret);
 	return ret;
 }

@@ -703,6 +703,10 @@ static int generate_key(void *args)
 	SMW_DBG_PRINTF(DEBUG, "%s: Key #%d is generated\n", __func__,
 		       key_identifier->s_id);
 
+	if (key_identifier->privacy_id != SMW_KEYMGR_PRIVACY_ID_PUBLIC)
+		key_attrs->attributes =
+			SMW_ATTR_SET_SENSITIVE(key_attrs->attributes);
+
 	if (smw_keymgr_get_public_data(&key_args->key_descriptor)) {
 		status = update_public_buffers(&key_args->key_descriptor,
 					       CMD_GENERATE_KEY, &op, false);
@@ -1563,6 +1567,10 @@ static int get_key_attributes(void *args)
 		key_attributes->permitted_algo = key_def->permitted_algo;
 
 	key_usage_to_smw(tee_usage, &key_attributes->usage_flags);
+
+	if (key_identifier->privacy_id != SMW_KEYMGR_PRIVACY_ID_PUBLIC)
+		key_attributes->attributes =
+			SMW_ATTR_SET_SENSITIVE(key_attributes->attributes);
 
 exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

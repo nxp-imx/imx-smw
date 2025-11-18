@@ -333,6 +333,7 @@ static int hkdf_derive_key(void *args)
 	struct key_derive_shared_params shared_params = { 0 };
 	struct smw_keymgr_identifier *key_id_base = NULL;
 	struct smw_keymgr_identifier *key_id_derived = NULL;
+	struct smw_key_attributes *key_attrs_derived = NULL;
 	struct smw_key_attributes *key_attrs = NULL;
 	smw_attr_usage_t actual_usage_flags = 0;
 
@@ -359,6 +360,8 @@ static int hkdf_derive_key(void *args)
 	hkdf_args = key_args->kdf_args;
 	if (!hkdf_args || !key_id_base || !key_id_derived)
 		goto exit;
+
+	key_attrs_derived = &key_id_derived->key_attributes;
 
 	if (key_args->kdf_id != SMW_CONFIG_KDF_ID_HKDF) {
 		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
@@ -506,6 +509,9 @@ static int hkdf_derive_key(void *args)
 		if (status != SMW_STATUS_OK)
 			goto exit;
 
+		key_attrs_derived->attributes =
+			SMW_ATTR_SET_SENSITIVE(key_attrs_derived->attributes);
+
 		SMW_DBG_PRINTF(DEBUG, "%s: Key #%d is generated.\n", __func__,
 			       key_id_derived->s_id);
 	}
@@ -577,6 +583,7 @@ static int ecdh_derive_key(void *args)
 	struct key_derive_shared_params shared_params = { 0 };
 	struct smw_keymgr_identifier *key_id_base = NULL;
 	struct smw_keymgr_identifier *key_id_derived = NULL;
+	struct smw_key_attributes *key_attrs_derived = NULL;
 	struct smw_key_attributes *key_attrs = NULL;
 	smw_attr_usage_t actual_usage_flags = 0;
 
@@ -602,6 +609,8 @@ static int ecdh_derive_key(void *args)
 	ecdh_args = key_args->kdf_args;
 	if (!ecdh_args || !key_id_base || !key_id_derived)
 		goto exit;
+
+	key_attrs_derived = &key_id_derived->key_attributes;
 
 	peer_public_buffer = smw_keymgr_get_peer_pub_buffer(key_args);
 	if (!peer_public_buffer)
@@ -731,6 +740,9 @@ static int ecdh_derive_key(void *args)
 						   &key_id_derived->privacy_id);
 		if (status != SMW_STATUS_OK)
 			goto exit;
+
+		key_attrs_derived->attributes =
+			SMW_ATTR_SET_SENSITIVE(key_attrs_derived->attributes);
 
 		SMW_DBG_PRINTF(DEBUG, "%s: Key #%d is generated.\n", __func__,
 			       key_id_derived->s_id);

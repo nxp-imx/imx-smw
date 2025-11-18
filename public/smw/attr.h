@@ -140,16 +140,17 @@ typedef uint32_t smw_attr_usage_t;
  * - Persistence: Transient, persistent, permanent
  * - Lifecycle: Open, closed, closed locked
  * - R/W flags: Read only (Rl), read once (Rc)
+ * - S flag: Sensitive key indicator
  *
  * The attributes bitfield is described below.
  *
- * +-------------------------------------------------------+
- * | Bits                                                  |
- * +---------+---+---+-----------+-----------+-------------+
- * | [31:18] | 17| 16|   [15:8]  |   [7:4]   |    [3:0]    |
- * +---------+---+---+-----------+-----------+-------------+
- * |         | Rl| Rc| Lifecycle |           | Persistence |
- * +---------+---+---+-----------+-----------+-------------+
+ * +----------------------------------------------------------+
+ * | Bits                                                     |
+ * +--------+---+---+---+-----------+-----------+-------------+
+ * | [31:19]| 18| 17| 16|   [15:8]  |   [7:4]   |    [3:0]    |
+ * +--------+---+---+---+-----------+-----------+-------------+
+ * |        | S | Rl| Rc| Lifecycle |           | Persistence |
+ * +--------+---+---+---+-----------+-----------+-------------+
  */
 typedef uint32_t smw_attr_attributes_t;
 
@@ -485,10 +486,12 @@ typedef uint32_t smw_attr_storage_id_t;
  * - SMW_ATTR_PERSISTENCE_OFFSET: Persistence offset.
  * - SMW_ATTR_LIFECYCLE_OFFSET: Lifecycle offset.
  * - SMW_ATTR_RW_FLAGS_OFFSET: R/W flags offset.
+ * - SMW_ATTR_SENSITIVE_OFFSET: Sensitive offset.
  */
 #define SMW_ATTR_PERSISTENCE_OFFSET 0u
 #define SMW_ATTR_LIFECYCLE_OFFSET   8u
 #define SMW_ATTR_RW_FLAGS_OFFSET    16u
+#define SMW_ATTR_SENSITIVE_OFFSET   18u
 
 /**
  * DOC: SMW_ATTR_xxx_MASK (smw_attr_attributes_t)
@@ -497,10 +500,12 @@ typedef uint32_t smw_attr_storage_id_t;
  * - SMW_ATTR_PERSISTENCE_MASK: Persistence mask.
  * - SMW_ATTR_LIFECYCLE_MASK: Lifecycle mask.
  * - SMW_ATTR_RW_FLAGS_MASK: R/W flags mask.
+ * - SMW_ATTR_SENSITIVE_MASK: Sensitive mask.
  */
 #define SMW_ATTR_PERSISTENCE_MASK ((smw_attr_attributes_t)0x0F)
 #define SMW_ATTR_LIFECYCLE_MASK	  ((smw_attr_attributes_t)0xFF)
-#define SMW_ATTR_RW_FLAGS_MASK	  ((smw_attr_attributes_t)0xFF)
+#define SMW_ATTR_RW_FLAGS_MASK	  ((smw_attr_attributes_t)0x03)
+#define SMW_ATTR_SENSITIVE_MASK	  ((smw_attr_attributes_t)0x01)
 
 /**
  * DOC: SMW_ATTR_PERSISTENCE_xxx
@@ -1779,5 +1784,40 @@ typedef uint32_t smw_attr_storage_id_t;
  */
 #define SMW_ATTR_IS_READ_ONCE(attr)                                            \
 	SMW_ATTR_IS_NAME_SHIFTED_SET(attr, RW_FLAGS, READ_ONCE)
+
+/**
+ * SMW_ATTR_SET_SENSITIVE() - Set sensitive flag.
+ * @attr: Attributes. See smw_attr_attributes_t.
+ *
+ * This macro sets sensitive flag.
+ *
+ * Return:
+ * Attributes
+ */
+#define SMW_ATTR_SET_SENSITIVE(attr)                                           \
+	SMW_ATTR_SET_CLEAR_VALUE(attr, SENSITIVE, 1)
+
+/**
+ * SMW_ATTR_CLEAR_SENSITIVE() - Clear sensitive flag.
+ * @attr: Attributes. See smw_attr_attributes_t.
+ *
+ * This macro clear sensitive flag.
+ *
+ * Return:
+ * Attributes
+ */
+#define SMW_ATTR_CLEAR_SENSITIVE(attr)                                         \
+	SMW_ATTR_SET_CLEAR_VALUE(attr, SENSITIVE, 0)
+
+/**
+ * SMW_ATTR_IS_SENSITIVE() - Whether the key is sensitive.
+ * @attr: Attributes. See smw_attr_attributes_t.
+ *
+ * This macro returns whether the sensitivity is true or not.
+ *
+ * Return:
+ * 1 if the sensitivity is set, 0 otherwise.
+ */
+#define SMW_ATTR_IS_SENSITIVE(attr) SMW_ATTR_GET_VALUE(attr, SENSITIVE)
 
 #endif /* __SMW_ATTR_H__ */

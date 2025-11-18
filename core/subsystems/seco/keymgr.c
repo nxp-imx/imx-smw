@@ -492,6 +492,10 @@ static int generate_key(struct subsystem_context *seco_ctx, void *args)
 
 	SMW_DBG_PRINTF(DEBUG, "Key identifier: 0x%08X\n", key_id);
 
+	if (key_identifier->privacy_id != SMW_KEYMGR_PRIVACY_ID_PUBLIC)
+		key_attributes->attributes =
+			SMW_ATTR_SET_SENSITIVE(key_attributes->attributes);
+
 	if (public_data) {
 		status = smw_keymgr_update_public_buffer(key_descriptor,
 							 tmp_key, key_size);
@@ -636,16 +640,22 @@ static int get_key_attributes(struct hdl *hdl, void *args)
 
 	struct smw_keymgr_get_key_attributes_args *key_args = args;
 	struct smw_keymgr_identifier *identifier = NULL;
+	struct smw_key_attributes *key_attributes = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	identifier = &key_args->key_descriptor.identifier;
+	key_attributes = &identifier->key_attributes;
 
 	identifier->key_attributes.usage_flags =
 		SMW_ATTR_USAGE_DECRYPT | SMW_ATTR_USAGE_ENCRYPT |
 		SMW_ATTR_USAGE_SIGN_HASH | SMW_ATTR_USAGE_SIGN_MESSAGE |
 		SMW_ATTR_USAGE_VERIFY_HASH | SMW_ATTR_USAGE_VERIFY_MESSAGE |
 		SMW_ATTR_USAGE_DERIVE;
+
+	if (identifier->privacy_id != SMW_KEYMGR_PRIVACY_ID_PUBLIC)
+		key_attributes->attributes =
+			SMW_ATTR_SET_SENSITIVE(key_attributes->attributes);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

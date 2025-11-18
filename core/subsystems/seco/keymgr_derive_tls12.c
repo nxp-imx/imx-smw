@@ -357,6 +357,8 @@ static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 	/* Only transient key are generated */
 	key_attributes->attributes =
 		SMW_ATTR_SET_TRANSIENT(key_attributes->attributes);
+	key_attributes->attributes =
+		SMW_ATTR_SET_SENSITIVE(key_attributes->attributes);
 	if (SET_OVERFLOW(key_group, key_identifier.group))
 		return SMW_STATUS_OPERATION_FAILURE;
 
@@ -834,6 +836,10 @@ static int tls12_op_copy_partial_data(struct smw_keymgr_derive_key_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_keymgr_tls12_args *tls_args = args->kdf_args;
+	struct smw_keymgr_identifier *key_derived_identifier =
+		&args->key_derived.identifier;
+	struct smw_key_attributes *key_derived_attributes =
+		&key_derived_identifier->key_attributes;
 	struct smw_op_context *ctx = NULL;
 	struct seco_tls12_partial_data *partial_data = NULL;
 	const struct key_def *key_def = NULL;
@@ -905,12 +911,13 @@ static int tls12_op_copy_partial_data(struct smw_keymgr_derive_key_args *args)
 	ctx->op_state = CTX_OP_STATE_INIT;
 	ctx->subsystem_context = partial_data;
 
-	args->key_derived.identifier.type_id =
-		SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER;
-	args->key_derived.identifier.s_id = (uint32_t)-1;
-	args->key_derived.identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_PRIVATE;
-	args->key_derived.identifier.security_size =
-		TLS12_MASTER_SECRET_SEC_SIZE;
+	key_derived_identifier->type_id = SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER;
+	key_derived_identifier->s_id = (uint32_t)-1;
+	key_derived_identifier->privacy_id = SMW_KEYMGR_PRIVACY_ID_PRIVATE;
+	key_derived_identifier->security_size = TLS12_MASTER_SECRET_SEC_SIZE;
+
+	key_derived_attributes->attributes =
+		SMW_ATTR_SET_SENSITIVE(key_derived_attributes->attributes);
 
 	status = SMW_STATUS_OK;
 

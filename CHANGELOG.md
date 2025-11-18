@@ -184,6 +184,10 @@ The failure is due to the storage manager which is already loaded and a new inst
   find operation is not able to find all keys whose template defines key usage
   and permitted algorithm.
 
+##### 5. OSAL
+
+ * OSAL's Linux SQLite database compatibility with previous version 5.0 is broken.
+
 #### SMW Library
 ##### 1. SMW APIs
 

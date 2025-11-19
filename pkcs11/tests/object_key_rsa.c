@@ -218,6 +218,7 @@ static int object_generate_rsa_keypair(CK_FUNCTION_LIST_PTR pfunc,
 	CK_MECHANISM genmech = { .mechanism = CKM_RSA_PKCS_KEY_PAIR_GEN };
 	CK_ULONG modulus_bits = 0;
 	CK_BBOOL btrue = CK_TRUE;
+	CK_BBOOL bsensitive = CK_FALSE;
 
 	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_SHA224_RSA_PKCS_PSS,
 						 CKM_SHA256_RSA_PKCS_PSS };
@@ -235,6 +236,9 @@ static int object_generate_rsa_keypair(CK_FUNCTION_LIST_PTR pfunc,
 		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
 		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
 		  sizeof(key_allowed_mech) },
+	};
+	CK_ATTRIBUTE keyAttrSensitive[] = {
+		{ CKA_SENSITIVE, &bsensitive, sizeof(bsensitive) },
 	};
 
 	SUBTEST_START();
@@ -274,6 +278,16 @@ static int object_generate_rsa_keypair(CK_FUNCTION_LIST_PTR pfunc,
 
 	TEST_OUT("RSA Keypair generated pub=#%lu priv=#%lu\n", hpubkey,
 		 hprivkey);
+
+	TEST_OUT("Get sensitive attribute\n");
+	ret = pfunc->C_GetAttributeValue(sess, hprivkey, keyAttrSensitive,
+					 ARRAY_SIZE(keyAttrSensitive));
+	if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
+		goto end;
+
+	if (CHECK_EXPECTED(bsensitive, "Got key sensitive %d expected %d",
+			   bsensitive, CK_TRUE))
+		goto end;
 
 	TEST_OUT("Key Destroy #%lu\n", hpubkey);
 	ret = pfunc->C_DestroyObject(sess, hpubkey);

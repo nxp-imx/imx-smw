@@ -438,6 +438,7 @@ static int object_derive_key_hkdf(CK_FUNCTION_LIST_PTR pfunc)
 
 	CK_RV ret = CKR_OK;
 	CK_BBOOL ck_true = CK_TRUE;
+	CK_BBOOL bsensitive = CK_FALSE;
 	CK_SESSION_HANDLE sess = 0;
 	CK_OBJECT_CLASS secret_key_class = CKO_SECRET_KEY;
 
@@ -467,6 +468,9 @@ static int object_derive_key_hkdf(CK_FUNCTION_LIST_PTR pfunc)
 		{ CKA_ALLOWED_MECHANISMS, &derived_key_allowed_mech,
 		  sizeof(derived_key_allowed_mech) },
 		{ CKA_ENCRYPT, &ck_true, sizeof(CK_BBOOL) },
+	};
+	CK_ATTRIBUTE keyAttrSensitive[] = {
+		{ CKA_SENSITIVE, &bsensitive, sizeof(bsensitive) },
 	};
 
 	unsigned int i = 0;
@@ -538,6 +542,18 @@ static int object_derive_key_hkdf(CK_FUNCTION_LIST_PTR pfunc)
 					 ARRAY_SIZE(derived_key_template),
 					 &derived_key);
 		if (CHECK_CK_RV(CKR_OK, "C_DeriveKey"))
+			goto end;
+
+		TEST_OUT("Get sensitive attribute\n");
+		ret = pfunc->C_GetAttributeValue(sess, derived_key,
+						 keyAttrSensitive,
+						 ARRAY_SIZE(keyAttrSensitive));
+		if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
+			goto end;
+
+		if (CHECK_EXPECTED(bsensitive,
+				   "Got key sensitive %d expected %d",
+				   bsensitive, CK_TRUE))
 			goto end;
 
 		TEST_OUT("Delete the derived key\n");
@@ -712,6 +728,7 @@ static int object_derive_key_hkdf_step(CK_FUNCTION_LIST_PTR pfunc)
 	CK_OBJECT_HANDLE derived_key = CK_INVALID_HANDLE;
 	CK_OBJECT_CLASS secret_key_class = CKO_SECRET_KEY;
 	CK_BBOOL ck_true = CK_TRUE;
+	CK_BBOOL bsensitive = CK_FALSE;
 
 	CK_OBJECT_HANDLE base_key = CK_INVALID_HANDLE;
 	CK_MECHANISM_TYPE base_key_allowed_mech = { CKM_HKDF_DERIVE };
@@ -750,6 +767,9 @@ static int object_derive_key_hkdf_step(CK_FUNCTION_LIST_PTR pfunc)
 		{ CKA_VERIFY, &ck_true, sizeof(CK_BBOOL) },
 		{ CKA_ALLOWED_MECHANISMS, &derived_key_allowed_mech,
 		  sizeof(derived_key_allowed_mech) }
+	};
+	CK_ATTRIBUTE keyAttrSensitive[] = {
+		{ CKA_SENSITIVE, &bsensitive, sizeof(bsensitive) },
 	};
 
 	SUBTEST_START();
@@ -810,6 +830,16 @@ static int object_derive_key_hkdf_step(CK_FUNCTION_LIST_PTR pfunc)
 				 &derived_key);
 
 	if (CHECK_CK_RV(CKR_OK, "C_DeriveKey"))
+		goto end;
+
+	TEST_OUT("Get sensitive attribute\n");
+	ret = pfunc->C_GetAttributeValue(sess, derived_key, keyAttrSensitive,
+					 ARRAY_SIZE(keyAttrSensitive));
+	if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
+		goto end;
+
+	if (CHECK_EXPECTED(bsensitive, "Got key sensitive %d expected %d",
+			   bsensitive, CK_TRUE))
 		goto end;
 
 	status = TEST_PASS;

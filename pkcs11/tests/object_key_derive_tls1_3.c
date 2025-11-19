@@ -295,6 +295,7 @@ static int object_derive_key_tls13(CK_FUNCTION_LIST_PTR pfunc)
 	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_BBOOL ck_true = CK_TRUE;
+	CK_BBOOL bsensitive = CK_FALSE;
 
 	CK_OBJECT_HANDLE hpubkey = CK_INVALID_HANDLE;
 	CK_OBJECT_HANDLE hprivkey = CK_INVALID_HANDLE;
@@ -343,6 +344,9 @@ static int object_derive_key_tls13(CK_FUNCTION_LIST_PTR pfunc)
 		{ CKA_ALLOWED_MECHANISMS, &ecdhe_key_allowed_mech,
 		  sizeof(ecdhe_key_allowed_mech) },
 		{ CKA_DERIVE, &ck_true, sizeof(CK_BBOOL) },
+	};
+	CK_ATTRIBUTE keyAttrSensitive[] = {
+		{ CKA_SENSITIVE, &bsensitive, sizeof(bsensitive) },
 	};
 
 	SUBTEST_START();
@@ -405,6 +409,17 @@ static int object_derive_key_tls13(CK_FUNCTION_LIST_PTR pfunc)
 	free(tls13_params.pInfo);
 	tls13_params.pInfo = NULL;
 
+	TEST_OUT("Get sensitive attribute\n");
+	ret = pfunc->C_GetAttributeValue(sess, s_hs_traffic_key,
+					 keyAttrSensitive,
+					 ARRAY_SIZE(keyAttrSensitive));
+	if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
+		goto end;
+
+	if (CHECK_EXPECTED(bsensitive, "Got key sensitive %d expected %d",
+			   bsensitive, CK_TRUE))
+		goto end;
+
 	TEST_OUT("Set CKM_HKDF_DERIVE mechanism parameters\n");
 	tls13_params.prfHashMechanism = CKM_SHA256;
 	tls13_params.bExpand = true;
@@ -427,6 +442,17 @@ static int object_derive_key_tls13(CK_FUNCTION_LIST_PTR pfunc)
 
 	free(tls13_params.pInfo);
 	tls13_params.pInfo = NULL;
+
+	TEST_OUT("Get sensitive attribute\n");
+	ret = pfunc->C_GetAttributeValue(sess, derived_encryption_key,
+					 keyAttrSensitive,
+					 ARRAY_SIZE(keyAttrSensitive));
+	if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
+		goto end;
+
+	if (CHECK_EXPECTED(bsensitive, "Got key sensitive %d expected %d",
+			   bsensitive, CK_TRUE))
+		goto end;
 
 	TEST_OUT("Set CKM_HKDF_DERIVE mechanism parameters\n");
 	tls13_params.prfHashMechanism = CKM_SHA256;

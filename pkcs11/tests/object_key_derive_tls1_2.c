@@ -430,6 +430,7 @@ static int object_derive_key_tls12_master_secret(CK_FUNCTION_LIST_PTR pfunc)
 	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_BBOOL ck_true = CK_TRUE;
+	CK_BBOOL bsensitive = CK_FALSE;
 
 	CK_OBJECT_HANDLE hpubkey = CK_INVALID_HANDLE;
 	CK_OBJECT_HANDLE hprivkey = CK_INVALID_HANDLE;
@@ -447,6 +448,9 @@ static int object_derive_key_tls12_master_secret(CK_FUNCTION_LIST_PTR pfunc)
 		{ CKA_DERIVE, &ck_true, sizeof(CK_BBOOL) },
 		{ CKA_ALLOWED_MECHANISMS, &base_key_allowed_mech,
 		  sizeof(base_key_allowed_mech) },
+	};
+	CK_ATTRIBUTE keyAttrSensitive[] = {
+		{ CKA_SENSITIVE, &bsensitive, sizeof(bsensitive) },
 	};
 
 	CK_TLS12_MASTER_KEY_DERIVE_PARAMS tls12_master_params = { 0 };
@@ -553,6 +557,16 @@ static int object_derive_key_tls12_master_secret(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_DeriveKey"))
 		goto end;
 
+	TEST_OUT("Get sensitive attribute\n");
+	ret = pfunc->C_GetAttributeValue(sess, derived_key, keyAttrSensitive,
+					 ARRAY_SIZE(keyAttrSensitive));
+	if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
+		goto end;
+
+	if (CHECK_EXPECTED(bsensitive, "Got key sensitive %d expected %d",
+			   bsensitive, CK_TRUE))
+		goto end;
+
 	TEST_OUT("Set CKM_TLS12_KEY_AND_MAC_DERIVE mechanism parameters\n");
 	tls12_block_params.prfHashMechanism = CKM_SHA256;
 	tls12_block_params.bIsExport = false;
@@ -575,6 +589,50 @@ static int object_derive_key_tls12_master_secret(CK_FUNCTION_LIST_PTR pfunc)
 				 derived_key_template,
 				 ARRAY_SIZE(derived_key_template), NULL_PTR);
 	if (CHECK_CK_RV(CKR_OK, "C_DeriveKey"))
+		goto end;
+
+	TEST_OUT("Get sensitive attribute\n");
+	ret = pfunc->C_GetAttributeValue(sess, key_material.hClientKey,
+					 keyAttrSensitive,
+					 ARRAY_SIZE(keyAttrSensitive));
+	if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
+		goto end;
+
+	if (CHECK_EXPECTED(bsensitive, "Got key sensitive %d expected %d",
+			   bsensitive, CK_TRUE))
+		goto end;
+
+	TEST_OUT("Get sensitive attribute\n");
+	ret = pfunc->C_GetAttributeValue(sess, key_material.hClientMacSecret,
+					 keyAttrSensitive,
+					 ARRAY_SIZE(keyAttrSensitive));
+	if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
+		goto end;
+
+	if (CHECK_EXPECTED(bsensitive, "Got key sensitive %d expected %d",
+			   bsensitive, CK_TRUE))
+		goto end;
+
+	TEST_OUT("Get sensitive attribute\n");
+	ret = pfunc->C_GetAttributeValue(sess, key_material.hServerKey,
+					 keyAttrSensitive,
+					 ARRAY_SIZE(keyAttrSensitive));
+	if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
+		goto end;
+
+	if (CHECK_EXPECTED(bsensitive, "Got key sensitive %d expected %d",
+			   bsensitive, CK_TRUE))
+		goto end;
+
+	TEST_OUT("Get sensitive attribute\n");
+	ret = pfunc->C_GetAttributeValue(sess, key_material.hServerMacSecret,
+					 keyAttrSensitive,
+					 ARRAY_SIZE(keyAttrSensitive));
+	if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
+		goto end;
+
+	if (CHECK_EXPECTED(bsensitive, "Got key sensitive %d expected %d",
+			   bsensitive, CK_TRUE))
 		goto end;
 
 	TEST_OUT("Delete the client key\n");

@@ -22,7 +22,8 @@ static hsm_err_t open_data_storage_service(struct hdl *hdl,
 					    &open_svc_data_storage_args,
 					    data_storage_hdl);
 
-	SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
+	SMW_DBG_PRINTF(DEBUG, "hsm_open_data_storage_service returned %d\n",
+		       err);
 	SMW_DBG_PRINTF(DEBUG, "data_storage_hdl: %u\n", *data_storage_hdl);
 
 	return err;
@@ -36,7 +37,8 @@ static hsm_err_t close_data_storage_service(hsm_hdl_t data_storage_hdl)
 
 	SMW_DBG_PRINTF(DEBUG, "data_storage_hdl: %u\n", data_storage_hdl);
 	err = hsm_close_data_storage_service(data_storage_hdl);
-	SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n", __func__, err);
+	SMW_DBG_PRINTF(DEBUG, "hsm_close_data_storage_service returned %d\n",
+		       err);
 
 	return err;
 }

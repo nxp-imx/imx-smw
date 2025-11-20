@@ -72,7 +72,8 @@ static hsm_err_t open_mac_service(struct hdl *hdl, hsm_hdl_t *mac_hdl)
 
 	err = hsm_open_mac_service(hdl->key_store, &svc_args, mac_hdl);
 	if (err != HSM_NO_ERROR) {
-		SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
+		SMW_DBG_PRINTF(DEBUG, "hsm_open_mac_service returned %d\n",
+			       err);
 		return err;
 	}
 
@@ -89,7 +90,7 @@ static hsm_err_t close_mac_service(hsm_hdl_t mac_hdl)
 
 	SMW_DBG_PRINTF(DEBUG, "mac_hdl: %u\n", mac_hdl);
 	err = hsm_close_mac_service(mac_hdl);
-	SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n", __func__, err);
+	SMW_DBG_PRINTF(DEBUG, "hsm_close_mac_service returned %d\n", err);
 
 	return err;
 }

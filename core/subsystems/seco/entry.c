@@ -33,7 +33,7 @@ static int open_session(hsm_hdl_t *session_hdl)
 	err = hsm_open_session(&open_session_args, session_hdl);
 	status = seco_convert_err(err);
 
-	SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
+	SMW_DBG_PRINTF(DEBUG, "hsm_open_session returned %d\n", err);
 	SMW_DBG_PRINTF(DEBUG, "session_hdl: %u\n", *session_hdl);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -48,7 +48,7 @@ static void close_session(hsm_hdl_t session_hdl)
 
 	SMW_DBG_PRINTF(DEBUG, "session_hdl: %u\n", session_hdl);
 	err = hsm_close_session(session_hdl);
-	SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n", __func__, err);
+	SMW_DBG_PRINTF(DEBUG, "hsm_close_session returned %d\n", err);
 }
 
 static int open_key_store_service(hsm_hdl_t session_hdl,
@@ -70,22 +70,29 @@ static int open_key_store_service(hsm_hdl_t session_hdl,
 	open_svc_key_store_args.key_store_identifier = info.storage_id;
 	open_svc_key_store_args.authentication_nonce = info.storage_nonce;
 	open_svc_key_store_args.max_updates_number = info.storage_replay;
-	/* Key store may already exists. */
+	/* Key store may already exist */
 	open_svc_key_store_args.flags = 0;
+
 	err = hsm_open_key_store_service(session_hdl, &open_svc_key_store_args,
 					 key_store_hdl);
+
+	SMW_DBG_PRINTF(DEBUG, "hsm_open_key_store_service returned %d\n", err);
+
 	if (err != HSM_NO_ERROR) {
 		/* Key store does not exists. Try to create it */
 		open_svc_key_store_args.flags =
 			HSM_SVC_KEY_STORE_FLAGS_CREATE |
 			HSM_SVC_KEY_STORE_FLAGS_STRICT_OPERATION;
+
 		err = hsm_open_key_store_service(session_hdl,
 						 &open_svc_key_store_args,
 						 key_store_hdl);
+
+		SMW_DBG_PRINTF(DEBUG,
+			       "hsm_open_key_store_service returned %d\n", err);
 	}
 
 	status = seco_convert_err(err);
-	SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
 
 	SMW_DBG_PRINTF(DEBUG, "key_store_hdl: %u\n", *key_store_hdl);
 
@@ -102,7 +109,7 @@ static void close_key_store_service(hsm_hdl_t key_store_hdl)
 
 	SMW_DBG_PRINTF(DEBUG, "key_store_hdl: %u\n", key_store_hdl);
 	err = hsm_close_key_store_service(key_store_hdl);
-	SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n", __func__, err);
+	SMW_DBG_PRINTF(DEBUG, "hsm_close_key_store_service returned %d\n", err);
 }
 
 static void reset_handles(void)
@@ -407,7 +414,8 @@ int seco_open_key_mgmt_service(struct hdl *hdl, hsm_hdl_t *key_mgt_hdl)
 	err = hsm_open_key_management_service(hdl->key_store,
 					      &open_svc_key_management_args,
 					      key_mgt_hdl);
-	SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
+	SMW_DBG_PRINTF(DEBUG, "hsm_open_key_management_service returned %d\n",
+		       err);
 	SMW_DBG_PRINTF(DEBUG, "Open key_mgt_hdl: %u\n", *key_mgt_hdl);
 
 	return seco_convert_err(err);
@@ -423,7 +431,9 @@ int seco_close_key_mgt_service(hsm_hdl_t key_mgt_hdl)
 
 	if (key_mgt_hdl) {
 		err = hsm_close_key_management_service(key_mgt_hdl);
-		SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n", __func__, err);
+		SMW_DBG_PRINTF(DEBUG,
+			       "hsm_close_key_management_service returned %d\n",
+			       err);
 	}
 
 	return seco_convert_err(err);

@@ -54,7 +54,11 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### SMW Library
 ##### 1. SMW APIs
 
+* Add Sensitive key attribute flag.
+
 ##### 2. Subsystems
+
+* All: Set Sensitive flag for generated and derived keys.
 
 ##### 3. ARM PSA APIs
 
@@ -69,10 +73,16 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### PKCS#11 Library
 
 * Release all operations specific context on C_Finalize.
+* Set CKA_SENSITIVE attribute according to the key Sensitive flag.
+* Set CKA_WRAP public key attribute to false.
+* Set CKA_UNWRAP private key attribute to false.
 
 #### PKCS#11 Tests
 
 * Update valgrind suppressions file.
+* Check CKA_SENSITIVE attribute for generated and derived keys.
+* Check CKA_WRAP and CKA_UNWRAP attributes for generated keys.
+* Disable key usage test on SECO platform.
 
 ---
 ### <a id ="rel_5_2"></a></br>**Release 5.2**

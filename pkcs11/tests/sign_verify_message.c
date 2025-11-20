@@ -122,14 +122,17 @@ static int sign_init_bad_params(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		goto end;
 
 	sign_mech.mechanism = CKM_AES_CMAC_GENERAL;
-	if (util_lib_is_mech_supported(pfunc, 0, sign_mech.mechanism)) {
+	if (util_lib_is_mech_supported(pfunc, 0, sign_mech.mechanism) &&
+	    !is_seco_subsystem()) {
 		TEST_OUT("Check CKA_SIGN key flag\n");
 		ret = pfunc->C_MessageSignInit(sess, &sign_mech,
 					       aes_hsecretkey_not_permitted);
 		if (CHECK_CK_RV(CKR_KEY_FUNCTION_NOT_PERMITTED,
 				"C_MessageSignInit"))
 			goto end;
+	}
 
+	if (util_lib_is_mech_supported(pfunc, 0, sign_mech.mechanism)) {
 		TEST_OUT("Check bad MAC mechanism parameters\n");
 		sign_mech.pParameter = &mac_params;
 		sign_mech.ulParameterLen = sizeof(mac_params);
@@ -242,14 +245,17 @@ static int verify_init_bad_params(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	}
 
 	verify_mech.mechanism = CKM_AES_CMAC_GENERAL;
-	if (util_lib_is_mech_supported(pfunc, 0, verify_mech.mechanism)) {
+	if (util_lib_is_mech_supported(pfunc, 0, verify_mech.mechanism) &&
+	    !is_seco_subsystem()) {
 		TEST_OUT("Check CKA_VERIFY key flag\n");
 		ret = pfunc->C_MessageVerifyInit(sess, &verify_mech,
 						 aes_hsecretkey_not_permitted);
 		if (CHECK_CK_RV(CKR_KEY_FUNCTION_NOT_PERMITTED,
 				"C_MessageVerifyInit"))
 			goto end;
+	}
 
+	if (util_lib_is_mech_supported(pfunc, 0, verify_mech.mechanism)) {
 		TEST_OUT("Check bad MAC mechanism parameters\n");
 		verify_mech.pParameter = &mac_params;
 		verify_mech.ulParameterLen = sizeof(mac_params);

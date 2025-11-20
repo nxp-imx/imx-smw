@@ -1556,6 +1556,11 @@ static int encrypt_decrypt_key_usage(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 	SUBTEST_START();
 
+	if (is_seco_subsystem()) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
 	if (util_open_rw_session((CK_FUNCTION_LIST_PTR)pfunc, 0, &sess) ==
 	    TEST_FAIL)
 		goto end;

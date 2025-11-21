@@ -93,7 +93,7 @@ macro(make_smw_conf)
     # add_custom_target(make_smw_conf)
     set(MAKE_SECO_SE_CONF ${SMW_SYS_CONF_SCRIPT}
                       in=${BIN_SMW_CONF}
-                      conf=ele
+                      conf=seco
                       id=0x454C4500 nonce=0x534D57 replay=3000)
   endif()
 
@@ -109,7 +109,7 @@ macro(make_smw_conf)
     set(MAKE_ELE_SE_CONF ${SMW_SYS_CONF_SCRIPT}
                       in=${BIN_SMW_CONF}
                       conf=ele
-                      id=0x454C4500 nonce=0x534D57)
+                      id=0x454C4500 nonce=0x534D57 shared=yes)
   endif()
 
   set(MAKE_SMW_CONF ${SMW_SYS_CONF_SCRIPT}

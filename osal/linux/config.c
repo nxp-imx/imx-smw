@@ -29,6 +29,7 @@
 #define SECO_CNF_REPLAY	   "replay"
 #define ELE_CNF_ID	   "id"
 #define ELE_CNF_NONCE	   "nonce"
+#define ELE_CNF_SHARED	   "shared"
 #define SMW_CONFIG_FILE	   "smw_config_file"
 #define SMW_DATABASE	   "database"
 
@@ -150,6 +151,30 @@ static unsigned short str_to_us(char *str)
 }
 
 /**
+ * str_to_bool() - Convert a string to boolean
+ * @str: String to convert
+ *
+ * Return:
+ * bool value.
+ */
+static bool str_to_bool(char *str)
+{
+	bool ret = false;
+	size_t len = 0;
+
+	if (!str)
+		goto end;
+
+	len = strlen(str);
+
+	if (len == 3 && !strncmp(str, "yes", len))
+		ret = true;
+
+end:
+	return ret;
+}
+
+/**
  * string_to_lower() - Convert a string to lowercase
  * @src: String to convert
  * @length: Length of source string to convert
@@ -192,6 +217,8 @@ static int value_to_str_alloc(void *dst, size_t dst_length __maybe_unused,
 
 	ret = trim_str_null(&p, value);
 	if (!ret && p) {
+		ret = RET_ERROR;
+
 		length = strlen(p);
 
 		if (length) {
@@ -202,8 +229,6 @@ static int value_to_str_alloc(void *dst, size_t dst_length __maybe_unused,
 				memcpy(*out, p, length);
 				ret = RET_NO_ERROR;
 			}
-		} else {
-			ret = RET_ERROR;
 		}
 	}
 
@@ -276,7 +301,7 @@ static int value_to_uint(void *dst, size_t dst_length __maybe_unused,
 }
 
 /**
- * value_to_uint() - Convert the value to unsigned short
+ * value_to_ushort() - Convert the value to unsigned short
  * @dst: [out] Pointer to the unsigned short
  * @dst_length: [in] Length of dst (not used)
  * @value: [in] Value to convert to unsigned short
@@ -294,6 +319,35 @@ static int value_to_ushort(void *dst, size_t dst_length __maybe_unused,
 		*((unsigned short *)dst) = str_to_us(value);
 		ret = RET_NO_ERROR;
 	}
+
+	return ret;
+}
+
+/**
+ * value_to_bool() - Convert the value to boolean
+ * @dst: [out] Pointer to the boolean
+ * @dst_length: [in] Length of dst (not used)
+ * @value: [in] Value to convert to boolean
+ *
+ * Return:
+ * RET_NO_ERROR  - Success
+ * RET_ERROR     - Error
+ */
+static int value_to_bool(void *dst, size_t dst_length __maybe_unused,
+			 char *value)
+{
+	int ret = RET_ERROR;
+	char *tmp = NULL;
+
+	value_to_str_alloc(&tmp, 0, value);
+
+	if (dst) {
+		*((bool *)dst) = str_to_bool(tmp);
+		ret = RET_NO_ERROR;
+	}
+
+	if (tmp)
+		free(tmp);
 
 	return ret;
 }
@@ -813,14 +867,17 @@ static int read_ele_conf(FILE *fp, struct lib_config_args *config, char **line,
 	int ret = RET_NO_ERROR;
 	unsigned int ele_flags = 0;
 
-#define FLAG_ELE_ID    BIT(0)
-#define FLAG_ELE_NONCE BIT(1)
+#define FLAG_ELE_ID	BIT(0)
+#define FLAG_ELE_NONCE	BIT(1)
+#define FLAG_ELE_SHARED BIT(2)
 
 	const struct cnf_section_desc cnf_section_ele[] = {
 		{ ELE_CNF_ID, &config->se_ele_info.storage_id, 0, FLAG_ELE_ID,
 		  value_to_uint },
 		{ ELE_CNF_NONCE, &config->se_ele_info.storage_nonce, 0,
 		  FLAG_ELE_NONCE, value_to_uint },
+		{ ELE_CNF_SHARED, &config->se_ele_info.storage_shared, 0,
+		  FLAG_ELE_SHARED, value_to_bool },
 		{ NULL, NULL, 0, 0, NULL }
 	};
 
@@ -829,7 +886,8 @@ static int read_ele_conf(FILE *fp, struct lib_config_args *config, char **line,
 					 length, 0);
 
 		if (ret != RET_NO_ERROR) {
-			if (ele_flags == (FLAG_ELE_ID | FLAG_ELE_NONCE))
+			if (ele_flags ==
+			    (FLAG_ELE_ID | FLAG_ELE_NONCE | FLAG_ELE_SHARED))
 				config->config_flags |= CONFIG_ELE;
 		}
 	}

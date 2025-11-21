@@ -167,9 +167,10 @@ usage_seco()
 usage_ele()
 {
   printf "\n"
-  printf "  conf=ele id=[storage id] nonce=[storage nonce]\n"
+  printf "  conf=ele id=[storage id] nonce=[storage nonce] shared=[storage shared]\n"
   printf "  <id>     : Storage identifier 32 bits integer (e.g. 0x534d5754)\n"
   printf "  <nonce>  : Storage nonce 32 bits integer (e.g 0x444546)\n"
+  printf "  <shared> : [optional] Storage shared by applications [yes/no], default is 'no'\n"
 }
 
 opt_infile=
@@ -177,6 +178,7 @@ opt_outfile=
 opt_section=
 opt_id=
 opt_nonce=
+opt_shared="no"
 opt_replay=
 opt_ta_uuid=
 opt_smw_config_file=
@@ -212,6 +214,10 @@ do
 
       nonce=*)
         opt_nonce="${arg#*=}"
+        ;;
+
+      shared=*)
+        opt_shared="${arg#*=}"
         ;;
 
       replay=*)
@@ -292,6 +298,8 @@ case ${opt_section} in
                    "id" "${opt_id}"
     set_conf_entry "${opt_outfile}" "${opt_section}" \
                    "nonce" "${opt_nonce}"
+    set_conf_entry "${opt_outfile}" "${opt_section}" \
+                   "shared" "${opt_shared}"
     ;;
 
   *)

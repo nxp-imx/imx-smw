@@ -24,7 +24,7 @@ if [ -e ${script_conf} ]; then
   fi
 
   # Setup the ele subsystem
-  res=$(${script_conf} in=${conf_file} conf=ele id=0x504b3131 nonce=0x444546)
+  res=$(${script_conf} in=${conf_file} conf=ele id=0x504b3131 nonce=0x444546 shared=yes)
    if [ "${res}" ]; then
     exit_err "${res}"
   fi

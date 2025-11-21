@@ -6,6 +6,7 @@
 #ifndef __SMW_OSAL_H__
 #define __SMW_OSAL_H__
 
+#include <stdbool.h>
 #include <stddef.h>
 
 #include "smw_status.h"
@@ -20,6 +21,8 @@
  * Below is a C code example configuring and loading the SMW library with
  * the given OSAL example.
  *
+ * This method overwrites the configuration set in file smw.conf.
+ *
  * .. code-block:: c
  *
  *    #define DEFAULT_OBJ_DB "/var/tmp/obj_db_smw_test.dat"
@@ -28,8 +31,10 @@
  *        { "11b5c4aa-6d20-11ea-bc55-0242ac130003" }
  *    };
  *
- *    static const struct se_info se_default_info = { 0x534d5754, 0x444546,
- *                                                    1000 }; // SMWT, DEF
+ *    static const struct se_info se_default_info = { .storage_id = 0x534d5754,
+ *                                                    .storage_nonce =  0x444546,
+ *                                                    .storage_replay = 1000,
+ *                                                    .storage_shared = true };
  *
  *    int main(int argc, char *argv[])
  *    {
@@ -43,6 +48,12 @@
  *
  *        // Configure the SECO Subsystem: Key storage identifier and replay
  *        res = smw_osal_set_subsystem_info(SMW_SUBSYSTEM_NAME_SECO, &se_default_info,
+ *                                           sizeof(se_default_info));
+ *        if (res != SMW_STATUS_OK)
+ *            goto exit;
+ *
+ *        // Configure the ELE Subsystem: Key storage identifier and shared flag
+ *        res = smw_osal_set_subsystem_info(SMW_SUBSYSTEM_NAME_ELE, &se_default_info,
  *                                           sizeof(se_default_info));
  *        if (res != SMW_STATUS_OK)
  *            goto exit;
@@ -85,11 +96,13 @@ struct tee_info {
  * @storage_id: Key storage identifier
  * @storage_nonce: Key storage nonce
  * @storage_replay: Replay attack counter (Not used on ELE)
+ * @storage_shared: Keystore is shared by threads/applications (ELE only)
  */
 struct se_info {
 	unsigned int storage_id;
 	unsigned int storage_nonce;
 	unsigned short storage_replay;
+	bool storage_shared;
 };
 
 /**

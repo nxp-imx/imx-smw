@@ -81,7 +81,7 @@ static int open_asymmetric_enc_service(struct hdl *hdl,
 	asym_open_args.key_store_handle = hdl->key_store;
 
 	err = hsm_asymmetric_enc_open(hdl->session, &asym_open_args);
-	SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
+	SMW_DBG_PRINTF(DEBUG, "hsm_asymmetric_enc_open returned %d\n", err);
 	SMW_DBG_PRINTF(DEBUG, "Open asymmetric_enc_handle: %u\n",
 		       asym_open_args.asymmetric_enc_handle);
 
@@ -102,7 +102,7 @@ static int close_asymmetric_enc_service(hsm_hdl_t asymmetric_enc_handle)
 	if (asymmetric_enc_handle)
 		err = hsm_asymmetric_enc_close(asymmetric_enc_handle);
 
-	SMW_DBG_PRINTF(DEBUG, "hsm_asymmetric_enc_close returned: %d\n", err);
+	SMW_DBG_PRINTF(DEBUG, "hsm_asymmetric_enc_close returned %d\n", err);
 
 	return ele_convert_err(err);
 }

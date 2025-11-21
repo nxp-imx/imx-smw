@@ -376,7 +376,8 @@ int open_key_mgmt_service(struct hdl *hdl, hsm_hdl_t *key_management_hdl)
 	err = hsm_open_key_management_service(hdl->key_store,
 					      &open_svc_key_management_args,
 					      key_management_hdl);
-	SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
+	SMW_DBG_PRINTF(DEBUG, "hsm_open_key_management_service returned %d\n",
+		       err);
 	SMW_DBG_PRINTF(DEBUG, "Open key_management_hdl: %u\n",
 		       *key_management_hdl);
 
@@ -394,7 +395,9 @@ int close_key_mgt_service(hsm_hdl_t key_management_hdl)
 
 	if (key_management_hdl) {
 		err = hsm_close_key_management_service(key_management_hdl);
-		SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n", __func__, err);
+		SMW_DBG_PRINTF(DEBUG,
+			       "hsm_close_key_management_service returned %d\n",
+			       err);
 	}
 
 	return ele_convert_err(err);

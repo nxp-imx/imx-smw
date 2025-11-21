@@ -30,7 +30,7 @@ static int open_session(hsm_hdl_t *session_hdl)
 	err = hsm_open_session(&open_session_args, session_hdl);
 	status = ele_convert_err(err);
 
-	SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
+	SMW_DBG_PRINTF(DEBUG, "hsm_open_session returned %d\n", err);
 	SMW_DBG_PRINTF(DEBUG, "session_hdl: %u\n", *session_hdl);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -45,7 +45,7 @@ static void close_session(hsm_hdl_t session_hdl)
 
 	SMW_DBG_PRINTF(DEBUG, "session_hdl: %u\n", session_hdl);
 	err = hsm_close_session(session_hdl);
-	SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n", __func__, err);
+	SMW_DBG_PRINTF(DEBUG, "hsm_close_session returned %d\n", err);
 }
 
 static int open_key_store_service(hsm_hdl_t session_hdl,
@@ -152,7 +152,7 @@ static void close_key_store_service(hsm_hdl_t key_store_hdl)
 
 	SMW_DBG_PRINTF(DEBUG, "key_store_hdl: %u\n", key_store_hdl);
 	err = hsm_close_key_store_service(key_store_hdl);
-	SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n", __func__, err);
+	SMW_DBG_PRINTF(DEBUG, "hsm_close_key_store_service returned %d\n", err);
 }
 
 static void reset_handles(void)

@@ -18,12 +18,57 @@ Each component handles its own version number specified in each component main C
 
 The releases are listed from the most recent to the first one.
 
-1. [Release 5.2](#rel_5_2)
-2. [Release 5.1](#rel_5_1)
-3. [Release 5.0.1](#rel_5_0)
-4. [Release 4.2](#rel_4_2)
-5. [Release 4.1](#rel_4_1)
-6. [Release 4.0](#rel_4_0)
+1. [Release 5.3](#rel_5_3)
+2. [Release 5.2](#rel_5_2)
+3. [Release 5.1](#rel_5_1)
+4. [Release 5.0.1](#rel_5_0)
+5. [Release 4.2](#rel_4_2)
+6. [Release 4.1](#rel_4_1)
+7. [Release 4.0](#rel_4_0)
+
+---
+### <a id ="rel_5_3"></a></br>**Release 5.3**
+---
+#### Known Issues
+##### 1. SECO Subsystem
+
+* When 2 or more applications load the SMW Library and configure the SECO subsystem, only one application is able to get the SECO configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the SECO subsystem. </br>
+The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
+
+##### 2. ELE Subsystem
+
+* ECC Signature verification with imported public key having x or y coordinate
+  MSB=0 is not supported.
+
+##### 3. TEE Subsystem
+
+* ECC Signature verification with imported public key having x or y coordinate
+  MSB=0 is not supported.
+
+##### 4. PKCS#11
+
+* As some subsystems are not handling key usage and permitted algorithm, the
+  find operation is not able to find all keys whose template defines key usage
+  and permitted algorithm.
+
+#### SMW Library
+##### 1. SMW APIs
+
+##### 2. Subsystems
+
+##### 3. ARM PSA APIs
+
+##### 4. OSAL
+
+* Configure SMW to open ELE storage shared by applications
+
+#### SMW Tests
+
+* Add F_ELE_App_001 test validating a multi-applications scenario with ELE.
+
+#### PKCS#11 Library
+
+#### PKCS#11 Tests
 
 ---
 ### <a id ="rel_5_2"></a></br>**Release 5.2**

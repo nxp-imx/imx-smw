@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2024 NXP
+ * Copyright 2021-2025 NXP
  */
 
 #include "smw_status.h"
@@ -141,6 +141,10 @@ static int cipher(struct hdl *hdl, void *args)
 		goto end;
 	}
 
+	status = seco_open_key_store_service(hdl);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	/*
 	 * If output length is too big SECO returns HSM_INVALID_PARAM, which
 	 * doesn't match SMW API behavior. Then set SECO argument to the correct
@@ -180,6 +184,7 @@ static int cipher(struct hdl *hdl, void *args)
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	// coverity[missing_unlock]
 	return status;
 }
 
@@ -195,5 +200,6 @@ bool seco_cipher_handle(struct hdl *hdl, enum operation_id operation_id,
 		return false;
 	}
 
+	// coverity[missing_unlock]
 	return true;
 }

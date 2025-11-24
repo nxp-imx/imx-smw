@@ -188,6 +188,10 @@ static int sign(struct hdl *hdl, void *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	status = seco_open_key_store_service(hdl);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_do_sign()\n"
 		       "op_generate_sign_args_t\n"
@@ -226,6 +230,8 @@ end:
 		SMW_UTILS_FREE(signature);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+
+	// coverity[missing_unlock]
 	return status;
 }
 
@@ -340,6 +346,10 @@ static int verify(struct hdl *hdl, void *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	status = seco_open_key_store_service(hdl);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	if (verify_args->attributes.msg_hashed)
 		op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_DIGEST;
 	else
@@ -381,6 +391,8 @@ end:
 		SMW_UTILS_FREE(hex_key_buf);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+
+	// coverity[missing_unlock]
 	return status;
 }
 
@@ -692,6 +704,7 @@ bool seco_sign_verify_handle(struct hdl *hdl, enum operation_id operation_id,
 		return false;
 	}
 
+	// coverity[missing_unlock]
 	return true;
 }
 

@@ -694,6 +694,10 @@ static int aead(struct hdl *hdl, void *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	status = seco_open_key_store_service(hdl);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	if (aead_args->mode_id == SMW_CONFIG_AEAD_MODE_ID_CCM) {
 		/*
 		 * op_cipher_args.cipher_algo is already set. Fill the remaining
@@ -807,5 +811,6 @@ bool seco_aead_handle(struct hdl *hdl, enum operation_id operation_id,
 		return false;
 	}
 
+	// coverity[missing_unlock]
 	return true;
 }

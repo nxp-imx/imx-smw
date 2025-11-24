@@ -100,6 +100,10 @@ static int data_storage(struct hdl *hdl,
 		}
 	}
 
+	status = seco_open_key_store_service(hdl);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	err = open_data_storage_service(hdl, &data_storage_hdl);
 	if (err != HSM_NO_ERROR) {
 		status = seco_convert_err(err);
@@ -135,12 +139,15 @@ end:
 	smw_object_db_clean_descriptor(&obj);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+
+	// coverity[missing_unlock]
 	return status;
 }
 
 static int store_data_raw(struct hdl *hdl,
 			  struct smw_storage_store_data_args *args)
 {
+	// coverity[missing_unlock]
 	return data_storage(hdl, &args->data_descriptor, true);
 }
 
@@ -160,6 +167,7 @@ static int storage_store(struct hdl *hdl, void *args)
 	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	// coverity[missing_unlock]
 	return status;
 }
 
@@ -231,5 +239,6 @@ bool seco_storage_handle(struct hdl *hdl, enum operation_id operation_id,
 		return false;
 	}
 
+	// coverity[missing_unlock]
 	return true;
 }

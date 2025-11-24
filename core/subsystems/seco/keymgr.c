@@ -238,6 +238,10 @@ static int export_key_operation(struct hdl *hdl,
 	op_export_key_args.out_key = tmp_key;
 	op_export_key_args.out_key_size = key_size;
 
+	status = seco_open_key_store_service(hdl);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_pub_key_recovery()\n"
 		       "  key_store_hdl: %u\n"
@@ -265,6 +269,8 @@ end:
 		SMW_UTILS_FREE(tmp_key);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+
+	// coverity[missing_unlock]
 	return status;
 }
 
@@ -570,6 +576,7 @@ static int export_key(struct hdl *hdl, void *args)
 	status = export_key_operation(hdl, key_descriptor);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	// coverity[missing_unlock]
 	return status;
 }
 

@@ -40,19 +40,22 @@ static int open_session(hsm_hdl_t *session_hdl)
 	return status;
 }
 
-static void close_session(hsm_hdl_t session_hdl)
+static void close_session(struct hdl *hdl)
 {
 	hsm_err_t __maybe_unused err = HSM_NO_ERROR;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	SMW_DBG_PRINTF(DEBUG, "session_hdl: %u\n", session_hdl);
-	err = hsm_close_session(session_hdl);
-	SMW_DBG_PRINTF(DEBUG, "hsm_close_session returned %d\n", err);
+	if (hdl->session) {
+		SMW_DBG_PRINTF(DEBUG, "session_hdl: %u\n", hdl->session);
+		err = hsm_close_session(hdl->session);
+		SMW_DBG_PRINTF(DEBUG, "hsm_close_session returned %d\n", err);
+
+		hdl->session = HSM_HANDLE_NONE;
+	}
 }
 
-static int open_key_store_service(hsm_hdl_t session_hdl,
-				  hsm_hdl_t *key_store_hdl)
+int seco_open_key_store_service(struct hdl *hdl)
 {
 	int status = SMW_STATUS_OK;
 
@@ -61,6 +64,12 @@ static int open_key_store_service(hsm_hdl_t session_hdl,
 	struct se_info info = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (smw_utils_mutex_lock(hdl->key_store_mutex))
+		return SMW_STATUS_MUTEX_LOCK_FAILURE;
+
+	if (hdl->key_store)
+		goto end;
 
 	if (smw_utils_get_subsystem_info(SMW_SUBSYSTEM_NAME_SECO, &info)) {
 		status = SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED;
@@ -73,8 +82,8 @@ static int open_key_store_service(hsm_hdl_t session_hdl,
 	/* Key store may already exist */
 	open_svc_key_store_args.flags = 0;
 
-	err = hsm_open_key_store_service(session_hdl, &open_svc_key_store_args,
-					 key_store_hdl);
+	err = hsm_open_key_store_service(hdl->session, &open_svc_key_store_args,
+					 &hdl->key_store);
 
 	SMW_DBG_PRINTF(DEBUG, "hsm_open_key_store_service returned %d\n", err);
 
@@ -84,9 +93,9 @@ static int open_key_store_service(hsm_hdl_t session_hdl,
 			HSM_SVC_KEY_STORE_FLAGS_CREATE |
 			HSM_SVC_KEY_STORE_FLAGS_STRICT_OPERATION;
 
-		err = hsm_open_key_store_service(session_hdl,
+		err = hsm_open_key_store_service(hdl->session,
 						 &open_svc_key_store_args,
-						 key_store_hdl);
+						 &hdl->key_store);
 
 		SMW_DBG_PRINTF(DEBUG,
 			       "hsm_open_key_store_service returned %d\n", err);
@@ -94,22 +103,37 @@ static int open_key_store_service(hsm_hdl_t session_hdl,
 
 	status = seco_convert_err(err);
 
-	SMW_DBG_PRINTF(DEBUG, "key_store_hdl: %u\n", *key_store_hdl);
+	SMW_DBG_PRINTF(DEBUG, "key_store_hdl: %u\n", *&hdl->key_store);
 
 end:
+	(void)smw_utils_mutex_unlock(hdl->key_store_mutex);
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
 
-static void close_key_store_service(hsm_hdl_t key_store_hdl)
+static void close_key_store_service(struct hdl *hdl)
 {
 	hsm_err_t __maybe_unused err = HSM_NO_ERROR;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	SMW_DBG_PRINTF(DEBUG, "key_store_hdl: %u\n", key_store_hdl);
-	err = hsm_close_key_store_service(key_store_hdl);
-	SMW_DBG_PRINTF(DEBUG, "hsm_close_key_store_service returned %d\n", err);
+	if (smw_utils_mutex_lock(hdl->key_store_mutex))
+		return;
+
+	if (hdl->key_store) {
+		SMW_DBG_PRINTF(DEBUG, "key_store_hdl: %u\n", hdl->key_store);
+		err = hsm_close_key_store_service(hdl->key_store);
+		SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n",
+			       "hsm_close_key_store_service", err);
+
+		hdl->key_store = 0;
+	}
+
+	(void)smw_utils_mutex_unlock(hdl->key_store_mutex);
+
+	// coverity[locked_destroy]
+	(void)smw_utils_mutex_destroy(&hdl->key_store_mutex);
 }
 
 static void reset_handles(void)
@@ -118,13 +142,10 @@ static void reset_handles(void)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (hdl->key_store)
-		close_key_store_service(hdl->key_store);
-	if (hdl->session)
-		close_session(hdl->session);
+	close_key_store_service(hdl);
+	close_session(hdl);
 
-	hdl->session = 0;
-	hdl->key_store = 0;
+	// coverity[missing_unlock]
 }
 
 static int unload(void)
@@ -171,11 +192,12 @@ static int load(void)
 		goto end;
 	}
 
-	status = open_session(&hdl->session);
-	if (status != SMW_STATUS_OK)
+	if (smw_utils_mutex_init(&hdl->key_store_mutex)) {
+		status = SMW_STATUS_MUTEX_INIT_FAILURE;
 		goto end;
+	}
 
-	status = open_key_store_service(hdl->session, &hdl->key_store);
+	status = open_session(&hdl->session);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -406,10 +428,16 @@ int seco_convert_err(hsm_err_t err)
 
 int seco_open_key_mgmt_service(struct hdl *hdl, hsm_hdl_t *key_mgt_hdl)
 {
+	int status = SMW_STATUS_OK;
+
 	hsm_err_t err = HSM_NO_ERROR;
 	open_svc_key_management_args_t open_svc_key_management_args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	status = seco_open_key_store_service(hdl);
+	if (status != SMW_STATUS_OK)
+		return status;
 
 	err = hsm_open_key_management_service(hdl->key_store,
 					      &open_svc_key_management_args,
@@ -418,6 +446,7 @@ int seco_open_key_mgmt_service(struct hdl *hdl, hsm_hdl_t *key_mgt_hdl)
 		       err);
 	SMW_DBG_PRINTF(DEBUG, "Open key_mgt_hdl: %u\n", *key_mgt_hdl);
 
+	// coverity[missing_unlock]
 	return seco_convert_err(err);
 }
 

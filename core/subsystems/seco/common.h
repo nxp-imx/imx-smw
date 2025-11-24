@@ -22,12 +22,14 @@
  * struct hdl - SECO handles
  * @session: Session handle
  * @key_store: Key store service flow handle
+ * @key_store_mutex: Mutex of the key store
  *
  * This structure stores the SECO handles managed by the SMW library.
  */
 struct hdl {
 	hsm_hdl_t session;
 	hsm_hdl_t key_store;
+	void *key_store_mutex;
 };
 
 /**
@@ -332,5 +334,12 @@ int seco_open_key_mgmt_service(struct hdl *hdl, hsm_hdl_t *key_mgt_hdl);
  * SMW_STATUS_SUBSYSTEM_FAILURE    - Subsystem failure
  */
 int seco_close_key_mgt_service(hsm_hdl_t key_mgt_hdl);
+
+/**
+ * seco_open_key_store_service() - Open key store if not already done
+ * @hdl: Pointer to subsystem context handlers
+ *
+ */
+int seco_open_key_store_service(struct hdl *hdl);
 
 #endif /* __COMMON_H__ */

@@ -368,10 +368,16 @@ static int check_export_key_config(struct smw_keymgr_descriptor *key_descriptor)
 
 int open_key_mgmt_service(struct hdl *hdl, hsm_hdl_t *key_management_hdl)
 {
+	int status = SMW_STATUS_OK;
+
 	hsm_err_t err = HSM_NO_ERROR;
 	open_svc_key_management_args_t open_svc_key_management_args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	status = ele_open_key_store_service(hdl);
+	if (status != SMW_STATUS_OK)
+		return status;
 
 	err = hsm_open_key_management_service(hdl->key_store,
 					      &open_svc_key_management_args,
@@ -381,6 +387,7 @@ int open_key_mgmt_service(struct hdl *hdl, hsm_hdl_t *key_management_hdl)
 	SMW_DBG_PRINTF(DEBUG, "Open key_management_hdl: %u\n",
 		       *key_management_hdl);
 
+	// coverity[missing_unlock]
 	return ele_convert_err(err);
 }
 
@@ -471,6 +478,7 @@ end:
 		status = tmp_status;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	// coverity[missing_unlock]
 	return status;
 }
 
@@ -997,6 +1005,7 @@ end:
 		SMW_UTILS_FREE(hex_priv_key);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	// coverity[missing_unlock]
 	return status;
 }
 
@@ -1113,6 +1122,7 @@ static int get_key_lengths(struct hdl *hdl, void *args)
 	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	// coverity[missing_unlock]
 	return status;
 }
 
@@ -1154,6 +1164,7 @@ end:
 		status = tmp_status;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	// coverity[missing_unlock]
 	return status;
 }
 
@@ -1236,6 +1247,7 @@ static bool key_is_present(struct hdl *hdl, void *args, int *status)
 
 	SMW_DBG_PRINTF_COND(VERBOSE, handled, "%s returned %d\n", __func__,
 			    *status);
+	// coverity[missing_unlock]
 	return handled;
 }
 
@@ -1289,6 +1301,7 @@ int ele_get_key_attributes(struct hdl *hdl,
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	// coverity[missing_unlock]
 	return status;
 }
 
@@ -1372,6 +1385,7 @@ end:
 		(void)smw_keymgr_free_keypair_buffer(key_desc);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	// coverity[missing_unlock]
 	return status;
 }
 

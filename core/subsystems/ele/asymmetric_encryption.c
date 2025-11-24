@@ -339,6 +339,10 @@ static int asymm_encrypt_decrypt(struct subsystem_context *ele_ctx,
 
 	set_io_params(operation_id, args, &op_args);
 
+	status = ele_open_key_store_service(&ele_ctx->hdl);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	status =
 		open_asymmetric_enc_service(&ele_ctx->hdl, &asymmetric_enc_hdl);
 	if (status != SMW_STATUS_OK)
@@ -416,6 +420,8 @@ end:
 		status = temp_status;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+
+	// coverity[missing_unlock]
 	return status;
 }
 

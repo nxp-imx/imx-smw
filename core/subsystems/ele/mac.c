@@ -199,6 +199,10 @@ static int mac(struct hdl *hdl, void *args)
 		op_args.flags |= HSM_OP_MAC_ONE_GO_FLAGS_MAC_VERIFICATION;
 	}
 
+	status = ele_open_key_store_service(hdl);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_do_mac()\n"
 		       "op_mac_one_go_args_t %s\n"
@@ -234,6 +238,8 @@ end:
 	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+
+	// coverity[missing_unlock]
 	return status;
 }
 
@@ -248,5 +254,6 @@ bool ele_mac_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
 		return false;
 	}
 
+	// coverity[missing_unlock]
 	return true;
 }

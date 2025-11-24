@@ -350,6 +350,10 @@ static int sign(struct subsystem_context *ele_ctx, void *args)
 	else
 		op_args.flags |= HSM_OP_GENERATE_SIGN_FLAGS_INPUT_MESSAGE;
 
+	status = ele_open_key_store_service(&ele_ctx->hdl);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_do_sign()\n"
 		       "op_generate_sign_args_t\n"
@@ -410,6 +414,7 @@ end:
 		SMW_UTILS_FREE(rsa_private_key_buf);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	// coverity[missing_unlock]
 	return status;
 }
 
@@ -628,6 +633,10 @@ static int verify(struct subsystem_context *ele_ctx, void *args)
 		op_args.flags |= HSM_OP_VERIFY_SIGN_FLAGS_INPUT_DIGEST;
 	else
 		op_args.flags |= HSM_OP_VERIFY_SIGN_FLAGS_INPUT_MESSAGE;
+
+	status = ele_open_key_store_service(&ele_ctx->hdl);
+	if (status != SMW_STATUS_OK)
+		goto end;
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_verify_sign()\n"

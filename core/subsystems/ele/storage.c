@@ -51,6 +51,10 @@ static int data_ops(struct hdl *hdl,
 	    NXP_IS_EL2GO_OBJECT(data_descriptor->data_attributes.storage_id))
 		op_args.flags |= HSM_OP_DATA_STORAGE_FLAGS_EL2GO;
 
+	status = ele_open_key_store_service(hdl);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_data_ops() - %s\n"
 		       "  op_data_storage_args_t\n"
@@ -73,13 +77,17 @@ static int data_ops(struct hdl *hdl,
 		smw_storage_set_data_length(data_descriptor,
 					    op_args.exp_output_size);
 
+end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+
+	// coverity[missing_unlock]
 	return status;
 }
 
 static int store_data_raw(struct hdl *hdl,
 			  struct smw_storage_store_data_args *args)
 {
+	// coverity[missing_unlock]
 	return data_ops(hdl, &args->data_descriptor, true);
 }
 
@@ -136,6 +144,10 @@ static int store_data_encrypted(struct subsystem_context *ele_ctx,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	status = ele_open_key_store_service(&ele_ctx->hdl);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_enc_data_ops()\n"
 		       "  op_enc_data_storage_args_t\n"
@@ -168,6 +180,8 @@ static int store_data_encrypted(struct subsystem_context *ele_ctx,
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+
+	// coverity[missing_unlock]
 	return status;
 }
 
@@ -211,6 +225,10 @@ static int storage_delete(struct hdl *hdl,
 	data_desc = &args->data_descriptor;
 	op_args.data_id = smw_storage_get_data_identifier(data_desc);
 
+	status = ele_open_key_store_service(hdl);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_data_delete_ops()\n"
 		       "  op_data_storage_delete_args_t\n"
@@ -224,7 +242,10 @@ static int storage_delete(struct hdl *hdl,
 
 	status = ele_convert_err(err);
 
+end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+
+	// coverity[missing_unlock]
 	return status;
 }
 
@@ -296,11 +317,13 @@ bool ele_storage_handle(struct subsystem_context *ele_ctx,
 		break;
 
 	case OPERATION_ID_IS_OBJECT_PRESENT:
+		// coverity[missing_unlock]
 		return storage_is_object_present(&ele_ctx->hdl, args, status);
 
 	default:
 		return false;
 	}
 
+	// coverity[missing_unlock]
 	return true;
 }

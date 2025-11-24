@@ -422,6 +422,10 @@ static int aead(struct hdl *hdl, void *args)
 		goto end;
 	}
 
+	status = ele_open_key_store_service(hdl);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_do_auth_enc_new()\n"
 		       "op_auth_enc_new_args_t\n"
@@ -533,5 +537,6 @@ bool ele_aead_handle(struct hdl *hdl, enum operation_id operation_id,
 		return false;
 	}
 
+	// coverity[missing_unlock]
 	return true;
 }

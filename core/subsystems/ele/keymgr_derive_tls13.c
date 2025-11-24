@@ -432,6 +432,7 @@ end:
 	if (payload)
 		SMW_UTILS_FREE(payload);
 
+	// coverity[missing_unlock]
 	return status;
 }
 
@@ -450,5 +451,6 @@ int derive_tls13(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	// coverity[missing_unlock]
 	return status;
 }

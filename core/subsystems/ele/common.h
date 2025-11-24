@@ -21,12 +21,14 @@
  * struct hdl - ELE handles
  * @session: Session handle
  * @key_store: Key store service flow handle
+ * @key_store_mutex: Mutex of the key store
  *
  * This structure stores the ELE handles managed by the SMW library.
  */
 struct hdl {
 	hsm_hdl_t session;
 	hsm_hdl_t key_store;
+	void *key_store_mutex;
 };
 
 /**
@@ -576,6 +578,13 @@ void ele_fill_sign_msg_block(void *msg, unsigned char cmd,
  * Length of signed message block
  */
 unsigned int ele_get_sign_msg_block_length(void);
+
+/**
+ * ele_open_key_store_service() - Open key store if not already done
+ * @hdl: Pointer to subsystem context handlers
+ *
+ */
+int ele_open_key_store_service(struct hdl *hdl);
 
 /**
  * derive_oem_mk() - ELE OEM Master key derivation operation.

@@ -541,6 +541,7 @@ For ELE, the NVM Secure Storage configuration is
 [ELE]
 id=0x534543EF
 nonce=0x534D57
+shared=no
 ```
 
 The `smw_system_conf.sh` could be used to change the content of the `smw.conf`

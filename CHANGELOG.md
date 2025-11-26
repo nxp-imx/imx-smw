@@ -147,6 +147,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE: Add support for asymmetric encryption and decryption operations using RSA
   algorithm.
 * ELE: Stored TLS 1.2 and TLS 1.3 derived key group set to undefined
+* ELE: Open keystore only if needed by the crypto operation.
+* SECO: Open keystore only if needed by the crypto operation.
 
 ##### 3. ARM PSA APIs
 

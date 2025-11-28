@@ -289,48 +289,32 @@ static int object_find_no_test_error(struct subtest_data *subtest)
 
 	args.object_descriptor = &object_descriptor;
 
-	if (object_descriptor.id) {
-		subtest->smw_status = smw_find_object_db(&args);
-		if (subtest->smw_status == SMW_STATUS_OK)
+	subtest->smw_status = smw_find_object_db_init(&args);
+	if (subtest->smw_status == SMW_STATUS_OK) {
+		while (smw_find_object_db_next(&args) == SMW_STATUS_OK) {
 			found++;
-
-		if (object_descriptor.label)
-			free(object_descriptor.label);
-
-		if (object_descriptor.user_id)
-			free(object_descriptor.user_id);
-
-		if (object_descriptor.type == SMW_OBJECT_TYPE_NAME_DATA)
-			free_data(&object_descriptor.data);
-	} else {
-		subtest->smw_status = smw_find_object_db_init(&args);
-		if (subtest->smw_status == SMW_STATUS_OK) {
-			while (smw_find_object_db_next(&args) ==
-			       SMW_STATUS_OK) {
-				found++;
-				if (object_descriptor.label) {
-					free(object_descriptor.label);
-					object_descriptor.label = NULL;
-				}
-
-				if (object_descriptor.user_id) {
-					free(object_descriptor.user_id);
-					object_descriptor.user_id = NULL;
-				}
-
-				if (object_descriptor.type ==
-				    SMW_OBJECT_TYPE_NAME_DATA) {
-					free_data(&object_descriptor.data);
-					memset(&object_descriptor.data, 0,
-					       sizeof(struct smw_data_descriptor));
-				} else {
-					memset(&object_descriptor.key, 0,
-					       sizeof(struct smw_key_descriptor));
-				}
+			if (object_descriptor.label) {
+				free(object_descriptor.label);
+				object_descriptor.label = NULL;
 			}
 
-			subtest->smw_status = smw_find_object_db_final(&args);
+			if (object_descriptor.user_id) {
+				free(object_descriptor.user_id);
+				object_descriptor.user_id = NULL;
+			}
+
+			if (object_descriptor.type ==
+			    SMW_OBJECT_TYPE_NAME_DATA) {
+				free_data(&object_descriptor.data);
+				memset(&object_descriptor.data, 0,
+				       sizeof(struct smw_data_descriptor));
+			} else {
+				memset(&object_descriptor.key, 0,
+				       sizeof(struct smw_key_descriptor));
+			}
 		}
+
+		subtest->smw_status = smw_find_object_db_final(&args);
 	}
 
 	if (subtest->smw_status != SMW_STATUS_OK) {

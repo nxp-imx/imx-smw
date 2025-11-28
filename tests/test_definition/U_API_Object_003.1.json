@@ -1,0 +1,32 @@
+{
+        "obj_db": {
+                "filepath": "/var/tmp/obj_db_smw_test_U_API_Object_003.dat"
+        },
+        "keys": {
+                "key 1": {
+                        "id": 268435455,
+                        "type": "AES",
+                        "security_size": 256,
+                        "attributes_list": [
+                                "PERSISTENT"
+                        ],
+                        "usage": [
+                                "ENCRYPT"
+                        ],
+                        "permitted_algo": [
+                                "ECB_NO_PADDING"
+                        ]
+                }
+        },
+        "subtest 1": {
+                "command": "GENERATE",
+                "key_name": "key 1",
+                "restriction_list": "imx8qxp"
+        },
+        "subtest 2": {
+                "command": "OBJECT_FIND",
+                "object_name": "key 1",
+                "privacy": "SECRET_KEY",
+                "depends": 1
+        }
+}

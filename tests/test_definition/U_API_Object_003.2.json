@@ -1,0 +1,26 @@
+{
+        "keys": {
+                "key 1": {
+                        "id": 268435455,
+                        "type": "AES",
+                        "security_size": 256
+                }
+        },
+        "subtest 1": {
+                "command": "OBJECT_FIND",
+                "object_name": "key 1",
+                "privacy": "SECRET_KEY",
+                "restriction_list": "imx8qxp"
+        },
+        "subtest 2": {
+                "command": "DELETE",
+                "key_name": "key 1",
+                "depends": 1
+        },
+        "subtest 3": {
+                "command": "OBJECT_FIND",
+                "object_name": "key 1",
+                "depends": 2,
+                "result": "SMW_STATUS_UNKNOWN_ID"
+        }
+}

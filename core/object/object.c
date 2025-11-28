@@ -138,9 +138,11 @@ end:
 enum smw_status_code
 smw_find_object_db_init(struct smw_find_object_db_args *args)
 {
+	int ret = 0;
 	enum smw_status_code status = SMW_STATUS_INVALID_PARAM;
 	struct smw_ops *ops = get_smw_ops();
 	struct smw_osal_object obj = { 0 };
+	struct smw_object_descriptor *obj_desc = NULL;
 	unsigned int s_id = INVALID_OBJ_ID;
 
 	SMW_DBG_TRACE_API_CALL;
@@ -158,12 +160,47 @@ smw_find_object_db_init(struct smw_find_object_db_args *args)
 		goto end;
 	}
 
-	smw_object_db_prepare(s_id, args->object_descriptor, &obj);
+	obj_desc = args->object_descriptor;
 
-	if (!ops->find_obj_init(&args->ctx, &obj))
+	smw_object_db_prepare(s_id, obj_desc, &obj);
+
+	/*
+	 *  Call the find_obj_init operation to initialize the object search.
+	 *  The operation returns:
+	 *  0: at least one object found in database
+	 *  1: no object found in database
+	 *  -1: Error during search
+	 */
+	ret = ops->find_obj_init(&args->ctx, &obj);
+	switch (ret) {
+	case 0:
 		status = SMW_STATUS_OK;
-	else
+		break;
+
+	case 1:
+		if (obj_desc->id == INVALID_OBJ_ID) {
+			status = SMW_STATUS_OK;
+			break;
+		}
+
+		/*
+		 * Object is not present in the database, query the
+		 * subsystem.
+		 */
+		status = find_object_in_subsystem(obj_desc);
+		if (status == SMW_STATUS_OK) {
+			ret = ops->find_obj_init(&args->ctx, &obj);
+			if (ret == 1)
+				status = SMW_STATUS_UNKNOWN_ID;
+			else if (ret == -1)
+				status = SMW_STATUS_OBJ_DB_FIND;
+		}
+		break;
+
+	default:
 		status = SMW_STATUS_OBJ_DB_FIND;
+		break;
+	}
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

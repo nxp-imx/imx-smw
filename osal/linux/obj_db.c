@@ -1600,6 +1600,16 @@ int obj_db_find_init(void **find_ctx, struct smw_osal_object *obj)
 		goto end;
 	}
 
+	/* Check that the statement is ready to return a row */
+	result = sqlite3_step(stmt);
+	if (result != SQLITE_ROW) {
+		sqlite3_finalize(stmt);
+		ret = 1; /* No row found */
+		goto end;
+	} else {
+		sqlite3_reset(stmt);
+	}
+
 	op_ctx = calloc(1, sizeof(*op_ctx));
 	if (!op_ctx)
 		goto end;

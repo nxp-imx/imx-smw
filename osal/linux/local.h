@@ -203,7 +203,7 @@ int obj_db_delete(struct smw_osal_object *obj);
  * @obj: Object
  *
  * Return:
- * 0 if success, -1 otherwise
+ * 0 if success, 1 if no object found and -1 otherwise
  */
 int obj_db_find_init(void **ctx, struct smw_osal_object *obj);
 

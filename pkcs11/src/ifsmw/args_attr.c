@@ -55,6 +55,9 @@ static void get_public_key_usage(struct libobj_obj *obj,
 	if (SMW_ATTR_USAGE_IS_VERIFY_MESSAGE(usage_flags) ||
 	    SMW_ATTR_USAGE_IS_VERIFY_HASH(usage_flags))
 		key->verify = true;
+
+	/* C_WrapKey in not supported */
+	key->wrap = false;
 }
 
 static void set_private_key_usage(smw_attr_usage_t *usage_flags,
@@ -91,6 +94,9 @@ static void get_private_key_usage(struct libobj_obj *obj,
 		key->extractable = true;
 		key->never_extractable = false;
 	}
+
+	/* C_UnwrapKey is not supported */
+	key->unwrap = false;
 }
 
 static void set_secret_key_usage(smw_attr_usage_t *usage_flags,

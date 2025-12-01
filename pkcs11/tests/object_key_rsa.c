@@ -219,12 +219,15 @@ static int object_generate_rsa_keypair(CK_FUNCTION_LIST_PTR pfunc,
 	CK_ULONG modulus_bits = 0;
 	CK_BBOOL btrue = CK_TRUE;
 	CK_BBOOL bsensitive = CK_FALSE;
+	CK_BBOOL bwrap = CK_TRUE;
+	CK_BBOOL bunwrap = CK_TRUE;
 
 	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_SHA224_RSA_PKCS_PSS,
 						 CKM_SHA256_RSA_PKCS_PSS };
 	CK_ATTRIBUTE pubkey_attrs[] = {
 		{ CKA_VERIFY, &btrue, sizeof(btrue) },
 		{ CKA_MODULUS_BITS, &modulus_bits, sizeof(CK_ULONG) },
+		{ CKA_WRAP, &bwrap, sizeof(bwrap) },
 		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
 		  sizeof(key_allowed_mech) },
 		{ CKA_PUBLIC_EXPONENT, (CK_BYTE_PTR)rsa_pub_exp,
@@ -234,11 +237,16 @@ static int object_generate_rsa_keypair(CK_FUNCTION_LIST_PTR pfunc,
 	CK_ATTRIBUTE privkey_attrs[] = {
 		{ CKA_SIGN, &btrue, sizeof(btrue) },
 		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
+		{ CKA_UNWRAP, &bunwrap, sizeof(bunwrap) },
 		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
 		  sizeof(key_allowed_mech) },
 	};
-	CK_ATTRIBUTE keyAttrSensitive[] = {
+	CK_ATTRIBUTE keyPrivateAttrs[] = {
 		{ CKA_SENSITIVE, &bsensitive, sizeof(bsensitive) },
+		{ CKA_UNWRAP, &bunwrap, sizeof(bunwrap) },
+	};
+	CK_ATTRIBUTE keyPublicAttrs[] = {
+		{ CKA_WRAP, &bwrap, sizeof(bwrap) },
 	};
 
 	SUBTEST_START();
@@ -279,14 +287,28 @@ static int object_generate_rsa_keypair(CK_FUNCTION_LIST_PTR pfunc,
 	TEST_OUT("RSA Keypair generated pub=#%lu priv=#%lu\n", hpubkey,
 		 hprivkey);
 
-	TEST_OUT("Get sensitive attribute\n");
-	ret = pfunc->C_GetAttributeValue(sess, hprivkey, keyAttrSensitive,
-					 ARRAY_SIZE(keyAttrSensitive));
+	TEST_OUT("Get private attributes\n");
+	ret = pfunc->C_GetAttributeValue(sess, hprivkey, keyPrivateAttrs,
+					 ARRAY_SIZE(keyPrivateAttrs));
 	if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
 		goto end;
 
 	if (CHECK_EXPECTED(bsensitive, "Got key sensitive %d expected %d",
 			   bsensitive, CK_TRUE))
+		goto end;
+
+	if (CHECK_EXPECTED(!bunwrap, "Got key unwrap %d expected %d", bunwrap,
+			   CK_FALSE))
+		goto end;
+
+	TEST_OUT("Get public attributes\n");
+	ret = pfunc->C_GetAttributeValue(sess, hpubkey, keyPublicAttrs,
+					 ARRAY_SIZE(keyPublicAttrs));
+	if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
+		goto end;
+
+	if (CHECK_EXPECTED(!bwrap, "Got key wrap %d expected %d", bwrap,
+			   CK_FALSE))
 		goto end;
 
 	TEST_OUT("Key Destroy #%lu\n", hpubkey);

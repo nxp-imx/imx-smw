@@ -43,10 +43,12 @@ static bool is_key_object(const char *object_name)
 	return false;
 }
 
-static int key_type_to_object_type(smw_key_type_t key_type_name,
+static int key_type_to_object_type(struct keypair_ops *key,
 				   smw_object_type_t *obj_type_name)
 {
-	switch (key_type_name) {
+	struct smw_key_descriptor *key_desc = &key->desc;
+
+	switch (key_desc->type_name) {
 	case SMW_KEY_TYPE_NAME_SECP_R1:
 	case SMW_KEY_TYPE_NAME_BRAINPOOL_R1:
 	case SMW_KEY_TYPE_NAME_BRAINPOOL_T1:
@@ -55,9 +57,14 @@ static int key_type_to_object_type(smw_key_type_t key_type_name,
 	case SMW_KEY_TYPE_NAME_X25519:
 	case SMW_KEY_TYPE_NAME_X448:
 	case SMW_KEY_TYPE_NAME_DSA_SM2_FP:
-	case SMW_KEY_TYPE_NAME_RSA:
 	case SMW_KEY_TYPE_NAME_RAW:
-		*obj_type_name = SMW_OBJECT_TYPE_NAME_KEY_PAIR;
+	case SMW_KEY_TYPE_NAME_RSA:
+		if (!key_desc->buffer || key_is_private_key_defined(key) ||
+		    !key_is_public_key_defined(key))
+			*obj_type_name = SMW_OBJECT_TYPE_NAME_KEY_PAIR;
+		else
+			*obj_type_name = SMW_OBJECT_TYPE_NAME_PUBLIC_KEY;
+
 		break;
 
 	case SMW_KEY_TYPE_NAME_AES:
@@ -179,9 +186,15 @@ object_read_descriptor(struct subtest_data *subtest,
 {
 	int res = ERR_CODE(BAD_ARGS);
 	struct keypair_ops key = { 0 };
+	struct smw_keypair_buffer key_buffer = { 0 };
 	struct smw_key_attributes *key_attributes = NULL;
 	struct json_object *okey_params = NULL;
 	struct smw_data_descriptor *data_descriptor = &object_descriptor->data;
+
+	/* Initialize key descriptor */
+	res = key_desc_init(&key, &key_buffer);
+	if (res != ERR_CODE(PASSED))
+		return res;
 
 	if (is_data_object(object_name)) {
 		res = data_read_descriptor(list_data(subtest), data_descriptor,
@@ -202,7 +215,7 @@ object_read_descriptor(struct subtest_data *subtest,
 			object_descriptor->key = key.desc;
 			object_descriptor->id = key.desc.id;
 
-			res = key_type_to_object_type(key.desc.type_name,
+			res = key_type_to_object_type(&key,
 						      &object_descriptor->type);
 			if (res != ERR_CODE(PASSED))
 				return res;

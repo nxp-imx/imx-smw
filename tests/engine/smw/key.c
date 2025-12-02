@@ -273,6 +273,64 @@ void set_key_ops(struct keypair_ops *key_test)
 }
 
 /**
+ * keypub_read() - Read the public key definition
+ * @key_test: Test keypair structure with operations
+ * @params: json-c object
+ *
+ * Read and set the key format and public key buffer.
+ * Key buffer is defined by a string.
+ * The public data buffer of the @key_test SMW buffer object is
+ * allocated by this function but must be freed by caller if function
+ * succeeds.
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -FAILED                  - Error in definition file
+ */
+static int keypub_read(struct keypair_ops *key_test, struct json_object *params)
+{
+	int ret = ERR_CODE(PASSED);
+	const char *format_string = NULL;
+
+	if (!params || !key_test || !key_test->keys) {
+		DBG_PRINT_BAD_ARGS();
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	ret = util_read_json_type(&format_string, FORMAT_OBJ, t_string, params);
+	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
+		return ret;
+
+	key_test->keys->format_name = key_get_format_name(format_string);
+
+	ret = util_read_obj_value(key_public_data(key_test),
+				  key_public_length(key_test), PUB_KEY_OBJ,
+				  params);
+
+	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
+		return ret;
+
+	if (key_test->desc.type_name == SMW_KEY_TYPE_NAME_RSA) {
+		ret = util_read_obj_value(key_modulus(key_test),
+					  key_modulus_length(key_test),
+					  MODULUS_OBJ, params);
+		if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
+			return ret;
+
+		ret = util_read_obj_value(key_public_exponent(key_test),
+					  key_public_exponent_length(key_test),
+					  PUB_EXP_OBJ, params);
+	}
+
+	if (ret == ERR_CODE(VALUE_NOTFOUND))
+		ret = ERR_CODE(PASSED);
+
+	return ret;
+}
+
+/**
  * keypair_read() - Read the public and private key definition
  * @key_test: Test keypair structure with operations
  * @params: json-c object
@@ -431,6 +489,13 @@ static int read_descriptor(struct llist *keys, struct keypair_ops *key_test,
 		(void)smw_get_security_size(desc);
 
 		set_key_ops(key_test);
+
+		if (key_test->keys && data->okey_params) {
+			ret = keypub_read(key_test, data->okey_params);
+			if (ret != ERR_CODE(PASSED) &&
+			    ret != ERR_CODE(VALUE_NOTFOUND))
+				return ret;
+		}
 
 		return ERR_CODE(PASSED);
 	}

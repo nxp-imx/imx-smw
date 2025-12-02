@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2023-2025 NXP
+ * Copyright 2023-2026 NXP
  */
 
 #ifndef __SMW_DEVICE_H__
@@ -12,23 +12,17 @@
 #include "smw/names.h"
 
 /**
- * DOC:
- * The device APIs allow user of the library to:
- *  - Get information about the device.
- *  - Change the device lifecycle.
- */
-
-/**
  * struct smw_device_attestation_args - Device attestation arguments
- * @version: Version of this structure
- * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
- * @challenge: Caller unique ephemeral value (e.g. nonce)
- * @challenge_length: Length (in bytes) of the @challenge value
- * @certificate: Device attestation certificate.
- * @certificate_length: Length (in bytes) of the @certificate.
+ * @version: [in] Version of this structure.
+ * @subsystem_name: [in] Secure Subsystem name. See &typedef smw_subsystem_t.
+ * @challenge: [in] Pointer to caller unique ephemeral value (e.g. nonce).
+ * @challenge_length: [in] Length in bytes of the challenge buffer.
+ * @certificate: [out] Pointer to the generated device attestation certificate.
+ * @certificate_length: [in/out] Length in bytes of the certificate buffer.
  *
- * @subsystem_name designates the Secure Subsystem to be used.
- * If this field is NULL, the default configured Secure Subsystem is used.
+ * The @subsystem_name designates the Secure Subsystem to be used.
+ * If this field is :ref:`SMW_SUBSYSTEM_NAME_NONE <smw_subsystem_t>`,
+ * the default configured Secure Subsystem is used.
  *
  * @challenge length depends of the device (refer to the subsystem capabilities).
  * If the length is bigger than expected, it will be cut to keep only the device
@@ -46,24 +40,25 @@ struct smw_device_attestation_args {
 
 /**
  * struct smw_device_uuid_args - Device UUID arguments
- * @version: Version of this structure
- * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
- * @certificate: Device attestation certificate.
- * @certificate_length: Length (in bytes) of the @certificate.
- * @uuid: Device UUID buffer
- * @uuid_length: Length (in bytes) of the @uuid
+ * @version: [in] Version of this structure.
+ * @subsystem_name: [in] Secure Subsystem name. See &typedef smw_subsystem_t.
+ * @certificate: [in] Device attestation certificate.
+ * @certificate_length: [in] Length in bytes of the certificate.
+ * @uuid: [out] Device UUID buffer.
+ * @uuid_length: [out] Length in bytes of the Device UUID buffer.
  *
- * @subsystem_name designates the Secure Subsystem to be used.
- * If this field is NULL, the default configured Secure Subsystem is used.
+ * The @subsystem_name designates the Secure Subsystem to be used.
+ * If this field is :ref:`SMW_SUBSYSTEM_NAME_NONE <smw_subsystem_t>`,
+ * the default configured Secure Subsystem is used.
  *
- * Two methods are allowed to get the Device UUID.
+ * Two methods are allowed to get the Device UUID:\
  *
- * * Method #1
+ * - Method #1
  *    Extract the device UUID from the device certificate.
  *    The Device Certificate (@certificate) is previously read using the
  *    smw_device_attestation() API.
  *
- * * Method #2
+ * - Method #2
  *    Read the device UUID without providing the Device Certificate. The
  *    field @certificate must be set to NULL.
  */
@@ -78,12 +73,16 @@ struct smw_device_uuid_args {
 
 /**
  * struct smw_device_lifecycle_args - Device lifecycle arguments
- * @version: Version of this structure
- * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
- * @lifecycle_name: Device lifecycle name. See &typedef smw_lifecycle_t
+ * @version: [in] Version of this structure.
+ * @subsystem_name: [in] Secure Subsystem name. See &typedef smw_subsystem_t.
+ * @lifecycle_name:
+ *  - [in] Name of the device lifecycle to set.
+ *  - [out] Name of the current device lifecycle.
+ *  - See &typedef smw_lifecycle_t.
  *
- * @subsystem_name designates the Secure Subsystem to be used.
- * If this field is NULL, the default configured Secure Subsystem is used.
+ * The @subsystem_name designates the Secure Subsystem to be used.
+ * If this field is :ref:`SMW_SUBSYSTEM_NAME_NONE <smw_subsystem_t>`,
+ * the default configured Secure Subsystem is used.
  */
 struct smw_device_lifecycle_args {
 	unsigned char version;
@@ -93,13 +92,18 @@ struct smw_device_lifecycle_args {
 
 /**
  * struct smw_device_reprovision_args - Device storage reprovisioning arguments
- * @version: Version of this structure
- * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
- * @data: Data message to prepare or to send to the device
- * @data_length: Length of the @data buffer
+ * @version: [in] Version of this structure.
+ * @subsystem_name: [in] Secure Subsystem name. See &typedef smw_subsystem_t.
+ * @data:
+ *  - [in] Pointer to the data message signed sent to the device via the smw_device_reprovision().
+ *  - [out] Pointer to the data message filled by the smw_device_reprovision_prepare().
+ * @data_length:
+ *  - [in] Length in bytes of the data buffer.
+ *  - [out] Length in bytes of the data buffer generated by smw_device_reprovision_prepare().
  *
- * @subsystem_name designates the Secure Subsystem to be used.
- * If this field is NULL, the default configured Secure Subsystem is used.
+ * The @subsystem_name designates the Secure Subsystem to be used.
+ * If this field is :ref:`SMW_SUBSYSTEM_NAME_NONE <smw_subsystem_t>`,
+ * the default configured Secure Subsystem is used.
  */
 struct smw_device_reprovision_args {
 	unsigned char version;
@@ -110,20 +114,30 @@ struct smw_device_reprovision_args {
 
 /**
  * smw_device_attestation() - Get the device attestation certificate.
- * @args: Pointer to the structure that contains the device attestation arguments.
+ * @args: Pointer to the structure that contains the device attestation
+ *        arguments.
  *
- * Reads the device attestation certificate.
+ * Reads the device attestation.
  *
- * Certificate length @args field is updated to the correct value when:
- *  - Length is bigger than expected. In this case operation succeeded.
- *  - Length is shorter than expected. In this case operation failed and
- *    returned SMW_STATUS_OUTPUT_TOO_SHORT.
- *  - Certificate buffer is set the NULL. In this case operation returned
- *    SMW_STATUS_OK
+ * To query the required certificate buffer length, set @args->certificate to
+ * NULL. The function will then set the required certificate buffer length in
+ * @args->certificate_length and return SMW_STATUS_OK.
+ *
+ * On operation completion, the @args->certificate_length field is updated to
+ * the correct value when:\
+ *
+ *  - Certificate buffer length is bigger than expected. In this case operation
+ *    succeeds.
+ *  - Certificate buffer length is shorter than expected. In this case operation
+ *    fails and returns SMW_STATUS_OUTPUT_TOO_SHORT.
  *
  * Return:
- * See &enum smw_status_code
- *	- Common return codes
+ *  - SMW_STATUS_OK:
+ *      Operation succeeded.
+ *  - SMW_STATUS_INVALID_PARAM:
+ *      - @args is NULL.
+ *      - Additional invalid parameters returned by the subsystem.
+ *  - Other error code from &enum smw_status_code
  */
 enum smw_status_code
 smw_device_attestation(struct smw_device_attestation_args *args);
@@ -132,20 +146,31 @@ smw_device_attestation(struct smw_device_attestation_args *args);
  * smw_device_get_uuid() - Get the device UUID.
  * @args: Pointer to the structure that contains the device UUID arguments.
  *
- * Extracts device UUID from the device certificate or reads the device UUID
- * without device certificate.
+ * Extracts device UUID from the device certificate, if @args->certificate
+ * is set or reads the device UUID from device if @args->certificate is
+ * NULL.
  *
  * Device UUID buffer is in big endian format.
  *
- * UUID length @args field is updated to the correct value when:
- *  - Length is bigger than expected. In this case operation succeeded.
- *  - Length is shorter than expected. In this case operation failed and
- *    returned SMW_STATUS_OUTPUT_TOO_SHORT.
- *  - UUID buffer is set the NULL. In this case operation returned SMW_STATUS_OK
+ * To query the required UUID buffer length, set @args->uuid to
+ * NULL. The function will then set the required UUID buffer length in
+ * @args->uuid_length and return SMW_STATUS_OK.
+ *
+ * On operation completion, the @args->uuid_length field is updated to the
+ * correct value when:\
+ *
+ *  - UUID buffer length is bigger than expected. In this case operation
+ *    succeeds.
+ *  - UUID buffer length is shorter than expected. In this case operation
+ *    fails and returns SMW_STATUS_OUTPUT_TOO_SHORT.
  *
  * Return:
- * See &enum smw_status_code
- *	- Common return codes
+ *  - SMW_STATUS_OK:
+ *      Operation succeeded.
+ *  - SMW_STATUS_INVALID_PARAM:
+ *      - @args is NULL.
+ *      - Additional invalid parameters returned by the subsystem.
+ *  - Other error code from &enum smw_status_code
  */
 enum smw_status_code smw_device_get_uuid(struct smw_device_uuid_args *args);
 
@@ -156,11 +181,16 @@ enum smw_status_code smw_device_get_uuid(struct smw_device_uuid_args *args);
  * Forward the device lifecycle to the given value. The device must be reset
  * to propagate the new lifecycle.
  *
- * **Caution:** Forwarding device lifecycle is not reversible.
+ * .. warning::
+ *   Forwarding device lifecycle is not reversible.
  *
  * Return:
- * See &enum smw_status_code
- *	- Common return codes
+ *  - SMW_STATUS_OK:
+ *      Operation succeeded.
+ *  - SMW_STATUS_INVALID_PARAM:
+ *      - @args is NULL.
+ *      - Additional invalid parameters returned by the subsystem.
+ *  - Other error code from &enum smw_status_code
  */
 enum smw_status_code
 smw_device_set_lifecycle(struct smw_device_lifecycle_args *args);
@@ -170,45 +200,74 @@ smw_device_set_lifecycle(struct smw_device_lifecycle_args *args);
  * @args: Pointer to the structure that contains the device lifecycle arguments.
  *
  * Return:
- * See &enum smw_status_code
- *	- Common return codes
+ *  - SMW_STATUS_OK:
+ *      Operation succeeded.
+ *  - SMW_STATUS_INVALID_PARAM:
+ *      - @args is NULL.
+ *  - Other error code from &enum smw_status_code
  */
 enum smw_status_code
 smw_device_get_lifecycle(struct smw_device_lifecycle_args *args);
 
 /**
- * smw_device_reprovision_prepare() - Fill the device reprovisioning message
- * @args: Pointer to the structure that contains the reprovisioning arguments
+ * smw_device_reprovision_prepare() - Fill the device reprovisioning message.
+ * @args: Pointer to the structure that contains the reprovisioning arguments.
  *
- * This function is used to fill the reprovisioning message.
- * The field data_length of @args is updated to the correct value when:
+ * This function is used to fill the reprovisioning message that will have to
+ * be signed by the user using the device keys.
  *
- *  - Length is bigger than expected. In this case operation succeeded.
- *  - Length is shorter than expected. In this case operation failed and
- *    returned SMW_STATUS_OUTPUT_TOO_SHORT.
- *  - Data buffer is set the NULL. In this case operation returned
- *    SMW_STATUS_OK
+ * .. warning::
+ *   This function is only available for the ELE (EdgeLock Enclave)
+ *   Secure Subsystem.
+ *
+ * To query the required data buffer length, set @args->data to
+ * NULL. The function will then set the required data buffer length in
+ * @args->data_length and return SMW_STATUS_OK.
+ *
+ * On operation completion, the @args->data_length field is updated to the
+ * correct value when:\
+ *
+ *  - Data buffer length is bigger than expected. In this case operation
+ *    succeeds.
+ *  - Data buffer length is shorter than expected. In this case operation
+ *    fails and returns SMW_STATUS_OUTPUT_TOO_SHORT.
  *
  * Return:
- * See &enum smw_status_code
+ *  - SMW_STATUS_OK:
+ *      Operation succeeded.
+ *  - SMW_STATUS_INVALID_PARAM:
+ *      - @args is NULL.
+ *      - Additional invalid parameters returned by the subsystem.
+ *  - Other error code from &enum smw_status_code
  *	- Common return codes
  */
 enum smw_status_code
 smw_device_reprovision_prepare(struct smw_device_reprovision_args *args);
 
 /**
- * smw_device_reprovision() - Request device storage reprovisioning
- * @args: Pointer to the structure that contains the reprovisioning arguments
+ * smw_device_reprovision() - Request device storage reprovisioning.
+ * @args: Pointer to the structure that contains the reprovisioning arguments.
  *
- * This function is used to request the subsystem to enable the storage
+ * This function is used to request the subsystem to enable the secure storage
  * re-provisioning. In this case, the rollback protection of the storage is
  * reset and consequently all objects previously stored are lost.
  *
- * The field data of @args might contain information to be passed to the
- * subsystem.
+ * .. warning::
+ *   This function is only available for the ELE (EdgeLock Enclave)
+ *   Secure Subsystem.
+ *
+ * The field data of @args->data might contain the ELE reprovisioning signed
+ * message to be passed to the ELE Secure Subsystem.
  *
  * Return:
- * See &enum smw_status_code
+ *  - SMW_STATUS_OK:
+ *      Operation succeeded.
+ *  - SMW_STATUS_INVALID_PARAM:
+ *      - @args is NULL.
+ *      - @args->data is NULL.
+ *      - @args->data_length is 0.
+ *      - Additional invalid parameters returned by the subsystem.
+ *  - Other error code from &enum smw_status_code
  *	- Common return codes
  */
 enum smw_status_code

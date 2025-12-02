@@ -1,23 +1,24 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2024-2025 NXP
+ * Copyright 2024-2026 NXP
  */
 
-#ifndef __OP_CONTEXT_H__
-#define __OP_CONTEXT_H__
+#ifndef __SMW_CRYPTO_OP_CONTEXT_H__
+#define __SMW_CRYPTO_OP_CONTEXT_H__
 
-/* SMW operation context arguments structure */
+/* SMW opaque operation context arguments structure */
 struct smw_op_context;
 
 /**
  * struct smw_context_args - SMW cryptographic operation context arguments
- * @version: Version of this structure
- * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
- *                  (**deprecated **)
- * @context: Pointer to an opaque operation context structure
+ * @version: [in] Version of this structure.
+ * @subsystem_name: [in] Secure Subsystem name (**deprecated**).
+ *                  See &typedef smw_subsystem_t.
+ * @context: [in/out] Pointer to an opaque operation context structure
  *
- * The @context parameter allocated by SMW should not be modified by the
- * application.
+ * .. caution::
+ *  The context parameter allocated by SMW should not be modified by the
+ *  application.
  *
  * This opaque structure is dynamically allocated by the SMW library upon
  * invoking the function smw_allocate_context(). It is deallocated when any of
@@ -27,10 +28,8 @@ struct smw_op_context;
  *  - In the event of critical failure during the associated operation.
  *  - When smw_cancel_operation() function is invoked.
  *
- * **Warning**:
- * @subsystem_name is deprecated and no more used. Subsystem is selected
- * when initializing the cryptographic operation. If not specified during the
- * operation initialization, the default configured subsystem will be used.
+ * .. caution::
+ *  The subsystem_name parameter is deprecated and no more used.
  */
 struct smw_context_args {
 	unsigned char version;
@@ -40,9 +39,12 @@ struct smw_context_args {
 
 /**
  * struct smw_copy_context_args - SMW cryptographic copy operation context args
- * @version: Version of this structure
- * @src_context: Pointer to source opaque operation context structure
- * @dst_context: Pointer to destination opaque operation context structure
+ * @version: [in] Version of this structure.
+ * @src_context: [in] Pointer to source opaque operation context structure.
+ * @dst_context: [in/out] Pointer to destination opaque operation context
+ *               structure.
+ *
+ * The @dst_context must be allocated by smw_allocate_context().
  */
 struct smw_copy_context_args {
 	unsigned char version;
@@ -51,7 +53,7 @@ struct smw_copy_context_args {
 };
 
 /**
- * smw_allocate_context() - Allocate SMW operation context
+ * smw_allocate_context() - Allocate SMW operation context.
  * @args: Pointer to operation context arguments structure.
  *
  * This function allocates an operation context for a new cryptographic
@@ -59,45 +61,58 @@ struct smw_copy_context_args {
  *
  * This function is intended for use in the multi-part cryptographic operation
  * and it serves as the first step in such operations.
+ *
  * This function does not need to be called for one-shot cryptographic
  * operation.
  *
  * Return:
- * See &enum smw_status_code
- *	- Common return codes
+ *  - SMW_STATUS_OK:
+ *      Operation succeeded.
+ *  - SMW_STATUS_INVALID_PARAM:
+ *      @args is NULL.
+ *  - Other error code from &enum smw_status_code
  */
 enum smw_status_code smw_allocate_context(struct smw_context_args *args);
 
 /**
- * smw_cancel_operation() - Cancel on-going cryptographic multi-part operation
- * @args: Pointer to an operation context arguments structure.
+ * smw_cancel_operation() - Cancel on-going cryptographic multi-part operation.
+ * @args: Pointer to operation context arguments structure.
  *
  * This function cancels the on-going cryptographic multi-part operation and
  * releases all the memory allocated to SMW operation context.
+ *
  * Additionally, this function can be used to release the SMW operation context
  * even if there are no on-going multi-part operations associated with it.
  *
- * Upon successful completion, @args->context field is set to NULL.
- *
  * Return:
- * See &enum smw_status_code
- *	- Common return codes
+ *  - SMW_STATUS_OK:
+ *      Operation succeeded and @args->context is set to NULL.
+ *  - SMW_STATUS_INVALID_PARAM:
+ *      - @args is NULL.
+ *      - @args->context is NULL.
+ *  - Other error code from &enum smw_status_code
  */
 enum smw_status_code smw_cancel_operation(struct smw_context_args *args);
 
 /**
- * smw_copy_context() - Copy an operation context
+ * smw_copy_context() - Copy an operation context.
  * @args: Pointer to copy operation context arguments structure.
  *
  * This function copies the last state of the source operation context to the
  * destination operation context.
+ *
  * Destination context must be allocated using smw_allocate_context() function
  * prior to invoking this function.
  *
  * Return:
- * See &enum smw_status_code
- *	- Common return codes
+ *  - SMW_STATUS_OK:
+ *      Operation succeeded and @args->context is set to NULL.
+ *  - SMW_STATUS_INVALID_PARAM:
+ *      - @args is NULL.
+ *      - @args->src_context is NULL.
+ *      - @args->dst_context is NULL.
+ *  - Other error code from &enum smw_status_code
  */
 enum smw_status_code smw_copy_context(struct smw_copy_context_args *args);
 
-#endif /* __OP_CONTEXT_H__ */
+#endif /* __SMW_CRYPTO_OP_CONTEXT_H__ */

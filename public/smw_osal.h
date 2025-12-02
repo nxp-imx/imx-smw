@@ -13,90 +13,27 @@
 #include "smw/names.h"
 
 /**
- * DOC:
- * The OSAL interface is the library API specific to the Operating System.
- * It's under the charge of the library integrator to adapt the OSAL library
- * part to the OS targeted.
+ * TEE_TA_UUID_SIZE_MAX - Size in bytes of the TEE TA UUID.
  *
- * Below is a C code example configuring and loading the SMW library with
- * the given OSAL example.
- *
- * This method overwrites the configuration set in file smw.conf.
- *
- * .. code-block:: c
- *
- *    #define DEFAULT_OBJ_DB "/var/tmp/obj_db_smw_test.dat"
- *
- *    static const struct tee_info tee_default_info = {
- *        { "11b5c4aa-6d20-11ea-bc55-0242ac130003" }
- *    };
- *
- *    static const struct se_info se_default_info = { .storage_id = 0x534d5754,
- *                                                    .storage_nonce =  0x444546,
- *                                                    .storage_replay = 1000,
- *                                                    .storage_shared = true };
- *
- *    int main(int argc, char *argv[])
- *    {
- *        int res = ERR_CODE(FAILED);
- *
- *        // Configure the TEE Subsystem: TA UUID (and so key storage)
- *        res = smw_osal_set_subsystem_info(SMW_SUBSYSTEM_NAME_TEE, &tee_default_info,
- *                                          sizeof(tee_default_info));
- *        if (res != SMW_STATUS_OK)
- *            goto exit;
- *
- *        // Configure the SECO Subsystem: Key storage identifier and replay
- *        res = smw_osal_set_subsystem_info(SMW_SUBSYSTEM_NAME_SECO, &se_default_info,
- *                                           sizeof(se_default_info));
- *        if (res != SMW_STATUS_OK)
- *            goto exit;
- *
- *        // Configure the ELE Subsystem: Key storage identifier and shared flag
- *        res = smw_osal_set_subsystem_info(SMW_SUBSYSTEM_NAME_ELE, &se_default_info,
- *                                           sizeof(se_default_info));
- *        if (res != SMW_STATUS_OK)
- *            goto exit;
- *
- *        // Open/Create the application object database
- *        res = smw_osal_open_obj_db(DEFAULT_OBJ_DB, strlen(DEFAULT_OBJ_DB) + 1);
- *        if (res != SMW_STATUS_OK)
- *            goto exit;
- *
- *        // Load and initialize the library. OSAL is loading the application
- *        // SMW configuration file defined by the system environment variable
- *        // 'SMW_CONFIG_FILE'
- *        res = smw_osal_lib_init();
- *        if (res != SMW_STATUS_OK)
- *            goto exit;
- *
- *        // Execute the application
- *        ...
- *
- *        exit:
- *
- *        return res;
- *    }
- *
+ * Size in bytes of the TEE TA UUID string size including the null terminator.
  */
-
-/* Size of the TEE TA UUID string size including the null terminator */
 #define TEE_TA_UUID_SIZE_MAX 37
 
 /**
  * struct tee_info - TEE Subsystem information
- * @ta_uuid: TA UUID
+ * @ta_uuid: TEE TA UUID value as a null-terminated string.
  */
 struct tee_info {
 	char ta_uuid[TEE_TA_UUID_SIZE_MAX];
 };
 
 /**
- * struct se_info - Secure Enclave information
- * @storage_id: Key storage identifier
- * @storage_nonce: Key storage nonce
- * @storage_replay: Replay attack counter (Not used on ELE)
- * @storage_shared: Keystore is shared by threads/applications (ELE only)
+ * struct se_info - Secure Enclave information about the NVM Secure Storage
+ * @storage_id: User defined identifier.
+ * @storage_nonce: User defined nonce to authentify the storage.
+ * @storage_replay: Replay attack counter (Only for SECO Secure Subsystem).
+ * @storage_shared: Allows to share storage between multiple applications
+ *                  (Only for ELE Secure Subsystem).
  */
 struct se_info {
 	unsigned int storage_id;
@@ -106,17 +43,7 @@ struct se_info {
 };
 
 /**
- * union subsystem_info - Union of all subsystem information
- * @tee: TEE Subsystem information
- * @se: Secure Enclave information
- */
-union subsystem_info {
-	struct tee_info tee;
-	struct se_info se;
-};
-
-/**
- * smw_osal_latest_subsystem_name() - Return the latest Secure Subsystem name
+ * smw_osal_latest_subsystem_name() - Return the latest Secure Subsystem name.
  *
  * In DEBUG mode only, function returns the name of the latest Secure Subsystem
  * invoked by SMW.
@@ -125,17 +52,22 @@ union subsystem_info {
  * In other modes, function always returns NULL.
  *
  * Return:
- * In DEBUG mode only, the name of the Secure Subsystem.
+ *  - The latest active Secure Subsystem name, in DEBUG mode only,
+ *  - SMW_SUBSYSTEM_NAME_NONE otherwise.
  */
 smw_subsystem_t smw_osal_latest_subsystem_name(void);
 
 /**
  * smw_osal_lib_init() - Initialize the SMW library
  *
- * This function must be the first function called by the application opening
- * a library instance.
- * It loads the subsystem configuration set in the linux environment
- * variable SMW_CONFIG_FILE.
+ * This function must be called before any key management, cryptographic
+ * operations to initialize the SMW library.
+ *
+ * It loads the subsystem configuration either defined in the system `smw.conf`
+ * file or by set in the linux environment variable SMW_CONFIG_FILE.
+ *
+ * .. caution::
+ *   The environment variable takes precedence over the configuration file.
  *
  * .. note::
  *	This function is not thread-safe. Other initialization functions
@@ -145,46 +77,66 @@ smw_subsystem_t smw_osal_latest_subsystem_name(void);
  *	This function should only be called when using the SMW APIs.
  *
  * Return:
- * SMW_STATUS_OK                   - Library initialization success
- * SMW_STATUS_LIBRARY_ALREADY_INIT - Library already initialized
- * otherwise any of the smw status
+ *  - SMW_STATUS_OK
+ *      Library initialization success.
+ *  - SMW_STATUS_LIBRARY_ALREADY_INIT
+ *      Library already initialized.
+ *  - Other error code from &enum smw_status_code
  */
 enum smw_status_code smw_osal_lib_init(void);
 
 /**
- * smw_osal_set_subsystem_info() - Set the Subsystem configuration information
- * @subsystem: Subsystem name
- * @info: Subsystem information
- * @info_size: Size in bytes of @info parameter
+ * smw_osal_set_subsystem_info() - Set the Subsystem configuration information.
+ * @subsystem: [in] Subsystem name.
+ * @info: [in] Subsystem information.
+ * @info_size: [in] Size in bytes of @info parameter.
  *
- * This function must be called before a subsystem is loaded.
+ * This function sets the subsystem configuration information used when
+ * the subsystem is loaded.
+ *
+ * .. caution::
+ *   This method overwrites the configuration set in file `smw.conf`.
  *
  * Return:
- * See &enum smw_status_code
- *  - SMW_STATUS_OK                     - Success
- *  - SMW_STATUS_SUBSYSTEM_LOADED       - Subsystem is already loaded
- *  - SMW_STATUS_INVALID_PARAM          - Function parameter error
- *  - SMW_STATUS_ALLOC_FAILURE          - Allocation failure
- *  - SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME - Unknown subsystem name
+ *  - SMW_STATUS_OK
+ *      Success.
+ *  - SMW_STATUS_SUBSYSTEM_LOADED
+ *      Subsystem is already loaded.
+ *  - SMW_STATUS_INVALID_PARAM
+ *      Function parameter error.
+ *  - SMW_STATUS_ALLOC_FAILURE
+ *      Allocation failure.
+ *  - SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME
+ *      Unknown subsystem name.
+ *  - Other error code from &enum smw_status_code
  */
 enum smw_status_code smw_osal_set_subsystem_info(smw_subsystem_t subsystem,
 						 void *info, size_t info_size);
 
 /**
- * smw_osal_open_obj_db() - Setup the object database file to open
- * @file: Fullname of the object database
- * @len: Length of the @file string
+ * smw_osal_open_obj_db() - Setup the object database file to open.
+ * @file: [in] Fullname of the object database, null-terminated string.
+ * @len: [in] Length is bytes of the filename string.
  *
  * If the library is already initialized, database may be already in use by
- * another thread. Hence it can be reconfigured.
+ * another application. If application must be separated, this function
+ * allows to define database file per application overwritten the file
+ * set in the system configuration file 'smw.conf'.
  * This function must be called before smw_osal_lib_init().
  *
+ * .. caution::
+ *   This method overwrites the configuration set in file `smw.conf`.
+ *
  * Return:
- * See &enum smw_status_code
- *  - SMW_STATUS_OK                    - Success
- *  - SMW_STATUS_LIBRARY_ALREADY_INIT  - Library already initialized
- *  - SMW_STATUS_CONFIGURATION_FAILURE - Error of configuration
- *  - SMW_STATUS_ALLOC_FAILURE         - Out of memory
+ *  - SMW_STATUS_OK
+ *      Success.
+ *  - SMW_STATUS_LIBRARY_ALREADY_INIT
+ *      Library already initialized.
+ *  - SMW_STATUS_CONFIGURATION_FAILURE
+ *      Error of configuration.
+ *  - SMW_STATUS_ALLOC_FAILURE
+ *      Out of memory.
+ *  - Other error code from &enum smw_status_code
  */
 enum smw_status_code smw_osal_open_obj_db(const char *file, size_t len);
 

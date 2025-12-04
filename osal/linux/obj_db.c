@@ -4,6 +4,7 @@
  */
 
 #include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <sqlite3.h>
@@ -703,9 +704,10 @@ static int sql_print_find(struct smw_osal_object *obj, char *sql,
 					 key->attributes.storage_id))
 			goto end;
 
-		if (SQL_PRINT_FIND_FIELD(key->security_size, &count, sql,
-					 length, " \"0x%X\" = %d", TAG_SIZE,
-					 key->security_size))
+		if (SQL_PRINT_FIND_FIELD((key->security_size &&
+					  key->security_size != UINT_MAX),
+					 &count, sql, length, " \"0x%X\" = %u",
+					 TAG_SIZE, key->security_size))
 			goto end;
 
 		break;

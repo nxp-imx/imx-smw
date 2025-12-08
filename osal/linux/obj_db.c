@@ -1290,7 +1290,10 @@ static int open_db(struct obj_db *db, const char *filename)
 	if (filename) {
 		DBG_PRINTF(INFO, "Create physical database %s\n", filename);
 		if (!create_directory(filename))
-			ret = sqlite3_open(filename, &db->handle);
+			ret = sqlite3_open_v2(filename, &db->handle,
+					      SQLITE_OPEN_READWRITE |
+						      SQLITE_OPEN_CREATE,
+					      NULL);
 	} else {
 		DBG_PRINTF(INFO, "Create memory database\n");
 		ret = sqlite3_open_v2(NULL, &db->handle,

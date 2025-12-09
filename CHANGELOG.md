@@ -55,6 +55,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 1. SMW APIs
 
 * Add Sensitive key attribute flag.
+* Find query subsystems if the object is not present in the database.
 
 ##### 2. Subsystems
 
@@ -71,6 +72,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### SMW Tests
 
 * Add F_ELE_App_001 test validating a multi-applications scenario with ELE.
+* Add U_API_Object_003 test to find an object not present in database.
 
 #### PKCS#11 Library
 
@@ -85,6 +87,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Check CKA_SENSITIVE attribute for generated and derived keys.
 * Check CKA_WRAP and CKA_UNWRAP attributes for generated keys.
 * Disable key usage test on SECO platform.
+* Add test to find an object not present in database.
 
 ---
 ### <a id ="rel_5_2"></a></br>**Release 5.2**

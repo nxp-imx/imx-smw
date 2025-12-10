@@ -158,17 +158,13 @@
  * not support.
  */
 #define PSA_AEAD_NONCE_LENGTH(key_type, alg)                                   \
-	(PSA_ALG_IS_AEAD(alg) ?                                                \
-		 ((PSA_ALG_AEAD_WITH_DEFAULT_LENGTH_TAG(alg) == PSA_ALG_CCM) ? \
-			  (13u) :                                              \
-		  (PSA_ALG_AEAD_WITH_DEFAULT_LENGTH_TAG(alg) == PSA_ALG_GCM) ? \
-			  (12u) :                                              \
-		  ((key_type) == PSA_KEY_TYPE_CHACHA20 &&                      \
-		   PSA_ALG_AEAD_WITH_DEFAULT_LENGTH_TAG(alg) ==                \
-			   PSA_ALG_CHACHA20_POLY1305) ?                        \
-			  (12u) :                                              \
-			  (0u)) :                                              \
-		 (0u))
+	(PSA_ALG_IS_AEAD(alg) &&                                               \
+	 ((PSA_ALG_AEAD_WITH_DEFAULT_LENGTH_TAG(alg) == PSA_ALG_CCM) ||        \
+	  (PSA_ALG_AEAD_WITH_DEFAULT_LENGTH_TAG(alg) == PSA_ALG_GCM) ||        \
+	  (PSA_ALG_AEAD_WITH_DEFAULT_LENGTH_TAG(alg) ==                        \
+	   PSA_ALG_CHACHA20_POLY1305))) ?                                      \
+		(12u) :                                                        \
+		(0u)
 
 /**
  * DOC: PSA_AEAD_NONCE_MAX_SIZE
@@ -176,7 +172,7 @@
  *
  * See also PSA_AEAD_NONCE_LENGTH().
  */
-#define PSA_AEAD_NONCE_MAX_SIZE (13u)
+#define PSA_AEAD_NONCE_MAX_SIZE (12u)
 
 /**
  * PSA_AEAD_TAG_LENGTH() - The length of a tag for an AEAD algorithm, in bytes.

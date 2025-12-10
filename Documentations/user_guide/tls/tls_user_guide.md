@@ -24,12 +24,21 @@
   - [Step 2: Self-Sign the CA Certificate](#step-2-self-sign-the-ca-certificate)
   - [Step 3: Sign the Server Certificate with the Private CA](#step-3-sign-the-server-certificate-with-the-private-ca)
 - [Start TLS Server](#start-tls-server)
+  - [Without verifying client certificates](#without-verifying-client-certificates)
+  - [Request a client certificates chain](#request-a-client-certificates-chain)
 - [TLS client key and certificate creation option](#tls-client-key-and-certificate-creation-option)
   - [Step 1: Generate client private key](#step-1-generate-client-private-key)
   - [Step 2: Create client CSR for TLS authentication](#step-2-create-client-csr-for-tls-authentication)
-  - [Step 3: Sign the client certificate with the private CA](#step-3-sign-the-client-certificate-with-the-private-ca)
+  - [Step 3: Self Sign the client certificate with the private CA](#step-3-self-sign-the-client-certificate-with-the-private-ca)
 - [Test TLS 1.2 Connection](#test-tls-12-connection)
 - [Test TLS 1.3 Connection](#test-tls-13-connection)
+- [Examples](#examples)
+  - [Offloading server to i.MX Secure Enclave (mutual authentication)](#offloading-server-to-imx-secure-enclave-mutual-authentication)
+  - [Offloading client to i.MX Secure Enclave (mutual authentication)](#offloading-client-to-imx-secure-enclave-mutual-authentication)
+  - [Client Self-signed certificate i.MX Secure Enclave](#client-self-signed-certificate-imx-secure-enclave)
+    - [Step 1: Generate CA private key in i.MX Secure Enclave](#step-1-generate-ca-private-key-in-imx-secure-enclave)
+    - [Step 2: Self-Sign the CA Certificate](#step-2-self-sign-the-ca-certificate-1)
+    - [Step 3: Self Sign the client certificate with the private CA](#step-3-self-sign-the-client-certificate-with-the-private-ca-1)
 - [References](#references)
 
 # Overview
@@ -120,10 +129,10 @@ default_properties = ?provider=pkcs11
 ```
 
 It is recommended to create a specific OpenSSL configuration file to enable the PKCS11 provider.
-You will have to set the `OPENSSL_CNF` environment variable to point to this configuration file.
+You will have to set the `OPENSSL_CONF` environment variable to point to this configuration file.
 
 ```sh
-OPENSSL_CNF=/path/to/custom/openssl.cnf openssl req -new \
+OPENSSL_CONF=/path/to/custom/openssl.cnf openssl req -new \
             -sha256 \
             -key "pkcs11:token=smw;id=%01;object=server-key;type=private" \
             -out server-cert.csr \
@@ -221,7 +230,7 @@ CN = <server.example.com>
 Create a CSR using the private key you created previously:
 
 ```sh
-openssl req -new \
+OPENSSL_CONF=/path/to/custom/openssl.cnf openssl req -new \
             -sha256 \
             -key "pkcs11:token=smw;id=%01;object=server-key;type=private" \
             -out server-cert.csr \
@@ -273,11 +282,23 @@ openssl x509 -req \
 
 # Start TLS Server
 
+## Without verifying client certificates
 ```sh
-openssl s_server \
+OPENSSL_CONF=/path/to/custom/openssl.cnf openssl s_server \
   -accept 443 \
   -cert server-cert.crt \
-  -key "pkcs11:object=server-key;type=private"
+  -key "pkcs11:token=smw;id=%01;object=server-key;type=private"
+```
+
+## Request a client certificates chain
+For example with the -Verify 3 option below, the client must supply a certificate chain that is verified until depth 3 is reached.
+
+```sh
+OPENSSL_CONF=/path/to/custom/openssl.cnf openssl s_server \
+  -accept 443 \
+  -Verify 3 \
+  -cert server-cert.crt \
+  -key "pkcs11:token=smw;id=%01;object=server-key;type=private"
 ```
 
 # TLS client key and certificate creation option
@@ -300,14 +321,14 @@ pkcs11-tool --module $MODULE_PKCS11 \
 
 ## Step 2: Create client CSR for TLS authentication
 ```sh
-openssl req -new \
+OPENSSL_CONF=/path/to/custom/openssl.cnf openssl req -new \
             -sha256 \
             -key "pkcs11:token=smw;id=%01;object=client-key;type=private" \
             -out client-cert.csr \
             -config <example_server.cnf>
 ```
 
-## Step 3: Sign the client certificate with the private CA
+## Step 3: Self Sign the client certificate with the private CA
 ```sh
 openssl x509 -req \
              -in client-cert.csr \
@@ -322,7 +343,7 @@ openssl x509 -req \
 
 ```sh
 # Test TLS 1.2 Connection with client authentication and specific cipher suites
-openssl s_client \
+OPENSSL_CONF=/path/to/custom/openssl.cnf openssl s_client \
   -connect example.com:443 \
   -tls1_2 \
   -cipher "ECDHE-ECDSA-AES128-GCM-SHA256" \
@@ -333,7 +354,7 @@ openssl s_client \
 
 ```sh
 # Test TLS 1.2 Connection with specific cipher suites
-openssl s_client \
+OPENSSL_CONF=/path/to/custom/openssl.cnf openssl s_client \
   -connect example.com:443 \
   -tls1_2 \
   -cipher "ECDHE-ECDSA-AES128-GCM-SHA256" \
@@ -344,7 +365,7 @@ openssl s_client \
 
 ```sh
 # Test TLS 1.3 Connection with client authentication and specific cipher suites
-openssl s_client \
+OPENSSL_CONF=/path/to/custom/openssl.cnf openssl s_client \
   -connect example.com:443 \
   -tls1_3 \
   -ciphersuites "TLS_CHACHA20_POLY1305_SHA256" \
@@ -355,12 +376,90 @@ openssl s_client \
 
 ```sh
 # Test TLS 1.3 Connection with specific cipher suites
-openssl s_client \
+OPENSSL_CONF=/path/to/custom/openssl.cnf openssl s_client \
   -connect example.com:443 \
   -tls1_3 \
   -ciphersuites "TLS_CHACHA20_POLY1305_SHA256" \
   -CAfile ca.crt
 ```
+
+# Examples
+
+## Offloading server to i.MX Secure Enclave (mutual authentication)
+Server TLS handshake and message exchange keys are offloaded in the i.MX Secure Enclave by interfacing OpenSSL to SMW's PKCS11 library. TLS encryption and signature are done by i.MX Secure Enclave.
+
+On the i.MX, after doing the [TLS Server Certificate Signing](#tls-server-certificate-signing) steps, start the TLS server with the private key stored in the i.MX Secure Enclave:
+```sh
+OPENSSL_CONF=/path/to/custom/openssl.cnf openssl s_server \
+  -accept 443 \
+  -Verify 3 \
+  -cert server-cert.crt \
+  -key "pkcs11:token=smw;id=%01;object=server-key;type=private"
+```
+
+## Offloading client to i.MX Secure Enclave (mutual authentication)
+Client TLS handshake and message exchange keys are offloaded in the i.MX Secure Enclave by interfacing OpenSSL to SMW's PKCS11 library. TLS encryption and signature are done by i.MX Secure Enclave.
+
+On the i.MX, after doing the [TLS Client Certificate Signing](#tls-client-key-and-certificate-creation-option) steps, start the TLS client with this private key with the following command:
+```sh
+OPENSSL_CONF=/path/to/custom/openssl.cnf openssl s_client \
+  -connect example.com:443 \
+  -tls1_3 \
+  -ciphersuites "TLS_CHACHA20_POLY1305_SHA256" \
+  -key "pkcs11:token=smw;id=%01;object=client-key;type=private" \
+  -cert client-cert.crt \
+  -CAfile ca.crt
+```
+
+## Client Self-signed certificate i.MX Secure Enclave
+In this case, the client self-signed certificate is signed with a i.MX Secure Enclave key to authenticate the client. OpenSSL is managing/handling all other TLS connection keys required for the handshake and client/server exchange.
+
+###  Step 1: Generate CA private key in i.MX Secure Enclave
+```sh
+pkcs11-tool --module $MODULE_PKCS11 \
+            --login \
+            --keypairgen \
+            --key-type EC:prime256v1 \
+            --label "ca-key" \
+            --id 02 \
+            --usage-sign \
+            --allowed-mechanisms "ECDSA-SHA256"
+```
+
+### Step 2: Self-Sign the CA Certificate
+```sh
+OPENSSL_CONF=/path/to/custom/openssl.cnf openssl req -new \
+            -x509 \
+            -key "pkcs11:token=smw;id=%02;object=ca-key;type=private" \
+            -days 365 \
+            -subj "/CN=<Example_CA>" \
+            -out ca.crt
+```
+
+### Step 3: Self Sign the client certificate with the private CA
+Use the client CSR created in [Step 2: Create client CSR for TLS authentication](#step-2-create-client-csr-for-tls-authentication):
+
+```sh
+OPENSSL_CONF=/path/to/custom/openssl.cnf openssl x509 -req \
+             -in client-cert.csr \
+             -CA ca.crt \
+             -CAkey "pkcs11:token=smw;id=%02;object=ca-key;type=private" \
+             -CAcreateserial \
+             -out client-cert-self-signed.crt \
+             -days 1000
+```
+
+Then start the TLS client with this private key and self signed certificate with the following command:
+```sh
+OPENSSL_CONF=/path/to/custom/openssl.cnf openssl s_client \
+  -connect example.com:443 \
+  -tls1_3 \
+  -ciphersuites "TLS_CHACHA20_POLY1305_SHA256" \
+  -key "pkcs11:token=smw;id=%01;object=client-key;type=private" \
+  -cert client-cert-self-signed.crt \
+  -CAfile ca.crt
+```
+
 
 # References
 - [OpenSSL Documentation](https://docs.openssl.org/3.0/man1/)

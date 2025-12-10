@@ -62,6 +62,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 ##### 3. ARM PSA APIs
 
+* Fix nonce length calculation for AEAD to be in line with ELE documentation.
+
 ##### 4. OSAL
 
 * Configure SMW to open ELE storage shared by applications

@@ -26,5 +26,6 @@ CK_RV util_set_unique_id(CK_UTF8CHAR_PTR unique_id, CK_ULONG_PTR length,
 			 CK_OBJECT_CLASS class, unsigned int id);
 CK_RV util_get_object_id(CK_UTF8CHAR_PTR unique_id, CK_ULONG length,
 			 unsigned int *object_id);
+CK_RV util_erase_database_object(unsigned int object_id);
 
 #endif /* __UTIL_H__ */

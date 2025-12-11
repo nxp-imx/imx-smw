@@ -4,6 +4,8 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
   add_compile_options(-Wall -Wextra -Werror)
 endif()
 
+find_package(SQLite3 REQUIRED)
+
 add_executable(${PROJECT_NAME} EXCLUDE_FROM_ALL "")
 
 file(GLOB pkcs11_test *.c)
@@ -36,7 +38,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/pkcs11/src/include
-    ${CMAKE_BINARY_DIR}/pkcs11/src/include)
+    ${CMAKE_BINARY_DIR}/pkcs11/src/include
+    ${SQLite3_INCLUDE_DIR})
 
 find_package(Threads REQUIRED)
 

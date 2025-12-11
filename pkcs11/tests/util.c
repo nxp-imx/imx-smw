@@ -3,7 +3,9 @@
  * Copyright 2023-2025 NXP
  */
 
+#include <ctype.h>
 #include <errno.h>
+#include <sqlite3.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -42,6 +44,31 @@
 		}                                                              \
 		ret;                                                           \
 	})
+
+/* Same as defined in osal/linux/config.c */
+#define SMW_ETC_CNF "/etc/opt/smw/smw.conf"
+
+#define SMW_CNF_TOKEN_COMMENT	    '#'
+#define SMW_CNF_TOKEN_SECTION_START '['
+#define SMW_CNF_TOKEN_SECTION_END   ']'
+#define SMW_CNF_TOKEN_EQUAL	    '='
+#define SMW_CNF_TOKEN_EOL	    '\n'
+
+#define SMW_TOKEN_SETUP_NAME	    "setup"
+#define SMW_TOKEN_DATABASE_NAME	    "database"
+#define SMW_TOKEN_SETUP_NAME_LEN    (sizeof(SMW_TOKEN_SETUP_NAME) - 1)
+#define SMW_TOKEN_DATABASE_NAME_LEN (sizeof(SMW_TOKEN_DATABASE_NAME) - 1)
+
+#define SQL_CMD_DELETE_OBJECT "DELETE FROM OBJECTS WHERE \"0x1\" = %u;"
+
+enum smw_cnf_state {
+	SMW_CNF_STATE_NONE,
+	SMW_CNF_STATE_COMMENT,
+	SMW_CNF_STATE_SECTION,
+	SMW_CNF_STATE_SECTION_NAME,
+	SMW_CNF_STATE_DATABASE_ENTRY,
+	SMW_CNF_STATE_UNUSED_ENTRY,
+};
 
 /**
  * string_to_lower() - Convert a string to lowercase
@@ -211,6 +238,131 @@ static bool compare_hostname(const char *device)
 	return false;
 }
 
+static CK_RV util_get_database_path(char **database_path, char *smw_etc_cnf)
+{
+	int ret = CKR_ARGUMENTS_BAD;
+	FILE *f = NULL;
+	char token = 0;
+	char section_name[80] = { 0 };
+	unsigned int section_name_len = 0;
+	char key_name[80] = { 0 };
+	unsigned int key_name_len = 0;
+	char value[80] = { 0 };
+	unsigned int value_len = 0;
+	unsigned int state = SMW_CNF_STATE_NONE;
+
+	if (!database_path || !smw_etc_cnf)
+		return ret;
+
+	f = fopen(smw_etc_cnf, "r");
+	if (!f)
+		return CKR_GENERAL_ERROR;
+
+	while (!feof(f)) {
+		if (fscanf(f, "%c", &token) != 1)
+			break;
+
+		if (isblank(token))
+			continue;
+
+		switch (token) {
+		case SMW_CNF_TOKEN_COMMENT:
+			if (state == SMW_CNF_STATE_NONE ||
+			    state == SMW_CNF_STATE_SECTION)
+				state = SMW_CNF_STATE_COMMENT;
+			break;
+
+		case SMW_CNF_TOKEN_EOL:
+			if (state == SMW_CNF_STATE_DATABASE_ENTRY) {
+				*database_path = calloc(value_len + 1, 1);
+				if (*database_path) {
+					memcpy(*database_path, value,
+					       value_len);
+					ret = CKR_OK;
+				} else {
+					ret = CKR_HOST_MEMORY;
+				}
+
+				goto end;
+			} else {
+				if (section_name_len) {
+					key_name_len = 0;
+					state = SMW_CNF_STATE_SECTION;
+				} else {
+					state = SMW_CNF_STATE_NONE;
+				}
+			}
+			break;
+
+		case SMW_CNF_TOKEN_SECTION_START:
+			if (state == SMW_CNF_STATE_NONE) {
+				section_name_len = 0;
+				state = SMW_CNF_STATE_SECTION_NAME;
+			}
+			break;
+
+		case SMW_CNF_TOKEN_SECTION_END:
+			if (state == SMW_CNF_STATE_SECTION_NAME)
+				state = SMW_CNF_STATE_SECTION;
+			break;
+
+		case SMW_CNF_TOKEN_EQUAL:
+			if (state == SMW_CNF_STATE_SECTION) {
+				value_len = 0;
+				state = SMW_CNF_STATE_UNUSED_ENTRY;
+				if (section_name_len ==
+					    SMW_TOKEN_SETUP_NAME_LEN &&
+				    key_name_len ==
+					    SMW_TOKEN_DATABASE_NAME_LEN &&
+				    !strncmp(section_name, SMW_TOKEN_SETUP_NAME,
+					     section_name_len) &&
+				    !strncmp(key_name, SMW_TOKEN_DATABASE_NAME,
+					     key_name_len))
+					state = SMW_CNF_STATE_DATABASE_ENTRY;
+			}
+			break;
+
+		default:
+			switch (state) {
+			case SMW_CNF_STATE_NONE:
+			case SMW_CNF_STATE_COMMENT:
+				break;
+
+			case SMW_CNF_STATE_SECTION_NAME:
+				section_name[section_name_len] = token;
+				if (INC_OVERFLOW(section_name_len, 1)) {
+					ret = CKR_ARGUMENTS_BAD;
+					goto end;
+				}
+				break;
+
+			case SMW_CNF_STATE_SECTION:
+				key_name[key_name_len] = token;
+				if (INC_OVERFLOW(key_name_len, 1)) {
+					ret = CKR_ARGUMENTS_BAD;
+					goto end;
+				}
+				break;
+
+			default:
+				value[value_len] = token;
+				if (INC_OVERFLOW(value_len, 1)) {
+					ret = CKR_ARGUMENTS_BAD;
+					goto end;
+				}
+				break;
+			}
+			break;
+		}
+	}
+
+end:
+	if (fclose(f))
+		perror("fclose()");
+
+	return ret;
+}
+
 bool is_8ulp(void)
 {
 	return compare_hostname(IMX8ULP);
@@ -300,6 +452,55 @@ CK_RV util_get_object_id(CK_UTF8CHAR_PTR unique_id, CK_ULONG length,
 end:
 	if (buffer)
 		free(buffer);
+
+	return ret;
+}
+
+CK_RV util_erase_database_object(unsigned int object_id)
+{
+	int ret = CKR_OK;
+	int res = 0;
+	char *database_path = NULL;
+	sqlite3 *db = NULL;
+	char *messageError = NULL;
+	char *sql_cmd = NULL;
+	int sql_len = snprintf(NULL, 0, SQL_CMD_DELETE_OBJECT, object_id);
+
+	if (sql_len < 0)
+		return CKR_FUNCTION_FAILED;
+
+	if (INC_OVERFLOW(sql_len, 1))
+		return CKR_FUNCTION_FAILED;
+
+	sql_cmd = malloc((size_t)sql_len);
+	if (!sql_cmd)
+		return CKR_HOST_MEMORY;
+
+	ret = util_get_database_path(&database_path, SMW_ETC_CNF);
+	if (ret == CKR_OK) {
+		res = sqlite3_open_v2(database_path, &db, SQLITE_OPEN_READWRITE,
+				      NULL);
+		if (res == SQLITE_OK) {
+			sprintf(sql_cmd, SQL_CMD_DELETE_OBJECT, object_id);
+
+			res = sqlite3_exec(db, sql_cmd, 0, 0, &messageError);
+			if (res != SQLITE_OK) {
+				TEST_OUT("SQL Error: %s\n", messageError);
+				sqlite3_free(messageError);
+				ret = CKR_FUNCTION_FAILED;
+			}
+
+			res = sqlite3_close(db);
+			if (res != SQLITE_OK)
+				ret = CKR_FUNCTION_FAILED;
+		} else {
+			ret = CKR_FUNCTION_FAILED;
+		}
+
+		free(database_path);
+	}
+
+	free(sql_cmd);
 
 	return ret;
 }

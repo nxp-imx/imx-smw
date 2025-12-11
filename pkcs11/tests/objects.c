@@ -1907,6 +1907,118 @@ end:
 	return status;
 }
 
+static int retrieve_key_from_subsystem(CK_FUNCTION_LIST_PTR pfunc)
+{
+	int status = TEST_FAIL;
+	psa_status_t psa_status = PSA_SUCCESS;
+	psa_key_attributes_t attributes = PSA_KEY_ATTRIBUTES_INIT;
+	psa_key_id_t psa_id = 0x0fffffff;
+	psa_key_type_t psa_key_type = PSA_KEY_TYPE_AES;
+	psa_algorithm_t aes_algo_type = PSA_ALG_CBC_NO_PADDING;
+
+	CK_RV ret = CKR_OK;
+	CK_SESSION_HANDLE sess = 0;
+	CK_OBJECT_HANDLE hkey = CK_INVALID_HANDLE;
+	CK_BBOOL btrue = CK_TRUE;
+
+	/* AES - 256 bits key length */
+	CK_ULONG key_length = 32;
+	CK_OBJECT_CLASS secret_key_class = CKO_SECRET_KEY;
+	CK_ULONG nb_keys_match = 0;
+	CK_ULONG unique_id_len = 0;
+	CK_UTF8CHAR_PTR unique_id = NULL_PTR;
+
+	CK_ATTRIBUTE aes_key_attrs[] = {
+		{ CKA_UNIQUE_ID, unique_id, sizeof(unique_id) },
+		{ CKA_TOKEN, &btrue, sizeof(CK_BBOOL) },
+	};
+
+	SUBTEST_START();
+
+	TEST_OUT("Generate AES secret Key\n");
+	/* Set key attributes */
+	psa_set_key_lifetime(&attributes, PSA_KEY_LIFETIME_PERSISTENT);
+	psa_set_key_usage_flags(&attributes,
+				PSA_KEY_USAGE_ENCRYPT | PSA_KEY_USAGE_DECRYPT);
+	psa_set_key_type(&attributes, psa_key_type);
+	psa_set_key_bits(&attributes, BYTES_TO_BITS(key_length));
+	psa_set_key_id(&attributes, psa_id);
+	psa_set_key_algorithm(&attributes, aes_algo_type);
+
+	/* Generate the key */
+	psa_status = psa_generate_key(&attributes, &psa_id);
+	if (psa_status != PSA_SUCCESS)
+		goto end;
+
+	ret = util_set_unique_id(unique_id, &unique_id_len, secret_key_class,
+				 psa_id);
+	if (ret != CKR_BUFFER_TOO_SMALL)
+		goto end;
+
+	unique_id = calloc(1, unique_id_len);
+	if (!unique_id)
+		goto end;
+
+	ret = util_set_unique_id(unique_id, &unique_id_len, secret_key_class,
+				 psa_id);
+	if (ret != CKR_OK)
+		goto end;
+
+	aes_key_attrs[0].pValue = unique_id;
+	aes_key_attrs[0].ulValueLen = unique_id_len;
+
+	ret = util_erase_database_object(psa_id);
+	if (ret != CKR_OK)
+		goto end;
+
+	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
+		goto end;
+
+	TEST_OUT("Login to R/W Session as User\n");
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_Login"))
+		goto end;
+
+	ret = pfunc->C_FindObjectsInit(sess, aes_key_attrs,
+				       ARRAY_SIZE(aes_key_attrs));
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjectsInit"))
+		goto end;
+
+	ret = pfunc->C_FindObjects(sess, &hkey, 1, &nb_keys_match);
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjects"))
+		goto end;
+
+	ret = pfunc->C_FindObjectsFinal(sess);
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjectsFinal"))
+		goto end;
+
+	if (CHECK_EXPECTED(nb_keys_match == 1,
+			   "Got %lu but expected %d objects", nb_keys_match, 1))
+		goto end;
+
+	TEST_OUT("Key Destroy #%lu\n", hkey);
+	ret = pfunc->C_DestroyObject(sess, hkey);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	status = TEST_PASS;
+end:
+	util_close_session(pfunc, &sess);
+
+	/* Free the attributes */
+	psa_reset_key_attributes(&attributes);
+
+	/* Destroy the key */
+	if (psa_id)
+		psa_destroy_key(psa_id);
+
+	if (unique_id)
+		free(unique_id);
+
+	SUBTEST_END(status);
+	return status;
+}
+
 void tests_pkcs11_objects(void *lib_hdl, CK_VOID_PTR pfunc)
 {
 	(void)lib_hdl;
@@ -1966,9 +2078,12 @@ void tests_pkcs11_objects(void *lib_hdl, CK_VOID_PTR pfunc)
 		goto end;
 
 	/*
-	 * Delete data not supported by SECO
+	 * Delete data and key get attributes not supported by SECO
 	 */
 	if (!is_seco_subsystem()) {
+		if (retrieve_key_from_subsystem(pfunc) == TEST_FAIL)
+			goto end;
+
 		if (get_data_size(pfunc) == TEST_FAIL)
 			goto end;
 

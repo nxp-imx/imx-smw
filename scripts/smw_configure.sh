@@ -120,6 +120,7 @@ optee_plat=
 opt_tee=0
 opt_seco=0
 opt_ele=0
+opt_tss2=0
 
 if [[ "${subsystems}" == "coverity" ]]; then
     opt_tee=1
@@ -130,6 +131,7 @@ if [[ "${subsystems}" == "coverity" ]]; then
         # For aarch64, enable all subsystems for maximum coverage
         opt_seco=1
         opt_ele=1
+        opt_tss2=1
         optee_plat="imx-mx93evk"
     fi
 else
@@ -146,6 +148,7 @@ else
                 ;;
             ele)
                 opt_ele=1
+                opt_tss2=1
                 ;;
             *)
                 echo "ERROR: Unknown subsystem: \"${subsystem}\""
@@ -251,6 +254,11 @@ if [[ ${opt_ele} -eq 1 ]]; then
         src=../secure_enclave ${arch} ${opt_toolpath}"
 fi
 
+if [[ ${opt_tss2} -eq 1 ]]; then
+eval "./scripts/smw_build.sh libtss2 export=${export}/usr \
+      src=../libtss2 ${arch} ${opt_toolpath}"
+fi
+
 eval "./scripts/smw_build.sh jsonc export=${export} \
       src=../jsonc ${arch} ${opt_toolpath}"
 eval "./scripts/smw_build.sh libsqlite export=${export}/usr \
@@ -285,6 +293,11 @@ fi
 # Enable optee if supported
 if [[ ${opt_tee} -eq 1 ]]; then
     conf_opts="${conf_opts} libuuid_config=${export}/usr teec=${export} tadevkit=${ta_export}"
+fi
+
+# Enable TSS2 if supported
+if [[ ${opt_tss2} -eq 1 ]]; then
+    conf_opts="${conf_opts} libtss2=${export}/usr"
 fi
 
 # Enable tests

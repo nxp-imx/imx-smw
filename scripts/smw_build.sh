@@ -28,6 +28,7 @@ opt_pkg_config=""
 opt_jsonc=""
 opt_psaarchtests=""
 opt_libsqlite=""
+opt_libtss2=""
 
 #
 # Get script name and path
@@ -235,6 +236,32 @@ function libsqlite()
     eval "${cmd_script}"
 }
 
+function libtss2()
+{
+    cmd_script="cmake ${opt_toolchain}"
+    libtss2_script="${script_dir}/build_libtss2.cmake"
+
+    printf "\033[0;32m\n"
+    printf "***************************************\n"
+    printf " Install libtss2 to %s\n" "${opt_export}"
+    printf "***************************************\n"
+    printf "\033[0m\n"
+
+    if [[ -z ${opt_export} ]]; then
+        usage_libtss2
+        exit 1
+    fi
+
+    if [[ -n ${opt_src} ]]; then
+        cmd_script="${cmd_script} -DTSS2_SRC_PATH=${opt_src}"
+    fi
+
+    cmd_script="${cmd_script} -DTSS2_ROOT=${opt_export} -P ${libtss2_script}"
+
+    printf "Execute %s\n" "${cmd_script}"
+    eval "${cmd_script}"
+}
+
 function teec()
 {
     cmd_script="cmake ${opt_toolchain} ${opt_builddir}"
@@ -326,6 +353,7 @@ function configure()
     cmd_script="${cmd_script} ${opt_libuuid_config} ${opt_teec} ${opt_tadevkit}"
     cmd_script="${cmd_script} ${opt_jsonc} ${opt_psaarchtests}"
     cmd_script="${cmd_script} ${opt_libsqlite}"
+    cmd_script="${cmd_script} ${opt_libtss2}"
 
     if [[ -n ${opt_feature_flags} ]]; then
         cmd_script="${cmd_script} ${opt_feature_flags}"
@@ -543,6 +571,20 @@ function usage_libsqlite()
     printf "\n"
 }
 
+function usage_libtss2()
+{
+    printf "\n"
+    printf "To build and install the LIBTSS2 Library\n"
+    printf "  %s libtss2 export=[dir] src=[dir] arch=[arch] " "${script_name}"
+    printf "toolpath=[dir] toolname=[name]\n"
+    printf "    export   = Export directory\n"
+    printf "    src      = [optional] Temporary directory where install sources\n"
+    printf "    arch     = [optional] Toolchain architecture (aarch32|aarch64)\n"
+    printf "    toolpath = [optional] Toolchain path where installed\n"
+    printf "    toolname = [optional] Toolchain name\n"
+    printf "\n"
+}
+
 function usage_seco()
 {
     printf "\n"
@@ -737,6 +779,7 @@ function usage()
     usage_psaarchtests
     usage_jsonc
     usage_configure
+    usage_libtss2
     usage_build
     usage_install
     usage_package
@@ -828,6 +871,12 @@ do
             opt_libsqlite="${arg#*=}"
             check_directory opt_libsqlite
             opt_libsqlite="-DSQLite3_ROOT=${opt_libsqlite}"
+            ;;
+
+        libtss2=*)
+            opt_libtss2="${arg#*=}"
+            check_directory opt_libtss2
+            opt_libtss2="-DTSS2_ROOT=${opt_libtss2}"
             ;;
 
         libuuid_config=*)
@@ -952,6 +1001,10 @@ case ${opt_action} in
 
     libsqlite)
         libsqlite
+        ;;
+
+    libtss2)
+        libtss2
         ;;
 
     teec)

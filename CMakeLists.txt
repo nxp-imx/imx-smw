@@ -133,6 +133,9 @@ add_subdirectory(pkcs11)
 # Include SMW Documentations
 add_subdirectory(Documentations)
 
+# Include TPM2 project
+add_subdirectory(tpm2)
+
 #
 # Generate and install OSAL configuration
 # NOTE: Macro is OSAL implementation

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2025 NXP
+ * Copyright 2021-2026 NXP
  */
 
 #include "smw/attr.h"
@@ -290,6 +290,7 @@ void args_attrs_key_usage(smw_attr_usage_t *usage_flags, struct libobj_obj *obj)
 
 	case CKK_EC:
 	case CKK_EC_EDWARDS:
+	case CKK_EC_MONTGOMERY:
 		set_ec_key_usage(usage_flags, obj);
 		break;
 
@@ -329,6 +330,7 @@ void args_attr_get_key_usage(struct libobj_obj *obj,
 
 	case CKK_EC:
 	case CKK_EC_EDWARDS:
+	case CKK_EC_MONTGOMERY:
 		get_ec_key_usage(obj, usage_flags);
 		break;
 
@@ -387,6 +389,7 @@ void args_attr_get_key_sensitivity(struct libobj_obj *obj,
 
 	case CKK_EC:
 	case CKK_EC_EDWARDS:
+	case CKK_EC_MONTGOMERY:
 	case CKK_RSA:
 		get_private_key_sensitivity(obj, attr);
 		break;

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #include <stdlib.h>
@@ -343,6 +343,7 @@ static void key_private_free(struct libobj_obj *obj)
 	switch (get_key_type(obj)) {
 	case CKK_EC:
 	case CKK_EC_EDWARDS:
+	case CKK_EC_MONTGOMERY:
 		key_ec_private_free(obj);
 		break;
 
@@ -382,6 +383,7 @@ static void key_public_free(struct libobj_obj *obj)
 	switch (get_key_type(obj)) {
 	case CKK_EC:
 	case CKK_EC_EDWARDS:
+	case CKK_EC_MONTGOMERY:
 		key_ec_public_free(obj);
 		break;
 
@@ -986,6 +988,7 @@ static CK_RV subkey_private_create(CK_SESSION_HANDLE hsession,
 	switch (get_key_type(obj)) {
 	case CKK_EC:
 	case CKK_EC_EDWARDS:
+	case CKK_EC_MONTGOMERY:
 		ret = key_ec_private_create(hsession, obj, attrs);
 		break;
 
@@ -1031,6 +1034,7 @@ static CK_RV subkey_private_retrieve(CK_SESSION_HANDLE hsession,
 	switch (get_key_type(obj)) {
 	case CKK_EC:
 	case CKK_EC_EDWARDS:
+	case CKK_EC_MONTGOMERY:
 		ret = key_ec_private_retrieve(hsession, obj);
 		break;
 
@@ -1087,6 +1091,7 @@ static CK_RV subkey_private_get_attribute(CK_ATTRIBUTE_PTR attr,
 	switch (get_key_type(obj)) {
 	case CKK_EC:
 	case CKK_EC_EDWARDS:
+	case CKK_EC_MONTGOMERY:
 		ret = key_ec_private_get_attribute(attr, obj, protect);
 		break;
 
@@ -1141,6 +1146,7 @@ static CK_RV subkey_private_modify_attribute(CK_ATTRIBUTE_PTR attr,
 	switch (get_key_type(obj)) {
 	case CKK_EC:
 	case CKK_EC_EDWARDS:
+	case CKK_EC_MONTGOMERY:
 		ret = key_ec_private_modify_attribute(attr, obj);
 		break;
 
@@ -1188,6 +1194,7 @@ static CK_RV subkey_public_create(CK_SESSION_HANDLE hsession,
 	switch (get_key_type(obj)) {
 	case CKK_EC:
 	case CKK_EC_EDWARDS:
+	case CKK_EC_MONTGOMERY:
 		ret = key_ec_public_create(hsession, obj, attrs);
 		break;
 
@@ -1233,6 +1240,7 @@ static CK_RV subkey_public_retrieve(CK_SESSION_HANDLE hsession,
 	switch (get_key_type(obj)) {
 	case CKK_EC:
 	case CKK_EC_EDWARDS:
+	case CKK_EC_MONTGOMERY:
 		ret = key_ec_public_retrieve(hsession, obj);
 		break;
 
@@ -1282,6 +1290,7 @@ static CK_RV subkey_public_get_attribute(CK_ATTRIBUTE_PTR attr,
 	switch (get_key_type(obj)) {
 	case CKK_EC:
 	case CKK_EC_EDWARDS:
+	case CKK_EC_MONTGOMERY:
 		ret = key_ec_public_get_attribute(attr, obj);
 		break;
 
@@ -1334,6 +1343,7 @@ static CK_RV subkey_public_modify_attribute(CK_ATTRIBUTE_PTR attr,
 	switch (get_key_type(obj)) {
 	case CKK_EC:
 	case CKK_EC_EDWARDS:
+	case CKK_EC_MONTGOMERY:
 		ret = key_ec_public_modify_attribute(attr, obj);
 		break;
 
@@ -1670,6 +1680,7 @@ CK_RV key_keypair_retrieve(CK_SESSION_HANDLE hsession,
 	switch (get_key_type(priv_obj)) {
 	case CKK_EC:
 	case CKK_EC_EDWARDS:
+	case CKK_EC_MONTGOMERY:
 		ret = key_ec_keypair_retrieve(hsession, pub_obj, priv_obj);
 		break;
 
@@ -1843,6 +1854,10 @@ CK_RV key_keypair_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 		key_type = CKK_RSA;
 		break;
 
+	case CKM_EC_MONTGOMERY_KEY_PAIR_GEN:
+		key_type = CKK_EC_MONTGOMERY;
+		break;
+
 	default:
 		return CKR_MECHANISM_INVALID;
 	}
@@ -1870,6 +1885,7 @@ CK_RV key_keypair_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	switch (key_type) {
 	case CKK_EC:
 	case CKK_EC_EDWARDS:
+	case CKK_EC_MONTGOMERY:
 		ret = key_ec_keypair_generate(hsession, mech, pub_key,
 					      pub_attrs, priv_key, priv_attrs);
 		break;

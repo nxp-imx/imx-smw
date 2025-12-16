@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #include <string.h>
@@ -118,6 +118,9 @@ smw_key_type_t smw_ec_name[] = { SMW_KEY_TYPE_NAME_SECP_R1,
 
 smw_key_type_t smw_ed_name[] = { SMW_KEY_TYPE_NAME_ED448,
 				 SMW_KEY_TYPE_NAME_ED25519 };
+
+smw_key_type_t smw_montgomery_name[] = { SMW_KEY_TYPE_NAME_X448,
+					 SMW_KEY_TYPE_NAME_X25519 };
 
 /**
  * struct mentry - Definition of a mechanism supported by each device
@@ -506,6 +509,8 @@ static struct mentry meckeygen[] = {
 	M_ECKEYGEN(smw_ec_name, ARRAY_SIZE(smw_ec_name), EC_KEY_PAIR_GEN),
 	M_ECKEYGEN(smw_ed_name, ARRAY_SIZE(smw_ed_name),
 		   EC_EDWARDS_KEY_PAIR_GEN),
+	M_ECKEYGEN(smw_montgomery_name, ARRAY_SIZE(smw_montgomery_name),
+		   EC_MONTGOMERY_KEY_PAIR_GEN),
 };
 
 /*
@@ -4374,6 +4379,7 @@ CK_RV libdev_export_public_key(const struct libobj_obj *obj)
 		break;
 
 	case CKK_EC_EDWARDS:
+	case CKK_EC_MONTGOMERY:
 		ret = export_edwards_public_key(&key_descriptor, obj);
 		break;
 

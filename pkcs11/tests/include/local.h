@@ -64,6 +64,7 @@ struct asn1_ec_curve {
 extern const struct asn1_ec_curve ec_curves[];
 extern const struct asn1_ec_curve ed_curves[];
 extern const size_t ed_curves_count;
+extern const struct asn1_ec_curve x_curves[];
 
 int util_to_asn1_string(CK_ATTRIBUTE_PTR attr,
 			const struct asn1_ec_curve *curve);

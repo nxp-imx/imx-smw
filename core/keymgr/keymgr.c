@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #include "smw_status.h"
@@ -1812,8 +1812,9 @@ smw_get_key_buffers_lengths(struct smw_key_descriptor *descriptor)
 	if (!descriptor)
 		goto end;
 
-	if (descriptor->type_name == SMW_KEY_TYPE_NAME_NONE ||
-	    !descriptor->security_size)
+	if ((descriptor->type_name == SMW_KEY_TYPE_NAME_NONE ||
+	     !descriptor->security_size) &&
+	    descriptor->id == INVALID_KEY_ID)
 		goto end;
 
 	if (!descriptor->buffer) {

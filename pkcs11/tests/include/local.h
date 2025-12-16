@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021, 2023-2025 NXP
+ * Copyright 2021, 2023-2026 NXP
  */
 #ifndef __LOCAL_H__
 #define __LOCAL_H__
@@ -50,6 +50,10 @@ const char *get_slot_label(CK_ULONG slotid);
 #define EC_ED25519 0
 #define EC_ED448   1
 
+/* Montgomery curves index */
+#define EC_X25519 0
+#define EC_X448	  1
+
 struct asn1_ec_curve {
 	size_t security_size;
 	const char *name;
@@ -75,6 +79,7 @@ void tests_pkcs11_slot_token(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_session(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_object_key_ec(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_object_key_edwards(void *lib_hdl, CK_VOID_PTR pfunc);
+void tests_pkcs11_object_key_montgomery(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_object_key_cipher(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_object_key_rsa(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_find(void *lib_hdl, CK_VOID_PTR pfunc);

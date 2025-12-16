@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023-2025 NXP
+ * Copyright 2021, 2023-2026 NXP
  */
 #include <string.h>
 
@@ -149,6 +149,7 @@ struct test_def test_list[] = { TEST_DEF(get_info_ifs),
 				TEST_DEF(session),
 				TEST_DEF(object_key_ec),
 				TEST_DEF(object_key_edwards),
+				TEST_DEF(object_key_montgomery),
 				TEST_DEF(object_key_cipher),
 				TEST_DEF(object_key_rsa),
 				TEST_DEF(find),

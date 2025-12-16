@@ -55,6 +55,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### SMW Library
 ##### 1. SMW APIs
 
+* Fix `smw_get_key_buffers_lengths()`: in case the key ID field only is set in the key descriptor structure, the function returns the subsystem key buffers' lengths (only the exportable ones) instead of returning an error.
+
 ##### 2. Subsystems
 
 ##### 3. ARM PSA APIs
@@ -332,7 +334,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 ##### 2. Subsystems
 
-* TEE: Fix memory leak in case of one-short AEAD, one-shot cipher and multi-part hash operations.
+* TEE: Fix memory leak in case of one-shot AEAD, one-shot cipher and multi-part hash operations.
 * TEE: Fix the get attribute's permitted algorithm overwriting the database
   value when key is created.
 * TEE: Rework TA to set the x or y MSB to 0 in case size is odd.

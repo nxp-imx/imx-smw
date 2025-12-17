@@ -66,6 +66,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 ##### 4. OSAL
 
+* Update all TEE configurations with supported key generation algorithms.
+
 #### SMW Tests
 
 * Update U_ELE_Mac_007 test to validate HMAC generation using base 64 plaintext key buffer.
@@ -73,7 +75,13 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 #### PKCS#11 Library
 
+* Add CKM_EC_MONTGOMERY_KEY_PAIR_GEN mechanism support.
+
 #### PKCS#11 Tests
+
+* Add EC Montgomery key generation tests
+* Add TLS 1.3 key exchange test with EC Montgomery key pair.
+* Update slot token test.
 
 ---
 ### <a id ="rel_5_3"></a></br>**Release 5.3**

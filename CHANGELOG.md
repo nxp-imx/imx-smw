@@ -80,6 +80,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Set CKA_SENSITIVE attribute according to the key Sensitive flag.
 * Set CKA_WRAP public key attribute to false.
 * Set CKA_UNWRAP private key attribute to false.
+* Enable TLS key exchange with EC Edwards key pair.
 
 #### PKCS#11 Tests
 
@@ -88,6 +89,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Check CKA_WRAP and CKA_UNWRAP attributes for generated keys.
 * Disable key usage test on SECO platform.
 * Add test to find an object not present in database.
+* Add TLS 1.3 key exchange test with EC Edwards key pair.
 
 ---
 ### <a id ="rel_5_2"></a></br>**Release 5.2**

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2025 NXP
+ * Copyright 2021-2026 NXP
  */
 
 #include <stdlib.h>
@@ -157,6 +157,7 @@ static struct smw_mech_def mlist_ele[] = {
 	M(SHA3_512_HMAC_GENERAL),
 	M(EC_EDWARDS_KEY_PAIR_GEN),
 	M(EDDSA),
+	M_OPT(EC_MONTGOMERY_KEY_PAIR_GEN),
 };
 
 /*

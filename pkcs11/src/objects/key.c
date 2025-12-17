@@ -2183,7 +2183,8 @@ static CK_RV check_input_params(CK_KEY_TYPE base_key_type,
 
 	case CKM_ECDH1_DERIVE:
 		if (base_key_type != CKK_EC &&
-		    base_key_type != CKK_EC_EDWARDS) {
+		    base_key_type != CKK_EC_EDWARDS &&
+		    base_key_type != CKK_EC_MONTGOMERY) {
 			ret = CKR_KEY_FUNCTION_NOT_PERMITTED;
 			break;
 		}

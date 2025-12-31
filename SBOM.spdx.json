@@ -8,14 +8,14 @@
     ],
     "licenseListVersion": "3.20"
   },
-  "name": "imx-smw-v5.3",
+  "name": "imx-smw-v5.4",
   "dataLicense": "CC0-1.0",
   "documentNamespace": "https://nxp.com/spdx/20c7f21f-debe-436d-a7e9-25167624d85e",
   "packages": [
     {
       "SPDXID": "SPDXRef-package-20c7f21f-debe-436d-a7e9-25167624d85e",
       "name": "imx-smw",
-      "versionInfo": "v5.3",
+      "versionInfo": "v5.4",
       "licenseConcluded": "(BSD-3-Clause)",
       "licenseDeclared": "(BSD-3-Clause)",
       "downloadLocation": "NOASSERTION",

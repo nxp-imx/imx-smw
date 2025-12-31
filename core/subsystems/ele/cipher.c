@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2025 NXP
+ * Copyright 2022-2026 NXP
  */
 
 #include "smw_status.h"
@@ -42,25 +42,49 @@ static int set_cipher_flags(enum smw_config_cipher_op_type_id smw_op_type_id,
 	return status;
 }
 
+static int get_private_key_buffer(op_cipher_one_go_args_t *op_args,
+				  struct smw_keymgr_descriptor *key_desc)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	unsigned int private_buf_len = smw_keymgr_get_private_length(key_desc);
+	unsigned char *private_buffer = smw_keymgr_get_private_data(key_desc);
+	unsigned int hex_private_len = 0;
+
+	if (!private_buf_len || !private_buffer)
+		goto end;
+
+	status = smw_utils_key_set_hex_buffer(key_desc->format_id,
+					      private_buffer, private_buf_len,
+					      &op_args->key, &hex_private_len);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	if (SET_OVERFLOW(hex_private_len, op_args->key_size)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+end:
+	return status;
+}
+
 static int cipher(struct hdl *hdl, void *args)
 {
-	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	int status = SMW_STATUS_OK;
 
 	hsm_err_t err = HSM_NO_ERROR;
 	op_cipher_one_go_args_t op_args = { 0 };
 	enum smw_config_key_type_id key_type_id = 0;
 	struct smw_crypto_cipher_args *cipher_args = args;
+	struct smw_keymgr_descriptor *key_desc = cipher_args->keys_desc[0];
+	struct smw_keymgr_identifier *key_identifier = &key_desc->identifier;
+	hsm_key_type_t ele_key_type = (hsm_key_type_t)0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (smw_crypto_get_cipher_nb_key_buffer(cipher_args)) {
-		SMW_DBG_PRINTF(ERROR, "%s: ELE doesn't support keys buffer\n",
-			       __func__);
-		goto end;
-	}
-
 	/* Get 1st key type as reference */
-	key_type_id = cipher_args->keys_desc[0]->identifier.type_id;
+	key_type_id = key_identifier->type_id;
 
 	/* Get ELE algorithm */
 	status = ele_set_cipher_algo(key_type_id, cipher_args->mode_id,
@@ -72,6 +96,23 @@ static int cipher(struct hdl *hdl, void *args)
 	status = set_cipher_flags(cipher_args->op_type_id, &op_args.flags);
 	if (status != SMW_STATUS_OK)
 		goto end;
+
+	if (key_identifier->s_id) {
+		op_args.key_identifier =
+			smw_crypto_get_cipher_key_id(cipher_args, 0);
+	} else {
+		/* Cipher using plaintext key buffer */
+		op_args.flags |= HSM_CIPHER_FLAGS_PLAINTEXT_KEY;
+		status = ele_get_key_type(key_type_id, &ele_key_type);
+		if (status != SMW_STATUS_OK)
+			goto end;
+
+		op_args.key_type = ele_key_type;
+
+		status = get_private_key_buffer(&op_args, key_desc);
+		if (status != SMW_STATUS_OK)
+			goto end;
+	}
 
 	op_args.output = smw_crypto_get_cipher_output(cipher_args);
 	op_args.input_size = smw_crypto_get_cipher_input_len(cipher_args);
@@ -85,7 +126,6 @@ static int cipher(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	op_args.key_identifier = smw_crypto_get_cipher_key_id(cipher_args, 0);
 	op_args.output_size = smw_crypto_get_cipher_output_len(cipher_args);
 	op_args.input = smw_crypto_get_cipher_input(cipher_args);
 	op_args.iv = smw_crypto_get_cipher_iv(cipher_args);
@@ -129,6 +169,9 @@ static int cipher(struct hdl *hdl, void *args)
 	smw_crypto_set_cipher_output_len(cipher_args, op_args.exp_output_size);
 
 end:
+	if (key_desc->format_id == SMW_KEYMGR_FORMAT_ID_BASE64 && op_args.key)
+		SMW_UTILS_FREE(op_args.key);
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 
 	// coverity[missing_unlock]

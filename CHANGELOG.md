@@ -60,6 +60,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 2. Subsystems
 
 * ELE: Fix the MAC operation key size when using a plaintext key encoded in base64.
+* ELE: Add support for cipher operation using plaintext private key buffer.
 
 ##### 3. ARM PSA APIs
 
@@ -68,6 +69,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### SMW Tests
 
 * Update U_ELE_Mac_007 test to validate HMAC generation using base 64 plaintext key buffer.
+* Add U_ELE_Cipher_003 tests to validate Cipher operation using plaintext key buffer.
 
 #### PKCS#11 Library
 

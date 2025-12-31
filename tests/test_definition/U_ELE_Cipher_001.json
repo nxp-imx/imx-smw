@@ -39,23 +39,6 @@
 			"permitted_algo": [
 				"CFB"
 			]
-		},
-		"key 4": {
-			"type": "AES",
-			"security_size": 256,
-			"priv_key": [
-				"d6c4cf73c639e025654dd3232fe3aa71",
-				"38f21bc8922271b4a6c0af999100b6b5"
-			],
-			"attributes_list": [
-				"TRANSIENT"
-			],
-			"usage": [
-				"ENCRYPT"
-			],
-			"permitted_algo": [
-				"ECB_NO_PADDING"
-			]
 		}
 	},
 	"subtest 1": {
@@ -95,16 +78,6 @@
 		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED"
 	},
 	"subtest 6": {
-		"description": "Key buffer not supported",
-		"command": "CIPHER",
-		"mode": "ECB",
-		"op_type": "ENCRYPT",
-		"subsystem": "ELE",
-		"key_name": "key 4",
-		"input": "ebabce95b14d3c8d6fb350390790311c",
-		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
-	},
-	"subtest 7": {
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
@@ -112,7 +85,7 @@
 		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"depends": 1
 	},
-	"subtest 8": {
+	"subtest 7": {
 		"command": "CIPHER",
 		"mode": "CBC",
 		"op_type": "DECRYPT",
@@ -122,7 +95,7 @@
 		"depends": 1,
 		"result": "SMW_STATUS_KEY_INVALID"
 	},
-	"subtest 9": {
+	"subtest 8": {
 		"description": "Get output length",
 		"command": "CIPHER",
 		"mode": "CBC",
@@ -133,7 +106,7 @@
 		"output": 0,
 		"depends": 1
 	},
-	"subtest 10": {
+	"subtest 9": {
 		"description": "Output length too small",
 		"command": "CIPHER",
 		"mode": "ECB",
@@ -144,7 +117,7 @@
 		"depends": 1,
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 11": {
+	"subtest 10": {
 		"command": "CIPHER",
 		"mode": "CFB",
 		"op_type": "ENCRYPT",
@@ -154,7 +127,7 @@
 		"cipher_id": 1,
 		"depends": 3
 	},
-	"subtest 12": {
+	"subtest 11": {
 		"command": "CIPHER",
 		"mode": "CFB",
 		"op_type": "DECRYPT",
@@ -164,17 +137,17 @@
 		"output": "ebabce95b14d3c8d6fb350390790311c",
 		"depends": 3
 	},
-	"subtest 13": {
+	"subtest 12": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1
 	},
-	"subtest 14": {
+	"subtest 13": {
 		"command": "DELETE",
 		"key_name": "key 2",
 		"depends": 2
 	},
-	"subtest 15": {
+	"subtest 14": {
 		"command": "DELETE",
 		"key_name": "key 3",
 		"depends": 3

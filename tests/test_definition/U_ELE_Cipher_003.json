@@ -1,0 +1,74 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 192,
+			"priv_key": [
+				"30313233343536373839414243444546",
+				"3132333435363738"
+			]
+		},
+		"key 2": {
+			"type": "AES",
+			"security_size": 128,
+			"format": "BASE64",
+			"priv_key": "BqkhQDa4oVtRLgPVNBIABg=="
+		}
+	},
+	"subtest 1": {
+		"description": "Encrypt with key buffer",
+		"command": "CIPHER",
+		"mode": "CBC",
+		"op_type": "ENCRYPT",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"input": [
+			"323334353637383941424344454630313334353637383941",
+			"424344454630313234353637383941424344454630313233"
+		],
+		"iv": "31323334353637383132333435363738",
+		"output": [
+			"b0e4c3e20a0a03ed3ed72b65f114c958b31ed18c300fcca3",
+			"69516171fbfff1afb4f0ac52de98c3203008a7c0f40f4aa5"
+		]
+	},
+	"subtest 2": {
+		"description": "Decrypt with key buffer",
+		"command": "CIPHER",
+		"mode": "CBC",
+		"op_type": "DECRYPT",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"input": [
+			"b0e4c3e20a0a03ed3ed72b65f114c958b31ed18c300fcca3",
+			"69516171fbfff1afb4f0ac52de98c3203008a7c0f40f4aa5"
+		],
+		"iv": "31323334353637383132333435363738",
+		"output": [
+			"323334353637383941424344454630313334353637383941",
+			"424344454630313234353637383941424344454630313233"
+		]
+	},
+	"subtest 3": {
+		"description": "Encrypt with key buffer (Base64 format)",
+		"command": "CIPHER",
+		"mode": "CBC",
+		"op_type": "ENCRYPT",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"iv": "3dafba429d9eb430b422da802c9fac41",
+		"input": "53696E676C6520626C6F636B206D7367",
+		"output": "e353779c1079aeb82708942dbe77181a"
+	},
+	"subtest 4": {
+		"description": "Decrypt with key buffer (Base64 format)",
+		"command": "CIPHER",
+		"mode": "CBC",
+		"op_type": "DECRYPT",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"iv": "3dafba429d9eb430b422da802c9fac41",
+		"input": "e353779c1079aeb82708942dbe77181a",
+		"output": "53696E676C6520626C6F636B206D7367"
+	}
+}

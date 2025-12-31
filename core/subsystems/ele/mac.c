@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023, 2025 NXP
+ * Copyright 2023, 2025-2026 NXP
  */
 
 #include "smw_status.h"
@@ -98,8 +98,7 @@ static int get_mac_algo(struct mac_algo *alg, struct smw_crypto_mac_args *args)
 }
 
 static int get_private_key_buffer(op_mac_one_go_args_t *op_args,
-				  struct smw_keymgr_descriptor *key_desc,
-				  unsigned char **hex_private_buffer)
+				  struct smw_keymgr_descriptor *key_desc)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 
@@ -112,17 +111,14 @@ static int get_private_key_buffer(op_mac_one_go_args_t *op_args,
 
 	status = smw_utils_key_set_hex_buffer(key_desc->format_id,
 					      private_buffer, private_buf_len,
-					      hex_private_buffer,
-					      &hex_private_len);
+					      &op_args->key, &hex_private_len);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (SET_OVERFLOW(private_buf_len, op_args->key_size)) {
+	if (SET_OVERFLOW(hex_private_len, op_args->key_size)) {
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
 	}
-
-	op_args->key = *hex_private_buffer;
 
 end:
 	return status;
@@ -140,8 +136,6 @@ static int mac(struct hdl *hdl, void *args)
 	struct smw_keymgr_descriptor *key_desc = &mac_args->key_descriptor;
 	struct smw_keymgr_identifier *key_identifier = &key_desc->identifier;
 	hsm_key_type_t ele_key_type = (hsm_key_type_t)0;
-
-	unsigned char *hex_private_buffer = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -161,14 +155,7 @@ static int mac(struct hdl *hdl, void *args)
 
 		op_args.key_type = ele_key_type;
 
-		if (SET_OVERFLOW(key_identifier->security_size,
-				 op_args.key_size)) {
-			status = SMW_STATUS_INVALID_PARAM;
-			goto end;
-		}
-
-		status = get_private_key_buffer(&op_args, key_desc,
-						&hex_private_buffer);
+		status = get_private_key_buffer(&op_args, key_desc);
 		if (status != SMW_STATUS_OK)
 			goto end;
 	}
@@ -232,10 +219,8 @@ static int mac(struct hdl *hdl, void *args)
 		smw_mac_set_mac_length(mac_args, op_args.exp_mac_size);
 
 end:
-	if (key_desc->format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
-		if (hex_private_buffer)
-			SMW_UTILS_FREE(hex_private_buffer);
-	}
+	if (key_desc->format_id == SMW_KEYMGR_FORMAT_ID_BASE64 && op_args.key)
+		SMW_UTILS_FREE(op_args.key);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 

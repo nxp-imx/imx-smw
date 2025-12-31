@@ -59,11 +59,15 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 ##### 2. Subsystems
 
+* ELE: Fix the MAC operation key size when using a plaintext key encoded in base64.
+
 ##### 3. ARM PSA APIs
 
 ##### 4. OSAL
 
 #### SMW Tests
+
+* Update U_ELE_Mac_007 test to validate HMAC generation using base 64 plaintext key buffer.
 
 #### PKCS#11 Library
 

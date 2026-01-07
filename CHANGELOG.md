@@ -64,6 +64,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 ##### 3. ARM PSA APIs
 
+* Upgrade ARM PSA Crypto API to version 1.3.2.
+
 ##### 4. OSAL
 
 * Update all TEE configurations with supported key generation algorithms.

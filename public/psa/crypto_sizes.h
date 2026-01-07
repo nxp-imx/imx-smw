@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022-2025 NXP
+ * Copyright 2022-2026 NXP
  */
 
 #ifndef __PSA_CRYPTO_SIZES_H__
@@ -30,9 +30,9 @@
 /**
  * DOC: Reference
  * Documentation:
- *	PSA Cryptography API v1.2.1
+ *	PSA Cryptography API v1.3.2
  * Link:
- *	https://arm-software.github.io/psa-api/crypto/1.2/about
+ *	https://arm-software.github.io/psa-api/crypto/1.3/about
  */
 
 /**
@@ -700,6 +700,19 @@ size_t psa_cipher_iv_length(psa_key_type_t key_type, psa_algorithm_t alg);
 			PSA_VENDOR_ECC_MAX_CURVE_BITS))
 
 /**
+ * DOC: PSA_EXPORT_ASYMMETRIC_KEY_MAX_SIZE
+ * Sufficient buffer size for exporting any asymmetric key pair or public key.
+ *
+ * This value must be a sufficient buffer size when calling psa_export_key() or
+ * psa_export_public_key() to export any asymmetric key pair or public key that is
+ * supported by the implementation, regardless of the exact key type and key size.
+ * 
+ * See also PSA_EXPORT_PUBLIC_KEY_OUTPUT_SIZE().
+ */
+#define PSA_EXPORT_ASYMMETRIC_KEY_MAX_SIZE                                     \
+	PSA_MAX(PSA_EXPORT_KEY_PAIR_MAX_SIZE, PSA_EXPORT_PUBLIC_KEY_MAX_SIZE)
+
+/**
  * PSA_EXPORT_PUBLIC_KEY_OUTPUT_SIZE() - Sufficient output buffer size for psa_export_public_key().
  * @key_type: A public key or key pair key type.
  * @key_bits: The size of the key in bits.
@@ -1119,5 +1132,79 @@ size_t psa_hash_length(psa_algorithm_t alg);
  * value greater than or equal to 64.
  */
 #define PSA_TLS12_PSK_TO_MS_PSK_MAX_SIZE /* implementation-defined value */
+
+/**
+ * PSA_PAKE_OUTPUT_SIZE - Sufficient output buffer size for psa_pake_output(), in bytes.
+ * @alg: A PAKE algorithm: a value of type psa_algorithm_t such that PSA_ALG_IS_PAKE(alg) is true.
+ * @primitive: A primitive of type psa_pake_primitive_t that is compatible with algorithm @alg.
+ * @output_step: A value of type psa_pake_step_t that is valid for the algorithm @alg.
+ * 
+ * **Warning: Not supported**
+ * 
+ * If the size of the output buffer is at least this large,
+ * it is guaranteed that psa_pake_output() will not fail due to an insufficient buffer size.
+ * The actual size of the output might be smaller in any given call.
+ * 
+ * See also PSA_PAKE_OUTPUT_MAX_SIZE
+ * 
+ * Returns:
+ * A sufficient output buffer size for the specified PAKE algorithm, primitive, and output step.
+ * An implementation can return either 0 or a correct size for a PAKE algorithm, primitive,
+ * and output step that it recognizes, but does not support.
+ * If the parameters are not valid, the return value is unspecified.
+ */
+#define PSA_PAKE_OUTPUT_SIZE(alg, primitive, output_step)                      \
+	/* implementation-defined value */
+
+/**
+ * DOC: PSA_PAKE_OUTPUT_MAX_SIZE
+ * Sufficient output buffer size for psa_pake_output() for any of the supported PAKE algorithms,
+ * primitives and output steps.
+ * 
+ * **Warning: Not supported**
+ * 
+ * If the size of the output buffer is at least this large,
+ * it is guaranteed that psa_pake_output() will not fail due to an insufficient buffer size.
+ * 
+ * See also PSA_PAKE_OUTPUT_SIZE(). 
+ */
+#define PSA_PAKE_OUTPUT_MAX_SIZE /* implementation-defined value */
+
+/**
+ * PSA_PAKE_INPUT_SIZE - Sufficient buffer size for inputs to psa_pake_input().
+ * @alg: A PAKE algorithm: a value of type psa_algorithm_t such that PSA_ALG_IS_PAKE(alg) is true.
+ * @primitive: A primitive of type psa_pake_primitive_t that is compatible with algorithm @alg.
+ * @input_step: A value of type psa_pake_step_t that is valid for the algorithm @alg.
+ * 
+ * **Warning: Not supported**
+ * 
+ * The value returned by this macro is guaranteed to be large enough for any valid input to psa_pake_input()
+ * in an operation with the specified parameters.
+ * 
+ * This macro can be useful when transferring inputs from the peer into the PAKE operation.
+ * 
+ * See also PSA_PAKE_INPUT_MAX_SIZE
+ * 
+ * Returns:
+ * A sufficient buffer size for the specified PAKE algorithm, primitive, and input step.
+ * An implementation can return either 0 or a correct size for a PAKE algorithm, primitive,
+ * and output step that it recognizes, but does not support.
+ * If the parameters are not valid, the return value is unspecified.
+ */
+#define PSA_PAKE_INPUT_SIZE(alg, primitive, input_step)                        \
+	/* implementation-defined value */
+
+/**
+ * DOC: PSA_PAKE_INPUT_MAX_SIZE
+ * Sufficient buffer size for inputs to psa_pake_input() for any of the supported PAKE algorithms,
+ * primitives and input steps.
+ * 
+ * **Warning: Not supported**
+ * 
+ * This macro can be useful when transferring inputs from the peer into the PAKE operation.
+ * 
+ * See also PSA_PAKE_INPUT_SIZE().
+ */
+#define PSA_PAKE_INPUT_MAX_SIZE /* implementation-defined value */
 
 #endif /* __PSA_CRYPTO_SIZES_H__ */

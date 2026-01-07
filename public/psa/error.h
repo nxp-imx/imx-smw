@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022, 2024 NXP
+ * Copyright 2022, 2024, 2026 NXP
  */
 
 #ifndef __PSA_STATUS_H__
@@ -16,9 +16,9 @@
 /**
  * DOC: Reference
  * Documentation:
- *	PSA Cryptography API v1.2.1
+ *	PSA Cryptography API v1.3.2
  * Link:
- *	https://arm-software.github.io/psa-api/crypto/1.2/about
+ *	https://arm-software.github.io/psa-api/crypto/1.3/about
  */
 
 /**

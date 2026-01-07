@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022-2025 NXP
+ * Copyright 2022-2026 NXP
  */
 
 #ifndef __PSA_CRYPTO_STRUCT_H__
@@ -16,9 +16,9 @@
 /**
  * DOC: Reference
  * Documentation:
- *	PSA Cryptography API v1.2.1
+ *	PSA Cryptography API v1.3.2
  * Link:
- *	https://arm-software.github.io/psa-api/crypto/1.2/about
+ *	https://arm-software.github.io/psa-api/crypto/1.3/about
  */
 
 /* To be defined */
@@ -123,6 +123,17 @@ static inline struct psa_mac_operation_s psa_mac_operation_init(void)
 	return PSA_MAC_OPERATION_INIT;
 }
 
+struct psa_custom_key_parameters_s {
+	uint32_t flags;
+};
+
+/**
+ * DOC: PSA_CUSTOM_KEY_PARAMETERS_INIT
+ * This macro returns a suitable initializer for a object of type
+ * &typedef psa_custom_key_parameters_t.
+ */
+#define PSA_CUSTOM_KEY_PARAMETERS_INIT ((psa_custom_key_parameters_t){ 0 })
+
 static inline void psa_set_key_id(psa_key_attributes_t *attributes,
 				  psa_key_id_t key)
 {
@@ -212,6 +223,40 @@ static inline void psa_set_key_bits(psa_key_attributes_t *attributes,
 static inline size_t psa_get_key_bits(const psa_key_attributes_t *attributes)
 {
 	return attributes->bits;
+}
+
+/* To be defined */
+struct psa_pake_cipher_suite_s {
+	int dummy;
+};
+
+/**
+ * DOC: PSA_PAKE_CIPHER_SUITE_INIT
+ * This macro returns a suitable initializer for a PAKE cipher suite object of 
+ * type psa_pake_cipher_suite_t.
+ */
+#define PSA_PAKE_CIPHER_SUITE_INIT ((psa_pake_cipher_suite_t){ 0 })
+
+static inline struct psa_pake_cipher_suite_s psa_pake_cipher_suite_init(void)
+{
+	return PSA_PAKE_CIPHER_SUITE_INIT;
+}
+
+/* To be defined */
+struct psa_pake_operation_s {
+	int dummy;
+};
+
+/**
+ * DOC: PSA_PAKE_OPERATION_INIT
+ * This macro returns a suitable initializer for a PAKE operation object 
+ * of type psa_pake_operation_t.
+ */
+#define PSA_PAKE_OPERATION_INIT ((psa_pake_operation_t){ 0 })
+
+static inline struct psa_pake_operation_s psa_pake_operation_init(void)
+{
+	return PSA_PAKE_OPERATION_INIT;
 }
 
 #endif /* __PSA_CRYPTO_STRUCT_H__ */

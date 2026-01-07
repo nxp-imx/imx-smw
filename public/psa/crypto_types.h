@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022-2024 NXP
+ * Copyright 2022-2026 NXP
  */
 
 #ifndef __PSA_CRYPTO_TYPES_H__
@@ -16,9 +16,9 @@
 /**
  * DOC: Reference
  * Documentation:
- *	PSA Cryptography API v1.2.1
+ *	PSA Cryptography API v1.3.2
  * Link:
- *	https://arm-software.github.io/psa-api/crypto/1.2/about
+ *	https://arm-software.github.io/psa-api/crypto/1.3/about
  */
 
 /**
@@ -306,5 +306,30 @@ typedef uint16_t psa_key_type_t;
  * typedef psa_key_usage_t - Encoding of permitted usage on a key.
  */
 typedef uint32_t psa_key_usage_t;
+
+/**
+ * typedef psa_pake_primitive_t - Encoding of the primitive associated with the PAKE.
+ */
+typedef uint32_t psa_pake_primitive_t;
+
+/**
+ * typedef psa_pake_primitive_type_t - Encoding of the primitive associated with the PAKE.
+ */
+typedef uint8_t psa_pake_primitive_type_t;
+
+/**
+ * typedef psa_pake_family_t - Encoding of the family of the primitive associated with the PAKE.
+ */
+typedef uint8_t psa_pake_family_t;
+
+/**
+ * typedef psa_pake_role_t - Encoding of the application role in a PAKE algorithm.
+ */
+typedef uint8_t psa_pake_role_t;
+
+/**
+ * typedef psa_pake_step_t - Encoding of input and output steps for a PAKE algorithm.
+ */
+typedef uint8_t psa_pake_step_t;
 
 #endif /* __PSA_CRYPTO_TYPES_H__ */

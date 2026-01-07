@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2025 NXP
+ * Copyright 2022-2026 NXP
  */
 
 #include <inttypes.h>
@@ -1906,6 +1906,24 @@ __export psa_status_t psa_generate_key(const psa_key_attributes_t *attributes,
 	return psa_status;
 }
 
+__export psa_status_t
+/* Without this comment clang-format does not meet the checkpatch requirement. */
+psa_generate_key_custom(const psa_key_attributes_t *attributes,
+			const psa_custom_key_parameters_t *custom,
+			const uint8_t *custom_data, size_t custom_data_length,
+			psa_key_id_t *key)
+{
+	(void)attributes;
+	(void)custom;
+	(void)custom_data;
+	(void)custom_data_length;
+	(void)key;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	return PSA_ERROR_NOT_SUPPORTED;
+}
+
 __export psa_status_t psa_get_key_attributes(psa_key_id_t key,
 					     psa_key_attributes_t *attributes)
 {
@@ -2369,6 +2387,27 @@ psa_key_derivation_output_key(const psa_key_attributes_t *attributes,
 
 __export psa_status_t
 /* Without this comment clang-format does not meet the checkpatch requirement. */
+psa_key_derivation_output_key_custom(const psa_key_attributes_t *attributes,
+				     psa_key_derivation_operation_t *operation,
+				     const psa_custom_key_parameters_t *custom,
+				     const uint8_t *custom_data,
+				     size_t custom_data_length,
+				     psa_key_id_t *key)
+{
+	(void)attributes;
+	(void)operation;
+	(void)custom;
+	(void)custom_data;
+	(void)custom_data_length;
+	(void)key;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	return PSA_ERROR_NOT_SUPPORTED;
+}
+
+__export psa_status_t
+/* Without this comment clang-format does not meet the checkpatch requirement. */
 psa_key_derivation_set_capacity(psa_key_derivation_operation_t *operation,
 				size_t capacity)
 {
@@ -2468,4 +2507,42 @@ __export void psa_reset_key_attributes(psa_key_attributes_t *attributes)
 	*attributes = PSA_KEY_ATTRIBUTES_INIT;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+}
+
+__export psa_status_t psa_encapsulate(psa_key_id_t key, psa_algorithm_t alg,
+				      const psa_key_attributes_t *attributes,
+				      psa_key_id_t *output_key,
+				      uint8_t *ciphertext,
+				      size_t ciphertext_size,
+				      size_t *ciphertext_length)
+{
+	(void)key;
+	(void)alg;
+	(void)attributes;
+	(void)output_key;
+	(void)ciphertext;
+	(void)ciphertext_size;
+	(void)ciphertext_length;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	return PSA_ERROR_NOT_SUPPORTED;
+}
+
+__export psa_status_t psa_decapsulate(psa_key_id_t key, psa_algorithm_t alg,
+				      const uint8_t *ciphertext,
+				      size_t ciphertext_length,
+				      const psa_key_attributes_t *attributes,
+				      psa_key_id_t *output_key)
+{
+	(void)key;
+	(void)alg;
+	(void)ciphertext;
+	(void)ciphertext_length;
+	(void)attributes;
+	(void)output_key;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	return PSA_ERROR_NOT_SUPPORTED;
 }

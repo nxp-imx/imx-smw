@@ -5,6 +5,7 @@ VERSION=1;
     /* No Start/Stop method specified. Default is 1. */
     [SECURITY_OPERATION]
         GENERATE_KEY;
+        KEY_TYPE_VALUES=AES:DES:DES3:SM4:BRAINPOOL_R1:SECP_R1:HMAC:RSA:ED25519;
     [SECURITY_OPERATION]
         DERIVE_KEY;
         OP_TYPE_VALUES=HKDF:ECDH;

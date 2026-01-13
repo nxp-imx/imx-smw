@@ -42,4 +42,23 @@ uint32_t handle_startup(tcti_smw_context_t *ctx, uint16_t tag,
  */
 uint32_t handle_shutdown(tcti_smw_context_t *ctx, uint16_t tag,
 			 const uint8_t *cmd, size_t cmd_size);
+
+/**
+ * handle_hash() - Process TPM2_Hash command.
+ * @ctx:      Pointer to the SMW TCTI context structure.
+ * @tag:      TPM structure tag from the command header.
+ * @cmd:      Pointer to the command buffer containing the full TPM command.
+ * @cmd_size: Size of the command buffer in bytes.
+ *
+ * This function handles the TPM2_Hash command which computes a hash digest
+ * of the provided data. It unmarshals the input parameters (data buffer,
+ * hash algorithm, and hierarchy), calls the SMW hash API to perform the
+ * actual hash computation, and builds a TPM response containing the hash
+ * digest and a validation ticket. Supports SHA1, SHA256, and SHA384 algorithms.
+ *
+ * Return:
+ * uint32_t value indicating success or the corresponding error code.
+ */
+uint32_t handle_hash(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
+		     size_t cmd_size);
 #endif /* __COMMANDS_H__ */

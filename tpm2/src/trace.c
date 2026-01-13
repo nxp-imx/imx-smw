@@ -57,3 +57,13 @@ end:
 exit:
 	va_end(args);
 }
+
+void print_buffer_hex(const uint8_t *buf, size_t len)
+{
+	size_t i = 0;
+
+	DBG_TRACE("Buffer (%zu bytes): ", len);
+	for (; i < len; i++)
+		DBG_TRACE("%02X ", buf[i]);
+	DBG_TRACE("\n");
+}

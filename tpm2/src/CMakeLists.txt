@@ -12,3 +12,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 	./include
         ${TSS2_INCLUDE_DIRS}
 	${CMAKE_SOURCE_DIR}/inc)
+
+add_subdirectory(utils)
+add_subdirectory(commands)

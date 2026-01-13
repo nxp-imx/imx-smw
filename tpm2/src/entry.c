@@ -94,6 +94,9 @@ static TSS2_RC tcti_smw_transmit(TSS2_TCTI_CONTEXT *tcti_ctx, size_t size,
 	case TPM2_CC_Shutdown:
 		rc = handle_shutdown(tcti_smwtpm, header.tag, cmd, header.size);
 		break;
+	case TPM2_CC_Hash:
+		rc = handle_hash(tcti_smwtpm, header.tag, cmd, header.size);
+		break;
 	default:
 		/* Unsupported command */
 		DBG_TRACE("Unsupported TPM command: 0x%x", header.code);
@@ -210,16 +213,28 @@ __export TSS2_RC Tss2_Tcti_Smw_Init(TSS2_TCTI_CONTEXT *tcti_ctx, size_t *size,
 				    const char *conf)
 {
 	(void)conf;
+	enum smw_status_code status = SMW_STATUS_OK;
+	tcti_smw_context_t *smw = (tcti_smw_context_t *)tcti_ctx;
+	tcti_context_t *tcti_common = tcti_smw_down_cast(smw);
+
 	if (!tcti_ctx) {
 		*size = sizeof(tcti_smw_context_t);
 		return TSS2_RC_SUCCESS;
 	}
 
 	memset(tcti_ctx, 0, sizeof(tcti_smw_context_t));
-	tcti_smw_context_t *smw = (tcti_smw_context_t *)tcti_ctx;
-	tcti_context_t *tcti_common = tcti_smw_down_cast(smw);
 
 	tcti_smw_init_context_data(tcti_common);
+
+	/*
+	 * 1. Init SMW middleware
+	 * This function will read /etc/opt/smw.conf and load ELE
+	 */
+	status = smw_osal_lib_init();
+	if (status != SMW_STATUS_OK) {
+		DBG_TRACE("Error: Impossible to initialize SMW: %d\n", status);
+		return smw_rc_to_tcti_rc(status);
+	}
 
 	smw->initialized = 1;
 

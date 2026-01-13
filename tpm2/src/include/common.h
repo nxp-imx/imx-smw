@@ -105,6 +105,10 @@ typedef struct {
 typedef struct {
 	tcti_context_t common; /* must be first */
 	int initialized;
+
+	/* last response buffer (Transmit/Receive) */
+	uint8_t *resp_buf;
+	size_t resp_size;
 } tcti_smw_context_t;
 
 /**

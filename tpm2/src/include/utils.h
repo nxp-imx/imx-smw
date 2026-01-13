@@ -11,6 +11,37 @@
 #include "common.h"
 
 /**
+ * free_resp() - Free the response buffer in the SMW TCTI context.
+ * @ctx: Pointer to the SMW TCTI context structure.
+ *
+ * This function releases the memory allocated for the response buffer
+ * and resets the response size to zero. It safely handles NULL context
+ * pointers.
+ *
+ * Return:
+ * None.
+ */
+void free_resp(tcti_smw_context_t *ctx);
+
+/**
+ * build_rc_response() - Build a TPM response with the specified return code.
+ * @ctx:       Pointer to the SMW TCTI context structure.
+ * @resp_size: Total size of the response including header.
+ * @tag:       TPM structure tag for the response.
+ * @rc:        TPM return code to include in the response.
+ *
+ * This function constructs a TPM response buffer with the provided parameters.
+ * It allocates memory for the response, builds the TPM header with the given
+ * tag and return code, and marshals it into the response buffer. Any previous
+ * response buffer is freed before creating the new one.
+ *
+ * Return:
+ * uint32_t value indicating success or the corresponding error.
+ */
+uint32_t build_rc_response(tcti_smw_context_t *ctx, uint32_t resp_size,
+			   uint16_t tag, TPM2_RC rc);
+
+/**
  * header_unmarshal() - Parse the first 10 bytes of a buffer into a header structure.
  * @buf:    Pointer to the source buffer containing the raw TPM header.
  * @header: Pointer to the &tpm_smw_header_t structure to be populated.

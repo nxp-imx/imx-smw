@@ -6,12 +6,10 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include <tss2/tss2_mu.h>
 
 #include "common.h"
-#include "trace.h"
 
 uint32_t tcti_common_transmit_checks(tcti_context_t *tcti_common,
 				     const uint8_t *command_buffer,

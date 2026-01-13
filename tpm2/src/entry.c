@@ -5,12 +5,16 @@
 
 #include <string.h>
 
+#include "smw_crypto.h"
+#include "smw_osal.h"
 #include "tcti_smw.h"
 
 #include "compiler.h"
 
 #include "common.h"
 #include "trace.h"
+#include "commands.h"
+#include "utils.h"
 
 /* tcti_smw_down_cast() - Down-cast SMW TCTI context to common context.
  * @tcti_smw: Pointer to the SMW TCTI context structure.
@@ -30,23 +34,120 @@ static tcti_context_t *tcti_smw_down_cast(tcti_smw_context_t *tcti_smw)
 	return &tcti_smw->common;
 }
 
-static uint32_t tcti_smw_transmit(TSS2_TCTI_CONTEXT *tcti_ctx, size_t size,
-				  const uint8_t *cmd)
+/**
+ * tcti_smw_context_cast() - Up-cast opaque TCTI context to SMW TCTI context.
+ * @tcti_ctx: Pointer to the opaque TSS2_TCTI_CONTEXT structure.
+ *
+ * This function performs an up-cast operation from the opaque TSS2_TCTI_CONTEXT
+ * type to the SMW-specific TCTI context structure. It allows access to the
+ * SMW-specific fields and functionality.
+ *
+ * Return:
+ * Pointer to the tcti_smw_context_t structure, or NULL if tcti_ctx is NULL.
+ */
+static tcti_smw_context_t *
+tcti_smw_context_cast(TSS2_TCTI_CONTEXT *
+			      /*Without this comment clang-format does */
+			      /*not meet the checkpatch requirement. */
+			      tcti_ctx)
 {
-	(void)tcti_ctx;
-	(void)size;
-	(void)cmd;
-	return TSS2_TCTI_RC_NOT_IMPLEMENTED;
+	if (!tcti_ctx)
+		return NULL;
+
+	return (tcti_smw_context_t *)tcti_ctx;
+}
+
+static TSS2_RC tcti_smw_transmit(TSS2_TCTI_CONTEXT *tcti_ctx, size_t size,
+				 const uint8_t *cmd)
+{
+	TSS2_RC rc = TSS2_TCTI_RC_GENERAL_FAILURE;
+	tpm_smw_header_t header = { 0 };
+	tcti_smw_context_t *tcti_smwtpm = tcti_smw_context_cast(tcti_ctx);
+	tcti_context_t *tcti_common = tcti_smw_down_cast(tcti_smwtpm);
+
+	rc = tcti_common_transmit_checks(tcti_common, cmd, SMW_TCTI_MAGIC);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	rc = header_unmarshal(cmd, &header);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	if (header.size != size) {
+		DBG_TRACE("Buffer size parameter: %zu\n", size);
+		DBG_TRACE("TPM2 command header size field: %d\n", header.size);
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	DBG_TRACE("Sending command with TPM_CC 0x%x and size %d\n", header.code,
+		  header.size);
+
+	DBG_TRACE("Command\n");
+	DBG_BUF_HEX(cmd, size);
+
+	tcti_common->state = TCTI_SMW_STATE_RECEIVE;
+	switch (header.code) {
+	case TPM2_CC_Startup:
+		rc = handle_startup(tcti_smwtpm, header.tag, cmd, header.size);
+		break;
+	case TPM2_CC_Shutdown:
+		rc = handle_shutdown(tcti_smwtpm, header.tag, cmd, header.size);
+		break;
+	default:
+		/* Unsupported command */
+		DBG_TRACE("Unsupported TPM command: 0x%x", header.code);
+		rc = build_rc_response(tcti_smwtpm, TPM_HEADER_SIZE, header.tag,
+				       TPM2_RC_COMMAND_CODE);
+		goto end;
+	}
+
+end:
+	return rc;
 }
 
 static uint32_t tcti_smw_receive(TSS2_TCTI_CONTEXT *tcti_ctx, size_t *size,
 				 uint8_t *response, int32_t timeout)
 {
-	(void)tcti_ctx;
-	(void)size;
-	(void)response;
 	(void)timeout;
-	return TSS2_TCTI_RC_NOT_IMPLEMENTED;
+	TSS2_RC rc = TSS2_TCTI_RC_GENERAL_FAILURE;
+	tcti_smw_context_t *tcti_smwtpm = tcti_smw_context_cast(tcti_ctx);
+	tcti_context_t *tcti_common = tcti_smw_down_cast(tcti_smwtpm);
+
+	rc = tcti_common_receive_checks(tcti_common, size, SMW_TCTI_MAGIC);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	if (!response) {
+		*size = tcti_smwtpm->resp_size;
+		goto end;
+	}
+
+	if (!tcti_smwtpm->resp_buf) {
+		DBG_TRACE("Response buffer is NULL\n");
+		rc = TSS2_TCTI_RC_NO_CONNECTION;
+		goto end;
+	}
+
+	if (*size < tcti_smwtpm->resp_size) {
+		*size = tcti_smwtpm->resp_size;
+		rc = TSS2_TCTI_RC_INSUFFICIENT_BUFFER;
+		goto end;
+	}
+
+	memcpy(response, tcti_smwtpm->resp_buf, tcti_smwtpm->resp_size);
+
+	*size = tcti_smwtpm->resp_size;
+
+	/* after read, free response */
+	free_resp(tcti_smwtpm);
+
+	DBG_TRACE("Response\n");
+	DBG_BUF_HEX(response, *size);
+	tcti_common->state = TCTI_SMW_STATE_TRANSMIT;
+
+end:
+	return rc;
 }
 
 static void tcti_smw_finalize(TSS2_TCTI_CONTEXT *tcti_ctx)

@@ -16,3 +16,4 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 add_subdirectory(utils)
 add_subdirectory(commands)
 add_subdirectory(crypto)
+add_subdirectory(session)

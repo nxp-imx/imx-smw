@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2025 NXP
+ * Copyright 2021-2026 NXP
  */
 
 #include <stdlib.h>
@@ -8,8 +8,6 @@
 
 #include <smw_keymgr.h>
 #include <smw/names.h>
-#include <smw/crypto/op_context.h>
-#include <smw/tls.h>
 
 #include "util.h"
 #include "util_key.h"

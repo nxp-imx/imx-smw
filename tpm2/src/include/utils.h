@@ -9,6 +9,7 @@
 #include <tss2/tss2_mu.h>
 
 #include "common.h"
+#include "session.h"
 
 /**
  * free_resp() - Free the response buffer in the SMW TCTI context.
@@ -100,4 +101,22 @@ uint32_t param_su_unmarshal(const uint8_t *buf, size_t buf_size,
  * uint32_t value corresponding to the input TSS2 TCTI return code.
  */
 uint32_t tcti_rc_to_tpm2_rc(TSS2_RC tcti_rc);
+
+/**
+ * start_auth_session_unmarshal() - Parse TPM2_StartAuthSession command parameters.
+ * @cmd:      Pointer to the command buffer containing the TPM command.
+ * @cmd_size: Size of the command buffer in bytes.
+ * @params:   Pointer to the structure to be populated with parsed parameters.
+ *
+ * This function unmarshals the TPM2_StartAuthSession command parameters from
+ * the command buffer. It extracts the tpmKey handle, bind entity, caller nonce,
+ * encrypted salt, session type, symmetric algorithm definition, and auth hash
+ * algorithm.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful parsing, or the corresponding error code on failure.
+ */
+uint32_t start_auth_session_unmarshal(const uint8_t *cmd, size_t cmd_size,
+				      start_auth_session_params_t *params);
+
 #endif /* __UTILS_H__ */

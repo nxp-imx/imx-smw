@@ -6,6 +6,7 @@
 #include <tss2/tss2_mu.h>
 
 #include "common.h"
+#include "session.h"
 #include "trace.h"
 
 uint32_t header_unmarshal(const uint8_t *buf, tpm_smw_header_t *header)
@@ -94,6 +95,67 @@ uint32_t param_su_unmarshal(const uint8_t *buf, size_t buf_size,
 		DBG_TRACE("Failed to unmarshal Type");
 		goto end;
 	}
+
+end:
+	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
+	return rc;
+}
+
+uint32_t start_auth_session_unmarshal(const uint8_t *cmd, size_t cmd_size,
+				      start_auth_session_params_t *params)
+{
+	TSS2_RC rc = TSS2_TCTI_RC_GENERAL_FAILURE;
+	size_t offset = TPM_HEADER_SIZE;
+
+	/* 1. tpmKey (4 octets) */
+	rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset, &params->tpmKey);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* 2. bind (4 octets) */
+	rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset, &params->bind);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* 3. nonceCaller (TPM2B_NONCE) */
+	rc = Tss2_MU_TPM2B_NONCE_Unmarshal(cmd, cmd_size, &offset,
+					   &params->nonceCaller);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* 4. encryptedSalt (TPM2B_ENCRYPTED_SECRET) */
+	rc = Tss2_MU_TPM2B_ENCRYPTED_SECRET_Unmarshal(cmd, cmd_size, &offset,
+						      &params->encryptedSalt);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* 5. sessionType (1 octet) */
+	rc = Tss2_MU_UINT8_Unmarshal(cmd, cmd_size, &offset,
+				     &params->session_type);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* 6. symmetric (TPMT_SYM_DEF) */
+	rc = Tss2_MU_TPMT_SYM_DEF_Unmarshal(cmd, cmd_size, &offset,
+					    &params->symmetric);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* 7. authHash (2 octets) */
+	rc = Tss2_MU_UINT16_Unmarshal(cmd, cmd_size, &offset,
+				      &params->auth_hash);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	DBG_TRACE("StartAuthSession parameters:\n");
+	DBG_TRACE("  tpmKey: 0x%08X\n", params->tpmKey);
+	DBG_TRACE("  bind: 0x%08X\n", params->bind);
+	DBG_TRACE("  nonceCaller size: %d\n", params->nonceCaller.size);
+	DBG_TRACE("  encryptedSalt size: %d\n", params->encryptedSalt.size);
+	DBG_TRACE("  sessionType: 0x%02X\n", params->session_type);
+	DBG_TRACE("  symmetric.algorithm: 0x%04X\n",
+		  params->symmetric.algorithm);
+	DBG_TRACE("  authHash: 0x%04X\n", params->auth_hash);
 
 end:
 	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);

@@ -13,7 +13,6 @@
 #include "smw_osal.h"
 #include "smw/attr.h"
 #include "smw/names.h"
-#include "smw/tls.h"
 #include "smw/object.h"
 
 #include "attributes.h"

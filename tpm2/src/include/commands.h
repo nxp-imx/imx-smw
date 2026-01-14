@@ -61,4 +61,24 @@ uint32_t handle_shutdown(tcti_smw_context_t *ctx, uint16_t tag,
  */
 uint32_t handle_hash(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 		     size_t cmd_size);
+
+/**
+ * handle_startauthsession() - Process TPM2_StartAuthSession command.
+ * @ctx:      Pointer to the SMW TCTI context structure.
+ * @tag:      TPM structure tag from the command header.
+ * @cmd:      Pointer to the command buffer containing the full TPM command.
+ * @cmd_size: Size of the command buffer in bytes.
+ *
+ * This function handles the TPM2_StartAuthSession command which establishes
+ * an authorization session with the TPM. It unmarshals the session parameters,
+ * generates a TPM nonce based on the specified hash algorithm size, allocates
+ * a new session with a unique handle, and builds the response containing the
+ * session handle and TPM nonce. The function ensures the TPM is initialized
+ * before creating sessions.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful session creation, or the corresponding error code.
+ */
+uint32_t handle_startauthsession(tcti_smw_context_t *ctx, uint16_t tag,
+				 const uint8_t *cmd, size_t cmd_size);
 #endif /* __COMMANDS_H__ */

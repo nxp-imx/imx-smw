@@ -101,6 +101,10 @@ static TSS2_RC tcti_smw_transmit(TSS2_TCTI_CONTEXT *tcti_ctx, size_t size,
 		rc = handle_startauthsession(tcti_smwtpm, header.tag, cmd,
 					     header.size);
 		break;
+	case TPM2_CC_ContextSave:
+		rc = handle_contextsave(tcti_smwtpm, header.tag, cmd,
+					header.size);
+		break;
 	default:
 		/* Unsupported command */
 		DBG_TRACE("Unsupported TPM command: 0x%x", header.code);

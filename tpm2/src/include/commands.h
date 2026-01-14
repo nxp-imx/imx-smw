@@ -81,4 +81,25 @@ uint32_t handle_hash(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
  */
 uint32_t handle_startauthsession(tcti_smw_context_t *ctx, uint16_t tag,
 				 const uint8_t *cmd, size_t cmd_size);
+
+/**
+ * handle_contextsave() - Process TPM2_ContextSave command.
+ * @ctx:      Pointer to the SMW TCTI context structure.
+ * @tag:      TPM structure tag from the command header.
+ * @cmd:      Pointer to the command buffer containing the full TPM command.
+ * @cmd_size: Size of the command buffer in bytes.
+ *
+ * This function handles the TPM2_ContextSave command which saves the context
+ * of a session or transient object for later restoration. It validates that
+ * the handle can be saved (sessions or transient objects only), creates a
+ * TPMS_CONTEXT structure with appropriate hierarchy and sequence number, and
+ * builds a context blob containing the necessary information to restore the
+ * context later. The function returns a marshaled TPMS_CONTEXT structure
+ * in the response.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful context save, or the corresponding error code.
+ */
+uint32_t handle_contextsave(tcti_smw_context_t *ctx, uint16_t tag,
+			    const uint8_t *cmd, size_t cmd_size);
 #endif /* __COMMANDS_H__ */

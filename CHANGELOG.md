@@ -62,6 +62,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix function smw_keymgr_free_keys_ptr_array(), checks input pointer parameter.
 * Fix cmake scripts to ensure proper execution.
 * Remove cmake CPM0144 warning when building the library.
+* Rework the SMW APIs documentation including the OSAL part. Split the public
+  headers and organize them in subdirectories for better clarity.
 
 ##### 2. Subsystems
 
@@ -113,6 +115,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * If key generation is unsuccessful, skip finding the keys in find_ext.c
 * Add object label attribute update tests to validate label and user id field modifications.
 * Add profile get attribute test.
+* Remove include header not needed.
 
 ---
 ### <a id ="rel_5_3"></a></br>**Release 5.3**

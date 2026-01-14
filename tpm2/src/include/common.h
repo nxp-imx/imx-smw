@@ -12,6 +12,8 @@
 
 #define TCTI_VERSION 0x2
 
+#define SMW_SESSION_KEY_SIZE 64
+
 /*
  * TPM_HEADER_SIZE is counting the significant bytes used to encode command's
  * header in the buffer. It's not the size of the struct tpm_smw_header_t. Decoding
@@ -21,6 +23,39 @@
 #define TPM_HEADER_SIZE (sizeof(uint16_t) + sizeof(uint32_t) + sizeof(uint32_t))
 
 #define SMW_TCTI_MAGIC 0x534D5754435449ULL /* SMWTCTI */
+
+#define SMW_MAX_SESSIONS 8
+
+/**
+ * struct tcti_smw_session_t - TPM session context structure.
+ * @type:             Session type (TPM2_SE_HMAC, TPM2_SE_POLICY, or TPM2_SE_TRIAL).
+ * @auth_hash:        Hash algorithm used for session authentication computations.
+ * @handle:           Unique session handle identifier.
+ * @active:           Flag indicating whether the session is currently active.
+ * @nonce:            TPM-generated nonce for replay protection and session freshness.
+ * @attrs:            Session attributes controlling session behavior (continue, decrypt, etc.).
+ * @auth:             Authorization value associated with the session.
+ * @session_key:      Derived session key used for HMAC calculations and parameter encryption.
+ * @session_key_size: Size of the session key in bytes.
+ *
+ * This structure represents an active TPM authorization session managed by the
+ * SMW TCTI layer. It maintains all necessary state for session-based authorization
+ * including cryptographic material (nonces, session keys), session configuration
+ * (type, hash algorithm, attributes), and lifecycle management (handle, active flag).
+ */
+typedef struct {
+	TPM2_SE type;
+	TPMI_ALG_HASH auth_hash;
+	uint32_t handle;
+	bool active;
+
+	TPM2B_NONCE nonce;
+	TPMA_SESSION attrs;
+	TPM2B_AUTH auth;
+
+	uint8_t session_key[SMW_SESSION_KEY_SIZE];
+	uint16_t session_key_size;
+} tcti_smw_session_t;
 
 /**
  * struct tpm_smw_header_t - TPM command/response header structure.
@@ -94,13 +129,18 @@ typedef struct {
 
 /**
  * struct tcti_smw_context_t - Context structure for SMW TCTI implementation.
- * @common:         Common TCTI context. Must be the first field.
- * @initialized:    Indicates whether the TCTI context has been initialized.
+ * @common:          Common TCTI context. Must be the first field.
+ * @initialized:     Indicates whether the TCTI context has been initialized.
+ * @resp_buf:        Pointer to the last response buffer for Transmit/Receive operations.
+ * @resp_size:       Size of the response buffer in bytes.
+ * @sessions:        Array of active TPM sessions (max SMW_MAX_SESSIONS).
+ * @next_session_id: Counter for generating unique session identifiers.
+ * @ctx_sequence:    Sequence number for context save/load operations.
  *
  * This typedef represents the TCTI context used by the SMW TCTI layer.
  * It embeds the common TCTI context as the first field to maintain
  * compatibility with generic TCTI operations, and it tracks initialization
- * state and the TPM internal state.
+ * state, response buffers, active sessions, and context management state.
  */
 typedef struct {
 	tcti_context_t common; /* must be first */
@@ -109,6 +149,11 @@ typedef struct {
 	/* last response buffer (Transmit/Receive) */
 	uint8_t *resp_buf;
 	size_t resp_size;
+
+	/* sessions */
+	tcti_smw_session_t sessions[SMW_MAX_SESSIONS];
+	uint8_t next_session_id;
+	uint8_t ctx_sequence;
 } tcti_smw_context_t;
 
 /**

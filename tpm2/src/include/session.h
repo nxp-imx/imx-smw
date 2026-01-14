@@ -8,7 +8,11 @@
 
 #include <tss2/tss2_mu.h>
 
+#include "common.h"
+
 #define SMW_SESSION_HANDLE_BASE 0x02000000 /* TPM spec: HMAC/Policy sessions */
+
+#define SMW_SESSION_METADATA_SIZE 20
 
 /**
  * struct start_auth_session_params_t - Parameters for TPM2_StartAuthSession command.
@@ -38,5 +42,62 @@ typedef struct {
 	TPMT_SYM_DEF symmetric;
 	TPMI_ALG_HASH auth_hash;
 } start_auth_session_params_t;
+
+/**
+ * struct smw_session_blob_t - Session data structure for SMW storage.
+ * @handle:        Unique session handle identifier.
+ * @type:          Session type (TPM2_SE_HMAC, TPM2_SE_POLICY, or TPM2_SE_TRIAL).
+ * @auth_hash:     Hash algorithm used for session authentication computations.
+ * @metadata:      Additional session-specific metadata or context information.
+ * @metadata_size: Size of valid data in the metadata buffer.
+ *
+ * This structure represents the session information that can be stored and
+ * retrieved from SMW's secure storage. It contains the essential session
+ * parameters needed to maintain session state across operations.
+ */
+typedef struct {
+	uint32_t handle;
+	TPM2_SE type;
+	TPMI_ALG_HASH auth_hash;
+	uint8_t metadata[SMW_SESSION_METADATA_SIZE];
+	size_t metadata_size;
+} smw_session_blob_t;
+
+/**
+ * smw_session_alloc() - Allocate and initialize a new TPM session.
+ * @ctx:    Pointer to the SMW TCTI context structure.
+ * @handle: Pointer to store the allocated session handle.
+ * @nonce:  TPM-generated nonce for the session.
+ * @params: Pointer to the session initialization parameters.
+ *
+ * This function allocates a new session slot from the session pool, assigns
+ * a unique handle, and initializes the session with the provided parameters.
+ * It configures the session type, authentication hash algorithm, and nonce.
+ * For unbound sessions without salt encryption (tpmKey and bind both NULL),
+ * it sets an empty session key.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful allocation, TPM2_RC_SESSION_MEMORY if no
+ * slots available, TSS2_TCTI_RC_NOT_IMPLEMENTED for unsupported configurations.
+ */
+uint32_t smw_session_alloc(tcti_smw_context_t *ctx, uint32_t *handle,
+			   TPM2B_NONCE nonce,
+			   start_auth_session_params_t *params);
+
+/**
+ * find_session_by_handle() - Find an active session by its handle.
+ * @ctx:    Pointer to the SMW TCTI context structure.
+ * @handle: Session handle to search for.
+ *
+ * This function searches through the session array in the TCTI context
+ * to find an active session matching the specified handle. It iterates
+ * through all possible session slots and returns the first active session
+ * with a matching handle.
+ *
+ * Return:
+ * Pointer to the matching tcti_smw_session_t structure if found, NULL otherwise.
+ */
+tcti_smw_session_t *find_session_by_handle(tcti_smw_context_t *ctx,
+					   uint32_t handle);
 
 #endif /* __SESSION_H__ */

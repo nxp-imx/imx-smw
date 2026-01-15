@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2025 NXP
+ * Copyright 2025-2026 NXP
  */
 
 #include <stdlib.h>
@@ -14,6 +14,7 @@
 #include "os_mutex.h"
 #include "util_session.h"
 #include "util.h"
+#include "util_lib.h"
 
 /*
  * Max supported EC Edwards private key size is 448 bits
@@ -67,6 +68,15 @@ static int object_edwards_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 	};
 
 	SUBTEST_START();
+
+	/*
+	 * Plaintext token key import is not supported on ELE and SECO.
+	 * Only session key import is supported.
+	 */
+	if (!is_tee_subsystem() && token) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
@@ -187,7 +197,7 @@ static int object_edwards_key_private(CK_FUNCTION_LIST_PTR pfunc,
 	size_t ec_point_len = 0;
 	size_t security_size = 0;
 
-	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_EDDSA };
+	CK_MECHANISM_TYPE key_allowed_mech = { CKM_EDDSA };
 	CK_ATTRIBUTE keyTemplate[] = {
 		{ CKA_CLASS, &key_class, sizeof(key_class) },
 		{ CKA_KEY_TYPE, &key_type, sizeof(key_type) },
@@ -201,6 +211,16 @@ static int object_edwards_key_private(CK_FUNCTION_LIST_PTR pfunc,
 	};
 
 	SUBTEST_START();
+
+	/*
+	 * Plaintext token key import is not supported on ELE and SECO.
+	 * Only session key import is supported.
+	 */
+	if ((!is_tee_subsystem() && token) ||
+	    (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech))) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
@@ -356,6 +376,11 @@ static int object_generate_edwards_keypair(CK_FUNCTION_LIST_PTR pfunc,
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
+
+	if (!util_lib_is_mech_supported(pfunc, 0, genmech.mechanism)) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	TEST_OUT("Login to R/W Session as User\n");
 	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
@@ -527,6 +552,11 @@ static int object_edwards_keypair_usage(CK_FUNCTION_LIST_PTR pfunc,
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
 
+	if (!util_lib_is_mech_supported(pfunc, 0, genmech.mechanism)) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
 	TEST_OUT("Login to R/W Session as User\n");
 	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
@@ -672,6 +702,12 @@ static int object_edwards_public_export(CK_FUNCTION_LIST_PTR pfunc)
 
 	/* Generate a key pair with SMW API */
 	smw_status = smw_generate_key(&genkey_args);
+	if (smw_status == SMW_STATUS_OPERATION_NOT_CONFIGURED ||
+	    smw_status == SMW_STATUS_OPERATION_NOT_SUPPORTED) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
 	if (smw_status != SMW_STATUS_OK &&
 	    smw_status != SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
 		TEST_OUT("Generate key pair failed\n");

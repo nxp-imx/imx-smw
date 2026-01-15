@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2025 NXP
+ * Copyright 2025-2026 NXP
  */
 #include <string.h>
 #include <smw/object.h>
@@ -1111,7 +1111,7 @@ void tests_pkcs11_find_ext(void *lib_hdl, CK_VOID_PTR pfunc)
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
 
-	if (generate_objects_key(pfunc) == TEST_FAIL)
+	if (generate_objects_key(pfunc) != TEST_PASS)
 		goto end;
 
 	TEST_OUT("Login to R/W Session as User\n");

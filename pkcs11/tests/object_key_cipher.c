@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2024 NXP
+ * Copyright 2021-2024, 2026 NXP
  */
 
 #include <stdlib.h>
@@ -31,6 +31,15 @@ static int object_cipher_key(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 	};
 
 	SUBTEST_START();
+
+	/*
+	 * Plaintext token key import is not supported on ELE and SECO.
+	 * Only session key import is supported.
+	 */
+	if (!is_tee_subsystem() && token) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
@@ -134,18 +143,21 @@ static int object_attribute_cipher_key(CK_FUNCTION_LIST_PTR pfunc)
 	CK_OBJECT_HANDLE hkey = CK_INVALID_HANDLE;
 	CK_OBJECT_CLASS key_class = CKO_SECRET_KEY;
 	CK_KEY_TYPE key_type = CKK_AES;
-	CK_BYTE key[32] = { 0 };
 	CK_BBOOL btrue = CK_TRUE;
 	CK_BBOOL bfalse = CK_FALSE;
 	CK_BBOOL bvalue = CK_FALSE;
 
+	CK_MECHANISM genmech = { .mechanism = CKM_AES_KEY_GEN };
+	CK_ULONG key_len = 32;
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_AES_ECB };
+
 	CK_ATTRIBUTE keyTemplate[] = {
-		{ CKA_CLASS, &key_class, sizeof(key_class) },
-		{ CKA_KEY_TYPE, &key_type, sizeof(key_type) },
-		{ CKA_VALUE, &key, sizeof(key) },
+		{ CKA_VALUE_LEN, &key_len, sizeof(key_len) },
 		{ CKA_ENCRYPT, &btrue, sizeof(btrue) },
 		{ CKA_DECRYPT, &btrue, sizeof(btrue) },
 		{ CKA_TOKEN, &btrue, sizeof(btrue) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 
 	CK_ATTRIBUTE getkeyAttr[] = {
@@ -172,12 +184,12 @@ static int object_attribute_cipher_key(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
-	TEST_OUT("Create Key Secret key\n");
-	ret = pfunc->C_CreateObject(sess, keyTemplate, ARRAY_SIZE(keyTemplate),
-				    &hkey);
-	if (CHECK_CK_RV(CKR_OK, "C_CreateObject"))
+	TEST_OUT("Generate Cipher key\n");
+	ret = pfunc->C_GenerateKey(sess, &genmech, keyTemplate,
+				   ARRAY_SIZE(keyTemplate), &hkey);
+	if (CHECK_CK_RV(CKR_OK, "C_GenerateKey"))
 		goto end;
-	TEST_OUT("Key secret created #%lu\n", hkey);
+	TEST_OUT("Key secret generated #%lu\n", hkey);
 
 	TEST_OUT("Get Key value - Return SENSITIVE error\n");
 	ret = pfunc->C_GetAttributeValue(sess, hkey, getkeyAttr,
@@ -187,7 +199,7 @@ static int object_attribute_cipher_key(CK_FUNCTION_LIST_PTR pfunc)
 
 	if (CHECK_EXPECTED(getkeyAttr[2].ulValueLen ==
 				   CK_UNAVAILABLE_INFORMATION,
-			   "Got Secret key length=%lu exptected %#lx",
+			   "Got Secret key length=%lu expected %#lx",
 			   getkeyAttr[2].ulValueLen,
 			   CK_UNAVAILABLE_INFORMATION))
 		goto end;
@@ -251,14 +263,16 @@ static int object_attribute_cipher_key(CK_FUNCTION_LIST_PTR pfunc)
 			   CK_TRUE))
 		goto end;
 
-	TEST_OUT("Key Destroy #%lu\n", hkey);
-	ret = pfunc->C_DestroyObject(sess, hkey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
 	status = TEST_PASS;
 
 end:
+	if (hkey) {
+		TEST_OUT("Key Destroy #%lu\n", hkey);
+		ret = pfunc->C_DestroyObject(sess, hkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			status = TEST_FAIL;
+	}
+
 	for (idx = 0; idx < ARRAY_SIZE(getkeyAttr); idx++) {
 		if (getkeyAttr[idx].pValue)
 			free(getkeyAttr[idx].pValue);

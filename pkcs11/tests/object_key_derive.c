@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024-2025 NXP
+ * Copyright 2024-2026 NXP
  */
 
 #include <stdlib.h>
@@ -320,7 +320,6 @@ static int object_derive_key_hkdf_bad_attr(CK_FUNCTION_LIST_PTR pfunc)
 		{ CKA_VALUE, &base_key_buffer, ARRAY_SIZE(base_key_buffer) },
 		{ CKA_ALLOWED_MECHANISMS, &base_key_allowed_mech,
 		  sizeof(base_key_allowed_mech) },
-		{ CKA_TOKEN, &ck_true, sizeof(CK_BBOOL) },
 	};
 
 	CK_MECHANISM derive_mech = { 0 };

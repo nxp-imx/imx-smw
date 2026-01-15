@@ -64,6 +64,15 @@ static int object_montgomery_key_public(CK_FUNCTION_LIST_PTR pfunc,
 
 	SUBTEST_START();
 
+	/*
+	 * Plaintext token key import is not supported on ELE and SECO.
+	 * Only session key import is supported.
+	 */
+	if (!is_tee_subsystem() && token) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
 
@@ -197,6 +206,15 @@ static int object_montgomery_key_private(CK_FUNCTION_LIST_PTR pfunc,
 	};
 
 	SUBTEST_START();
+
+	/*
+	 * Plaintext token key import is not supported on ELE and SECO.
+	 * Only session key import is supported.
+	 */
+	if (!is_tee_subsystem() && token) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;

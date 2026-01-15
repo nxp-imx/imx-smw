@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2025 NXP
+ * Copyright 2021-2026 NXP
  */
 
 #include <stdlib.h>
@@ -259,6 +259,15 @@ static int create_cipher_key(CK_FUNCTION_LIST_PTR pfunc,
 	SUBTEST_START();
 
 	*nb_key_created = 0;
+
+	/*
+	 * Plaintext token key import is not supported on ELE and SECO.
+	 * Only session key import is supported.
+	 */
+	if (!is_tee_subsystem() && token) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	TEST_OUT("Login to R/W Session as User\n");
 	ret = pfunc->C_Login(*sess, CKU_USER, NULL_PTR, 0);

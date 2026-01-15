@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2025 NXP
+ * Copyright 2025-2026 NXP
  */
 
 #include <stdlib.h>
@@ -67,6 +67,11 @@ static int generate_cipher_key_performance(CK_FUNCTION_LIST_PTR pfunc)
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
 
+	if (!util_lib_is_mech_supported(pfunc, 0, genmech.mechanism)) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
 	TEST_OUT("Login to R/W Session as User\n");
 	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
@@ -85,6 +90,8 @@ static int generate_cipher_key_performance(CK_FUNCTION_LIST_PTR pfunc)
 	ret = pfunc->C_DestroyObject(sess, hkey[0]);
 	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
 		goto end;
+
+	hkey[0] = CK_INVALID_HANDLE;
 
 	/* Performance test */
 	TEST_OUT("Performance test run\n");
@@ -129,14 +136,6 @@ static int generate_cipher_key_performance(CK_FUNCTION_LIST_PTR pfunc)
 		key_count++;
 	}
 
-	for (i = 0; i < GENERATE_KEY_COUNT; i++) {
-		if (hkey[i] != CK_INVALID_HANDLE) {
-			ret = pfunc->C_DestroyObject(sess, hkey[i]);
-			if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-				goto end;
-		}
-	}
-
 	average = average / key_count;
 	TEST_OUT("Average time %lld\n", average);
 	deviation = deviation / key_count - average * average;
@@ -156,6 +155,14 @@ static int generate_cipher_key_performance(CK_FUNCTION_LIST_PTR pfunc)
 	}
 
 end:
+	for (i = 0; i < GENERATE_KEY_COUNT; i++) {
+		if (hkey[i] != CK_INVALID_HANDLE) {
+			ret = pfunc->C_DestroyObject(sess, hkey[i]);
+			if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+				status = TEST_FAIL;
+		}
+	}
+
 	util_close_session(pfunc, &sess);
 
 	SUBTEST_END(status);

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2025 NXP
+ * Copyright 2021-2026 NXP
  */
 
 #include <stdlib.h>
@@ -102,6 +102,15 @@ static int object_rsa_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 
 	SUBTEST_START();
 
+	/*
+	 * Plaintext token key import is not supported on ELE and SECO.
+	 * Only session key import is supported.
+	 */
+	if (!is_tee_subsystem() && token) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
 
@@ -165,6 +174,15 @@ static int object_rsa_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 	};
 
 	SUBTEST_START();
+
+	/*
+	 * Plaintext token key import is not supported on ELE and SECO.
+	 * Only session key import is supported.
+	 */
+	if (!is_tee_subsystem() && token) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;

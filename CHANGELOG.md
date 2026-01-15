@@ -76,6 +76,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Update U_ELE_Mac_007 test to validate HMAC generation using base 64 plaintext key buffer.
 * Add U_ELE_Cipher_003 tests to validate Cipher operation using plaintext key buffer.
 * Enable ELE AEAD one-shot tests on the i.MX943 platform.
+* As plaintext key import isn't supported by all subsystems, update the test
+  U_API_Object_002 to generate the key 3 instead of importing it.
 
 #### PKCS#11 Library
 
@@ -86,6 +88,14 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add EC Montgomery key generation tests
 * Add TLS 1.3 key exchange test with EC Montgomery key pair.
 * Update slot token test.
+* Skip plaintext token key import tests on ELE and SECO subsystems as they only
+  support session key import.
+* Update the test `object_attribute_cipher_key` to generate the key instead
+  of importing it to avoid plaintext token key import limitations.
+* Update mlist_ele with additional ELE-exclusive mechanisms and mark HKDF_DERIVE,
+  EC_EDWARDS_KEY_PAIR_GEN, and EDDSA as optional mechanisms.
+* Add mechanism support checks before performing the operations.
+* If key generation is unsuccessful, skip finding the keys in find_ext.c
 
 ---
 ### <a id ="rel_5_3"></a></br>**Release 5.3**

@@ -10,6 +10,7 @@
 
 #include <tss2/tss2_mu.h>
 #include "smw_crypto.h"
+#include "common.h"
 
 /**
  * map_hash_info() - Map hash algorithm information for TPM to SMW mapping.
@@ -27,4 +28,42 @@
  */
 uint32_t map_hash_info(TPMI_ALG_HASH hash_alg, uint16_t *digest_size,
 		       smw_hash_algo_t *smw_name);
+
+/**
+ * calculate_response_hmac - Calculate HMAC for TPM2 response authentication
+ *
+ * @session:         Active TPM2 session containing session key and nonces
+ * @responseCode:    TPM2 response code (RC) from command execution
+ * @commandCode:     TPM2 command code (CC) that was executed
+ * @parameters:      Response parameters buffer (marshaled)
+ * @parameters_size: Size of response parameters in bytes
+ * @nonceCaller:     Nonce provided by caller in the request
+ * @nonceCaller_size: Size of caller's nonce in bytes
+ * @hmac_out:        Output buffer for calculated HMAC (allocated by function)
+ * @hmac_size:       Output size of the calculated HMAC
+ *
+ * This function calculates the response HMAC according to TPM2 specification
+ * for authenticated sessions. It performs the following steps:
+ *
+ * 1. Computes rpHash = Hash(responseCode || commandCode || parameters)
+ * 2. Constructs HMAC message = rpHash || nonceTPM || nonceCaller || sessionAttributes
+ * 3. Calculates HMAC using the session key over the constructed message
+ *
+ * The caller is responsible for freeing the allocated @hmac_out buffer.
+ *
+ * Return: TSS2_RC_SUCCESS on success
+ *         TSS2_TCTI_RC_MEMORY if memory allocation fails
+ *         TSS2_TCTI_RC_GENERAL_FAILURE if hash or HMAC computation fails
+ *         Other TSS2_RC codes for marshaling errors
+ *
+ * Note: This function follows TPM 2.0 specification Part 1, Section 16
+ *       for HMAC session response authentication.
+ */
+uint32_t calculate_response_hmac(tcti_smw_session_t *session,
+				 TPM2_RC responseCode, TPM2_CC commandCode,
+				 const uint8_t *parameters,
+				 size_t parameters_size,
+				 const uint8_t *nonceCaller,
+				 size_t nonceCaller_size, uint8_t **hmac_out,
+				 uint16_t *hmac_size);
 #endif /* __CRYPTO_H__ */

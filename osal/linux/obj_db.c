@@ -460,21 +460,6 @@ static int sql_print_update(struct smw_osal_object *obj, char *sql,
 	smw_attr_attributes_t obj_attributes = 0;
 	static const char *update = "UPDATE %s SET ";
 
-	switch (descriptor->type) {
-	case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
-	case SMW_OBJECT_TYPE_NAME_PUBLIC_KEY:
-	case SMW_OBJECT_TYPE_NAME_SECRET_KEY:
-		obj_attributes = descriptor->key.attributes.attributes;
-		break;
-
-	case SMW_OBJECT_TYPE_NAME_DATA:
-		obj_attributes = descriptor->data.attributes.attributes;
-		break;
-
-	default:
-		break;
-	}
-
 	if (sql_print(sql, length, update, OBJECT_DB_TABLE_NAME))
 		goto end;
 
@@ -482,25 +467,106 @@ static int sql_print_update(struct smw_osal_object *obj, char *sql,
 	 * Update fields with value (filed=value)
 	 */
 
-	/* field: TAG_ATTRIBUTES */
-	if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_ATTRIBUTES,
-		      obj_attributes))
-		goto end;
+	/*
+	 * Update fields after object creation
+	 */
+	if (obj->obj_id_subsystem) {
+		switch (descriptor->type) {
+		case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
+		case SMW_OBJECT_TYPE_NAME_PUBLIC_KEY:
+		case SMW_OBJECT_TYPE_NAME_SECRET_KEY:
+			obj_attributes = descriptor->key.attributes.attributes;
+			break;
 
-	/* field: TAG_SUSYSTEM_NAME */
-	if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_SUBSYSTEM_NAME,
-		      descriptor->subsystem_name))
-		goto end;
+		case SMW_OBJECT_TYPE_NAME_DATA:
+			obj_attributes = descriptor->data.attributes.attributes;
+			break;
 
-	/* field: TAG_OBJECT_TYPE */
-	if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_OBJECT_TYPE,
-		      descriptor->type))
-		goto end;
+		default:
+			break;
+		}
 
-	/* field: TAG_KEY_GROUP */
-	if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_KEY_GROUP,
-		      descriptor->group))
-		goto end;
+		/* field: TAG_ATTRIBUTES */
+		if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_ATTRIBUTES,
+			      obj_attributes))
+			goto end;
+
+		/* field: TAG_SUSYSTEM_NAME */
+		if (sql_print(sql, length, "\"0x%X\" = %d, ",
+			      TAG_SUBSYSTEM_NAME, descriptor->subsystem_name))
+			goto end;
+
+		/* field: TAG_OBJECT_TYPE */
+		if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_OBJECT_TYPE,
+			      descriptor->type))
+			goto end;
+
+		/* field: TAG_KEY_GROUP */
+		if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_KEY_GROUP,
+			      descriptor->group))
+			goto end;
+
+		/* field: TAG_SUBSYSTEM_ID */
+		if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_SUBSYSTEM_ID,
+			      obj->obj_id_subsystem))
+			goto end;
+
+		switch (descriptor->type) {
+		case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
+		case SMW_OBJECT_TYPE_NAME_PUBLIC_KEY:
+		case SMW_OBJECT_TYPE_NAME_SECRET_KEY:
+			/* field: TAG_KEY_TYPE */
+			if (sql_print(sql, length, "\"0x%X\" = %d, ",
+				      TAG_KEY_TYPE, descriptor->key.type_name))
+				goto end;
+
+			/* field: TAG_KEY_PERMITTED_ALGO */
+			if (sql_print(sql, length, "\"0x%X\" = %llu, ",
+				      TAG_KEY_PERMITTED_ALGO,
+				      descriptor->key.attributes.permitted_algo))
+				goto end;
+
+			/* field: TAG_KEY_USAGE */
+			if (sql_print(sql, length, "\"0x%X\" = %d, ",
+				      TAG_KEY_USAGE,
+				      descriptor->key.attributes.usage_flags))
+				goto end;
+
+			/* field: TAG_STORAGE_ID */
+			if (sql_print(sql, length, "\"0x%X\" = %d, ",
+				      TAG_STORAGE_ID,
+				      descriptor->key.attributes.storage_id))
+				goto end;
+
+			/* field: TAG_SIZE */
+			if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_SIZE,
+				      descriptor->key.security_size))
+				goto end;
+
+			break;
+
+		case SMW_OBJECT_TYPE_NAME_DATA:
+			/* field: TAG_STORAGE_ID */
+			if (sql_print(sql, length, "\"0x%X\" = %d, ",
+				      TAG_STORAGE_ID,
+				      descriptor->data.attributes.storage_id))
+				goto end;
+
+			/* field: TAG_SIZE */
+			if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_SIZE,
+				      descriptor->data.length))
+				goto end;
+
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	/*
+	 * Update R/W fields
+	 */
 
 	/* field: TAG_LABEL */
 	if (descriptor->label) {
@@ -516,61 +582,9 @@ static int sql_print_update(struct smw_osal_object *obj, char *sql,
 			goto end;
 	}
 
-	/* field: TAG_SUBSYSTEM_ID */
-	if (obj->obj_id_subsystem) {
-		if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_SUBSYSTEM_ID,
-			      obj->obj_id_subsystem))
-			goto end;
-	}
-
-	switch (descriptor->type) {
-	case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
-	case SMW_OBJECT_TYPE_NAME_PUBLIC_KEY:
-	case SMW_OBJECT_TYPE_NAME_SECRET_KEY:
-		/* field: TAG_KEY_TYPE */
-		if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_KEY_TYPE,
-			      descriptor->key.type_name))
-			goto end;
-
-		/* field: TAG_KEY_PERMITTED_ALGO */
-		if (sql_print(sql, length, "\"0x%X\" = %llu, ",
-			      TAG_KEY_PERMITTED_ALGO,
-			      descriptor->key.attributes.permitted_algo))
-			goto end;
-
-		/* field: TAG_KEY_USAGE */
-		if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_KEY_USAGE,
-			      descriptor->key.attributes.usage_flags))
-			goto end;
-
-		/* field: TAG_STORAGE_ID */
-		if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_STORAGE_ID,
-			      descriptor->key.attributes.storage_id))
-			goto end;
-
-		/* field: TAG_SIZE */
-		if (sql_print(sql, length, "\"0x%X\" = %d ", TAG_SIZE,
-			      descriptor->key.security_size))
-			goto end;
-
-		break;
-
-	case SMW_OBJECT_TYPE_NAME_DATA:
-		/* field: TAG_STORAGE_ID */
-		if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_STORAGE_ID,
-			      descriptor->data.attributes.storage_id))
-			goto end;
-
-		/* field: TAG_SIZE */
-		if (sql_print(sql, length, "\"0x%X\" = %d ", TAG_SIZE,
-			      descriptor->data.length))
-			goto end;
-
-		break;
-
-	default:
-		break;
-	}
+	/* Remove trailing comma and space */
+	if (SUB_OVERFLOW(*length, 2, length))
+		goto end;
 
 	if (sql_print(sql, length, " WHERE \"0x%X\" = %d;", TAG_DATABASE_ID,
 		      descriptor->id))

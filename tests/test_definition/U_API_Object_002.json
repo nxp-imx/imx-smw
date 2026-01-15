@@ -36,23 +36,21 @@
                 "HASH=SHA256"
             ]
         },
-		"key 3": {
-			"type": "SECP_R1",
-			"security_size": 256,
-			"pub_key": [
-				"01234567890123456789012345678901",
-				"01234567890123456789012345678901",
-				"01234567890123456789012345678901",
-				"01234567890123456789012345678901"
-			],
-			"attributes_list": [
-				"TRANSIENT"
-			],
-			"usage": [
-				"SIGN_HASH",
-				"SIGN_MESSAGE"
-			]
-		},
+        "key 3": {
+            "type": "SECP_R1",
+            "security_size": 256,
+            "attributes_list": [
+                "TRANSIENT"
+            ],
+            "usage": [
+                "SIGN_HASH",
+                "SIGN_MESSAGE"
+            ],
+            "permitted_algo": [
+                "ECDSA",
+                "HASH=SHA256"
+            ]
+        },
         "key find algo": {
             "type": "SECP_R1",
             "attributes_list": [
@@ -82,10 +80,10 @@
         "command": "STORAGE_STORE",
         "data_name": "data 1"
     },
-	"subtest 4": {
-		"command": "IMPORT",
-		"key_name": "key 3"
-	},
+    "subtest 4": {
+        "command": "GENERATE",
+        "key_name": "key 3"
+    },
     "subtest 5": {
         "command": "OBJECT_FIND",
         "object_name": "data 1",
@@ -107,7 +105,7 @@
         "command": "OBJECT_FIND",
         "object_name": "key 3",
         "depends": 4,
-        "privacy": "PUBLIC_KEY"
+        "privacy": "KEYPAIR"
     },
     "subtest 9": {
         "command": "OBJECT_FIND",

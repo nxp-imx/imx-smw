@@ -102,4 +102,24 @@ uint32_t handle_startauthsession(tcti_smw_context_t *ctx, uint16_t tag,
  */
 uint32_t handle_contextsave(tcti_smw_context_t *ctx, uint16_t tag,
 			    const uint8_t *cmd, size_t cmd_size);
+
+/**
+ * handle_hmac - Process TPM2_CC_HMAC command
+ *
+ * @ctx:      TCTI SMW context containing response buffer
+ * @tag:      TPM2 command tag (TPM2_ST_NO_SESSIONS or TPM2_ST_SESSIONS)
+ * @cmd:      Command buffer containing marshaled TPM2_CC_HMAC parameters
+ * @cmd_size: Size of command buffer in bytes
+ *
+ * This function implements the TPM2_CC_HMAC command handler which computes
+ * an HMAC of the provided data using a loaded HMAC key or session key.
+ *
+ * Return: TSS2_RC_SUCCESS on success
+ *         TPM2_RC_SIZE for marshaling errors
+ *         TPM2_RC_HANDLE for invalid session handle
+ *         TPM2_RC_MEMORY for allocation failures
+ *         TPM2_RC_FAILURE for SMW operation failures
+ */
+uint32_t handle_hmac(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
+		     size_t cmd_size);
 #endif /* __COMMANDS_H__ */

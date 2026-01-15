@@ -122,4 +122,25 @@ uint32_t handle_contextsave(tcti_smw_context_t *ctx, uint16_t tag,
  */
 uint32_t handle_hmac(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 		     size_t cmd_size);
+
+/**
+ * handle_flushcontext() - Process TPM2_FlushContext command.
+ * @ctx:      Pointer to the SMW TCTI context structure.
+ * @tag:      TPM structure tag from the command header.
+ * @cmd:      Pointer to the command buffer containing the full TPM command.
+ * @cmd_size: Size of the command buffer in bytes.
+ *
+ * This function handles the TPM2_FlushContext command which removes a loaded
+ * context (session or transient object) from TPM memory. It extracts the handle
+ * to flush, determines if it's a session or transient object, and performs the
+ * appropriate cleanup. For sessions, it clears the session data and marks it
+ * as inactive. The command always returns success per TPM2 specification, even
+ * if the handle doesn't exist or was already flushed.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS always (per TPM2 specification), with appropriate error code
+ * only for command parsing failures.
+ */
+uint32_t handle_flushcontext(tcti_smw_context_t *ctx, uint16_t tag,
+			     const uint8_t *cmd, size_t cmd_size);
 #endif /* __COMMANDS_H__ */

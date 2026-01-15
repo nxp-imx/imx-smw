@@ -285,3 +285,75 @@ end:
 
 	return tss2_rc;
 }
+
+uint32_t handle_flushcontext(tcti_smw_context_t *ctx, uint16_t tag,
+			     const uint8_t *cmd, size_t cmd_size)
+{
+	TPM2_RC rc = TPM2_RC_SUCCESS;
+	TSS2_RC tss2_rc = TSS2_TCTI_RC_GENERAL_FAILURE;
+	TPMI_DH_CONTEXT flush_handle = 0;
+	size_t offset = TPM_HEADER_SIZE;
+	bool is_transient = false, is_session = false;
+	tcti_smw_session_t *session = NULL;
+
+	/* Extract the handle to flush from command */
+	tss2_rc =
+		Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset, &flush_handle);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	DBG_TRACE("Flushing handle 0x%08x\n", flush_handle);
+
+	/* Check if it's a session handle */
+	is_session = (flush_handle >= TPM2_HMAC_SESSION_FIRST &&
+		      flush_handle <= TPM2_HMAC_SESSION_LAST) ||
+		     (flush_handle >= TPM2_POLICY_SESSION_FIRST &&
+		      flush_handle <= TPM2_POLICY_SESSION_LAST);
+
+	if (is_session) {
+		/* Find and free the session */
+		session = find_session_by_handle(ctx, flush_handle);
+
+		if (!session || !session->active) {
+			/*
+			 * Session not found or not active, shall return TPM2_RC_HANDLE
+			 * Per TPM 2.0 Part 3, Section 28.4
+			 */
+			DBG_TRACE("Session 0x%08x not found or not active\n",
+				  flush_handle);
+			goto end_handle_error;
+		}
+		DBG_TRACE("Flushing session 0x%08x (type=%d, hash=%d)\n",
+			  flush_handle, session->type, session->auth_hash);
+
+		/* Clear the session data */
+		memset(session, 0, sizeof(tcti_smw_session_t));
+
+		DBG_TRACE("Session 0x%08x successfully flushed\n",
+			  flush_handle);
+	} else if (is_transient) {
+		/* For transient objects or other handles */
+		DBG_TRACE("Flushing non-session handle 0x%08x ", flush_handle);
+		DBG_TRACE("(not implemented)\n");
+		/* In a full implementation, it should handle transient objects here */
+	} else {
+		DBG_TRACE("Invalid handle type: 0x%08x\n", flush_handle);
+		goto end_handle_error;
+	}
+
+	/* Response is just the header with success code */
+	tss2_rc = build_rc_response(ctx, TPM_HEADER_SIZE, tag, TPM2_RC_SUCCESS);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		return tss2_rc;
+
+end:
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		rc = tcti_rc_to_tpm2_rc(tss2_rc);
+		return build_rc_response(ctx, TPM_HEADER_SIZE, tag, rc);
+	}
+
+	return tss2_rc;
+
+end_handle_error:
+	return build_rc_response(ctx, TPM_HEADER_SIZE, tag, TPM2_RC_HANDLE);
+}

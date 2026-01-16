@@ -27,10 +27,7 @@
 		"command": "GENERATE",
 		"subsystem": "ELE",
 		"key_name": "key 1",
-		"restriction_list": [
-			"imx8ulp",
-			"imx943"
-		]
+		"restriction_list": "imx8ulp"
 	},
 	"subtest 2": {
 		"description": "(CHACHA20-POLY1305) One-shot AEAD Encryption - tag is part of output",
@@ -200,10 +197,7 @@
 			"a6ad5cb4022b02709b"
 		],
 		"tag": "eead9d67890cbb22392336fea1851f38",
-		"restriction_list": [
-			"imx8ulp",
-			"imx943"
-		]
+		"restriction_list": "imx8ulp"
 	},
 	"subtest 11": {
 		"description": "(CHACHA20-POLY1305) One-shot AEAD Decryption operation",

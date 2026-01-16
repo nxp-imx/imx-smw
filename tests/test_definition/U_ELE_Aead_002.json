@@ -172,8 +172,7 @@
 			"04791e183cb0c2e5e851425e11b4e528",
 			"237f123b5de8e349dd6d1a4506465f72",
 			"57001080003872271900d3f39c9661fd"
-		],
-		"restriction_list": "imx943"
+		]
 	},
 	"subtest 11": {
 		"description": "input buffer = ciphertext + tag",

@@ -340,10 +340,7 @@
 		"input": "7789b41cb3ee548814ca0b388c10b343",
 		"output": "d2c78110ac7e8f107c0df0570bd7c90c",
 		"tag": "c26a379b6d98ef2852ead8ce83a833a7",
-		"restriction_list": [
-			"imx8ulp",
-			"imx943"
-		]
+		"restriction_list": "imx8ulp"
 	},
 	"subtest 23": {
 		"description": "Decrypt using GCM mode",

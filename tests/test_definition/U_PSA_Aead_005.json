@@ -31,19 +31,13 @@
 		"command": "GENERATE",
 		"api": "PSA",
 		"key_name": "generated aes-chacha-256 key encrypt",
-		"restriction_list": [
-			"imx8ulp",
-			"imx943"
-		]
+		"restriction_list": "imx8ulp"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
 		"api": "PSA",
 		"key_name": "generated aes-chacha-256 key decrypt",
-		"restriction_list": [
-			"imx8ulp",
-			"imx943"
-		]
+		"restriction_list": "imx8ulp"
 	},
 	"subtest 3": {
 		"description": "aes-chacha-256, encrypt, output buffer size",

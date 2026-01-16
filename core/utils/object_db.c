@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2025 NXP
+ * Copyright 2023-2026 NXP
  */
 
 #include "smw_status.h"
@@ -130,6 +130,7 @@ int smw_object_db_update(unsigned int s_id,
 	struct smw_ops *ops = get_smw_ops();
 	bool free_user_id = false;
 	struct smw_osal_object obj = { 0 };
+	struct smw_object_descriptor desc_copy = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -140,6 +141,16 @@ int smw_object_db_update(unsigned int s_id,
 		return SMW_STATUS_OPS_INVALID;
 
 	smw_object_db_prepare(s_id, descriptor, &obj);
+
+	/* Only update R/W attributes */
+	if (s_id == INVALID_OBJ_ID) {
+		desc_copy.id = descriptor->id;
+		desc_copy.label = descriptor->label;
+		desc_copy.user_id = descriptor->user_id;
+		desc_copy.persistency = descriptor->persistency;
+
+		obj.obj_desc = &desc_copy;
+	}
 
 	/*
 	 * If the descriptor User ID is not defined, assign the user id to

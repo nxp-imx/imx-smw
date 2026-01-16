@@ -56,6 +56,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 1. SMW APIs
 
 * Fix `smw_get_key_buffers_lengths()`: in case the key ID field only is set in the key descriptor structure, the function returns the subsystem key buffers' lengths (only the exportable ones) instead of returning an error.
+* `smw_update_object_db`: Existing object can only update their label and/or user id field.
 
 ##### 2. Subsystems
 
@@ -70,6 +71,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Update all TEE configurations with supported key generation algorithms.
 * Update the i.MX943 configuration file to enable support for AEAD one-shot operations.
+* Only update object label and user id fields when updating an existing object in the object database.
 
 #### SMW Tests
 
@@ -96,6 +98,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   EC_EDWARDS_KEY_PAIR_GEN, and EDDSA as optional mechanisms.
 * Add mechanism support checks before performing the operations.
 * If key generation is unsuccessful, skip finding the keys in find_ext.c
+* Add object label attribute update tests to validate label and user id field modifications.
 
 ---
 ### <a id ="rel_5_3"></a></br>**Release 5.3**

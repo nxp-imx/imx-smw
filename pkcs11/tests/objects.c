@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024-2025 NXP
+ * Copyright 2024-2026 NXP
  */
 
 #include <stdlib.h>
@@ -2019,6 +2019,112 @@ end:
 	return status;
 }
 
+static int object_attribute_update(CK_FUNCTION_LIST_PTR pfunc)
+{
+	int status = TEST_FAIL;
+	enum smw_status_code smw_status = SMW_STATUS_OK;
+	struct smw_object_descriptor descriptor = { 0 };
+	struct smw_find_object_db_args find_args = { 0 };
+
+	CK_RV ret = CKR_OK;
+	CK_SESSION_HANDLE sess = 0;
+	CK_MECHANISM genmech = { .mechanism = CKM_AES_KEY_GEN };
+	CK_OBJECT_HANDLE hkey = CK_INVALID_HANDLE;
+	CK_ULONG key_len = 16;
+	CK_BBOOL btrue = CK_TRUE;
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_AES_ECB };
+	CK_CHAR label[] = "updated label";
+	CK_ULONG nb_keys_match = 0;
+
+	CK_ATTRIBUTE key_attrs[] = {
+		{ CKA_VALUE_LEN, &key_len, sizeof(key_len) },
+		{ CKA_TOKEN, &btrue, sizeof(CK_BBOOL) },
+		{ CKA_ENCRYPT, &btrue, sizeof(btrue) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
+	};
+
+	CK_ATTRIBUTE keyAttrLabel[] = {
+		{ CKA_LABEL, &label, sizeof(label) },
+	};
+
+	SUBTEST_START();
+
+	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
+		goto end;
+
+	TEST_OUT("Login to R/W Session as User\n");
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_Login"))
+		goto end;
+
+	ret = pfunc->C_GenerateKey(sess, &genmech, key_attrs,
+				   ARRAY_SIZE(key_attrs), &hkey);
+	if (CHECK_CK_RV(CKR_OK, "C_GenerateKey"))
+		goto end;
+
+	TEST_OUT("Update label attribute\n");
+	ret = pfunc->C_SetAttributeValue(sess, hkey, keyAttrLabel,
+					 ARRAY_SIZE(keyAttrLabel));
+	if (CHECK_CK_RV(CKR_OK, "C_SetAttributeValue"))
+		goto end;
+
+	descriptor.persistency = SMW_ATTR_SET_PERSISTENT(0);
+	find_args.object_descriptor = &descriptor;
+	smw_status = smw_find_object_db_init(&find_args);
+	if (smw_status != SMW_STATUS_OK)
+		goto end;
+
+	while (smw_find_object_db_next(&find_args) == SMW_STATUS_OK) {
+		if (descriptor.label) {
+			if (!memcmp(label, (unsigned char *)descriptor.label,
+				    sizeof(label)))
+				nb_keys_match++;
+
+			free(descriptor.label);
+			descriptor.label = NULL;
+		}
+
+		if (descriptor.user_id) {
+			free(descriptor.user_id);
+			descriptor.user_id = NULL;
+		}
+
+		if (descriptor.type == SMW_OBJECT_TYPE_NAME_DATA) {
+			if (descriptor.data.data) {
+				free(descriptor.data.data);
+				descriptor.data.data = NULL;
+			}
+			memset(&descriptor.data, 0,
+			       sizeof(struct smw_data_descriptor));
+		} else {
+			memset(&descriptor.key, 0,
+			       sizeof(struct smw_key_descriptor));
+		}
+	}
+
+	(void)smw_find_object_db_final(&find_args);
+
+	if (CHECK_EXPECTED(nb_keys_match == 1,
+			   "Got %lu but expected %d objects", nb_keys_match, 1))
+		goto end;
+
+	status = TEST_PASS;
+
+end:
+	if (hkey != CK_INVALID_HANDLE) {
+		TEST_OUT("Key Destroy #%lu\n", hkey);
+		ret = pfunc->C_DestroyObject(sess, hkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			goto end;
+	}
+
+	util_close_session(pfunc, &sess);
+
+	SUBTEST_END(status);
+	return status;
+}
+
 void tests_pkcs11_objects(void *lib_hdl, CK_VOID_PTR pfunc)
 {
 	(void)lib_hdl;
@@ -2075,6 +2181,9 @@ void tests_pkcs11_objects(void *lib_hdl, CK_VOID_PTR pfunc)
 		goto end;
 
 	if (generate_cipher_key_check_user_id(pfunc) == TEST_FAIL)
+		goto end;
+
+	if (object_attribute_update(pfunc) == TEST_FAIL)
 		goto end;
 
 	/*

@@ -143,4 +143,29 @@ uint32_t handle_hmac(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
  */
 uint32_t handle_flushcontext(tcti_smw_context_t *ctx, uint16_t tag,
 			     const uint8_t *cmd, size_t cmd_size);
+
+/**
+ * handle_getcapability - Process TPM2_CC_GetCapability command
+ *
+ * @ctx:      TCTI SMW context
+ * @tag:      TPM2 command tag
+ * @cmd:      Command buffer containing marshaled parameters
+ * @cmd_size: Size of command buffer
+ *
+ * This function implements a minimal TPM2_CC_GetCapability handler.
+ * Currently returns empty capability data for all requests.
+ *
+ * Command format:
+ *   - capability:     TPM2_CAP (capability group to query)
+ *   - property:       UINT32 (first property in group)
+ *   - propertyCount:  UINT32 (number of properties to return)
+ *
+ * Response format:
+ *   - moreData:       TPMI_YES_NO (more data available)
+ *   - capabilityData: TPMS_CAPABILITY_DATA (requested capability data)
+ *
+ * Return: TSS2_RC_SUCCESS on success, error code otherwise
+ */
+uint32_t handle_getcapability(tcti_smw_context_t *ctx, uint16_t tag,
+			      const uint8_t *cmd, size_t cmd_size);
 #endif /* __COMMANDS_H__ */

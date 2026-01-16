@@ -7,6 +7,7 @@
 
 #include "utils.h"
 #include "commands.h"
+#include "trace.h"
 
 uint32_t handle_startup(tcti_smw_context_t *ctx, uint16_t tag,
 			const uint8_t *cmd, size_t cmd_size)
@@ -60,6 +61,136 @@ uint32_t handle_shutdown(tcti_smw_context_t *ctx, uint16_t tag,
 	tss2_rc = build_rc_response(ctx, resp_size, tag, TPM2_RC_SUCCESS);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		return tss2_rc;
+
+end:
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		rc = tcti_rc_to_tpm2_rc(tss2_rc);
+		return build_rc_response(ctx, TPM_HEADER_SIZE, tag, rc);
+	}
+
+	return tss2_rc;
+}
+
+uint32_t handle_getcapability(tcti_smw_context_t *ctx, uint16_t tag,
+			      const uint8_t *cmd, size_t cmd_size)
+{
+	TPM2_RC rc = TPM2_RC_SUCCESS;
+	TSS2_RC tss2_rc = TSS2_TCTI_RC_GENERAL_FAILURE;
+	size_t offset = TPM_HEADER_SIZE;
+
+	/* Input parameters */
+	TPM2_CAP capability = 0;
+	uint32_t property = 0;
+	uint32_t property_count = 0;
+
+	/* Output parameters */
+	TPMI_YES_NO more_data = TPM2_NO;
+	TPMS_CAPABILITY_DATA cap_data = { 0 };
+
+	/* Response construction */
+	size_t resp_offset = TPM_HEADER_SIZE;
+	uint32_t total_resp_size = 0;
+	/*
+	 * Workaround: Some TSS2 Marshal functions don't handle NULL buffer correctly
+	 * for size calculation.
+	 * cap_data_size must be compute manually in the switch case statement.
+	 */
+	size_t cap_data_size = sizeof(TPM2_CAP);
+	uint8_t i = 0;
+
+	/* 1. Check initialization */
+	if (!ctx->initialized) {
+		tss2_rc = TSS2_TCTI_RC_BAD_SEQUENCE;
+		goto end;
+	}
+
+	/* 2. Unmarshal input parameters */
+	tss2_rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset, &capability);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	tss2_rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset, &property);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	tss2_rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset,
+					   &property_count);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* 3. Prepare capability data based on request */
+	cap_data.capability = capability;
+
+	switch (capability) {
+	case TPM2_CAP_TPM_PROPERTIES:
+		/* Return minimal TPM properties */
+		cap_data.data.tpmProperties.count = 0;
+		cap_data_size += sizeof(uint32_t); /* count */
+		cap_data_size += cap_data.data.tpmProperties.count *
+				 sizeof(TPMS_TAGGED_PROPERTY);
+		/* Could add properties here if needed */
+		break;
+
+	case TPM2_CAP_ALGS:
+		/* Return supported algorithms */
+		cap_data.data.algorithms.count = 0;
+		cap_data_size += sizeof(uint32_t); /* count */
+		cap_data_size += cap_data.data.algorithms.count *
+				 sizeof(TPMS_ALG_PROPERTY);
+		/* Could add algorithms here if needed */
+		break;
+
+	case TPM2_CAP_COMMANDS:
+		/* Return supported commands */
+		cap_data.data.command.count = 0;
+		cap_data_size += sizeof(uint32_t); /* count field */
+		cap_data_size += cap_data.data.command.count * sizeof(TPMA_CC);
+		/* Could add commands here if needed */
+		break;
+
+	case TPM2_CAP_HANDLES:
+		/* Return active session(s) */
+		cap_data.data.handles.count = 0;
+		cap_data_size += sizeof(uint32_t); /* count field */
+		cap_data_size +=
+			cap_data.data.handles.count * sizeof(TPM2_HANDLE);
+
+		for (; i < SMW_MAX_SESSIONS; i++) {
+			if (ctx->sessions[i].active) {
+				cap_data.data.handles
+					.handle[cap_data.data.handles.count++] =
+					ctx->sessions[i].handle;
+			}
+		}
+
+		break;
+
+	default:
+		/* Unknown capability - return empty data */
+		DBG_TRACE("Unknown capability requested: 0x%08x\n", capability);
+		break;
+	}
+
+	total_resp_size = TPM_HEADER_SIZE + sizeof(TPMI_YES_NO) + cap_data_size;
+
+	/* 4. Build response */
+	tss2_rc = build_rc_response(ctx, total_resp_size, tag, TPM2_RC_SUCCESS);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		return tss2_rc;
+
+	/* 5. Marshal response data */
+	tss2_rc = Tss2_MU_UINT8_Marshal(more_data, ctx->resp_buf,
+					ctx->resp_size, &resp_offset);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	tss2_rc = Tss2_MU_TPMS_CAPABILITY_DATA_Marshal(&cap_data, ctx->resp_buf,
+						       ctx->resp_size,
+						       &resp_offset);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	DBG_TRACE("GetCapability response size: %zu bytes\n", resp_offset);
 
 end:
 	if (tss2_rc != TSS2_RC_SUCCESS) {

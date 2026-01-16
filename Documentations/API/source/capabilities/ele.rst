@@ -574,16 +574,13 @@ AEAD
    |                        |              |                                         |                |
    |                        |              | - 12 (user supplied full IV)            |                |
    +------------------------+              +-----------------------------------------+----------------+
-   | CHACHA20_POLY1305 [3]_ |              | 12                                      |       16       |
+   | CHACHA20_POLY1305 [2]_ |              | 12                                      |       16       |
    +------------------------+--------------+-----------------------------------------+----------------+
 
 .. [2] Not supported on i.MX8ULP
 
-.. [3] Supported on i.MX91, i.MX93 and i.MX95.
-
 .. note::
-  - AEAD is not supported on i.MX943.
-  - The ELE subsystem supports AEAD encryption and decryption using either a key identifier or a plaintext key buffer.
+  The ELE subsystem supports AEAD encryption and decryption using either a key identifier or a plaintext key buffer.
 
 One-shot operations supported:
  - AEAD Encryption

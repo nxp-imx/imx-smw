@@ -67,11 +67,13 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 4. OSAL
 
 * Update all TEE configurations with supported key generation algorithms.
+* Update the i.MX943 configuration file to enable support for AEAD one-shot operations.
 
 #### SMW Tests
 
 * Update U_ELE_Mac_007 test to validate HMAC generation using base 64 plaintext key buffer.
 * Add U_ELE_Cipher_003 tests to validate Cipher operation using plaintext key buffer.
+* Enable ELE AEAD one-shot tests on the i.MX943 platform.
 
 #### PKCS#11 Library
 

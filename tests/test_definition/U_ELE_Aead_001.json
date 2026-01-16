@@ -47,23 +47,18 @@
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "ELE",
-		"key_name": "key 1",
-		"restriction_list": "imx943"
+		"key_name": "key 1"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
 		"subsystem": "ELE",
-		"key_name": "key 2",
-		"restriction_list": "imx943"
+		"key_name": "key 2"
 	},
 	"subtest 3": {
 		"command": "GENERATE",
 		"subsystem": "ELE",
 		"key_name": "key 3",
-		"restriction_list": [
-			"imx8ulp",
-			"imx943"
-		]
+		"restriction_list": "imx8ulp"
 	},
 	"subtest 4": {
 		"description": "(CCM) Key type not supported",
@@ -104,8 +99,7 @@
 		"aad": "353637383132333435363738",
 		"iv": "60cc50e0887532e0d4f3d2f2",
 		"tag": 10,
-		"result": "SMW_STATUS_OUTPUT_TOO_SHORT",
-		"restriction_list": "imx943"
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
 	"subtest 7": {
 		"description": "(CCM) Get output length",

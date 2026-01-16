@@ -30,14 +30,12 @@
 	"subtest 1": {
 		"command": "GENERATE",
 		"api": "PSA",
-		"key_name": "generated aes-ccm-128 key encrypt",
-		"restriction_list": "imx943"
+		"key_name": "generated aes-ccm-128 key encrypt"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
 		"api": "PSA",
-		"key_name": "generated aes-ccm-128 key decrypt",
-		"restriction_list": "imx943"
+		"key_name": "generated aes-ccm-128 key decrypt"
 	},
 	"subtest 3": {
 		"description": "aes-ccm-128, encrypt, output buffer size",

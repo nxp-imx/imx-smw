@@ -28,10 +28,7 @@
 		"command": "GENERATE",
 		"subsystem": "ELE",
 		"key_name": "key 1",
-		"restriction_list": [
-			"imx8ulp",
-			"imx943"
-		]
+		"restriction_list": "imx8ulp"
 	},
 	"subtest 2": {
 		"description": "(GCM) IV length = 0",

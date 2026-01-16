@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024-2025 NXP
+ * Copyright 2024-2026 NXP
  */
 
 #include <stdlib.h>
@@ -836,7 +836,7 @@ static int encrypt_decrypt_generate_iv(CK_FUNCTION_LIST_3_0_PTR pfunc)
 				goto end;
 
 			continue;
-		} else if ((!is_8ulp() && !is_943()) && is_ele_subsystem() &&
+		} else if (!is_8ulp() && is_ele_subsystem() &&
 			   (gcm_params.ulIvFixedBits != 0 &&
 			    gcm_params.ulIvFixedBits != 32)) {
 			if (gcm_params.ulIvFixedBits == 128) {

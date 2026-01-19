@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2025 NXP
+ * Copyright 2023-2026 NXP
  */
 
 #include "smw_status.h"
@@ -117,16 +117,6 @@ static int mac(struct hdl *hdl, void *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	key_descriptor = &mac_args->key_descriptor;
-
-	if (key_descriptor->format_id != SMW_KEYMGR_FORMAT_ID_INVALID) {
-		//TODO: first import key, then generate mac
-		//      for now import is not supported by SECO
-		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-		goto end;
-	}
-
-	op_args.key_identifier = key_descriptor->identifier.s_id;
 	op_args.algorithm = alg.id;
 	op_args.payload = smw_mac_get_input_data(mac_args);
 	op_args.mac = smw_mac_get_mac_data(mac_args);
@@ -162,6 +152,17 @@ static int mac(struct hdl *hdl, void *args)
 	} else {
 		op_args.flags = HSM_OP_MAC_ONE_GO_FLAGS_MAC_VERIFICATION;
 	}
+
+	key_descriptor = &mac_args->key_descriptor;
+
+	if (key_descriptor->format_id != SMW_KEYMGR_FORMAT_ID_INVALID) {
+		//TODO: first import key, then generate mac
+		//      for now import is not supported by SECO
+		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+		goto end;
+	}
+
+	op_args.key_identifier = key_descriptor->identifier.s_id;
 
 	status = seco_open_key_store_service(hdl);
 	if (status != SMW_STATUS_OK)

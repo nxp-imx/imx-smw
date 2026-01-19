@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2025 NXP
+ * Copyright 2021-2026 NXP
  */
 
 #include "smw_status.h"
@@ -87,6 +87,18 @@ static int cipher(struct hdl *hdl, void *args)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
+	op_args.output = smw_crypto_get_cipher_output(cipher_args);
+	op_args.input_size = smw_crypto_get_cipher_input_len(cipher_args);
+
+	/* Get output length feature */
+	if (!op_args.output) {
+		/* Cipher output length is equal to input length */
+		smw_crypto_set_cipher_output_len(cipher_args,
+						 op_args.input_size);
+		status = SMW_STATUS_OK;
+		goto end;
+	}
+
 	if (smw_crypto_get_cipher_nb_key_buffer(cipher_args)) {
 		SMW_DBG_PRINTF(ERROR, "%s: SECO doesn't support keys buffer\n",
 			       __func__);
@@ -106,18 +118,6 @@ static int cipher(struct hdl *hdl, void *args)
 	status = set_cipher_flags(cipher_args->op_type_id, &op_args.flags);
 	if (status != SMW_STATUS_OK)
 		goto end;
-
-	op_args.output = smw_crypto_get_cipher_output(cipher_args);
-	op_args.input_size = smw_crypto_get_cipher_input_len(cipher_args);
-
-	/* Get output length feature */
-	if (!op_args.output) {
-		/* Cipher output length is equal to input length */
-		smw_crypto_set_cipher_output_len(cipher_args,
-						 op_args.input_size);
-		status = SMW_STATUS_OK;
-		goto end;
-	}
 
 	/*
 	 * If output length is too short, update is done here (not supported by

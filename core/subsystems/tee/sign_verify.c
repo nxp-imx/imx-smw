@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023-2025 NXP
+ * Copyright 2021, 2023-2026 NXP
  */
 
 #include <tee_client_api.h>
@@ -335,17 +335,8 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 	operation.params[1].tmpref.size = shared_params_size;
 	operation.params[2].tmpref.buffer = smw_sign_verify_get_msg_buf(args);
 	operation.params[2].tmpref.size = smw_sign_verify_get_msg_len(args);
-
-	/*
-	 * In case the signature buffer is NULL, the length must be 0 to
-	 * get the signature length.
-	 */
-	if (smw_sign_verify_get_sign_buf(args)) {
-		operation.params[3].tmpref.buffer =
-			smw_sign_verify_get_sign_buf(args);
-		operation.params[3].tmpref.size =
-			smw_sign_verify_get_sign_len(args);
-	}
+	operation.params[3].tmpref.buffer = smw_sign_verify_get_sign_buf(args);
+	operation.params[3].tmpref.size = smw_sign_verify_get_sign_len(args);
 
 	/* Invoke TA */
 	status = execute_tee_cmd(cmd_id, &operation);
@@ -374,7 +365,7 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 
 exit:
 	if (shared_params)
-		free(shared_params);
+		SMW_UTILS_FREE(shared_params);
 
 	if (param0_type == TEEC_MEMREF_PARTIAL_INPUT)
 		TEEC_ReleaseSharedMemory(&shm);

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2025 NXP
+ * Copyright 2025-2026 NXP
  */
 
 #include <tee_client_api.h>
@@ -242,13 +242,6 @@ static int asymm_encrypt_decrypt(struct smw_crypto_asymm_enc_args *args,
 	operation.params[3].tmpref.size =
 		smw_crypto_get_asymm_enc_output_len(args);
 
-	/*
-	 * TEE requires an output buffer length set to 0 if output
-	 * buffer is NULL.
-	 */
-	if (!operation.params[3].tmpref.buffer)
-		operation.params[3].tmpref.size = 0;
-
 	/* Invoke TA */
 	status = execute_tee_cmd(cmd_id, &operation);
 	SMW_DBG_PRINTF_COND(ERROR, status != SMW_STATUS_OK,
@@ -267,7 +260,7 @@ static int asymm_encrypt_decrypt(struct smw_crypto_asymm_enc_args *args,
 
 exit:
 	if (shared_params)
-		free(shared_params);
+		SMW_UTILS_FREE(shared_params);
 
 	if (param0_type == TEEC_MEMREF_PARTIAL_INPUT)
 		TEEC_ReleaseSharedMemory(&shm);

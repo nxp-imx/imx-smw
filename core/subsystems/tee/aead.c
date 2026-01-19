@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2025 NXP
+ * Copyright 2023-2026 NXP
  */
 
 #include <tee_client_api.h>
@@ -472,28 +472,14 @@ static int aead_multi_part_common(struct smw_op_context *op_context,
 	op.params[0].tmpref.size = sizeof(context);
 	op.params[1].tmpref.buffer = smw_crypto_get_aead_input(args);
 
-	/*
-	 * For final operation, TEE requires an input length set to 0 if input
-	 * data buffer is NULL
-	 */
-	if (!op.params[1].tmpref.buffer) {
-		op.params[1].tmpref.size = 0;
-	} else {
-		status = get_tee_input_data_len(args, ta_cmd, &input_length);
-		if (status != SMW_STATUS_OK)
-			goto end;
+	status = get_tee_input_data_len(args, ta_cmd, &input_length);
+	if (status != SMW_STATUS_OK)
+		goto end;
 
-		op.params[1].tmpref.size = input_length;
-	}
+	op.params[1].tmpref.size = input_length;
 
 	op.params[2].tmpref.buffer = smw_crypto_get_aead_output(args);
-
-	/* Set output length to 0 if output data buffer is NULL */
-	if (!op.params[2].tmpref.buffer)
-		op.params[2].tmpref.size = 0;
-	else
-		op.params[2].tmpref.size =
-			get_tee_output_data_len(args, ta_cmd);
+	op.params[2].tmpref.size = get_tee_output_data_len(args, ta_cmd);
 
 	if (ta_cmd == CMD_AEAD_ENCRYPT_FINAL ||
 	    ta_cmd == CMD_AEAD_DECRYPT_FINAL) {

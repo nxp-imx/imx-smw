@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2025 NXP
+ * Copyright 2021-2026 NXP
  */
 
 #include <tee_client_api.h>
@@ -276,28 +276,9 @@ static int cipher_multi_part_common(struct smw_op_context *op_context,
 	op.params[0].tmpref.buffer = &context;
 	op.params[0].tmpref.size = sizeof(context);
 	op.params[1].tmpref.buffer = smw_crypto_get_cipher_input(args);
-
-	/*
-	 * For final operation, TEE requires an input length set to 0 if input
-	 * data buffer is NULL
-	 */
-	if (!op.params[1].tmpref.buffer)
-		op.params[1].tmpref.size = 0;
-	else
-		op.params[1].tmpref.size =
-			smw_crypto_get_cipher_input_len(args);
-
+	op.params[1].tmpref.size = smw_crypto_get_cipher_input_len(args);
 	op.params[2].tmpref.buffer = smw_crypto_get_cipher_output(args);
-
-	/*
-	 * For final operation, TEE requires an output length set to 0 if output
-	 * data buffer is NULL
-	 */
-	if (!op.params[2].tmpref.buffer)
-		op.params[2].tmpref.size = 0;
-	else
-		op.params[2].tmpref.size =
-			smw_crypto_get_cipher_output_len(args);
+	op.params[2].tmpref.size = smw_crypto_get_cipher_output_len(args);
 
 	/* Invoke TA */
 	status = execute_tee_cmd(ta_cmd, &op);
@@ -332,8 +313,19 @@ static int cipher(void *args)
 	int status = SMW_STATUS_OK;
 	struct smw_crypto_cipher_args *cipher_args = args;
 	struct smw_op_context op_context = { 0 };
+	unsigned int input_len = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	/* Get output length feature */
+	if (!smw_crypto_get_cipher_output(cipher_args)) {
+		input_len = smw_crypto_get_cipher_input_len(cipher_args);
+
+		/* Cipher output length is equal to input length */
+		smw_crypto_set_cipher_output_len(cipher_args, input_len);
+
+		goto end;
+	}
 
 	/*
 	 * For multi-part operation, dynamic memory is allocated for operation

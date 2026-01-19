@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2025 NXP
+ * Copyright 2023-2026 NXP
  */
 
 #include <tee_client_api.h>
@@ -12,21 +12,41 @@
 #include "utils.h"
 #include "tee.h"
 
-static int get_mac_algo(enum tee_algorithm_id *alg,
+#define TEE_CMAC_MAX_LENGTH 16U
+
+struct mac_algo {
+	enum tee_algorithm_id tee_id;
+	unsigned int max_length;
+};
+
+static int get_mac_algo(enum tee_algorithm_id *alg, unsigned int *mac_len,
 			struct smw_crypto_mac_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
+	const struct tee_hash_algo *hash_algo = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!alg || !mac_len || !args)
+		goto end;
 
 	switch (args->algo_id) {
 	case SMW_CONFIG_MAC_ALGO_ID_CMAC:
 		*alg = TEE_ALGORITHM_ID_CMAC;
+		*mac_len = TEE_CMAC_MAX_LENGTH;
+
 		status = SMW_STATUS_OK;
 		break;
 
 	case SMW_CONFIG_MAC_ALGO_ID_HMAC:
-		status = tee_convert_hash_algorithm_id(args->hash_id, alg);
+		hash_algo = tee_get_hash_algo(args->hash_id);
+		if (!hash_algo)
+			goto end;
+
+		*alg = hash_algo->tee_id;
+		*mac_len = hash_algo->length;
+
+		status = SMW_STATUS_OK;
 		break;
 
 	default:
@@ -34,6 +54,8 @@ static int get_mac_algo(enum tee_algorithm_id *alg,
 		break;
 	}
 
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
 
@@ -70,6 +92,7 @@ static int mac(void *args)
 	unsigned int output_length = 0;
 	unsigned char *hex_key = NULL;
 	unsigned int hex_key_len = 0;
+	unsigned int mac_len = 0;
 
 	uint32_t key_param_type = TEEC_VALUE_INPUT;
 	uint32_t mac_param_type = TEEC_MEMREF_TEMP_INPUT;
@@ -88,9 +111,18 @@ static int mac(void *args)
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
-	status = get_mac_algo(&shared_params.tee_algorithm_id, mac_args);
+	status = get_mac_algo(&shared_params.tee_algorithm_id, &mac_len,
+			      mac_args);
 	if (status != SMW_STATUS_OK)
 		goto exit;
+
+	if (mac_args->op_id == SMW_CONFIG_MAC_OP_ID_COMPUTE &&
+	    !smw_mac_get_mac_data(mac_args)) {
+		smw_mac_set_mac_length(mac_args, mac_len);
+
+		status = SMW_STATUS_OK;
+		goto exit;
+	}
 
 	/*
 	 * params[0] = Key ID or Key buffer

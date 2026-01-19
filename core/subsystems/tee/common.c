@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2025 NXP
+ * Copyright 2023-2026 NXP
  */
 
 #include <tee_client_api.h>
@@ -12,46 +12,57 @@
 
 #include "tee.h"
 
-#define ALGORITHM_ID(_id)                                                      \
+#define HASH_ALGO(_id, _length)                                                \
 	{                                                                      \
 		.smw_id = SMW_CONFIG_HASH_ALGO_ID_##_id,                       \
-		.tee_id = TEE_ALGORITHM_ID_##_id                               \
+		.tee_id = TEE_ALGORITHM_ID_##_id, .length = _length            \
 	}
 
-/**
- * struct - Hash algorithm IDs
- * @smw_id: Hash algorithm ID as defined in SMW.
- * @tee_id: Hash algorithm ID as defined in TEE subsystem.
- */
-static const struct {
-	enum smw_config_hash_algo_id smw_id;
-	enum tee_algorithm_id tee_id;
-} algorithm_ids[] = { ALGORITHM_ID(MD5),      ALGORITHM_ID(SHA1),
-		      ALGORITHM_ID(SHA224),   ALGORITHM_ID(SHA256),
-		      ALGORITHM_ID(SHA384),   ALGORITHM_ID(SHA512),
-		      ALGORITHM_ID(SHA3_224), ALGORITHM_ID(SHA3_256),
-		      ALGORITHM_ID(SHA3_384), ALGORITHM_ID(SHA3_512),
-		      ALGORITHM_ID(SM3),      ALGORITHM_ID(SHAKE256),
-		      ALGORITHM_ID(INVALID) };
+static const struct tee_hash_algo hash_algos[] = {
+	HASH_ALGO(MD5, 16),	 HASH_ALGO(SHA1, 20),
+	HASH_ALGO(SHA224, 28),	 HASH_ALGO(SHA256, 32),
+	HASH_ALGO(SHA384, 48),	 HASH_ALGO(SHA512, 64),
+	HASH_ALGO(SHA3_224, 28), HASH_ALGO(SHA3_256, 32),
+	HASH_ALGO(SHA3_384, 48), HASH_ALGO(SHA3_512, 64),
+	HASH_ALGO(SM3, 32),	 HASH_ALGO(SHAKE256, 64),
+	HASH_ALGO(INVALID, 0)
+};
+
+const struct tee_hash_algo *
+tee_get_hash_algo(enum smw_config_hash_algo_id smw_id)
+{
+	const struct tee_hash_algo *hash_algo = NULL;
+	unsigned int i = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (; i < ARRAY_SIZE(hash_algos); i++) {
+		if (hash_algos[i].smw_id == smw_id) {
+			hash_algo = &hash_algos[i];
+			break;
+		}
+	}
+
+	return hash_algo;
+}
 
 int tee_convert_hash_algorithm_id(enum smw_config_hash_algo_id smw_id,
 				  enum tee_algorithm_id *tee_id)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-
-	unsigned int i = 0;
-	unsigned int array_size = ARRAY_SIZE(algorithm_ids);
+	const struct tee_hash_algo *hash_algo = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	for (; i < array_size; i++) {
-		if (algorithm_ids[i].smw_id == smw_id) {
-			*tee_id = algorithm_ids[i].tee_id;
-			status = SMW_STATUS_OK;
-			break;
-		}
-	}
+	hash_algo = tee_get_hash_algo(smw_id);
+	if (!hash_algo)
+		goto end;
 
+	*tee_id = hash_algo->tee_id;
+
+	status = SMW_STATUS_OK;
+
+end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021, 2023-2025 NXP
+ * Copyright 2020-2021, 2023-2026 NXP
  */
 
 #ifndef TEE_H
@@ -14,6 +14,18 @@
 #include "tee_subsystem.h"
 
 #define TEE_MAX_IV_LEN 16
+
+/**
+ * struct - Hash algorithm IDs
+ * @smw_id: Hash algorithm ID as defined in SMW.
+ * @tee_id: Hash algorithm ID as defined in TEE subsystem.
+ * @length: Digest length in bytes
+ */
+struct tee_hash_algo {
+	enum smw_config_hash_algo_id smw_id;
+	enum tee_algorithm_id tee_id;
+	unsigned int length;
+};
 
 /**
  * struct aead_context - AEAD context
@@ -92,6 +104,17 @@ int tee_convert_key_type(struct smw_keymgr_identifier *key_identifier,
  * SMW key type
  */
 enum smw_config_key_type_id key_type_tee_to_smw(enum tee_key_type key_type);
+
+/**
+ * tee_get_hash_algo() - Get the TEE hash algorithm information
+ * @algo_id: SMW Hash algorithm id.
+ *
+ * Return:
+ * NULL if algorithm not found, otherwise reference to the hash algorithm
+ * information.
+ */
+const struct tee_hash_algo *
+tee_get_hash_algo(enum smw_config_hash_algo_id smw_id);
 
 /**
  * tee_convert_hash_algorithm_id() - Convert SMW algorithm to TEE algorithm.

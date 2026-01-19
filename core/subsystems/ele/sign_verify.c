@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2025 NXP
+ * Copyright 2022-2026 NXP
  */
 
 #include "smw_status.h"
@@ -672,10 +672,10 @@ static int verify(struct subsystem_context *ele_ctx, void *args)
 
 end:
 	if (temp_pub_key)
-		free(temp_pub_key);
+		SMW_UTILS_FREE(temp_pub_key);
 
 	if (temp_sign)
-		free(temp_sign);
+		SMW_UTILS_FREE(temp_sign);
 
 	if (export_key_desc.pub)
 		(void)smw_keymgr_free_keypair_buffer(&export_key_desc);

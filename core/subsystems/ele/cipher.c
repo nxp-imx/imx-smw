@@ -83,6 +83,17 @@ static int cipher(struct hdl *hdl, void *args)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
+	op_args.output = smw_crypto_get_cipher_output(cipher_args);
+	op_args.input_size = smw_crypto_get_cipher_input_len(cipher_args);
+
+	/* Get output length feature */
+	if (!op_args.output) {
+		/* Cipher output length is equal to input length */
+		smw_crypto_set_cipher_output_len(cipher_args,
+						 op_args.input_size);
+		goto end;
+	}
+
 	/* Get 1st key type as reference */
 	key_type_id = key_identifier->type_id;
 
@@ -112,18 +123,6 @@ static int cipher(struct hdl *hdl, void *args)
 		status = get_private_key_buffer(&op_args, key_desc);
 		if (status != SMW_STATUS_OK)
 			goto end;
-	}
-
-	op_args.output = smw_crypto_get_cipher_output(cipher_args);
-	op_args.input_size = smw_crypto_get_cipher_input_len(cipher_args);
-
-	/* Get output length feature */
-	if (!op_args.output) {
-		/* Cipher output length is equal to input length */
-		smw_crypto_set_cipher_output_len(cipher_args,
-						 op_args.input_size);
-		status = SMW_STATUS_OK;
-		goto end;
 	}
 
 	op_args.output_size = smw_crypto_get_cipher_output_len(cipher_args);

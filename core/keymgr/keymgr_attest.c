@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024-2025 NXP
+ * Copyright 2024-2026 NXP
  */
 
 #include <inttypes.h>
@@ -144,9 +144,16 @@ enum smw_status_code smw_key_attestation(struct smw_key_attestation_args *args)
 	SMW_DBG_TRACE_API_CALL;
 
 	if (!args || !args->key_descriptor || !args->attest_key_descriptor ||
-	    !args->key_descriptor->id || !args->attest_key_descriptor->id ||
-	    (!args->challenge && args->certificate) ||
-	    (args->challenge && !args->challenge_length))
+	    !args->key_descriptor->id || !args->attest_key_descriptor->id)
+		goto end;
+
+	if (!args->challenge != !args->challenge_length)
+		goto end;
+
+	if (!args->certificate != !args->certificate_length)
+		goto end;
+
+	if (args->certificate && !args->challenge)
 		goto end;
 
 	status =

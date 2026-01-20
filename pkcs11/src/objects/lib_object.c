@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #include <stdlib.h>
@@ -1228,37 +1228,71 @@ static CK_RV libobj_get_profile_attribute(struct libobj_obj *libobj,
 					  CK_ATTRIBUTE_PTR attrs,
 					  CK_ULONG nb_attrs)
 {
+	CK_RV ret = CKR_OK;
+	CK_RV status = CKR_OK;
+	CK_VOID_PTR pValue = NULL_PTR;
+	CK_ULONG ulValueLen = 0;
+
 	unsigned int i = 0;
 
 	for (; i < nb_attrs; i++) {
-		if (!(attrs + i)->pValue) {
-			DBG_TRACE("Attribute Type 0x%lx not defined",
-				  (attrs + i)->type);
-			return CKR_ATTRIBUTE_VALUE_INVALID;
-		}
+		pValue = (attrs + i)->pValue;
+		ulValueLen = (attrs + i)->ulValueLen;
 
 		switch ((attrs + i)->type) {
 		case CKA_CLASS:
-			*(CK_OBJECT_CLASS *)(attrs + i)->pValue = CKO_PROFILE;
+			if (pValue) {
+				if (ulValueLen >= sizeof(CK_OBJECT_CLASS))
+					*(CK_OBJECT_CLASS *)pValue =
+						CKO_PROFILE;
+				else
+					status = CKR_BUFFER_TOO_SMALL;
+			}
+
+			(attrs + i)->ulValueLen = sizeof(CK_OBJECT_CLASS);
 			break;
 
 		case CKA_PROFILE_ID:
-			*(CK_ULONG *)(attrs + i)->pValue =
-				*(CK_PROFILE_ID *)libobj->object;
+			if (pValue) {
+				if (ulValueLen >= sizeof(CK_ULONG))
+					*(CK_ULONG *)pValue =
+						*(CK_PROFILE_ID *)libobj->object;
+				else
+					status = CKR_BUFFER_TOO_SMALL;
+			}
+
+			(attrs + i)->ulValueLen = sizeof(CK_ULONG);
 			break;
 
 		case CKA_TOKEN:
-			*(CK_BBOOL *)(attrs + i)->pValue = CK_TRUE;
+			if (pValue) {
+				if (ulValueLen >= sizeof(CK_BBOOL))
+					*(CK_BBOOL *)pValue = CK_TRUE;
+				else
+					status = CKR_BUFFER_TOO_SMALL;
+			}
+
+			(attrs + i)->ulValueLen = sizeof(CK_BBOOL);
 			break;
 
 		default:
 			DBG_TRACE("Attribute Type 0x%lx not supported",
 				  (attrs + i)->type);
-			return CKR_ATTRIBUTE_TYPE_INVALID;
+			(attrs + i)->ulValueLen = CK_UNAVAILABLE_INFORMATION;
+			status = CKR_ATTRIBUTE_TYPE_INVALID;
+			break;
 		}
+
+		/*
+		 * Continue to parse all requested attributes.
+		 * If status is not CKR_OK, set return function value
+		 * to the first error occurring.
+		 */
+		if (ret == CKR_OK && status != CKR_OK)
+			ret = status;
 	}
 
-	return CKR_OK;
+	return ret;
 }
 
 CK_RV libobj_get_attribute(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject,

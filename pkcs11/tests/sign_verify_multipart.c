@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024-2025 NXP
+ * Copyright 2024-2026 NXP
  */
 
 #include <stdlib.h>
@@ -675,6 +675,7 @@ static int sign_verify_multipart_ecdsa(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_SignUpdate"))
 		goto end;
 
+	signature_len = 0;
 	TEST_OUT("Get signature length (sign with NULL signature buffer)\n");
 	ret = pfunc->C_SignFinal(sess, NULL_PTR, &signature_len);
 	if (CHECK_CK_RV(CKR_OK, "C_SignFinal"))
@@ -836,6 +837,7 @@ static int sign_verify_multipart_eddsa(CK_FUNCTION_LIST_PTR pfunc)
 			if (CHECK_CK_RV(CKR_OK, "C_SignUpdate"))
 				goto end;
 
+			signature_len = 0;
 			TEST_OUT("Get signature length\n");
 			ret = pfunc->C_SignFinal(sess, signature,
 						 &signature_len);
@@ -887,6 +889,7 @@ static int sign_verify_multipart_eddsa(CK_FUNCTION_LIST_PTR pfunc)
 			if (CHECK_CK_RV(CKR_OK, "C_SignUpdate"))
 				goto end;
 
+			signature_len = 0;
 			TEST_OUT("Get signature length\n");
 			ret = pfunc->C_SignFinal(sess, NULL_PTR,
 						 &signature_len);

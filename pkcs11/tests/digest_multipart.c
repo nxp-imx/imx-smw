@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2025 NXP
+ * Copyright 2025-2026 NXP
  */
 
 #include <stdlib.h>
@@ -536,6 +536,7 @@ static int digest_multipart_empty_data(CK_FUNCTION_LIST_PTR pfunc)
 		if (CHECK_CK_RV(CKR_OK, "C_DigestInit"))
 			goto end;
 
+		digest_length = 0;
 		TEST_OUT("Retrieve digest length for empty data\n");
 		ret = pfunc->C_DigestFinal(sess, NULL_PTR, &digest_length);
 		if (CHECK_CK_RV(CKR_OK, "C_DigestFinal"))

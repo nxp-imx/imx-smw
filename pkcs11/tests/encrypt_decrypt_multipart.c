@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2025 NXP
+ * Copyright 2023-2026 NXP
  */
 
 #include <stdlib.h>
@@ -404,16 +404,31 @@ static int encrypt_decrypt_multipart_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_DATA_INVALID, "C_EncryptUpdate"))
 		goto end;
 
+	TEST_OUT("Initialize multi-part encryption operation\n");
+	ret = pfunc->C_EncryptInit(sess, &encrypt_decrypt_mech, hsecretkey);
+	if (CHECK_CK_RV(CKR_OK, "C_EncryptInit"))
+		goto end;
+
 	TEST_OUT("Input data length is 0\n");
 	ret = pfunc->C_EncryptUpdate(sess, &data[0], 0, &encrypted_data[0],
 				     &encrypted_part_len);
 	if (CHECK_CK_RV(CKR_DATA_LEN_RANGE, "C_EncryptUpdate"))
 		goto end;
 
+	TEST_OUT("Initialize multi-part encryption operation\n");
+	ret = pfunc->C_EncryptInit(sess, &encrypt_decrypt_mech, hsecretkey);
+	if (CHECK_CK_RV(CKR_OK, "C_EncryptInit"))
+		goto end;
+
 	TEST_OUT("Pointer to hold the length of encrypted data is NULL\n");
 	ret = pfunc->C_EncryptUpdate(sess, &data[0], part_len,
 				     &encrypted_data[0], NULL_PTR);
 	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_EncryptUpdate"))
+		goto end;
+
+	TEST_OUT("Initialize multi-part encryption operation\n");
+	ret = pfunc->C_EncryptInit(sess, &encrypt_decrypt_mech, hsecretkey);
+	if (CHECK_CK_RV(CKR_OK, "C_EncryptInit"))
 		goto end;
 
 	TEST_OUT("Pointer to hold length of last encrypted part is NULL\n");
@@ -438,10 +453,20 @@ static int encrypt_decrypt_multipart_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_ENCRYPTED_DATA_INVALID, "C_DecryptUpdate"))
 		goto end;
 
+	TEST_OUT("Initialize multi-part decryption operation\n");
+	ret = pfunc->C_DecryptInit(sess, &encrypt_decrypt_mech, hsecretkey);
+	if (CHECK_CK_RV(CKR_OK, "C_DecryptInit"))
+		goto end;
+
 	TEST_OUT("Length of the encrypted data is 0\n");
 	ret = pfunc->C_DecryptUpdate(sess, &encrypted_data[0], 0,
 				     &recovered_data[0], &part_len);
 	if (CHECK_CK_RV(CKR_ENCRYPTED_DATA_LEN_RANGE, "C_DecryptUpdate"))
+		goto end;
+
+	TEST_OUT("Initialize multi-part decryption operation\n");
+	ret = pfunc->C_DecryptInit(sess, &encrypt_decrypt_mech, hsecretkey);
+	if (CHECK_CK_RV(CKR_OK, "C_DecryptInit"))
 		goto end;
 
 	TEST_OUT("Pointer to hold the length of recovered data is NULL\n");
@@ -449,6 +474,11 @@ static int encrypt_decrypt_multipart_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 				     encrypted_part_len, &recovered_data[0],
 				     NULL_PTR);
 	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_DecryptUpdate"))
+		goto end;
+
+	TEST_OUT("Initialize multi-part decryption operation\n");
+	ret = pfunc->C_DecryptInit(sess, &encrypt_decrypt_mech, hsecretkey);
+	if (CHECK_CK_RV(CKR_OK, "C_DecryptInit"))
 		goto end;
 
 	TEST_OUT("Pointer to hold the length of last data part is NULL\n");

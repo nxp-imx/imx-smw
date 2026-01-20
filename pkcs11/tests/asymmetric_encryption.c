@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2025 NXP
+ * Copyright 2025-2026 NXP
  */
 
 #include <stdlib.h>
@@ -137,6 +137,39 @@ static int perform_asymm_encrypt_decrypt(CK_FUNCTION_LIST_PTR pfunc,
 	recovered_data =
 		(CK_BYTE_PTR)calloc(recovered_data_len, sizeof(CK_BYTE));
 	if (CHECK_EXPECTED(recovered_data, "Allocation error"))
+		goto end;
+
+	TEST_OUT("Initialize encrypt operation\n");
+	ret = pfunc->C_EncryptInit(sess, &encrypt_decrypt_mech, hpubkey);
+	if (CHECK_CK_RV(CKR_OK, "C_EncryptInit"))
+		goto end;
+
+	TEST_OUT("Get output buffer length, data=NULL and data_len=0\n");
+	ret = pfunc->C_Encrypt(sess, NULL_PTR, 0, encrypted_data,
+			       &encrypted_data_len);
+	if (CHECK_CK_RV(CKR_DATA_LEN_RANGE, "C_Encrypt"))
+		goto end;
+
+	TEST_OUT("Initialize encrypt operation\n");
+	ret = pfunc->C_EncryptInit(sess, &encrypt_decrypt_mech, hpubkey);
+	if (CHECK_CK_RV(CKR_OK, "C_EncryptInit"))
+		goto end;
+
+	TEST_OUT("Get output buffer length, data_len=0\n");
+	ret = pfunc->C_Encrypt(sess, data, 0, encrypted_data,
+			       &encrypted_data_len);
+	if (CHECK_CK_RV(CKR_DATA_LEN_RANGE, "C_Encrypt"))
+		goto end;
+
+	TEST_OUT("Initialize encrypt operation\n");
+	ret = pfunc->C_EncryptInit(sess, &encrypt_decrypt_mech, hpubkey);
+	if (CHECK_CK_RV(CKR_OK, "C_EncryptInit"))
+		goto end;
+
+	TEST_OUT("Get output buffer length, data=NULL\n");
+	ret = pfunc->C_Encrypt(sess, NULL_PTR, data_len, encrypted_data,
+			       &encrypted_data_len);
+	if (CHECK_CK_RV(CKR_DATA_INVALID, "C_Encrypt"))
 		goto end;
 
 	TEST_OUT("Initialize encrypt operation\n");

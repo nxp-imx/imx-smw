@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024-2025 NXP
+ * Copyright 2024-2026 NXP
  */
 
 #include <stdlib.h>
@@ -1155,6 +1155,7 @@ multipart_cipher_update(CK_FUNCTION_LIST_3_0_PTR pfunc, CK_SESSION_HANDLE sess,
 	in_index = i * input_len;
 	out_index = *total_output_len;
 
+	output_len = 0;
 	ret = multipart_cipher_block(pfunc, sess, pParameter, ulParameterLen,
 				     &input[in_index], &output[out_index],
 				     input_len, &output_len, encrypt, true);

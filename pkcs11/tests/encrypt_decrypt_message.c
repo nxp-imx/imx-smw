@@ -869,6 +869,7 @@ static int encrypt_decrypt_generate_iv(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		if (CHECK_CK_RV(CKR_OK, "C_MessageDecryptInit"))
 			goto end;
 
+		recovered_data_len = 0;
 		TEST_OUT("Get decrypt message len\n");
 		ret = pfunc->C_DecryptMessage(sess, enc_dec_mech.pParameter,
 					      enc_dec_mech.ulParameterLen,
@@ -1161,6 +1162,7 @@ static int encrypt_decrypt_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		if (CHECK_CK_RV(CKR_OK, "C_MessageDecryptInit"))
 			goto end;
 
+		recovered_data_len = 0;
 		TEST_OUT("Get decrypt message len\n");
 		ret = pfunc->C_DecryptMessage(sess, enc_dec_mech.pParameter,
 					      enc_dec_mech.ulParameterLen,
@@ -1319,6 +1321,7 @@ static int encrypt_decrypt_des(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		if (CHECK_CK_RV(CKR_OK, "C_MessageDecryptInit"))
 			goto end;
 
+		recovered_data_len = 0;
 		ret = pfunc->C_DecryptMessage(sess, NULL_PTR, 0, NULL_PTR, 0,
 					      encrypted_data,
 					      encrypted_data_len, NULL_PTR,
@@ -1473,6 +1476,7 @@ static int encrypt_decrypt_des3(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		if (CHECK_CK_RV(CKR_OK, "C_MessageDecryptInit"))
 			goto end;
 
+		recovered_data_len = 0;
 		ret = pfunc->C_DecryptMessage(sess, NULL_PTR, 0, NULL_PTR, 0,
 					      encrypted_data,
 					      encrypted_data_len, NULL_PTR,

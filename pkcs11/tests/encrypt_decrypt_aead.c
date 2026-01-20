@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024-2025 NXP
+ * Copyright 2024-2026 NXP
  */
 
 #include <stdlib.h>
@@ -309,7 +309,7 @@ static int encrypt_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 		if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_Encrypt"))
 			goto end;
 
-		TEST_OUT("Re-initialize encrypt operation\n");
+		TEST_OUT("Initialize encrypt operation\n");
 		ret = pfunc->C_EncryptInit(sess, &encrypt_mech, aes_hsecretkey);
 		if (CHECK_CK_RV(CKR_OK, "C_EncryptInit"))
 			goto end;
@@ -335,6 +335,11 @@ static int encrypt_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 		ret = pfunc->C_Encrypt(sess, data, 0, encrypted_data,
 				       &encrypted_data_len);
 		if (CHECK_CK_RV(CKR_DATA_LEN_RANGE, "C_Encrypt"))
+			goto end;
+
+		TEST_OUT("Initialize encrypt operation\n");
+		ret = pfunc->C_EncryptInit(sess, &encrypt_mech, aes_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_EncryptInit"))
 			goto end;
 
 		TEST_OUT("Check data NULL\n");
@@ -425,7 +430,7 @@ static int decrypt_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 		if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_Decrypt"))
 			goto end;
 
-		TEST_OUT("Re-initialize decrypt operation\n");
+		TEST_OUT("Initialize decrypt operation\n");
 		ret = pfunc->C_DecryptInit(sess, &decrypt_mech, aes_hsecretkey);
 		if (CHECK_CK_RV(CKR_OK, "C_DecryptInit"))
 			goto end;
@@ -451,6 +456,11 @@ static int decrypt_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 		ret = pfunc->C_Decrypt(sess, data, 0, recovered_data,
 				       &recovered_data_len);
 		if (CHECK_CK_RV(CKR_ENCRYPTED_DATA_LEN_RANGE, "C_Decrypt"))
+			goto end;
+
+		TEST_OUT("Initialize decrypt operation\n");
+		ret = pfunc->C_DecryptInit(sess, &decrypt_mech, aes_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DecryptInit"))
 			goto end;
 
 		TEST_OUT("Check data NULL\n");
@@ -497,6 +507,7 @@ static int encrypt_decrypt_aead(CK_FUNCTION_LIST_PTR pfunc)
 	CK_ULONG encrypted_data_len = 0;
 	CK_BYTE_PTR recovered_data = NULL_PTR;
 	CK_ULONG recovered_data_len = 0;
+	CK_ULONG tmp = 0;
 
 	SUBTEST_START();
 
@@ -533,9 +544,41 @@ static int encrypt_decrypt_aead(CK_FUNCTION_LIST_PTR pfunc)
 		if (CHECK_CK_RV(CKR_OK, "C_EncryptInit"))
 			goto end;
 
-		/* Set a wrong encrypted data length */
-		encrypted_data_len = 2;
+		TEST_OUT("Get output buffer length, data=NULL and length=0\n");
+		ret = pfunc->C_Encrypt(sess, NULL_PTR, 0, NULL_PTR, &tmp);
+		if (CHECK_CK_RV(CKR_DATA_LEN_RANGE, "C_Encrypt"))
+			goto end;
 
+		TEST_OUT("Initialize encrypt operation\n");
+		ret = pfunc->C_EncryptInit(sess, &encrypt_decrypt_mech,
+					   aes_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_EncryptInit"))
+			goto end;
+
+		TEST_OUT("Get output buffer length, data_len=0\n");
+		ret = pfunc->C_Encrypt(sess, data, 0, NULL_PTR, &tmp);
+		if (CHECK_CK_RV(CKR_DATA_LEN_RANGE, "C_Encrypt"))
+			goto end;
+
+		TEST_OUT("Initialize encrypt operation\n");
+		ret = pfunc->C_EncryptInit(sess, &encrypt_decrypt_mech,
+					   aes_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_EncryptInit"))
+			goto end;
+
+		TEST_OUT("Get output buffer length, data=NULL\n");
+		ret = pfunc->C_Encrypt(sess, NULL_PTR, sizeof(data), NULL_PTR,
+				       &tmp);
+		if (CHECK_CK_RV(CKR_DATA_INVALID, "C_Encrypt"))
+			goto end;
+
+		TEST_OUT("Initialize encrypt operation\n");
+		ret = pfunc->C_EncryptInit(sess, &encrypt_decrypt_mech,
+					   aes_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_EncryptInit"))
+			goto end;
+
+		encrypted_data_len = 0;
 		/* Encrypt message when encrypted data buffer too small */
 		ret = pfunc->C_Encrypt(sess, data, sizeof(data), NULL_PTR,
 				       &encrypted_data_len);
@@ -559,6 +602,7 @@ static int encrypt_decrypt_aead(CK_FUNCTION_LIST_PTR pfunc)
 		if (CHECK_CK_RV(CKR_OK, "C_DecryptInit"))
 			goto end;
 
+		recovered_data_len = 0;
 		ret = pfunc->C_Decrypt(sess, encrypted_data, encrypted_data_len,
 				       NULL_PTR, &recovered_data_len);
 		if (CHECK_CK_RV(CKR_OK, "C_Decrypt"))

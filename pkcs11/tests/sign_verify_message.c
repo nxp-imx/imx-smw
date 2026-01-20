@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024-2025 NXP
+ * Copyright 2024-2026 NXP
  */
 
 #include <stdlib.h>
@@ -635,6 +635,28 @@ static int sign_verify_cmac(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_MessageSignInit"))
 		goto end;
 
+	tmp = 0;
+	TEST_OUT("Get output buffer length, msg=NULL\n");
+	ret = pfunc->C_SignMessage(sess, NULL_PTR, 0, NULL_PTR, msg_len,
+				   NULL_PTR, &tmp);
+	if (CHECK_CK_RV(CKR_DATA_INVALID, "C_SignMessage"))
+		goto end;
+
+	TEST_OUT("Initialize message sign operation\n");
+	ret = pfunc->C_MessageSignInit(sess, &sign_verify_mech, aes_hsecretkey);
+	if (CHECK_CK_RV(CKR_OK, "C_MessageSignInit"))
+		goto end;
+
+	TEST_OUT("Get output buffer length, msg_len=0\n");
+	ret = pfunc->C_SignMessage(sess, NULL_PTR, 0, msg, 0, NULL_PTR, &tmp);
+	if (CHECK_CK_RV(CKR_DATA_LEN_RANGE, "C_SignMessage"))
+		goto end;
+
+	TEST_OUT("Initialize message sign operation\n");
+	ret = pfunc->C_MessageSignInit(sess, &sign_verify_mech, aes_hsecretkey);
+	if (CHECK_CK_RV(CKR_OK, "C_MessageSignInit"))
+		goto end;
+
 	/* Set a wrong signature length */
 	signature_len = 15;
 	signature = malloc(signature_len);
@@ -645,6 +667,17 @@ static int sign_verify_cmac(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	ret = pfunc->C_SignMessage(sess, NULL_PTR, 0, msg, msg_len, signature,
 				   &signature_len);
 	if (CHECK_CK_RV(CKR_BUFFER_TOO_SMALL, "C_SignMessage"))
+		goto end;
+
+	tmp = 0;
+	TEST_OUT("Get output buffer length, msg=NULL and length=0\n");
+	ret = pfunc->C_SignMessage(sess, NULL_PTR, 0, NULL_PTR, 0, NULL_PTR,
+				   &tmp);
+	if (CHECK_CK_RV(CKR_OK, "C_SignMessage"))
+		goto end;
+
+	if (CHECK_EXPECTED(tmp == signature_len, "Got %lu but expected %lu",
+			   tmp, signature_len))
 		goto end;
 
 	/* Realloc signature buffer with new signature length */
@@ -725,6 +758,7 @@ static int sign_verify_hmac(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	CK_MECHANISM sign_verify_mech = { .mechanism = CKM_SHA256_HMAC };
 	CK_BYTE_PTR signature = NULL_PTR;
 	CK_ULONG signature_len = 0;
+	CK_ULONG tmp = 0;
 
 	CK_OBJECT_HANDLE hmac_hsecretkey = 0;
 	CK_MECHANISM hmac_key_mech = { .mechanism =
@@ -774,10 +808,45 @@ static int sign_verify_hmac(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_MessageSignInit"))
 		goto end;
 
+	tmp = 0;
+	TEST_OUT("Get output buffer length, msg=NULL\n");
+	ret = pfunc->C_SignMessage(sess, NULL_PTR, 0, NULL_PTR, msg_len,
+				   NULL_PTR, &tmp);
+	if (CHECK_CK_RV(CKR_DATA_INVALID, "C_SignMessage"))
+		goto end;
+
+	TEST_OUT("Initialize message sign operation\n");
+	ret = pfunc->C_MessageSignInit(sess, &sign_verify_mech,
+				       hmac_hsecretkey);
+	if (CHECK_CK_RV(CKR_OK, "C_MessageSignInit"))
+		goto end;
+
+	TEST_OUT("Get output buffer length, msg_len=0\n");
+	ret = pfunc->C_SignMessage(sess, NULL_PTR, 0, msg, 0, NULL_PTR, &tmp);
+	if (CHECK_CK_RV(CKR_DATA_LEN_RANGE, "C_SignMessage"))
+		goto end;
+
+	TEST_OUT("Initialize message sign operation\n");
+	ret = pfunc->C_MessageSignInit(sess, &sign_verify_mech,
+				       hmac_hsecretkey);
+	if (CHECK_CK_RV(CKR_OK, "C_MessageSignInit"))
+		goto end;
+
 	TEST_OUT("Get signature length (sign with NULL signature buffer)\n");
 	ret = pfunc->C_SignMessage(sess, NULL_PTR, 0, NULL_PTR, 0, signature,
 				   &signature_len);
 	if (CHECK_CK_RV(CKR_OK, "C_SignMessage"))
+		goto end;
+
+	tmp = 0;
+	TEST_OUT("Get output buffer length, msg=NULL and length=0\n");
+	ret = pfunc->C_SignMessage(sess, NULL_PTR, 0, NULL_PTR, 0, NULL_PTR,
+				   &tmp);
+	if (CHECK_CK_RV(CKR_OK, "C_SignMessage"))
+		goto end;
+
+	if (CHECK_EXPECTED(tmp == signature_len, "Got %lu but expected %lu",
+			   tmp, signature_len))
 		goto end;
 
 	signature = malloc(signature_len);
@@ -886,6 +955,7 @@ static int sign_verify_hmac_plaintext_key(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		if (CHECK_CK_RV(CKR_OK, "C_MessageSignInit"))
 			goto end;
 
+		signature_len = 0;
 		TEST_OUT("Get signature length\n");
 		ret = pfunc->C_SignMessage(sess, NULL_PTR, 0, NULL_PTR, 0,
 					   signature, &signature_len);
@@ -924,7 +994,6 @@ static int sign_verify_hmac_plaintext_key(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 		free(signature);
 		signature = NULL;
-		signature_len = 0;
 	}
 
 	status = TEST_PASS;

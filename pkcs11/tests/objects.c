@@ -209,6 +209,7 @@ static int encrypt_decrypt_aes(CK_FUNCTION_LIST_PTR pfunc)
 			if (CHECK_CK_RV(CKR_OK, "C_DecryptInit"))
 				goto end;
 
+			recovered_data_len = 0;
 			ret = pfunc->C_Decrypt(sess, encrypted_data,
 					       encrypted_data_len, NULL_PTR,
 					       &recovered_data_len);

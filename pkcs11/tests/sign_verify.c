@@ -680,6 +680,26 @@ static int sign_verify_ecdsa(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_SignInit"))
 		goto end;
 
+	TEST_OUT("Get output buffer length, msg=NULL\n");
+	ret = pfunc->C_Sign(sess, NULL_PTR, msg_len, NULL_PTR, &tmp);
+	if (CHECK_CK_RV(CKR_DATA_INVALID, "C_Sign"))
+		goto end;
+
+	TEST_OUT("Initialize sign operation\n");
+	ret = pfunc->C_SignInit(sess, &sign_verify_mech, hprivkey);
+	if (CHECK_CK_RV(CKR_OK, "C_SignInit"))
+		goto end;
+
+	TEST_OUT("Get output buffer length, msg_len=0\n");
+	ret = pfunc->C_Sign(sess, msg, 0, NULL_PTR, &tmp);
+	if (CHECK_CK_RV(CKR_DATA_LEN_RANGE, "C_Sign"))
+		goto end;
+
+	TEST_OUT("Initialize sign operation\n");
+	ret = pfunc->C_SignInit(sess, &sign_verify_mech, hprivkey);
+	if (CHECK_CK_RV(CKR_OK, "C_SignInit"))
+		goto end;
+
 	/* Set a wrong signature length */
 	signature_len = 20;
 	signature = malloc(signature_len);
@@ -689,6 +709,15 @@ static int sign_verify_ecdsa(CK_FUNCTION_LIST_PTR pfunc)
 	TEST_OUT("Sign message with signature buffer too small\n");
 	ret = pfunc->C_Sign(sess, msg, msg_len, signature, &signature_len);
 	if (CHECK_CK_RV(CKR_BUFFER_TOO_SMALL, "C_Sign"))
+		goto end;
+
+	TEST_OUT("Get output buffer length, msg=NULL and msg_len=0\n");
+	ret = pfunc->C_Sign(sess, NULL_PTR, 0, NULL_PTR, &tmp);
+	if (CHECK_CK_RV(CKR_OK, "C_Sign"))
+		goto end;
+
+	if (CHECK_EXPECTED(tmp == signature_len, "Got %lu but expected %lu",
+			   tmp, signature_len))
 		goto end;
 
 	/* Realloc signature buffer with new signature length */
@@ -793,6 +822,7 @@ static int sign_verify_rsa_pkcs(CK_FUNCTION_LIST_PTR pfunc)
 	CK_MECHANISM sign_verify_mech = { .mechanism = CKM_SHA512_RSA_PKCS };
 	CK_BYTE_PTR signature = NULL_PTR;
 	CK_ULONG signature_len = 0;
+	CK_ULONG tmp = 0;
 
 	CK_OBJECT_HANDLE hpubkey = CK_INVALID_HANDLE;
 	CK_OBJECT_HANDLE hprivkey = CK_INVALID_HANDLE;
@@ -839,9 +869,38 @@ static int sign_verify_rsa_pkcs(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_SignInit"))
 		goto end;
 
+	TEST_OUT("Get output buffer length, msg=NULL\n");
+	ret = pfunc->C_Sign(sess, NULL_PTR, msg_len, NULL_PTR, &tmp);
+	if (CHECK_CK_RV(CKR_DATA_INVALID, "C_Sign"))
+		goto end;
+
+	TEST_OUT("Initialize sign operation\n");
+	ret = pfunc->C_SignInit(sess, &sign_verify_mech, hprivkey);
+	if (CHECK_CK_RV(CKR_OK, "C_SignInit"))
+		goto end;
+
+	TEST_OUT("Get output buffer length, msg_len=0\n");
+	ret = pfunc->C_Sign(sess, msg, 0, NULL_PTR, &tmp);
+	if (CHECK_CK_RV(CKR_DATA_LEN_RANGE, "C_Sign"))
+		goto end;
+
+	TEST_OUT("Initialize sign operation\n");
+	ret = pfunc->C_SignInit(sess, &sign_verify_mech, hprivkey);
+	if (CHECK_CK_RV(CKR_OK, "C_SignInit"))
+		goto end;
+
 	TEST_OUT("Get signature length (sign with NULL signature buffer)\n");
 	ret = pfunc->C_Sign(sess, NULL_PTR, 0, signature, &signature_len);
 	if (CHECK_CK_RV(CKR_OK, "C_Sign"))
+		goto end;
+
+	TEST_OUT("Get output buffer length, msg=NULL and msg_len=0\n");
+	ret = pfunc->C_Sign(sess, NULL_PTR, 0, NULL_PTR, &tmp);
+	if (CHECK_CK_RV(CKR_OK, "C_Sign"))
+		goto end;
+
+	if (CHECK_EXPECTED(tmp == signature_len, "Got %lu but expected %lu",
+			   tmp, signature_len))
 		goto end;
 
 	signature = malloc(signature_len);
@@ -885,6 +944,7 @@ static int sign_verify_rsa_pss(CK_FUNCTION_LIST_PTR pfunc)
 	CK_RSA_PKCS_PSS_PARAMS pss_params = { 0 };
 	CK_BYTE_PTR signature = NULL_PTR;
 	CK_ULONG signature_len = 0;
+	CK_ULONG tmp = 0;
 
 	CK_OBJECT_HANDLE hpubkey = CK_INVALID_HANDLE;
 	CK_OBJECT_HANDLE hprivkey = CK_INVALID_HANDLE;
@@ -936,9 +996,38 @@ static int sign_verify_rsa_pss(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_SignInit"))
 		goto end;
 
+	TEST_OUT("Get output buffer length, msg=NULL\n");
+	ret = pfunc->C_Sign(sess, NULL_PTR, msg_len, NULL_PTR, &tmp);
+	if (CHECK_CK_RV(CKR_DATA_INVALID, "C_Sign"))
+		goto end;
+
+	TEST_OUT("Initialize sign operation\n");
+	ret = pfunc->C_SignInit(sess, &sign_verify_mech, hprivkey);
+	if (CHECK_CK_RV(CKR_OK, "C_SignInit"))
+		goto end;
+
+	TEST_OUT("Get output buffer length, msg_len=0\n");
+	ret = pfunc->C_Sign(sess, msg, 0, NULL_PTR, &tmp);
+	if (CHECK_CK_RV(CKR_DATA_LEN_RANGE, "C_Sign"))
+		goto end;
+
+	TEST_OUT("Initialize sign operation\n");
+	ret = pfunc->C_SignInit(sess, &sign_verify_mech, hprivkey);
+	if (CHECK_CK_RV(CKR_OK, "C_SignInit"))
+		goto end;
+
 	TEST_OUT("Get signature length (sign with NULL signature buffer)\n");
 	ret = pfunc->C_Sign(sess, NULL_PTR, 0, signature, &signature_len);
 	if (CHECK_CK_RV(CKR_OK, "C_Sign"))
+		goto end;
+
+	TEST_OUT("Get output buffer length, msg=NULL and msg_len=0\n");
+	ret = pfunc->C_Sign(sess, NULL_PTR, 0, NULL_PTR, &tmp);
+	if (CHECK_CK_RV(CKR_OK, "C_Sign"))
+		goto end;
+
+	if (CHECK_EXPECTED(tmp == signature_len, "Got %lu but expected %lu",
+			   tmp, signature_len))
 		goto end;
 
 	signature = malloc(signature_len);
@@ -982,6 +1071,7 @@ static int sign_verify_eddsa(CK_FUNCTION_LIST_PTR pfunc)
 	CK_ULONG signature_len = 0;
 	CK_BYTE_PTR payload = NULL_PTR;
 	CK_ULONG payload_len = 0;
+	CK_ULONG tmp = 0;
 
 	CK_OBJECT_HANDLE hpubkey = 0;
 	CK_OBJECT_HANDLE hprivkey = 0;
@@ -1082,6 +1172,30 @@ static int sign_verify_eddsa(CK_FUNCTION_LIST_PTR pfunc)
 				payload_len = msg_sha512_len;
 			}
 
+			tmp = 0;
+			TEST_OUT("Get output buffer length, msg=NULL\n");
+			ret = pfunc->C_Sign(sess, NULL_PTR, payload_len,
+					    NULL_PTR, &tmp);
+			if (CHECK_CK_RV(CKR_DATA_INVALID, "C_Sign"))
+				goto end;
+
+			TEST_OUT("Initialize sign operation\n");
+			ret = pfunc->C_SignInit(sess, &sign_verify_mech[idx],
+						hprivkey);
+			if (CHECK_CK_RV(CKR_OK, "C_SignInit"))
+				goto end;
+
+			TEST_OUT("Get output buffer length, msg_len=0\n");
+			ret = pfunc->C_Sign(sess, payload, 0, NULL_PTR, &tmp);
+			if (CHECK_CK_RV(CKR_DATA_LEN_RANGE, "C_Sign"))
+				goto end;
+
+			TEST_OUT("Initialize sign operation\n");
+			ret = pfunc->C_SignInit(sess, &sign_verify_mech[idx],
+						hprivkey);
+			if (CHECK_CK_RV(CKR_OK, "C_SignInit"))
+				goto end;
+
 			/* Set a wrong signature length */
 			signature_len = 20;
 			signature = malloc(signature_len);
@@ -1098,6 +1212,17 @@ static int sign_verify_eddsa(CK_FUNCTION_LIST_PTR pfunc)
 			}
 
 			if (CHECK_CK_RV(CKR_BUFFER_TOO_SMALL, "C_Sign"))
+				goto end;
+
+			tmp = 0;
+			TEST_OUT("Get output length, msg=NULL and msg_len=0\n");
+			ret = pfunc->C_Sign(sess, NULL_PTR, 0, NULL_PTR, &tmp);
+			if (CHECK_CK_RV(CKR_OK, "C_Sign"))
+				goto end;
+
+			if (CHECK_EXPECTED(tmp == signature_len,
+					   "Got %lu but expected %lu", tmp,
+					   signature_len))
 				goto end;
 
 			/* Realloc signature buffer with new signature length */
@@ -1518,6 +1643,27 @@ static int sign_verify_tls(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_SignInit"))
 		goto end;
 
+	tmp = 0;
+	TEST_OUT("Get output buffer length, msg_sha256=NULL\n");
+	ret = pfunc->C_Sign(sess, NULL_PTR, msg_sha256_len, NULL_PTR, &tmp);
+	if (CHECK_CK_RV(CKR_DATA_INVALID, "C_Sign"))
+		goto end;
+
+	TEST_OUT("Initialize sign operation\n");
+	ret = pfunc->C_SignInit(sess, &sign_verify_mech, master_hsecretkey);
+	if (CHECK_CK_RV(CKR_OK, "C_SignInit"))
+		goto end;
+
+	TEST_OUT("Get output buffer length, msg_sha256_len=0\n");
+	ret = pfunc->C_Sign(sess, msg_sha256, 0, NULL_PTR, &tmp);
+	if (CHECK_CK_RV(CKR_DATA_LEN_RANGE, "C_Sign"))
+		goto end;
+
+	TEST_OUT("Initialize sign operation\n");
+	ret = pfunc->C_SignInit(sess, &sign_verify_mech, master_hsecretkey);
+	if (CHECK_CK_RV(CKR_OK, "C_SignInit"))
+		goto end;
+
 	/* Set a wrong signature length */
 	signature_len = 10;
 	signature = malloc(signature_len);
@@ -1528,6 +1674,15 @@ static int sign_verify_tls(CK_FUNCTION_LIST_PTR pfunc)
 	ret = pfunc->C_Sign(sess, msg_sha256, msg_sha256_len, signature,
 			    &signature_len);
 	if (CHECK_CK_RV(CKR_BUFFER_TOO_SMALL, "C_Sign"))
+		goto end;
+
+	TEST_OUT("Get output buffer length, msg=NULL and msg_len=0\n");
+	ret = pfunc->C_Sign(sess, NULL_PTR, 0, NULL_PTR, &tmp);
+	if (CHECK_CK_RV(CKR_OK, "C_Sign"))
+		goto end;
+
+	if (CHECK_EXPECTED(tmp == signature_len, "Got %lu but expected %lu",
+			   tmp, signature_len))
 		goto end;
 
 	/* Realloc signature buffer with new signature length */

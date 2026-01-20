@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023-2025 NXP
+ * Copyright 2021, 2023-2026 NXP
  */
 
 #include <stdlib.h>
@@ -784,16 +784,18 @@ CK_RV lib_sign(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 	if (state != OP_NEXT && !pulsignaturelen)
 		goto end;
 
-	if (state == OP_NEXT || (state == OP_ONE_SHOT && psignature)) {
-		if (!uldatalen) {
-			ret = CKR_DATA_LEN_RANGE;
-			goto end;
-		}
+	if ((state == OP_NEXT || (state == OP_ONE_SHOT && psignature) ||
+	     pdata) &&
+	    !uldatalen) {
+		ret = CKR_DATA_LEN_RANGE;
+		goto end;
+	}
 
-		if (!pdata) {
-			ret = CKR_DATA_INVALID;
-			goto end;
-		}
+	if ((state == OP_NEXT || (state == OP_ONE_SHOT && psignature) ||
+	     uldatalen) &&
+	    !pdata) {
+		ret = CKR_DATA_INVALID;
+		goto end;
 	}
 
 	if (!pparameter != !ulparameterlen) {

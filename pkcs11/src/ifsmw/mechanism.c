@@ -3899,7 +3899,8 @@ static CK_RV op_mmac_common(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	ret = smw_status_to_ck_rv(status);
 
 	DBG_TRACE("%s on subsystem #%d SMW status %d return 0x%lx",
-		  params->op_flag == CKF_SIGN ? "Sign" : "Verify",
+		  (params->op_flag & (CKF_SIGN | CKF_MESSAGE_SIGN)) ? "Sign" :
+								      "Verify",
 		  smw_args.subsystem_name, status, ret);
 
 	return ret;

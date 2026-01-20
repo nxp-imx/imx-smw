@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2025 NXP
+ * Copyright 2023-2026 NXP
  */
 
 #include <stdlib.h>
@@ -775,6 +775,28 @@ static CK_RV cancel_operation(void *session, struct libopctx *opctx)
 	return ret;
 }
 
+static bool is_asymmetric_encryption(CK_MECHANISM_TYPE mechanism)
+{
+	bool ret = false;
+
+	if (mechanism == CKM_RSA_PKCS || mechanism == CKM_RSA_PKCS_OAEP ||
+	    mechanism == CKM_RSA_X_509)
+		ret = true;
+
+	return ret;
+}
+
+static bool is_aead(CK_MECHANISM_TYPE mechanism)
+{
+	bool ret = false;
+
+	if (mechanism == CKM_AES_CCM || mechanism == CKM_AES_GCM ||
+	    mechanism == CKM_CHACHA20_POLY1305)
+		ret = true;
+
+	return ret;
+}
+
 CK_RV lib_cipher_copy_operation(void *src, void **dst)
 {
 	CK_RV ret = CKR_OK;
@@ -946,22 +968,9 @@ CK_RV lib_encrypt_decrypt(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 	struct lib_cipher_params params = { 0 };
 	struct libobj_obj *obj = NULL;
 	CK_BBOOL terminate = CK_TRUE;
-
-	if (state == OP_ONE_SHOT || state == OP_UPDATE || state == OP_NEXT) {
-		if (!input_length) {
-			ret = (op_flag & (CKF_MESSAGE_ENCRYPT | CKF_ENCRYPT)) ?
-				      CKR_DATA_LEN_RANGE :
-				      CKR_ENCRYPTED_DATA_LEN_RANGE;
-			goto end;
-		}
-
-		if (!pinput) {
-			ret = (op_flag & (CKF_MESSAGE_ENCRYPT | CKF_ENCRYPT)) ?
-				      CKR_DATA_INVALID :
-				      CKR_ENCRYPTED_DATA_INVALID;
-			goto end;
-		}
-	}
+	CK_BBOOL encrypt = (op_flag & (CKF_MESSAGE_ENCRYPT | CKF_ENCRYPT)) ?
+				   CK_TRUE :
+				   CK_FALSE;
 
 	if (!poutput_length) {
 		ret = CKR_ARGUMENTS_BAD;
@@ -977,6 +986,22 @@ CK_RV lib_encrypt_decrypt(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 	ret = libsess_find_opctx(hsession, op_flag, &mechanism, (void **)&ctx);
 	if (ret != CKR_OK)
 		goto end;
+
+	if ((state == OP_ONE_SHOT || state == OP_UPDATE || state == OP_NEXT)) {
+		if ((is_asymmetric_encryption(mechanism.mechanism) ||
+		     is_aead(mechanism.mechanism) || poutput || pinput) &&
+		    !input_length) {
+			ret = encrypt ? CKR_DATA_LEN_RANGE :
+					CKR_ENCRYPTED_DATA_LEN_RANGE;
+			goto end;
+		}
+
+		if ((poutput || input_length) && !pinput) {
+			ret = encrypt ? CKR_DATA_INVALID :
+					CKR_ENCRYPTED_DATA_INVALID;
+			goto end;
+		}
+	}
 
 	ret = libopctx_check_next_state(ctx->current_state, state, &terminate);
 	if (ret != CKR_OK)

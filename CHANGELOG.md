@@ -85,6 +85,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### PKCS#11 Library
 
 * Add CKM_EC_MONTGOMERY_KEY_PAIR_GEN mechanism support.
+* Fix attribute handling for profile object.
 
 #### PKCS#11 Tests
 
@@ -100,6 +101,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add mechanism support checks before performing the operations.
 * If key generation is unsuccessful, skip finding the keys in find_ext.c
 * Add object label attribute update tests to validate label and user id field modifications.
+* Add profile get attribute test.
 
 ---
 ### <a id ="rel_5_3"></a></br>**Release 5.3**

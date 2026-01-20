@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2025 NXP
+ * Copyright 2021-2026 NXP
  */
 
 #include <stdlib.h>
@@ -382,7 +382,12 @@ int sign_verify(struct subtest_data *subtest, int operation)
 			 * may have been already allocated.
 			 */
 			args.signature = exp_sign;
-			args.signature_length = exp_sign_length;
+			if (exp_sign)
+				args.signature_length = exp_sign_length;
+			else
+				args.signature_length = 0;
+
+			res = ERR_CODE(PASSED);
 		} else {
 			res = set_signature_to_generate(subtest,
 							args.key_descriptor,

@@ -12,7 +12,6 @@
 	"subtest 1": {
 		"description": "MAC args pointer is NULL",
 		"command": "MAC_COMPUTE",
-		"subsystem": "DEFAULT",
 		"algo": "CMAC",
 		"key_name": "key 1",
 		"input": [
@@ -38,7 +37,6 @@
 	"subtest 2": {
 		"description": "Version is not supported",
 		"command": "MAC_COMPUTE",
-		"subsystem": "DEFAULT",
 		"algo": "CMAC",
 		"version": 255,
 		"key_name": "key 1",
@@ -89,7 +87,6 @@
 	"subtest 4": {
 		"description": "Key descriptor pointer is NULL",
 		"command": "MAC_COMPUTE",
-		"subsystem": "DEFAULT",
 		"algo": "CMAC",
 		"key_name": "key 1",
 		"input": [
@@ -115,7 +112,6 @@
 	"subtest 5": {
 		"description": "Algo is undefined",
 		"command": "MAC_COMPUTE",
-		"subsystem": "DEFAULT",
 		"algo": "UNDEFINED",
 		"key_name": "key 1",
 		"input": [
@@ -140,7 +136,6 @@
 	"subtest 6": {
 		"description": "Message buffer is NULL",
 		"command": "MAC_COMPUTE",
-		"subsystem": "DEFAULT",
 		"algo": "CMAC",
 		"key_name": "key 1",
 		"input": 163,
@@ -153,7 +148,6 @@
 	"subtest 7": {
 		"description": "Message length is 0",
 		"command": "MAC_COMPUTE",
-		"subsystem": "DEFAULT",
 		"algo": "CMAC",
 		"key_name": "key 1",
 		"input": [
@@ -177,9 +171,46 @@
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 8": {
+		"description": "Get output length and no message",
+		"command": "MAC_COMPUTE",
+		"algo": "CMAC",
+		"key_name": "key 1",
+		"mac": 0
+	},
+	"subtest 9": {
+		"description": "Get output length and message buffer is NULL",
+		"command": "MAC_COMPUTE",
+		"algo": "CMAC",
+		"key_name": "key 1",
+		"input": 163,
+		"mac": 0,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 10": {
+		"description": "Get output length and message length is 0",
+		"command": "MAC_COMPUTE",
+		"algo": "CMAC",
+		"key_name": "key 1",
+		"input": [
+			0,
+			"7c9c67323a1df1adbfe5ceb415eaef01",
+			"55ece2820f4d50c1ec22cba4928ac656",
+			"c83fe585db6a78ce40bc42757aba7e5a",
+			"3f582428d6ca68d0c3978336a6efb729",
+			"613e8d9979016204bfd921322fdd5222",
+			"183554447de5e6e9bbe6edf76d7b71e1",
+			"8dc2e8d6dc89b7398364f652fafc7343",
+			"29aafa3dcd45d4f31e388e4fafd7fc64",
+			"95f37ca5cbab7f54d586463da4bfeaa3",
+			"bae09f7b8e9239d832b4f0a733aa609c",
+			"c1f8d4"
+		],
+		"mac": 0,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 11": {
 		"description": "MAC buffer is NULL",
 		"command": "MAC_COMPUTE",
-		"subsystem": "DEFAULT",
 		"algo": "CMAC",
 		"key_name": "key 1",
 		"input": [
@@ -198,10 +229,9 @@
 		"mac": 32,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 9": {
+	"subtest 12": {
 		"description": "MAC length is 0",
 		"command": "MAC_COMPUTE",
-		"subsystem": "DEFAULT",
 		"algo": "CMAC",
 		"key_name": "key 1",
 		"input": [

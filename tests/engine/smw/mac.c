@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2024, 2026 NXP
  */
 
 #include <stdlib.h>
@@ -175,24 +175,16 @@ int mac(struct subtest_data *subtest, bool verify)
 
 	res = util_read_hex_buffer(&input_hex, &input_len, subtest->params,
 				   INPUT_OBJ);
-	if (res != ERR_CODE(PASSED))
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(MISSING_PARAMS))
 		goto exit;
 
 	args.input = input_hex;
 	args.input_length = input_len;
 
-	/*
-	 * Read expected mac buffer if any.
-	 * Test definition might not set the expected mac buffer.
-	 */
 	res = util_read_hex_buffer(&mac_hex, &mac_len, subtest->params,
 				   MAC_OBJ);
-	if (res != ERR_CODE(PASSED)) {
-		if (res != ERR_CODE(MISSING_PARAMS))
-			goto exit;
-
-		res = ERR_CODE(PASSED);
-	}
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(MISSING_PARAMS))
+		goto exit;
 
 	/* Get 'mac_id' parameter to store the mac in the list */
 	res = util_read_json_type(&mac_id, MAC_ID_OBJ, t_int, subtest->params);
@@ -282,7 +274,7 @@ int mac(struct subtest_data *subtest, bool verify)
 		 * - case 3 (no mac_id and no expected mac):
 		 *       nothing to do.
 		 */
-		if (mac_hex && mac_id == INT_MAX) {
+		if ((mac_hex || mac_len) && mac_id == INT_MAX) {
 			res = util_compare_buffers(args.mac, args.mac_length,
 						   mac_hex, mac_len);
 		} else if (mac_id != INT_MAX) {

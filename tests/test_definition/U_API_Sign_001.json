@@ -182,6 +182,23 @@
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 6": {
+		"description": "No message buffer",
+		"command": "SIGN",
+		"subsystem": "DEFAULT",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA256"
+		],
+		"key_name": "key 1",
+		"signature": [
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 7": {
 		"description": "Message buffer is NULL",
 		"command": "SIGN",
 		"subsystem": "DEFAULT",
@@ -199,7 +216,7 @@
 		],
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 7": {
+	"subtest 8": {
 		"description": "Message length is 0",
 		"command": "SIGN",
 		"subsystem": "DEFAULT",
@@ -230,7 +247,57 @@
 		],
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 8": {
+	"subtest 9": {
+		"description": "Get output length and no message buffer",
+		"command": "SIGN",
+		"subsystem": "DEFAULT",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA256"
+		],
+		"key_name": "key 1",
+		"signature": 64
+	},
+	"subtest 10": {
+		"description": "Get output length and message buffer is NULL",
+		"command": "SIGN",
+		"subsystem": "DEFAULT",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA256"
+		],
+		"key_name": "key 1",
+		"message": 163,
+		"signature": 64,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 11": {
+		"description": "Get output length and message length is 0",
+		"command": "SIGN",
+		"subsystem": "DEFAULT",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA256"
+		],
+		"key_name": "key 1",
+		"message": [
+			0,
+			"7c9c67323a1df1adbfe5ceb415eaef01",
+			"55ece2820f4d50c1ec22cba4928ac656",
+			"c83fe585db6a78ce40bc42757aba7e5a",
+			"3f582428d6ca68d0c3978336a6efb729",
+			"613e8d9979016204bfd921322fdd5222",
+			"183554447de5e6e9bbe6edf76d7b71e1",
+			"8dc2e8d6dc89b7398364f652fafc7343",
+			"29aafa3dcd45d4f31e388e4fafd7fc64",
+			"95f37ca5cbab7f54d586463da4bfeaa3",
+			"bae09f7b8e9239d832b4f0a733aa609c",
+			"c1f8d4"
+		],
+		"signature": 64,
+		"result": "SMW_STATUS_INVALID_PARAM",
+	},
+	"subtest 12": {
 		"description": "Signature length is 0",
 		"command": "SIGN",
 		"subsystem": "DEFAULT",
@@ -261,13 +328,13 @@
 		],
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 9": {
+	"subtest 13": {
 		"description": "Add a keypair for the test",
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key 2"
 	},
-	"subtest 10": {
+	"subtest 14": {
 		"description": "Get the signature length",
 		"command": "SIGN",
 		"subsystem": "DEFAULT",
@@ -275,13 +342,13 @@
 			"ECDSA",
 			"HASH=SHA256"
 		],
-		"signature": 64,
 		"key_name": "key 2",
-		"depends": 9
+		"signature": 64,
+		"depends": 13
 	},
-	"subtest 11": {
+	"subtest 15": {
 		"command": "DELETE",
 		"key_name": "key 2",
-		"depends": 9
+		"depends": 13
 	}
 }

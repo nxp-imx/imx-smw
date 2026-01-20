@@ -24,7 +24,9 @@
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
 		"key_name": "key 1",
+		"iv": "60cc50e0887532e0d4f3d2f2",
 		"input": "0123456789abcdef1011121314151617",
+		"tag": 16,
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
 	},
 	"subtest 3": {
@@ -32,7 +34,9 @@
 		"command": "AEAD",
 		"op_type": "ENCRYPT",
 		"key_name": "key 1",
+		"iv": "60cc50e0887532e0d4f3d2f2",
 		"input": "0123456789abcdef1011121314151617",
+		"tag": 16,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 4": {
@@ -40,7 +44,9 @@
 		"command": "AEAD",
 		"mode": "GCM",
 		"key_name": "key 1",
+		"iv": "60cc50e0887532e0d4f3d2f2",
 		"input": "0123456789abcdef1011121314151617",
+		"tag": 16,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 5": {
@@ -49,58 +55,96 @@
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
 		"key_name": "key 1",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"tag": 16,
+		"output": "0123456789abcdef1011121314151617",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 6": {
+		"description": "Input data buffer is NULL",
+		"command": "AEAD",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"input": 16,
+		"tag": 16,
+		"output": "0123456789abcdef1011121314151617",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 7": {
 		"description": "Input data length is 0",
 		"command": "AEAD",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
 		"key_name": "key 1",
+		"iv": "60cc50e0887532e0d4f3d2f2",
 		"input": [
 			0,
 			"0123456789abcdef1011121314151617"
 		],
+		"tag": 16,
+		"output": "0123456789abcdef1011121314151617",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 7": {
+	"subtest 8": {
+		"description": "Get output length and input data buffer is NULL",
+		"command": "AEAD",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"input": 16,
+		"tag": 16,
+		"output": 0,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 9": {
 		"description": "Output pointer is set and output length is not set",
 		"command": "AEAD",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
 		"key_name": "key 1",
+		"iv": "60cc50e0887532e0d4f3d2f2",
 		"input": "0123456789abcdef1011121314151617",
+		"tag": 16,
 		"output": [
 			0,
 			"0123456789abcdef1011121314151617"
 		],
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 8": {
+	"subtest 10": {
 		"description": "Mode is undefined",
 		"command": "AEAD",
 		"mode": "UNDEFINED",
 		"op_type": "ENCRYPT",
 		"key_name": "key 1",
+		"iv": "60cc50e0887532e0d4f3d2f2",
 		"input": "0123456789abcdef1011121314151617",
+		"tag": 16,
 		"result": "SMW_STATUS_UNKNOWN_MODE_NAME"
 	},
-	"subtest 9": {
+	"subtest 11": {
 		"description": "Operation type is undefined",
 		"command": "AEAD",
 		"mode": "GCM",
 		"op_type": "UNDEFINED",
 		"key_name": "key 1",
+		"iv": "60cc50e0887532e0d4f3d2f2",
 		"input": "0123456789abcdef1011121314151617",
+		"tag": 16,
 		"result": "SMW_STATUS_UNKNOWN_OP_TYPE_NAME"
 	},
-	"subtest 10": {
+	"subtest 12": {
 		"description": "Subsystem name is undefined",
 		"command": "AEAD",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
 		"key_name": "key 1",
+		"iv": "60cc50e0887532e0d4f3d2f2",
 		"input": "0123456789abcdef1011121314151617",
+		"tag": 16,
 		"subsystem": "UNDEFINED",
 		"result": "SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME"
 	}

@@ -24,6 +24,9 @@
 			0,
 			"5555555555"
 		],
+		"signature": [
+			"5555555555"
+		],
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 5": {

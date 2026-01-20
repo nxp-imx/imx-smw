@@ -40,20 +40,18 @@
 	"subtest 4": {
 		"description": "Input length is set while input buffer is not set",
 		"command": "ASYMMETRIC_ENCRYPT",
-		"subsystem": "TEE",
 		"enc_attr": [
 			"RSA_OAEP",
 			"HASH=SHA256"
 		],
 		"input": 10,
-		"output": 256,
+		"output": 32,
 		"key_name": "key 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 5": {
 		"description": "Input length is set to 0 while input buffer is set",
 		"command": "ASYMMETRIC_ENCRYPT",
-		"subsystem": "TEE",
 		"enc_attr": [
 			"RSA_OAEP",
 			"HASH=SHA256"
@@ -62,14 +60,13 @@
 			0,
 			"0123456789abcdef1011121314151617"
 		],
-		"output": 256,
+		"output": 32,
 		"key_name": "key 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 6": {
 		"description": "Output pointer is set and output length is not set",
 		"command": "ASYMMETRIC_ENCRYPT",
-		"subsystem": "TEE",
 		"enc_attr": [
 			"RSA_OAEP",
 			"HASH=SHA256"

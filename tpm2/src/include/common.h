@@ -145,4 +145,17 @@ uint32_t tcti_common_transmit_checks(tcti_context_t *tcti_common,
 uint32_t tcti_common_receive_checks(tcti_context_t *tcti_common,
 				    size_t *response_size, uint64_t magic);
 
+/**
+ * smw_rc_to_tcti_rc() - Convert SMW status code to TSS2 TCTI return code.
+ * @smw_rc: SMW status code to convert.
+ *
+ * This function maps SMW cryptographic API status codes to their corresponding
+ * TSS2 TCTI return codes. It provides a centralized conversion mechanism to
+ * ensure consistent error handling when calling SMW operations from the TPM2
+ * TCTI layer. Unmapped SMW status codes default to TSS2_TCTI_RC_GENERAL_FAILURE.
+ *
+ * Return:
+ * TSS2_RC value corresponding to the input SMW status code.
+ */
+TSS2_RC smw_rc_to_tcti_rc(int smw_rc);
 #endif /* __COMMON_H__ */

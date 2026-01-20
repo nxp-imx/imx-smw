@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2025 NXP
+ * Copyright 2025-2026 NXP
  */
 
 #include <smw_status.h>
@@ -194,6 +194,99 @@ end:
 	return status;
 }
 
+static int get_profile_object_attributes(CK_FUNCTION_LIST_PTR pfunc)
+{
+	int status = TEST_FAIL;
+
+	CK_RV ret = CKR_OK;
+
+	CK_ULONG nb_match = 0;
+	CK_BBOOL ck_true = CK_TRUE;
+	unsigned int i = 0;
+
+	CK_OBJECT_CLASS profile_class = CKO_PROFILE;
+	CK_SESSION_HANDLE sess = CK_INVALID_HANDLE;
+	CK_PROFILE_ID profile_id = CKP_INVALID_ID;
+	CK_BBOOL token = CK_TRUE;
+	CK_ATTRIBUTE find_token_profile_objects[] = {
+		{ CKA_TOKEN, &ck_true, sizeof(ck_true) },
+		{ CKA_CLASS, &profile_class, sizeof(profile_class) },
+	};
+	CK_ATTRIBUTE retrieve_template[] = { { CKA_TOKEN, NULL_PTR, 0 },
+					     { CKA_CLASS, NULL_PTR, 0 },
+					     { CKA_PROFILE_ID, NULL_PTR, 0 } };
+
+	CK_OBJECT_HANDLE profile_obj_hdl[PROFILE_OBJ_COUNT] = { 0 };
+
+	SUBTEST_START();
+
+	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
+		goto end;
+
+	TEST_OUT("Login to R/W Session as User\n");
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_Login"))
+		goto end;
+
+	TEST_OUT("Find profile objects\n");
+	ret = pfunc->C_FindObjectsInit(sess, find_token_profile_objects,
+				       ARRAY_SIZE(find_token_profile_objects));
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjectsInit"))
+		goto end;
+
+	ret = pfunc->C_FindObjects(sess, profile_obj_hdl, PROFILE_OBJ_COUNT,
+				   &nb_match);
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjects"))
+		goto end;
+
+	if (CHECK_EXPECTED(nb_match == PROFILE_OBJ_COUNT,
+			   "Got %lu but expected %d object", nb_match,
+			   PROFILE_OBJ_COUNT))
+		goto end;
+
+	TEST_OUT("Number of match found : %lu\n", nb_match);
+
+	ret = pfunc->C_FindObjectsFinal(sess);
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjectsFinal"))
+		goto end;
+
+	TEST_OUT("Get Profile attributes\n");
+	for (; i < nb_match; i++) {
+		ret = pfunc->C_GetAttributeValue(sess, profile_obj_hdl[i],
+						 retrieve_template, 3);
+		if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
+			goto end;
+
+		if (retrieve_template[0].ulValueLen != sizeof(CK_BBOOL) ||
+		    retrieve_template[1].ulValueLen !=
+			    sizeof(CK_OBJECT_CLASS) ||
+		    retrieve_template[2].ulValueLen != sizeof(CK_ULONG))
+			goto end;
+
+		retrieve_template[0].pValue = &token;
+		retrieve_template[1].pValue = &profile_class;
+		retrieve_template[2].pValue = &profile_id;
+
+		ret = pfunc->C_GetAttributeValue(sess, profile_obj_hdl[i],
+						 retrieve_template, 3);
+		if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
+			goto end;
+
+		if (token != CK_TRUE || profile_class != CKO_PROFILE)
+			goto end;
+
+		TEST_OUT("Profile ID = %lu\n", profile_id);
+	}
+
+	status = TEST_PASS;
+
+end:
+	util_close_session(pfunc, &sess);
+
+	SUBTEST_END(status);
+	return status;
+}
+
 void tests_pkcs11_object_profile(void *lib_hdl, CK_VOID_PTR pfunc)
 {
 	(void)lib_hdl;
@@ -219,7 +312,7 @@ void tests_pkcs11_object_profile(void *lib_hdl, CK_VOID_PTR pfunc)
 	if (find_all_objects(pfunc) == TEST_FAIL)
 		goto end;
 
-	status = TEST_PASS;
+	status = get_profile_object_attributes(pfunc);
 
 end:
 	ret = ((CK_FUNCTION_LIST_PTR)pfunc)->C_Finalize(NULL_PTR);

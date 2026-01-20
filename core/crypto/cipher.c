@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2025 NXP
+ * Copyright 2021-2026 NXP
  */
 
 #include "smw_status.h"
@@ -185,6 +185,8 @@ end:
  */
 static int is_iv_set(struct smw_crypto_cipher_args *args)
 {
+	int status = SMW_STATUS_OK;
+
 	switch (args->mode_id) {
 	case SMW_CONFIG_CIPHER_MODE_ID_ECB:
 		break;
@@ -192,12 +194,13 @@ static int is_iv_set(struct smw_crypto_cipher_args *args)
 	default:
 		if (!smw_crypto_get_cipher_iv(args) ||
 		    !smw_crypto_get_cipher_iv_len(args))
-			return SMW_STATUS_INVALID_PARAM;
+			status = SMW_STATUS_INVALID_PARAM;
 
 		break;
 	}
 
-	return SMW_STATUS_OK;
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
 }
 
 inline unsigned char *
@@ -322,8 +325,16 @@ enum smw_status_code smw_cipher(struct smw_cipher_args *args)
 
 	SMW_DBG_TRACE_API_CALL;
 
-	if (!args || !args->data.input || !args->data.input_length ||
-	    (args->data.output && !args->data.output_length))
+	if (!args)
+		goto end;
+
+	if (!args->data.input != !args->data.input_length)
+		goto end;
+
+	if (!args->data.output != !args->data.output_length)
+		goto end;
+
+	if (args->data.output && !args->data.input)
 		goto end;
 
 	status = convert_init_args(&args->init, &cipher_args, &subsystem_id);

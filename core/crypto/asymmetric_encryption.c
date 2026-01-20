@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2025 NXP
+ * Copyright 2025-2026 NXP
  */
 
 #include <inttypes.h>
@@ -138,9 +138,16 @@ smw_asymmetric_encrypt_decrypt(enum operation_id operation_id,
 
 	SMW_DBG_TRACE_API_CALL;
 
-	if (!args || !args->input || !args->input_length ||
-	    !args->key_descriptor || (args->output && !args->output_length) ||
-	    (operation_id == OPERATION_ID_ASYMM_DECRYPT && !args->output))
+	if (!args || !args->key_descriptor)
+		goto end;
+
+	if (!args->input || !args->input_length)
+		goto end;
+
+	if (!args->output != !args->output_length)
+		goto end;
+
+	if (operation_id == OPERATION_ID_ASYMM_DECRYPT && !args->output)
 		goto end;
 
 	status = asymm_encrypt_convert_args(args, &asymm_enc_args,

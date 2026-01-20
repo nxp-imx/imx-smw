@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2025 NXP
+ * Copyright 2023-2026 NXP
  */
 
 #include "smw_status.h"
@@ -23,11 +23,14 @@
  */
 static int is_iv_set(struct smw_crypto_aead_args *args)
 {
+	int status = SMW_STATUS_OK;
+
 	if (!smw_crypto_get_aead_user_iv(args) &&
 	    smw_crypto_get_aead_user_iv_len(args))
-		return SMW_STATUS_INVALID_PARAM;
-	else
-		return SMW_STATUS_OK;
+		status = SMW_STATUS_INVALID_PARAM;
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
 }
 
 /**
@@ -49,6 +52,7 @@ static int is_plaintext_len_set(struct smw_crypto_aead_args *args)
 			status = SMW_STATUS_INVALID_PARAM;
 	}
 
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
 
@@ -69,6 +73,7 @@ static int is_tag_len_set(struct smw_crypto_aead_args *args)
 	if (!smw_crypto_get_aead_tag_len(args))
 		status = SMW_STATUS_INVALID_PARAM;
 
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
 
@@ -88,6 +93,7 @@ static int is_output_iv_set(struct smw_crypto_aead_args *args)
 	    args->op_type_id == SMW_CONFIG_AEAD_OP_TYPE_ID_ENCRYPT)
 		status = SMW_STATUS_INVALID_PARAM;
 
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
 
@@ -932,9 +938,13 @@ enum smw_status_code smw_aead(struct smw_aead_args *args)
 
 	SMW_DBG_TRACE_API_CALL;
 
-	if (!args || !args->init || !args->final || !args->final->data ||
-	    !args->final->data->input || !args->final->data->input_length ||
-	    (args->final->data->output && !args->final->data->output_length))
+	if (!args || !args->init || !args->final || !args->final->data)
+		goto end;
+
+	if (!args->final->data->input || !args->final->data->input_length)
+		goto end;
+
+	if (!args->final->data->output != !args->final->data->output_length)
 		goto end;
 
 	aead_args.oneshot_pub = args;
@@ -1140,10 +1150,16 @@ enum smw_status_code smw_aead_final(struct smw_aead_final_args *args)
 
 	SMW_DBG_TRACE_API_CALL;
 
-	if (!args || !args->data || !args->data->context ||
-	    (args->data->input && !args->data->input_length) ||
-	    (args->data->output && !args->data->output_length) ||
-	    !args->tag_length)
+	if (!args || !args->data || !args->data->context)
+		goto end;
+
+	if (!args->data->input != !args->data->input_length)
+		goto end;
+
+	if (!args->data->output != !args->data->output_length)
+		goto end;
+
+	if (!args->tag_length)
 		goto end;
 
 	if (args->version != 0 || args->data->version != 0) {

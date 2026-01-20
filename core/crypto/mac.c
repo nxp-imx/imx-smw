@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2025 NXP
+ * Copyright 2023-2026 NXP
  */
 
 #include "smw_crypto.h"
@@ -55,7 +55,7 @@ end:
 static enum smw_status_code mac_operate(struct smw_mac_args *args,
 					enum smw_config_mac_op_type_id op_id)
 {
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_INVALID_PARAM;
 
 	struct smw_crypto_mac_args mac_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
@@ -65,23 +65,15 @@ static enum smw_status_code mac_operate(struct smw_mac_args *args,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!args) {
-		status = SMW_STATUS_INVALID_PARAM;
+	if (!args)
 		goto end;
-	}
 
-	if ((!args->mac && args->mac_length) ||
-	    (args->mac && !args->mac_length)) {
-		status = SMW_STATUS_INVALID_PARAM;
+	if (!args->mac != !args->mac_length)
 		goto end;
-	}
 
 	/* Cipher MAC of an empty message is valid */
-	if ((!args->input && args->input_length) ||
-	    (args->input && !args->input_length)) {
-		status = SMW_STATUS_INVALID_PARAM;
+	if (!args->input != !args->input_length)
 		goto end;
-	}
 
 	status = mac_convert_args(args, &mac_args, &subsystem_id);
 	if (status != SMW_STATUS_OK)

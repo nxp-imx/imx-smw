@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #include <inttypes.h>
@@ -232,7 +232,7 @@ static unsigned int get_sign_size(struct smw_keymgr_descriptor *key)
 static int sign_verify(enum operation_id operation_id,
 		       struct smw_sign_verify_args *args)
 {
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_INVALID_PARAM;
 
 	struct smw_crypto_sign_verify_args sign_verify_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
@@ -248,13 +248,20 @@ static int sign_verify(enum operation_id operation_id,
 	 * Sign API can be called with a NULL signature pointer to get the
 	 * signature length
 	 */
-	if (!args ||
-	    (!args->signature && operation_id == OPERATION_ID_VERIFY) ||
-	    (args->signature && (!args->message || !args->message_length ||
-				 !args->signature_length))) {
-		status = SMW_STATUS_INVALID_PARAM;
+	if (!args)
 		goto end;
-	}
+
+	if (!args->message != !args->message_length)
+		goto end;
+
+	if (!args->signature != !args->signature_length)
+		goto end;
+
+	if (operation_id == OPERATION_ID_VERIFY && !args->signature)
+		goto end;
+
+	if (args->signature && !args->message)
+		goto end;
 
 	status = sign_verify_convert_args(args, &sign_verify_args,
 					  &subsystem_id);
@@ -423,14 +430,17 @@ static int sign_verify_final(enum operation_id operation_id,
 	 * Sign API can be called with a NULL signature pointer to get the
 	 * signature length
 	 */
-	if (!args || !args->context ||
-	    !args->message != !args->message_length ||
-	    (!args->signature &&
-	     operation_id == OPERATION_ID_VERIFY_MULTI_PART) ||
-	    (args->signature && !args->signature_length)) {
-		status = SMW_STATUS_INVALID_PARAM;
+	if (!args || !args->context)
 		goto end;
-	}
+
+	if (!args->message != !args->message_length)
+		goto end;
+
+	if (!args->signature != !args->signature_length)
+		goto end;
+
+	if (operation_id == OPERATION_ID_VERIFY_MULTI_PART && !args->signature)
+		goto end;
 
 	status = sign_verify_final_convert_args(args, &sign_verify_args);
 	if (status != SMW_STATUS_OK)

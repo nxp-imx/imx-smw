@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021, 2023-2025 NXP
+ * Copyright 2020-2021, 2023-2026 NXP
  */
 
 #include "smw_status.h"
@@ -364,18 +364,19 @@ smw_crypto_get_hash_op_context(struct smw_crypto_hash_args *args)
 
 enum smw_status_code smw_hash(struct smw_hash_args *args)
 {
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_INVALID_PARAM;
 
 	struct smw_crypto_hash_args hash_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	SMW_DBG_TRACE_API_CALL;
 
-	if (!args || (args->output && (!args->input != !args->input_length ||
-				       !args->output_length))) {
-		status = SMW_STATUS_INVALID_PARAM;
+	if (!args)
 		goto end;
-	}
+
+	if ((!args->input != !args->input_length) ||
+	    (!args->output != !args->output_length))
+		goto end;
 
 	status = convert_args(args, &hash_args, &subsystem_id);
 	if (status != SMW_STATUS_OK)
@@ -465,8 +466,11 @@ enum smw_status_code smw_hash_final(struct smw_hash_final_args *args)
 
 	SMW_DBG_TRACE_API_CALL;
 
-	if (!args || !args->context || (args->input && !args->input_length) ||
-	    (args->output && !args->output_length))
+	if (!args || !args->context)
+		goto end;
+
+	if ((!args->input != !args->input_length) ||
+	    (!args->output != !args->output_length))
 		goto end;
 
 	status = convert_final_args(args, &hash_args);

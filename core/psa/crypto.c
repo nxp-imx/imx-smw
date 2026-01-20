@@ -832,7 +832,8 @@ static psa_status_t set_cipher_args(psa_key_id_t key, psa_algorithm_t alg,
 	unsigned char *iv = NULL;
 
 	if (!PSA_ALG_IS_CIPHER(alg) || !input || !input_length || !output ||
-	    !output_size || !output_length)
+	    !output_size || !output_length ||
+	    op_type_name == SMW_CIPHER_OP_TYPE_NAME_NONE)
 		return PSA_ERROR_INVALID_ARGUMENT;
 
 	key_descriptor->id = key;

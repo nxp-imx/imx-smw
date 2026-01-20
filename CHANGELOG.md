@@ -58,6 +58,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix `smw_get_key_buffers_lengths()`: in case the key ID field only is set in the key descriptor structure, the function returns the subsystem key buffers' lengths (only the exportable ones) instead of returning an error.
 * `smw_update_object_db`: Existing object can only update their label and/or user id field.
 * Add `SMW_STATUS_INPUT_TOO_LARGE` status when the input buffer is too large.
+* For AEAD, asymmetric encryption, cipher, MAC and Sign operations, if the user requests the output buffer length by setting the output buffer address to NULL, the input parameters are ignored, except the input buffer length if it is used to compute the output buffer length.
 
 ##### 2. Subsystems
 
@@ -67,6 +68,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 3. ARM PSA APIs
 
 * Upgrade ARM PSA Crypto API to version 1.3.2.
+* For AEAD, asymmetric encryption, cipher, MAC and Sign operations, if the user requests the output buffer length by setting the output buffer address to NULL, the input parameters are ignored, except the input buffer length if it is used to compute the output buffer length.
 
 ##### 4. OSAL
 
@@ -86,6 +88,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Add CKM_EC_MONTGOMERY_KEY_PAIR_GEN mechanism support.
 * Fix attribute handling for profile object.
+* For AEAD, asymmetric encryption, cipher, MAC and Sign operations, if the user requests the output buffer length by setting the output buffer address to NULL, the input parameters are ignored, except the input buffer length if it is used to compute the output buffer length.
 
 #### PKCS#11 Tests
 

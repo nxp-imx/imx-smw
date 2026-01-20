@@ -48,3 +48,30 @@ uint32_t build_rc_response(tcti_smw_context_t *ctx, uint32_t resp_size,
 
 	return TSS2_RC_SUCCESS;
 }
+
+uint32_t tcti_rc_to_tpm2_rc(TSS2_RC tcti_rc)
+{
+	switch (tcti_rc) {
+	case TSS2_RC_SUCCESS:
+		return TPM2_RC_SUCCESS;
+	case TSS2_TCTI_RC_BAD_REFERENCE:
+		return TPM2_RC_REFERENCE_H0;
+	case TSS2_TCTI_RC_MEMORY:
+		return TPM2_RC_MEMORY;
+	case TSS2_TCTI_RC_BAD_VALUE:
+		return TPM2_RC_VALUE;
+	case TSS2_TCTI_RC_BAD_SEQUENCE:
+		return TPM2_RC_SEQUENCE;
+	case TSS2_TCTI_RC_INSUFFICIENT_BUFFER:
+		return TPM2_RC_SIZE;
+	case TSS2_TCTI_RC_NOT_IMPLEMENTED:
+		return TPM2_RC_NOT_USED;
+	case TSS2_TCTI_RC_MALFORMED_RESPONSE:
+		return TPM2_RC_BAD_TAG;
+	case TSS2_TCTI_RC_IO_ERROR:
+	case TSS2_TCTI_RC_GENERAL_FAILURE:
+	case TSS2_TCTI_RC_TRY_AGAIN:
+	default:
+		return TPM2_RC_FAILURE;
+	}
+}

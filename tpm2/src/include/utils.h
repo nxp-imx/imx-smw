@@ -85,4 +85,19 @@ uint32_t header_marshal(const tpm_smw_header_t *header, uint8_t *buf);
  */
 uint32_t param_su_unmarshal(const uint8_t *buf, size_t buf_size,
 			    TPM2_SU *su_type);
+
+/**
+ * tcti_rc_to_tpm2_rc() - Convert TSS2 TCTI return code to TPM2 response code.
+ * @tcti_rc: TSS2 TCTI return code to convert.
+ *
+ * This function maps TSS2 TCTI layer return codes to their corresponding TPM2
+ * response codes suitable for inclusion in TPM command responses. It provides
+ * a conversion mechanism to translate internal TCTI errors into standard TPM2
+ * error codes that can be returned to TPM clients. Unmapped or general TCTI
+ * errors default to TPM2_RC_FAILURE.
+ *
+ * Return:
+ * uint32_t value corresponding to the input TSS2 TCTI return code.
+ */
+uint32_t tcti_rc_to_tpm2_rc(TSS2_RC tcti_rc);
 #endif /* __UTILS_H__ */

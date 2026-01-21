@@ -18,6 +18,7 @@
 #include "common.h"
 #include "util_status.h"
 #include "keymgr.h"
+#include "operation_context.h"
 
 #define GET_ALGO_INFO(_algo, _array)                                           \
 	({                                                                     \
@@ -389,6 +390,15 @@ set_aead_decrypt_params(psa_key_id_t key, psa_algorithm_t alg,
 		return status;
 
 	return PSA_SUCCESS;
+}
+
+static int compare_buffer(const uint8_t *input_a, size_t input_a_length,
+			  const uint8_t *input_b, size_t input_b_length)
+{
+	if (input_a_length != input_b_length)
+		return -1;
+
+	return SMW_UTILS_MEMCMP(input_a, input_b, input_a_length);
 }
 
 __export size_t psa_cipher_encrypt_output_size(psa_key_type_t key_type,
@@ -1116,23 +1126,62 @@ __export psa_status_t psa_generate_random(uint8_t *output, size_t output_size)
 
 __export psa_status_t psa_hash_abort(psa_hash_operation_t *operation)
 {
-	(void)operation;
+	psa_status_t psa_status = PSA_SUCCESS;
+	struct smw_context_args args = { 0 };
+	void *api = smw_cancel_operation;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!operation || !smw_utils_is_lib_initialized())
+		return PSA_ERROR_BAD_STATE;
+
+	/* Already aborted/terminated - this is safe and has no effect */
+	if (!operation->op_context)
+		return PSA_SUCCESS;
+
+	args.context = operation->op_context;
+	psa_status = call_smw_api(api, &args, &args.subsystem_name);
+	if (psa_status == PSA_SUCCESS)
+		memset(operation, 0, sizeof(*operation));
+
+	return psa_status;
 }
 
 __export psa_status_t
 psa_hash_clone(const psa_hash_operation_t *source_operation,
 	       psa_hash_operation_t *target_operation)
 {
-	(void)source_operation;
-	(void)target_operation;
+	psa_status_t psa_status = PSA_SUCCESS;
+	smw_subsystem_t subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
+	struct smw_copy_context_args args = { 0 };
+	struct smw_op_context *op_context = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!smw_utils_is_lib_initialized())
+		return PSA_ERROR_BAD_STATE;
+
+	if (!source_operation || !source_operation->op_context)
+		return PSA_ERROR_BAD_STATE;
+
+	if (!target_operation || target_operation->op_context)
+		return PSA_ERROR_BAD_STATE;
+
+	op_context = SMW_UTILS_CALLOC(1, sizeof(struct smw_op_context));
+	if (!op_context)
+		return PSA_ERROR_INSUFFICIENT_MEMORY;
+
+	args.src_context = source_operation->op_context;
+	args.dst_context = op_context;
+	psa_status =
+		call_smw_api((enum smw_status_code(*)(void *))smw_copy_context,
+			     &args, &subsystem_name);
+	if (psa_status == PSA_SUCCESS)
+		target_operation->op_context = op_context;
+	else
+		SMW_UTILS_FREE(op_context);
+
+	return psa_status;
 }
 
 __export psa_status_t psa_hash_compare(psa_algorithm_t alg,
@@ -1143,7 +1192,6 @@ __export psa_status_t psa_hash_compare(psa_algorithm_t alg,
 	psa_status_t psa_status = PSA_SUCCESS;
 	uint8_t hash_computed[PSA_HASH_MAX_SIZE] = { 0 };
 	size_t hash_computed_length = 0;
-	unsigned int i = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1154,12 +1202,9 @@ __export psa_status_t psa_hash_compare(psa_algorithm_t alg,
 	if (psa_status != PSA_SUCCESS)
 		return psa_status;
 
-	if (hash_computed_length != hash_length)
+	if (compare_buffer(hash, hash_length, hash_computed,
+			   hash_computed_length))
 		return PSA_ERROR_INVALID_SIGNATURE;
-
-	for (; i < hash_length; i++)
-		if (hash[i] != hash_computed[i])
-			return PSA_ERROR_INVALID_SIGNATURE;
 
 	return PSA_SUCCESS;
 }
@@ -1203,14 +1248,30 @@ __export psa_status_t psa_hash_finish(psa_hash_operation_t *operation,
 				      uint8_t *hash, size_t hash_size,
 				      size_t *hash_length)
 {
-	(void)operation;
-	(void)hash;
-	(void)hash_size;
-	(void)hash_length;
+	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
+	smw_subsystem_t subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
+	struct smw_hash_final_args args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!operation || !operation->op_context ||
+	    !smw_utils_is_lib_initialized())
+		return psa_status;
+
+	args.context = operation->op_context;
+	args.output = hash;
+
+	if (SET_OVERFLOW(hash_size, args.output_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	psa_status =
+		call_smw_api((enum smw_status_code(*)(void *))smw_hash_final,
+			     &args, &subsystem_name);
+
+	operation->op_context = args.context;
+	*hash_length = args.output_length;
+
+	return psa_status;
 }
 
 __export psa_status_t psa_hash_resume(psa_hash_operation_t *operation,
@@ -1229,12 +1290,41 @@ __export psa_status_t psa_hash_resume(psa_hash_operation_t *operation,
 __export psa_status_t psa_hash_setup(psa_hash_operation_t *operation,
 				     psa_algorithm_t alg)
 {
-	(void)operation;
-	(void)alg;
+	enum smw_status_code status = SMW_STATUS_OK;
+	struct smw_context_args ctx_args = { 0 };
+	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
+	struct smw_hash_init_args args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!operation || operation->op_context ||
+	    !smw_utils_is_lib_initialized())
+		return psa_status;
+
+	args.version = 1;
+	args.algo_name = get_hash_algo_name(alg);
+
+	if (args.algo_name == SMW_HASH_ALGO_NAME_NONE)
+		return PSA_ERROR_NOT_SUPPORTED;
+
+	ctx_args.subsystem_name = get_psa_default_subsystem();
+
+	status = smw_allocate_context(&ctx_args);
+	if (status != SMW_STATUS_OK)
+		return util_smw_to_psa_status(status);
+
+	args.context = ctx_args.context;
+
+	psa_status =
+		call_smw_api((enum smw_status_code(*)(void *))smw_hash_init,
+			     &args, &args.subsystem_name);
+
+	if (psa_status == PSA_SUCCESS)
+		operation->op_context = args.context;
+	else if (psa_status == PSA_ERROR_INVALID_ARGUMENT)
+		(void)smw_utils_free_context(&ctx_args.context);
+
+	return psa_status;
 }
 
 __export psa_status_t psa_hash_suspend(psa_hash_operation_t *operation,
@@ -1255,25 +1345,51 @@ __export psa_status_t psa_hash_suspend(psa_hash_operation_t *operation,
 __export psa_status_t psa_hash_update(psa_hash_operation_t *operation,
 				      const uint8_t *input, size_t input_length)
 {
-	(void)operation;
-	(void)input;
-	(void)input_length;
+	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
+	smw_subsystem_t subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
+	struct smw_hash_update_args args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!operation || !operation->op_context ||
+	    !smw_utils_is_lib_initialized())
+		return psa_status;
+
+	args.context = operation->op_context;
+	args.input = (unsigned char *)input;
+
+	if (SET_OVERFLOW(input_length, args.input_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	psa_status =
+		call_smw_api((enum smw_status_code(*)(void *))smw_hash_update,
+			     &args, &subsystem_name);
+
+	operation->op_context = args.context;
+
+	return psa_status;
 }
 
 __export psa_status_t psa_hash_verify(psa_hash_operation_t *operation,
 				      const uint8_t *hash, size_t hash_length)
 {
-	(void)operation;
-	(void)hash;
-	(void)hash_length;
+	psa_status_t psa_status = PSA_SUCCESS;
+	uint8_t hash_computed[PSA_HASH_MAX_SIZE] = { 0 };
+	size_t hash_computed_length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	psa_status =
+		psa_hash_finish(operation, hash_computed, sizeof(hash_computed),
+				&hash_computed_length);
+	if (psa_status != PSA_SUCCESS)
+		return psa_status;
+
+	if (compare_buffer(hash, hash_length, hash_computed,
+			   hash_computed_length))
+		return PSA_ERROR_INVALID_SIGNATURE;
+
+	return PSA_SUCCESS;
 }
 
 __export psa_status_t psa_mac_abort(psa_mac_operation_t *operation)

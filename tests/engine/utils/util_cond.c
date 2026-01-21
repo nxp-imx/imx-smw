@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2023, 2026 NXP
  */
 
 #include <errno.h>
@@ -25,14 +25,39 @@ struct thr_cond {
 void *util_cond_create(void)
 {
 	struct thr_cond *thr_cond = NULL;
+	pthread_condattr_t attr = { 0 };
+	int ret = 0;
 
 	thr_cond = calloc(1, sizeof(*thr_cond));
-	if (thr_cond) {
-		if (pthread_cond_init(&thr_cond->wait_cond, NULL)) {
-			free(thr_cond);
-			thr_cond = NULL;
-		}
+	if (!thr_cond)
+		return NULL;
+
+	ret = pthread_condattr_init(&attr);
+	if (ret) {
+		DBG_PRINT("pthread_condattr_init failed: %d", ret);
+		free(thr_cond);
+		return NULL;
 	}
+
+	ret = pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
+	if (ret) {
+		DBG_PRINT("pthread_condattr_setclock failed: %d", ret);
+		(void)pthread_condattr_destroy(&attr);
+		free(thr_cond);
+		return NULL;
+	}
+
+	ret = pthread_cond_init(&thr_cond->wait_cond, &attr);
+	if (ret) {
+		DBG_PRINT("pthread_cond_init failed: %d", ret);
+		(void)pthread_condattr_destroy(&attr);
+		free(thr_cond);
+		return NULL;
+	}
+
+	ret = pthread_condattr_destroy(&attr);
+	if (ret)
+		DBG_PRINT("pthread_condattr_destroy failed: %d", ret);
 
 	return thr_cond;
 }
@@ -93,7 +118,7 @@ int util_cond_wait(void *cond, void *mutex, unsigned int timeout)
 
 	util_mutex_lock(mutex);
 
-	if (clock_gettime(CLOCK_REALTIME, &ts)) {
+	if (clock_gettime(CLOCK_MONOTONIC, &ts)) {
 		DBG_PRINT("Clock gettime: %s", util_get_strerr());
 		res = ERR_CODE(INTERNAL);
 		goto exit;

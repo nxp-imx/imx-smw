@@ -55,9 +55,8 @@ static inline struct psa_cipher_operation_s psa_cipher_operation_init(void)
 	return PSA_CIPHER_OPERATION_INIT;
 }
 
-/* To be defined */
 struct psa_hash_operation_s {
-	int dummy;
+	void *op_context;
 };
 
 /**

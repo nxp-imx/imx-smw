@@ -2652,8 +2652,6 @@ psa_get_key_usage_flags(const psa_key_attributes_t *attributes);
  * psa_hash_abort() - Abort a hash operation.
  * @operation: Initialized hash operation.
  *
- * **Warning: Not supported**
- *
  * Aborting an operation frees all associated resources except for the operation object itself. Once
  * aborted, the operation object can be reused for another operation by calling psa_hash_setup()
  * again.
@@ -2679,8 +2677,6 @@ psa_status_t psa_hash_abort(psa_hash_operation_t *operation);
  * psa_hash_clone() - Clone a hash operation.
  * @source_operation: The active hash operation to clone.
  * @target_operation: The operation object to set up. It must be initialized but not active.
- *
- * **Warning: Not supported**
  *
  * This function copies the state of an ongoing hash operation to a new operation object. In other
  * words, this function is equivalent to calling psa_hash_setup() on @target_operation with the same
@@ -2790,8 +2786,6 @@ psa_status_t psa_hash_compute(psa_algorithm_t alg, const uint8_t *input,
  * @hash_length: On success, the number of bytes that make up the hash value. This is always
  *               PSA_HASH_LENGTH(alg) where alg is the hash algorithm that the operation performs.
  *
- * **Warning: Not supported**
- *
  * The application must call psa_hash_setup() or psa_hash_resume() before calling this function.
  * This function calculates the hash of the message formed by concatenating the inputs passed to
  * preceding calls to psa_hash_update().
@@ -2885,8 +2879,6 @@ psa_status_t psa_hash_resume(psa_hash_operation_t *operation,
  * @operation: The operation object to set up. It must have been initialized as per the
  *             documentation for &typedef psa_hash_operation_t and not yet in use.
  * @alg: The hash algorithm to compute (PSA_ALG_XXX value such that PSA_ALG_IS_HASH(alg) is true).
- *
- * **Warning: Not supported**
  *
  * The sequence of operations to calculate a hash (message digest) is as follows\:
  *
@@ -3001,8 +2993,6 @@ psa_status_t psa_hash_suspend(psa_hash_operation_t *operation,
  * @input: Buffer containing the message fragment to hash.
  * @input_length: Size of the @input buffer in bytes.
  *
- * **Warning: Not supported**
- *
  * The application must call psa_hash_setup() or psa_hash_resume() before calling this function.
  *
  * If this function returns an error status, the operation enters an error state and must be aborted
@@ -3030,8 +3020,6 @@ psa_status_t psa_hash_update(psa_hash_operation_t *operation,
  * @operation: Active hash operation.
  * @hash: Buffer containing the expected hash value.
  * @hash_length: Size of the @hash buffer in bytes.
- *
- * **Warning: Not supported**
  *
  * The application must call psa_hash_setup() before calling this function. This function calculates
  * the hash of the message formed by concatenating the inputs passed to preceding calls to

@@ -73,6 +73,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Add F_ELE_App_001 test validating a multi-applications scenario with ELE.
 * Add U_API_Object_003 test to find an object not present in database.
+* Replace CLOCK_REALTIME with CLOCK_MONOTONIC in condition variable timeout calculations.
+  CLOCK_REALTIME is affected by system clock adjustments, causing false timeouts.
 
 #### PKCS#11 Library
 

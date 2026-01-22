@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2022, 2024 NXP
+ * Copyright 2021-2022, 2024, 2026 NXP
  */
 #ifndef __UTIL_CONTEXT_H__
 #define __UTIL_CONTEXT_H__
@@ -79,5 +79,23 @@ int util_context_update_node(struct llist *list, unsigned int id,
 int util_context_set_op_ctx(struct subtest_data *subtest, unsigned int *ctx_id,
 			    struct smw_op_context **arg_context,
 			    struct smw_op_context *api_ctx);
+
+/**
+ * util_context_array_find_node() - Search an operation context.
+ * @subtest: Subtest data
+ * @obj: JSON object containing context id array.
+ * @index: Index in the context id array.
+ * @context_id: Pointer to context ID
+ * @context: Pointer to SMW context structure.
+ *
+ * Return:
+ * PASSED                  - Success.
+ * -BAD_ARGS               - One of the arguments is bad.
+ * -FAILED                 - @index is not found.
+ */
+int util_context_array_find_node(struct subtest_data *subtest,
+				 struct json_object *obj, unsigned int index,
+				 unsigned int *context_id,
+				 struct smw_op_context **context);
 
 #endif /* __UTIL_CONTEXT_H__ */

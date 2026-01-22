@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #ifndef __JSON_TYPES_H__
@@ -171,6 +171,9 @@
 #define HASH_FINAL	      "HASH_FINAL"
 #define HASH_INIT	      "HASH_INIT"
 #define HASH_UPDATE	      "HASH_UPDATE"
+#define HASH_CLONE	      "HASH_CLONE"
+#define HASH_ABORT	      "HASH_ABORT"
+#define HASH_VERIFY	      "HASH_VERIFY"
 #define IMPORT		      "IMPORT"
 #define IMPORT_BLOB	      "IMPORT_BLOB"
 #define KEY_ATTESTATION	      "KEY_ATTESTATION"

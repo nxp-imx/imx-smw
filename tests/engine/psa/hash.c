@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2024, 2026 NXP
  */
 
 #include <stdlib.h>
@@ -11,6 +11,7 @@
 #include "hash.h"
 #include "json_types.h"
 #include "util.h"
+#include "util_context.h"
 
 #define HASH_ALGO(_name, _id, _length)                                         \
 	{                                                                      \
@@ -162,6 +163,326 @@ exit:
 
 	if (digest_hex)
 		free(digest_hex);
+
+	return res;
+}
+
+int hash_init_psa(struct subtest_data *subtest)
+{
+	int res = ERR_CODE(PASSED);
+	unsigned int ctx_id = UINT_MAX;
+	const char *alg_name = NULL;
+	struct smw_op_context *context = NULL;
+	psa_algorithm_t psa_alg_id = PSA_ALG_NONE;
+	psa_hash_operation_t operation = psa_hash_operation_init();
+
+	if (!subtest) {
+		DBG_PRINT_BAD_ARGS();
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	res = util_context_set_op_ctx(subtest, &ctx_id, &context, NULL);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	if (context) {
+		DBG_PRINT_BAD_ARGS();
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	/* Algorithm is mandatory */
+	res = util_read_json_type(&alg_name, ALGO_OBJ, t_string,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	psa_alg_id = get_hash_alg_id(alg_name);
+
+	/* Call hash function and compare result with expected one */
+	subtest->psa_status = psa_hash_setup(&operation, psa_alg_id);
+	if (subtest->psa_status != PSA_SUCCESS) {
+		res = ERR_CODE(API_STATUS_NOK);
+		goto exit;
+	}
+
+	res = util_context_add_node(list_op_ctxs(subtest), ctx_id,
+				    operation.op_context);
+
+exit:
+	return res;
+}
+
+int hash_update_psa(struct subtest_data *subtest)
+{
+	int res = ERR_CODE(PASSED);
+	int tmp_res = ERR_CODE(PASSED);
+	unsigned int ctx_id = UINT_MAX;
+	unsigned int input_len = 0;
+	unsigned char *input_hex = NULL;
+	struct smw_op_context *context = NULL;
+	psa_hash_operation_t operation = psa_hash_operation_init();
+
+	if (!subtest) {
+		DBG_PRINT_BAD_ARGS();
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	res = util_context_set_op_ctx(subtest, &ctx_id, &context, NULL);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	res = util_read_hex_buffer(&input_hex, &input_len, subtest->params,
+				   INPUT_OBJ);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	operation.op_context = context;
+
+	/* Call hash function and compare result with expected one */
+	subtest->psa_status = psa_hash_update(&operation, input_hex, input_len);
+	if (subtest->psa_status != PSA_SUCCESS)
+		res = ERR_CODE(API_STATUS_NOK);
+
+	if (operation.op_context != context) {
+		tmp_res =
+			util_context_update_node(list_op_ctxs(subtest), ctx_id,
+						 operation.op_context);
+
+		if (res == ERR_CODE(PASSED) && tmp_res != ERR_CODE(PASSED))
+			res = tmp_res;
+	}
+
+exit:
+	if (input_hex)
+		free(input_hex);
+
+	return res;
+}
+
+int hash_final_psa(struct subtest_data *subtest)
+{
+	int res = ERR_CODE(PASSED);
+	int tmp_res = ERR_CODE(PASSED);
+	unsigned int ctx_id = UINT_MAX;
+	unsigned int output_len = PSA_HASH_MAX_SIZE;
+	unsigned int digest_len = 0;
+	size_t hash_length = 0;
+	unsigned char *output_hex = NULL;
+	unsigned char *digest_hex = NULL;
+	struct smw_op_context *context = NULL;
+	psa_hash_operation_t operation = psa_hash_operation_init();
+
+	if (!subtest) {
+		DBG_PRINT_BAD_ARGS();
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	res = util_context_set_op_ctx(subtest, &ctx_id, &context, NULL);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	/*
+	 * Read expected digest buffer if any.
+	 * Test definition might not set the expected digest buffer.
+	 */
+	res = util_read_hex_buffer(&digest_hex, &digest_len, subtest->params,
+				   DIGEST_OBJ);
+	if (res == ERR_CODE(PASSED))
+		output_len = digest_len;
+	else if (res == ERR_CODE(MISSING_PARAMS))
+		digest_len = output_len;
+	else
+		goto exit;
+
+	output_hex = malloc(output_len);
+	if (!output_hex) {
+		DBG_PRINT_ALLOC_FAILURE();
+		res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		goto exit;
+	}
+
+	operation.op_context = context;
+
+	/* Call hash function and compare result with expected one */
+	subtest->psa_status = psa_hash_finish(&operation, output_hex,
+					      output_len, &hash_length);
+	if (subtest->psa_status != PSA_SUCCESS)
+		res = ERR_CODE(API_STATUS_NOK);
+
+	if (operation.op_context != context) {
+		tmp_res =
+			util_context_update_node(list_op_ctxs(subtest), ctx_id,
+						 operation.op_context);
+
+		if (res == ERR_CODE(PASSED) && tmp_res != ERR_CODE(PASSED)) {
+			res = tmp_res;
+			goto exit;
+		}
+	}
+
+	if (res == ERR_CODE(PASSED))
+		res = util_compare_buffers(output_hex, hash_length, digest_hex,
+					   digest_len);
+
+exit:
+	if (output_hex)
+		free(output_hex);
+
+	if (digest_hex)
+		free(digest_hex);
+
+	return res;
+}
+
+int hash_verify_psa(struct subtest_data *subtest)
+{
+	int res = ERR_CODE(PASSED);
+	int tmp_res = ERR_CODE(PASSED);
+	unsigned int ctx_id = UINT_MAX;
+	unsigned int digest_len = 0;
+	unsigned char *digest_hex = NULL;
+	struct smw_op_context *context = NULL;
+	psa_hash_operation_t operation = psa_hash_operation_init();
+
+	if (!subtest) {
+		DBG_PRINT_BAD_ARGS();
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	res = util_context_set_op_ctx(subtest, &ctx_id, &context, NULL);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	/*
+	 * Read expected digest buffer.
+	 */
+	res = util_read_hex_buffer(&digest_hex, &digest_len, subtest->params,
+				   DIGEST_OBJ);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	operation.op_context = context;
+
+	/* Call hash function and compare result with expected one */
+	subtest->psa_status =
+		psa_hash_verify(&operation, digest_hex, digest_len);
+	if (subtest->psa_status != PSA_SUCCESS)
+		res = ERR_CODE(API_STATUS_NOK);
+
+	if (operation.op_context != context) {
+		tmp_res =
+			util_context_update_node(list_op_ctxs(subtest), ctx_id,
+						 operation.op_context);
+
+		if (res == ERR_CODE(PASSED) && tmp_res != ERR_CODE(PASSED))
+			res = tmp_res;
+	}
+
+exit:
+	if (digest_hex)
+		free(digest_hex);
+
+	return res;
+}
+
+int hash_clone_psa(struct subtest_data *subtest)
+{
+	int res = ERR_CODE(PASSED);
+	unsigned int dst_ctx_id = 0;
+	unsigned int src_ctx_id = 0;
+	struct smw_op_context *dst_context = NULL;
+	struct smw_op_context *src_context = NULL;
+	struct json_object *obj = NULL;
+	psa_hash_operation_t src_operation = psa_hash_operation_init();
+	psa_hash_operation_t dst_operation = psa_hash_operation_init();
+
+	if (!subtest) {
+		DBG_PRINT_BAD_ARGS();
+		return res;
+	}
+
+	/* Context ID is a mandatory parameter */
+	res = util_read_json_type(&obj, CTX_ID_OBJ, t_buffer, subtest->params);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	if (obj) {
+		/*
+		 * Context ID must be an array of integer. First member
+		 * represents the source ID, second the destination ID
+		 */
+
+		if (json_object_get_type(obj) != json_type_array) {
+			DBG_PRINT_BAD_PARAM(CTX_ID_OBJ);
+			return ERR_CODE(BAD_PARAM_TYPE);
+		}
+
+		if (json_object_array_length(obj) != 2) {
+			DBG_PRINT_BAD_PARAM(CTX_ID_OBJ);
+			return ERR_CODE(BAD_PARAM_TYPE);
+		}
+
+		/* Get source context ID and node data */
+		res = util_context_array_find_node(subtest, obj, 0, &src_ctx_id,
+						   &src_context);
+		if (res != ERR_CODE(PASSED))
+			return res;
+
+		/* Get destination context ID and node data */
+		res = util_context_array_find_node(subtest, obj, 1, &dst_ctx_id,
+						   &dst_context);
+		if (res != ERR_CODE(PASSED))
+			return res;
+	}
+
+	src_operation.op_context = src_context;
+
+	/* Call hash clone function */
+	subtest->psa_status = psa_hash_clone(&src_operation, &dst_operation);
+	if (subtest->psa_status != PSA_SUCCESS) {
+		res = ERR_CODE(API_STATUS_NOK);
+		goto exit;
+	}
+
+	res = util_context_add_node(list_op_ctxs(subtest), dst_ctx_id,
+				    dst_operation.op_context);
+
+exit:
+	return res;
+}
+
+int hash_abort_psa(struct subtest_data *subtest)
+{
+	int res = ERR_CODE(PASSED);
+	int tmp_res = ERR_CODE(PASSED);
+	unsigned int ctx_id = UINT_MAX;
+	struct smw_op_context *context = NULL;
+	psa_hash_operation_t operation = psa_hash_operation_init();
+
+	if (!subtest) {
+		DBG_PRINT_BAD_ARGS();
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	res = util_context_set_op_ctx(subtest, &ctx_id, &context, NULL);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	operation.op_context = context;
+
+	/* Call hash function and compare result with expected one */
+	subtest->psa_status = psa_hash_abort(&operation);
+	if (subtest->psa_status != PSA_SUCCESS)
+		res = ERR_CODE(API_STATUS_NOK);
+
+	if (operation.op_context != context) {
+		tmp_res =
+			util_context_update_node(list_op_ctxs(subtest), ctx_id,
+						 operation.op_context);
+
+		if (res == ERR_CODE(PASSED) && tmp_res != ERR_CODE(PASSED))
+			res = tmp_res;
+	}
 
 	return res;
 }

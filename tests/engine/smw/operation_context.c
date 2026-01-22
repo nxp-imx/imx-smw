@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2025 NXP
+ * Copyright 2021-2026 NXP
  */
 
 #include <stdlib.h>
@@ -57,40 +57,6 @@ static int bad_params(struct json_object *params, void **args,
 	}
 
 	return ret;
-}
-
-static int find_context_node(struct subtest_data *subtest,
-			     struct json_object *obj, unsigned int index,
-			     unsigned int *context_id,
-			     struct smw_op_context **context)
-{
-	int status = ERR_CODE(BAD_PARAM_TYPE);
-
-	struct json_object *array_member = NULL;
-	int json_ctx_id = 0;
-
-	array_member = json_object_array_get_idx(obj, index);
-
-	if (json_object_get_type(array_member) != json_type_int) {
-		DBG_PRINT_BAD_PARAM(CTX_ID_OBJ);
-		goto end;
-	}
-
-	json_ctx_id = json_object_get_int(array_member);
-	if (SET_OVERFLOW(json_ctx_id, *context_id))
-		DBG_PRINT_BAD_PARAM(CTX_ID_OBJ);
-
-	status = ERR_CODE(PASSED);
-
-	status = util_context_find_node(list_op_ctxs(subtest), *context_id,
-					context);
-	if (status != ERR_CODE(PASSED)) {
-		DBG_PRINT("Failed to find context node");
-		return status;
-	}
-
-end:
-	return status;
 }
 
 static int copy_output_data_node(struct subtest_data *subtest,
@@ -262,14 +228,14 @@ int copy_context(struct subtest_data *subtest)
 		}
 
 		/* Get source context ID and node data */
-		res = find_context_node(subtest, obj, 0, &src_ctx_id,
-					&args.src_context);
+		res = util_context_array_find_node(subtest, obj, 0, &src_ctx_id,
+						   &args.src_context);
 		if (res != ERR_CODE(PASSED))
 			return res;
 
 		/* Get destination context ID and node data */
-		res = find_context_node(subtest, obj, 1, &dst_ctx_id,
-					&args.dst_context);
+		res = util_context_array_find_node(subtest, obj, 1, &dst_ctx_id,
+						   &args.dst_context);
 		if (res != ERR_CODE(PASSED))
 			return res;
 	} else if (is_api_test(subtest)) {

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2024 NXP
+ * Copyright 2021-2024,2026 NXP
  */
 
 #include <stdlib.h>
@@ -85,4 +85,34 @@ int util_context_set_op_ctx(struct subtest_data *subtest, unsigned int *ctx_id,
 	}
 
 	return ERR_CODE(PASSED);
+}
+
+int util_context_array_find_node(struct subtest_data *subtest,
+				 struct json_object *obj, unsigned int index,
+				 unsigned int *context_id,
+				 struct smw_op_context **context)
+{
+	int status = ERR_CODE(BAD_PARAM_TYPE);
+
+	struct json_object *array_member = NULL;
+	int json_ctx_id = 0;
+
+	array_member = json_object_array_get_idx(obj, index);
+
+	if (json_object_get_type(array_member) != json_type_int) {
+		DBG_PRINT_BAD_PARAM(CTX_ID_OBJ);
+		goto end;
+	}
+
+	json_ctx_id = json_object_get_int(array_member);
+	if (SET_OVERFLOW(json_ctx_id, *context_id))
+		DBG_PRINT_BAD_PARAM(CTX_ID_OBJ);
+
+	status = util_context_find_node(list_op_ctxs(subtest), *context_id,
+					context);
+	if (status != ERR_CODE(PASSED))
+		DBG_PRINT("Failed to find context node");
+
+end:
+	return status;
 }

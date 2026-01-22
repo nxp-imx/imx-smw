@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2025 NXP
+ * Copyright 2023-2026 NXP
  */
 
 #include <string.h>
@@ -62,9 +62,23 @@ static int execute_generate_cmd(char *cmd, struct subtest_data *subtest)
  */
 static int execute_hash_cmd(char *cmd, struct subtest_data *subtest)
 {
-	(void)cmd;
+	if (!strcmp(cmd, HASH))
+		return hash_psa(subtest);
+	else if (!strcmp(cmd, HASH_INIT))
+		return hash_init_psa(subtest);
+	else if (!strcmp(cmd, HASH_UPDATE))
+		return hash_update_psa(subtest);
+	else if (!strcmp(cmd, HASH_FINAL))
+		return hash_final_psa(subtest);
+	else if (!strcmp(cmd, HASH_CLONE))
+		return hash_clone_psa(subtest);
+	else if (!strcmp(cmd, HASH_ABORT))
+		return hash_abort_psa(subtest);
+	else if (!strcmp(cmd, HASH_VERIFY))
+		return hash_verify_psa(subtest);
 
-	return hash_psa(subtest);
+	DBG_PRINT("Undefined command");
+	return ERR_CODE(UNDEFINED_CMD);
 }
 
 /**

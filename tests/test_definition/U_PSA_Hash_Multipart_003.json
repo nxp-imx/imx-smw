@@ -1,0 +1,82 @@
+{
+	"subtest 1": {
+		"description": "Generate hash multi-part",
+		"command": "HASH_INIT",
+		"api": "PSA",
+		"algo": "SHA224",
+		"context_id": 0
+	},
+	"subtest 2": {
+		"description": "Update the hash",
+		"command": "HASH_UPDATE",
+		"api": "PSA",
+		"input": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a",
+			"59f8237a1cb51b42f3ded6b202d9af09",
+			"97898fdd03cf60bda951c514547a0850",
+			"cec25444ae2f24cb711bfbafcc3956c9",
+			"41d3de69f155e3f8b10f06db5f37359b",
+			"772ddd43e1035a0a0d3db33242d58430",
+			"33833b0dd43b870c6bf60e8deab55f31",
+			"7cc3273f5e3ba747f0cb65050cb72287",
+			"96210d9254873643008d45f29cfd6c5b"
+		],
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 3": {
+		"description": "Make a context copy",
+		"command": "HASH_CLONE",
+		"api": "PSA",
+		"type": "HASH_MULTI_PART",
+		"context_id": [
+			0,
+			1
+		]
+	},
+	"subtest 4": {
+		"description": "Update the hash",
+		"command": "HASH_UPDATE",
+		"api": "PSA",
+		"input": [
+			"060c9a"
+		],
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 5": {
+		"description": "Update the hash",
+		"command": "HASH_UPDATE",
+		"api": "PSA",
+		"input": [
+			"060c9a"
+		],
+		"context_id": 1,
+		"depends": 3
+	},
+	"subtest 6": {
+		"description": "Finalize the message to hash with original context",
+		"command": "HASH_FINAL",
+		"api": "PSA",
+		"algo": "SHA224",
+		"digest": [
+			"9db6dc3a23abd7b6c3d72c38f4843c7d",
+			"e48a71d0ba91a86b18393e5f"
+		],
+		"context_id": 0,
+		"depends": 4
+	},
+	"subtest 7": {
+		"description": "Finalize the message to hash with copied context",
+		"command": "HASH_FINAL",
+		"api": "PSA",
+		"algo": "SHA224",
+		"digest": [
+			"9db6dc3a23abd7b6c3d72c38f4843c7d",
+			"e48a71d0ba91a86b18393e5f"
+		],
+		"context_id": 1,
+		"depends": 5
+	}
+}

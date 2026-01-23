@@ -69,6 +69,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Upgrade ARM PSA Crypto API to version 1.3.2.
 * For AEAD, asymmetric encryption, cipher, MAC and Sign operations, if the user requests the output buffer length by setting the output buffer address to NULL, the input parameters are ignored, except the input buffer length if it is used to compute the output buffer length.
+* Add Hash multi-part support.
 
 ##### 4. OSAL
 
@@ -83,6 +84,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Enable ELE AEAD one-shot tests on the i.MX943 platform.
 * As plaintext key import isn't supported by all subsystems, update the test
   U_API_Object_002 to generate the key 3 instead of importing it.
+* Add PSA tests for Hash multi-part (U_PSA_Hash_Multipart_XXX).
 
 #### PKCS#11 Library
 

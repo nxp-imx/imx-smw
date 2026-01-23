@@ -541,8 +541,17 @@ For ELE, the NVM Secure Storage configuration is
 [ELE]
 id=0x534543EF
 nonce=0x534D57
-shared=no
+shared=yes
 ```
+
+> **WARNING:**
+> An ELE NVM Secure Storage created with a "shared" option set to `yes` (resp. `no`)
+> cannot be used by the SMW library if it has been configured and then
+> built with the "shared" option set to `no` (resp. `yes`).
+> With version 5.3 and next, the `smw.conf` installed sets the "shared" option to `yes`.
+> With versions older than 5.3, the "shared" option is not configurable and is not enabled.
+> In order to keep using an ELE storage created with a version of SMW library
+> older than version 5.3, the "shared" option has to be set to `no` in `smw.conf`.
 
 The `smw_system_conf.sh` could be used to change the content of the `smw.conf`
 file. It's installed on in the `/etc/opt/smw/` system folder.

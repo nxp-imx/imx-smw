@@ -64,7 +64,7 @@ endif()
 
 string(REPLACE ";" " " BUILD_DOC_BUILDER "${BUILD_DOC_BUILDER}")
 
-set(PROJECT_COPYRIGHT "2021-2025 - NXP - Non-Confidential")
+set(PROJECT_COPYRIGHT "2021-2026 - NXP - Non-Confidential")
 configure_file(${DOC_API_SOURCE_DIR}/conf.py.in
                ${DOC_API_SOURCE_DIR}/conf.py)
 

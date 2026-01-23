@@ -67,7 +67,14 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 ##### 4. OSAL
 
-* Configure SMW to open ELE storage shared by applications
+* Configure SMW library to create ELE NVM Secure Storage shared by applications.
+  **ELE NVM Secure Storage may be not compatible due to "shared" option**.
+  An ELE NVM Secure Storage created with the "shared" option set to `yes` cannot be
+  loaded if the SMW library was configured with the "shared" option set to `no`,
+  if the "shared" option is not defined or if the ELE NVM Secure Storage was created
+  with a library version older than 5.3.
+  An ELE NVM Secure Storage created with the "shared" option set to `no` cannot be
+  loaded if the SMW library was configured with the "shared" option set to `yes`.
 
 #### SMW Tests
 

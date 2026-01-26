@@ -12,6 +12,8 @@
 #include "smw_crypto.h"
 #include "common.h"
 
+#define SMW_OBJECT_METADATA_SIZE 20
+
 typedef struct {
 	TPMI_RH_HIERARCHY primary_handle;
 	TPM2B_SENSITIVE_CREATE in_sensitive;
@@ -27,6 +29,27 @@ typedef struct {
 	TPM2B_DIGEST creation_hash;
 	TPMT_TK_CREATION creation_ticket;
 } createprimary_output_t;
+
+/**
+ * struct smw_object_blob_t - Object data structure for SMW storage.
+ * @handle:        TPM object handle identifier.
+ * @smw_key_id:    SMW key identifier for the underlying cryptographic key.
+ * @attributes:    TPM object attributes defining usage and properties.
+ * @metadata:      Additional object-specific metadata or context information.
+ * @metadata_size: Size of valid data in the metadata buffer.
+ *
+ * This structure represents the object information that can be stored and
+ * retrieved from SMW's secure storage. It contains the essential object
+ * parameters needed to maintain object state across operations, including
+ * the mapping between TPM handles and SMW key identifiers.
+ */
+typedef struct {
+	uint32_t handle;
+	uint32_t smw_key_id;
+	TPMA_OBJECT attributes;
+	uint8_t metadata[SMW_OBJECT_METADATA_SIZE];
+	size_t metadata_size;
+} smw_object_blob_t;
 
 /**
  * map_hash_info() - Map hash algorithm information for TPM to SMW mapping.
@@ -82,4 +105,39 @@ uint32_t calculate_response_hmac(tcti_smw_session_t *session,
 				 const uint8_t *nonceCaller,
 				 size_t nonceCaller_size, uint8_t **hmac_out,
 				 uint16_t *hmac_size);
+
+/**
+ * smw_object_alloc() - Allocate a transient object slot
+ * @ctx:    Pointer to the SMW TCTI context structure.
+ * @handle: Pointer to store the allocated session handle.
+ * @attributes: TPM2 object attributes (TPMA_OBJECT flags)
+ * @key_id: SMW/ELE key identifier from smw_generate_key()
+ * @hierarchy: TPM2 object hierarchy
+ *
+ * Allocates a free slot in the transient object pool and assigns a TPM2
+ * handle in the saveable range (0x80000000-0x80000002).
+ *
+ * Return:
+ * - TSS2_RC_SUCCESS: Object allocated, handle written to *handle
+ * - TSS2_TCTI_RC_MEMORY: All slots occupied
+ */
+uint32_t smw_object_alloc(tcti_smw_context_t *ctx, uint32_t *handle,
+			  TPMA_OBJECT attributes, unsigned int key_id,
+			  TPMI_RH_HIERARCHY hierarchy);
+
+/**
+ * find_object_by_handle() - Find object by TPM2 handle
+ * @ctx:    TCTI SMW context containing object pool
+ * @handle: TPM2 handle to search for (0x80000000-0x80000002)
+ *
+ * This function searches through the object array in the TCTI context
+ * to find an active object matching the specified handle. It iterates
+ * through all possible object slots and returns the first active object
+ * with a matching handle.
+ *
+ * Return:
+ * Pointer to the matching tcti_smw_object_t structure if found, NULL otherwise.
+ */
+tcti_smw_object_t *find_object_by_handle(tcti_smw_context_t *ctx,
+					 uint32_t handle);
 #endif /* __CRYPTO_H__ */

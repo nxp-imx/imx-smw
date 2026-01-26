@@ -26,6 +26,28 @@
 
 #define SMW_MAX_SESSIONS 8
 
+#define SMW_MAX_OBJECTS 3
+
+/**
+ * struct tcti_smw_object_t - TPM2 transient object slot
+ * @handle: TPM2 handle (0x80000000-0x80000002)
+ * @smw_key_id: ELE keystore identifier
+ * @attributes: TPM2 object attributes (TPMA_OBJECT)
+ * @hierarchy: TPM2 hierarchy where object was created
+ * @active: Slot in use
+ * @is_persistent: Eligible for TPM2_EvictControl
+ *
+ * Tracks a transient object created by CreatePrimary/Load.
+ */
+typedef struct {
+	TPM2_HANDLE handle;
+	uint32_t smw_key_id;
+	TPMA_OBJECT attributes;
+	TPMI_RH_HIERARCHY hierarchy;
+	bool active;
+	bool is_persistent;
+} tcti_smw_object_t;
+
 /**
  * struct tcti_smw_session_t - TPM session context structure.
  * @type:             Session type (TPM2_SE_HMAC, TPM2_SE_POLICY, or TPM2_SE_TRIAL).
@@ -154,6 +176,10 @@ typedef struct {
 	tcti_smw_session_t sessions[SMW_MAX_SESSIONS];
 	uint8_t next_session_id;
 	uint8_t ctx_sequence;
+
+	/* objects */
+	tcti_smw_object_t objects[SMW_MAX_OBJECTS];
+	uint8_t next_transient_id;
 } tcti_smw_context_t;
 
 /**

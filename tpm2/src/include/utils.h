@@ -10,6 +10,7 @@
 
 #include "common.h"
 #include "session.h"
+#include "crypto.h"
 
 /**
  * free_resp() - Free the response buffer in the SMW TCTI context.
@@ -119,4 +120,8 @@ uint32_t tcti_rc_to_tpm2_rc(TSS2_RC tcti_rc);
 uint32_t start_auth_session_unmarshal(const uint8_t *cmd, size_t cmd_size,
 				      start_auth_session_params_t *params);
 
+uint32_t create_primary_unmarshal(const uint8_t *cmd, size_t cmd_size,
+				  createprimary_input_t *input,
+				  TPM2B_NONCE *nonce_caller,
+				  uint32_t *session_handle);
 #endif /* __UTILS_H__ */

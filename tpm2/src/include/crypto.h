@@ -12,6 +12,22 @@
 #include "smw_crypto.h"
 #include "common.h"
 
+typedef struct {
+	TPMI_RH_HIERARCHY primary_handle;
+	TPM2B_SENSITIVE_CREATE in_sensitive;
+	TPM2B_PUBLIC in_public;
+	TPM2B_DATA outside_info;
+	TPML_PCR_SELECTION creation_pcr;
+} createprimary_input_t;
+
+typedef struct {
+	TPM2B_PUBLIC out_public;
+	TPM2B_NAME object_name;
+	TPM2B_CREATION_DATA creation_data;
+	TPM2B_DIGEST creation_hash;
+	TPMT_TK_CREATION creation_ticket;
+} createprimary_output_t;
+
 /**
  * map_hash_info() - Map hash algorithm information for TPM to SMW mapping.
  * @hash_alg:     TPM2 hash algorithm identifier.

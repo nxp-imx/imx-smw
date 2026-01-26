@@ -168,4 +168,26 @@ uint32_t handle_flushcontext(tcti_smw_context_t *ctx, uint16_t tag,
  */
 uint32_t handle_getcapability(tcti_smw_context_t *ctx, uint16_t tag,
 			      const uint8_t *cmd, size_t cmd_size);
+
+/**
+ * handle_createprimary() - Process TPM2_CreatePrimary command.
+ * @ctx:      Pointer to the SMW TCTI context structure.
+ * @tag:      TPM structure tag from the command header.
+ * @cmd:      Pointer to the command buffer containing the full TPM command.
+ * @cmd_size: Size of the command buffer in bytes.
+ *
+ * This function handles the TPM2_CreatePrimary command which creates a new
+ * primary key in a specified hierarchy. It unmarshals the command parameters
+ * including hierarchy handle, authorization session, sensitive
+ * creation data, public template, outside info, and PCR selection. The function
+ * validates the key type, configures appropriate SMW key generation
+ * parameters, and calls the SMW API to generate the key. It builds a response
+ * containing the object handle, public area, creation data, creation hash,
+ * creation ticket, and object name.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful key creation, or the corresponding error code
+ */
+uint32_t handle_createprimary(tcti_smw_context_t *ctx, uint16_t tag,
+			      const uint8_t *cmd, size_t cmd_size);
 #endif /* __COMMANDS_H__ */

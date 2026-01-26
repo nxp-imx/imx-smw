@@ -9,7 +9,8 @@
 		- [4.2.1. Use of system configuration file](#421-use-of-system-configuration-file)
 		- [4.2.2. Use of OSAL APIs and system environment](#422-use-of-osal-apis-and-system-environment)
 - [5. PKCS11](#5-pkcs11)
-- [6. Files Organization](#6-files-organization)
+- [6. TPM2](#6-tpm2)
+- [7. Files Organization](#7-files-organization)
 
 
 # 1. Introduction
@@ -23,16 +24,19 @@ This SMW Library doesn't intent to calculate data (cryptographic operation),
 the only operation it's doing is pure software data conversion like DER, PEM, ...
 
 Security Middleware supports the following Secure Subsystem:
-*	SECO subsystem (limited to device supporting the SECO, e.g. i.MX8QXP).
-*	TEE subsystem (OPTEE OS running in Trustzone secure world).
-* ELE subsystem (device supporting EdgeLock Enclave, e.g. i.MX8ULP, i.MX9x).
+  - SECO subsystem (limited to device supporting the SECO, e.g. i.MX8QXP).
+  - TEE subsystem (OPTEE OS running in Trustzone secure world).
+  - ELE subsystem (device supporting EdgeLock Enclave, e.g. i.MX8ULP, i.MX9x).
 
 The package includes:
-*	SMW Library exposing SMW's APIs and ARM PSA APIs.
-*	PKCS#11 Library on top of the SMW Library.
-*	Test suites: SMW test suites, PKCS#11 test suites.
+  - SMW Library exposing SMW's APIs and ARM PSA APIs.
+  - PKCS#11 Library on top of the SMW Library.
+  - Test suites: SMW test suites, PKCS#11 test suites.
 
-This guide aims to explain how to build and integrate the Security Middleware Library.
+This guide describes how to use the Security Middleware Library and its APIs
+to perform cryptographic operations through the available Secure Subsystems.
+It covers library configuration, integration with Linux OS, and usage of PKCS#11
+and TPM2 interfaces with CLI tools.
 
 # 2. Secure Subsystems versus Operations
 Following <a href="#table-secure-subsystem-vs-operations">Secure Subsystems vs
@@ -603,7 +607,29 @@ gives some command lines description to start manipulating keys with
 This user guide provides also more information on the PKCS11 APIs and mechanisms
 supported.
 
-# 6. Files Organization
+# 6. TPM2
+The SMW project provides an optional shared library named `libtss2-tcti-smw.so`
+to support TPM2 TCTI operations.
+
+The TPM2 TCTI shared library is a Software form of the TPM Command Transmission
+Interface (TCTI) that is used by the TPM2-TSS stack to communicate with the SMW
+Library considered as TPM2 device. The SMW's Secure Subsystem target is function
+of the Subsystem configuration loaded. It's recommended to load a Subsystem
+configuration targeting ELE (EdgeLock Secure Enclave) Secure Subsystem to be
+the targeted subsystem for TPM2 TCTI operations. More details on Secure Subsystem
+configuration are available in the User API documentation available
+[here](./Documentations/API/SecurityMiddleware_API.pdf)
+
+The TPM2 TCTI library is built as part of the SMW project build process. Refer
+to the [Build instruction](./build_instructions.md) for details on how to
+enable and configure the TPM2 TCTI library.
+
+The [TPM2-Tool User Guide](./tpm2/tpm2_tool_user_guide.md) details and gives
+some command lines description to start manipulating objects with `tpm2-tools`.
+This user guide provides also more information on the TPM2 commands
+supported.
+
+# 7. Files Organization
 Below is the organization of the project sources.
 
 <pre>

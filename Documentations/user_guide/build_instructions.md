@@ -6,26 +6,29 @@
   - [2.2. Install in other path](#22-install-in-other-path)
   - [2.3. Additional toolchain options](#23-additional-toolchain-options)
 - [3. External Dependencies](#3-external-dependencies)
-    - [3.1. SECO subsystem](#31-seco-subsystem)
-      - [3.1.1. SECO Libraries](#311-seco-libraries)
-      - [3.1.2. NVM Daemon](#312-nvm-daemon)
-    - [3.2. TEE subsystem](#32-tee-subsystem)
-      - [3.2.1. OPTEE Client Library](#321-optee-client-library)
-      - [3.2.2. OPTEE TA Development Kit](#322-optee-ta-development-kit)
-    - [3.3. ELE subsystem](#33-ele-subsystem)
-      - [3.3.1. ELE Library](#331-ele-library)
-      - [3.3.2. NVM Daemon](#332-nvm-daemon)
-    - [3.4. JSON-C Library](#34-json-c-library)
-    - [3.5 ARM PSA Test Suite](#35-arm-psa-test-suite)
-    - [3.6. SQLite3 Library](#36-sqlite3-library)
+  - [3.1. SECO subsystem](#31-seco-subsystem)
+    - [3.1.1. SECO Libraries](#311-seco-libraries)
+    - [3.1.2. NVM Daemon](#312-nvm-daemon)
+  - [3.2. TEE subsystem](#32-tee-subsystem)
+    - [3.2.1. OPTEE Client Library](#321-optee-client-library)
+    - [3.2.2. OPTEE TA Development Kit](#322-optee-ta-development-kit)
+  - [3.3. ELE subsystem](#33-ele-subsystem)
+    - [3.3.1. ELE Library](#331-ele-library)
+    - [3.3.2. NVM Daemon](#332-nvm-daemon)
+  - [3.4. JSON-C Library](#34-json-c-library)
+  - [3.5. 5 ARM PSA Test Suite](#35-5-arm-psa-test-suite)
+  - [3.6. SQLite3 Library](#36-sqlite3-library)
+  - [3.7. TPM2-TSS Library](#37-tpm2-tss-library)
 - [4. Project configuration and compilation](#4-project-configuration-and-compilation)
-  - [4.1. Build environment options](#41-build-environment-options)
-  - [4.2. Enabling Secure Subsystems](#42-enabling-secure-subsystems)
-  - [4.3. Libraries options](#43-libraries-options)
-    - [4.3.1. SMW Library options](#431-smw-library-options)
-    - [4.3.2. PKCS#11 Library options](#432-pkcs11-library-options)
-  - [4.4. Enabling test suites](#44-enabling-test-suites)
-- [5. SMW/PKCS#11 Libraries installation](#5-smwpkcs11-libraries-installation)
+  - [4.1. Output build directory](#41-output-build-directory)
+  - [4.2. Build environment options](#42-build-environment-options)
+  - [4.3. Enabling Secure Subsystems](#43-enabling-secure-subsystems)
+  - [4.4. Enabling TPM2 TCTI Library](#44-enabling-tpm2-tcti-library)
+  - [4.5. Libraries options](#45-libraries-options)
+    - [4.5.1. SMW Library options](#451-smw-library-options)
+    - [4.5.2. PKCS#11 Library options](#452-pkcs11-library-options)
+  - [4.6. Enabling test suites](#46-enabling-test-suites)
+- [5. Libraries installation](#5-libraries-installation)
   - [5.1. Install command](#51-install-command)
   - [5.2. Install result (full install)](#52-install-result-full-install)
   - [5.3. Install result (minimal install)](#53-install-result-minimal-install)
@@ -171,12 +174,17 @@ this section to build external dependencies using provided cmake scripts.
 	<td>SQLite3 Library</td>
 	<td>Shared library libsqlite3.so and sqlite3.h header</td>
 </tr>
+<tr>
+  <td>TPM2</td>
+	<td>TPM2-TSS Library</td>
+	<td>Shared library libtss2-mu.so, libtss2-rc.so and tss2 headers</td>
+</tr>
 </tbody>
 </table>
 
-### 3.1. SECO subsystem
+## 3.1. SECO subsystem
 
-#### 3.1.1. SECO Libraries
+### 3.1.1. SECO Libraries
 The SECO Library interfaces the SMW's subsystem SECO with the kernel SECO
 Message Unit driver.
 
@@ -191,7 +199,7 @@ the `SECO_ROOT` directory.
 $ cmake -DCMAKE_TOOLCHAIN_FILE=./scripts/aarch[XX]_toolchain.cmake -DSECO_ROOT=[export path] -DSECO_SRC_PATH=[source path] -P ./scripts/build_seco.cmake
 ```
 
-#### 3.1.2. NVM Daemon
+### 3.1.2. NVM Daemon
 The SECO Non-Volatile Memory (NVM) daemon used to store all persistent objects is
 built with the same command as the [SECO Library](#311-seco-library).
 The NVM Daemon is a linux service that must be started before loading the SMW Library.
@@ -205,7 +213,7 @@ used on the host platform.
 systemctl start nvm_daemon
 ```
 
-### 3.2. TEE subsystem
+## 3.2. TEE subsystem
 The core library includes a static OPTEE Trusted Application library
 (code is available under `core/subsystems/tee/lib_ta/` folder). This library is
 built if the OPTEE Client and TA Development Kit options are set as defined
@@ -223,7 +231,7 @@ using the TA Library provided.
 A default OPTEE TA (with UUID=11b5c4aa-6d20-11ea-bc55-0242ac130003) is built
 and installed if TEE subsystem is enabled.
 
-#### 3.2.1. OPTEE Client Library
+### 3.2.1. OPTEE Client Library
 The OPTEE Client library interfaces the SMW Library with the OPTEE Trusted
 Application (TA) running in Trustzone secure world.
 
@@ -243,7 +251,7 @@ $ cmake -DCMAKE_TOOLCHAIN_FILE=./scripts/aarch[XX]_toolchain.cmake -DTEEC_ROOT=[
 prefix. The default `BUILD_DIR` value is `./ext_build`. The intermediate objects
 are built in the `[BUILD_DIR]/optee_client` (by default `./ext_build/optee_client`).
 
-#### 3.2.2. OPTEE TA Development Kit
+### 3.2.2. OPTEE TA Development Kit
 The OPTEE TA Development Kit is a OPTEE Trusted Application build kit.
 
 The following cmake script builds the OPTEE TA Development Kit sources pointed
@@ -269,8 +277,8 @@ The toolchain used is function of the platform.
 prefix. The OPTEE OS objects are built in the `./[BUILD_DIR]/build.[PLATFORM]`
 (by default `./build.[PLATFORM]`).
 
-### 3.3. ELE subsystem
-#### 3.3.1. ELE Library
+## 3.3. ELE subsystem
+### 3.3.1. ELE Library
 The ELE Library interfaces the SMW's subsystem ELE with the kernel ELE
 Message Unit driver.
 
@@ -285,7 +293,7 @@ directory.
 $ cmake -DCMAKE_TOOLCHAIN_FILE=./scripts/aarch[XX]_toolchain.cmake -DELE_ROOT=[export path] -DELE_SRC_PATH=[source path] -P ./scripts/build_ele.cmake
 ```
 
-#### 3.3.2. NVM Daemon
+### 3.3.2. NVM Daemon
 The ELE Non-Volatile Memory (NVM) daemon used to store all persistent objects is
 built with the same command as the [ELE Library](#331-ele-library).
 The NVM Daemon is a linux service that must be started before loading the
@@ -300,7 +308,7 @@ used on the host platform.
 systemctl start nvm_daemon
 ```
 
-### 3.4. JSON-C Library
+## 3.4. JSON-C Library
 The JSON-C Library is required only if the SMW test suite is wanted.
 
 The following cmake script uploads into the `JSONC_SRC_PATH` if not already
@@ -317,7 +325,7 @@ $ cmake -DCMAKE_TOOLCHAIN_FILE=./scripts/aarch[XX]_toolchain.cmake -DJSONC_ROOT=
 > The option `JSONC_VERSION` can be defined to build a specific JSON-C library.
 If not define, the version 0.15 is built.
 
-### 3.5 ARM PSA Test Suite
+## 3.5. 5 ARM PSA Test Suite
 The SMW Library refers to the ARM PSA Test Suite to validate the implementation
 of the ARM PSA API standard compliancy. If the SMW Tests are enabled and the
 ARM PSA tests must be executed, the cmake project option `PSA_ARCH_TESTS_SRC_PATH`
@@ -333,7 +341,7 @@ A SMW cmake script is available to clone the version used as reference.
 $ cmake -DPSA_ARCH_TESTS_SRC_PATH=[source path] -P ./scripts/fetch_psaarchtests.cmake
 ```
 
-### 3.6. SQLite3 Library
+## 3.6. SQLite3 Library
 The SQLite3 Library is required to handle the OSAL database support.
 
 The following cmake script uploads into the `SQLite3_SRC_PATH` if not already
@@ -346,10 +354,25 @@ is described in [Toolchains](#2-toolchains).
 $ cmake -DCMAKE_TOOLCHAIN_FILE=./scripts/aarch[XX]_toolchain.cmake -DSQLite3_ROOT=[export path] -DSQLite3_SRC_PATH=[source path] -P ./scripts/build_libsqlite.cmake
 ```
 
+## 3.7. TPM2-TSS Library
+The TPM2-TSS Library is required to handle the TPM2 support.
+
+The following cmake script uploads into the `TSS2_SRC_PATH` if not already
+present and builds the TPM2-TSS sources present in `TSS2_SRC_PATH` using the
+default compiler, then the library and interface headers are copied in the path
+specified by `TSS2_ROOT`. Installation of the ARM 32 or 64 bits cross-compiler
+is described in [Toolchains](#2-toolchains).
+
+```sh
+$ cmake -D CMAKE_TOOLCHAIN_FILE=./scripts/aarch[XX]_toolchain.cmake -DTSS2_ROOT=[export path] -DTSS2_SRC_PATH=[source path] -P ./scripts/build_tss2.cmake
+```
+
+
 # 4. Project configuration and compilation
 This chapter explains how to configure and compile the Secure Middleware project:
-- SMW shared library and test suites (SMW and PSA standard test suite)
-- PKCS#11 shared library and test suite
+- SMW shared library and test suites (SMW and PSA standard test suite).
+- PKCS#11 shared library and test suite.
+- TPM2 TCTI shared library.
 
 The project requires the cmake minimal version 3.28.
 
@@ -361,7 +384,34 @@ If no subsystem is configured, the project will not build.
 > The configuration of the project can be done interactively with the GUI ccmake
 tool (refer to <a href=https://cmake.org/cmake/help/latest/manual/ccmake.1.html>ccmake help</a>)
 
-## 4.1. Build environment options
+The <a href=https://cmake.org/cmake/help/latest/manual/cmake.1.html>cmake</a>
+command is used to configure and build the project.
+
+
+## 4.1. Output build directory
+The output build directory can be specified with the cmake `-B` option:
+```sh
+cmake [<options>] -B <path-to-build> [-S <path-to-source>]
+```
+
+Where:
+- `<options>` are the cmake configuration options as detailed in this chapter.
+- `<path-to-build>` is the output build directory path.
+- `<path-to-source>` is the source directory path (optional, defaults to
+  current directory).
+
+
+Other possibility to specify the build directory is to use create the output
+build directory and configure the project:
+
+```sh
+mkdir ./build
+cd .build
+cmake [<options>] [-S <path-to-source>]
+```
+
+
+## 4.2. Build environment options
 The <a href="#table-build-environment-options">build environment options</a>
 setup the overall project by defining the compiler, the debug level and the API
 documentation generation.
@@ -462,7 +512,7 @@ documentation generation.
 </tbody>
 </table>
 
-## 4.2. Enabling Secure Subsystems
+## 4.3. Enabling Secure Subsystems
 The Secure Subsystem(s) supported by the SMW library are depending of the cmake
 project option configuration as details in the <a href="#table-enabling-secure-subsystem-options">
 Enabling Secure Subsystems options table</a> below.
@@ -501,9 +551,20 @@ Before enabling a subsystem, the subsystem dependencies must be built as describ
 </tbody>
 </table>
 
-## 4.3. Libraries options
+## 4.4. Enabling TPM2 TCTI Library
+The SMW project provides an additional shared library named `libtss2-tcti-smw.so`
+to support TPM2 TCTI operations. This library is built when the `-DTSS2_ROOT=<path>`
+CMake option is provided during project configuration.
 
-### 4.3.1. SMW Library options
+
+The [TPM2 TCTI Library options](#37-tpm2-tcti-library-options) section details
+build instruction for the TPM2 TCTI's dependencies to the user TPM2-TSS interface.
+The `TSS2_ROOT` CMake option must point to the root directory of the TPM2-TSS
+libraries installation.
+
+## 4.5. Libraries options
+
+### 4.5.1. SMW Library options
 The following <a href="#table-smw-library-options">SMW Library options table</a>
 lists the SMW build options selectable to customize the operation supported by
 the library.
@@ -619,7 +680,7 @@ The default option value is in **bold**.
 </tbody>
 </table>
 
-### 4.3.2. PKCS#11 Library options
+### 4.5.2. PKCS#11 Library options
 The following <a href="#table-pkcs11-library-options">PKCS#11 Library options
 table</a> lists the PKCS#11 build options selectable to customize the operation
 supported by the library.
@@ -655,7 +716,7 @@ The default option value is in **bold**.
 </tbody>
 </table>
 
-## 4.4. Enabling test suites
+## 4.6. Enabling test suites
 The SMW and PKCS#11 libraries are validated using in-house test suites or
 reference test suite.
 
@@ -699,15 +760,27 @@ The default option value is in **bold**.
 </table>
 
 
-# 5. SMW/PKCS#11 Libraries installation
-As mentioned in the [Project configuration and compilation](#4-project-configuration-and-compilation),
-the output library is located in the sub-directory _`lib`_ of the project build
-folder (e.g _`./build/lib`_) and the exported header files in the top folder
-_`./public`_ folder.
+# 5. Libraries installation
+The SMW project generates two libraries:
+ - The main SMW library (`libsmw.so`)
+ - The PKCS#11 library (`libpkcs11_smw.so`)
 
-It's possible to install these files using the `make install` command that, by default, installs files in system folder _`/usr`_ as defined by the
+The SMW project generates optinal library:
+ - The TPM2 TCTI library (`libtss2-tcti-smw.so`)
+
+As mentioned in the [Project configuration and compilation](#4-project-configuration-and-compilation),
+the output libraries are located in the sub-directory _`lib`_ of the project build
+folder (e.g _`./build/lib`_).
+The exported header files installed are:
+ - For the SMW libary from the top folder _`./public`_.
+ - For the PKCS#11 library from the top folder _`./pkcs11/import`_.
+ - For the TPM2 TCTI library from the top folder _`./tpm2/public`_.
+
+
+It's possible to make the installation with the `make install` command that,
+by default, installs files in system folder _`/usr`_ as defined by the
 <a href=https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_PREFIX.html>CMAKE_INSTALL_PREFIX</a>.
-As this project could be cross-compiled, destination directory could be changed
+As this project could be cross-compiled, destination directory could be changed.
 
 ## 5.1. Install command
 The following command shows how to install this project in a specific destination:
@@ -720,7 +793,7 @@ The following command shows how to install this project in a specific destinatio
 
 > 📝 **Note**:
 > _DESTDIR_ is the path to the installation directory in which _`usr`_ folder
-is created or already present. Hence, project library `libsmw.so` is installed
+is created or already present. Hence, project libraries are is installed
 in _`[DESTDIR]/[CMAKE_INSTALL_PREFIX]/lib`_ (i.e. _`[DESTDIR]/usr/lib`_ by
 default).
 
@@ -734,17 +807,21 @@ super-user privilege.
 
 ## 5.2. Install result (full install)
 
-The full install is performed when following install command detailed 
+The full install is performed when following install command detailed
 previously. This installation allows to build application on device.
 
-In case of NXP Yocto build, the installation is minimal as shown in 
+In case of NXP Yocto build, the installation is minimal as shown in
 the [install result (minimal install)](#53-install-result-minimal-install).
 
-> 📝 **Note 1**: The <i>x</i> and <i>y</i> are respectively for the 
+> 📝 **Note 1**: The <i>x</i> and <i>y</i> are respectively for the
   project major and minor version.
 
-> 📝 **Note 2**: The `usr/lib/cmake` folder is not present if the project
-option `DISABLE_CMAKE_CONFIG=ON` (see [Build environment options](#41-build-environment-options)).
+> 📝 **Note 2**: The <i>n</i> and <i>m</i> are respectively for the
+  TPM2 TCTI library project major and minor version.
+
+> 📝 **Note 3**: The `usr/lib/cmake` folder is not present if the project
+option `DISABLE_CMAKE_CONFIG=ON` (see
+[Build environment options](#41-build-environment-options)).
 
 <pre>
 `-- <span style="color:orange">etc</span>
@@ -785,22 +862,29 @@ option `DISABLE_CMAKE_CONFIG=ON` (see [Build environment options](#41-build-envi
     |   |   |-- smw_osal.h
     |   |   |-- smw_status.h
     |   |   `-- smw_storage.h
-    |   `-- <span style="color:orange">smw_pkcs11</span>
-    |       |-- pkcs11.h
-    |       |-- pkcs11f.h
-    |       `-- pkcs11t.h
+    |   |-- <span style="color:orange">smw_pkcs11</span>
+    |   |   |-- pkcs11.h
+    |   |   |-- pkcs11f.h
+    |   |   `-- pkcs11t.h
+    |   `-- <span style="color:orange">tss2-tcti-smw</span>
+    |   |   `-- tcti_smw.h
     |-- <span style="color:orange">lib</span>
     |   |-- <span style="color:orange">cmake</span>
+    |   |   |-- <span style="color:green">FindXXX.cmake       Find dependencies modules</span>
     |   |   |-- NXP_SMWConfig.cmake
     |   |   |-- NXP_SMWConfigVersion.cmake
     |   |   |-- NXP_SMWTargets-debug.cmake
     |   |   `-- NXP_SMWTargets.cmake
+    |   |-- <span style="color:green"> libXXX.so              Dependencies libraries</span>
     |   |-- libsmw.so -> libsmw.so.<i>x</i>
     |   |-- libsmw.so.<i>x</i> -> libsmw.so.<i>x.y</i>
     |   |-- libsmw.so.<i>x.y</i>
     |   |-- libsmw_pkcs11.so -> libsmw_pkcs11.so.<i>x</i>
     |   |-- libsmw_pkcs11.so.<i>x</i> -> libsmw_pkcs11.so.<i>x.y</i>
     |   |-- libsmw_pkcs11.so.<i>x.y</i>
+    |   |-- libtss2-tcti-smw.so -> libtss2-tcti-smw.so.<i>n</i>
+    |   |-- libtss2-tcti-smw.so.<i>n</i> -> libtss2-tcti-smw.so.<i>n.m</i>
+    |   |-- libtss2-tcti-smw.so.<i>n.m</i>
     |   `-- <span style="color:orange">optee_armtz</span>
     |       `-- 11b5c4aa-6d20-11ea-bc55-0242ac130003.ta
     `-- <span style="color:orange">share</span>
@@ -816,7 +900,12 @@ The minimal install is installing only files and libraries to run application
 compiled on a host (e.g. Yocto).
 
 
-> 📝 **Note 1**: The <i>x</i> and <i>y</i> are respectively for the project major and minor version.
+> 📝 **Note 1**: The <i>x</i> and <i>y</i> are respectively for the
+  project major and minor version.
+
+> 📝 **Note 2**: The <i>n</i> and <i>m</i> are respectively for the
+  TPM2 TCTI library project major and minor version.
+
 
 <pre>
 `-- <span style="color:orange">etc</span>
@@ -830,6 +919,8 @@ compiled on a host (e.g. Yocto).
     |   |-- libsmw.so.<i>x.y</i>
     |   |-- libsmw_pkcs11.so.<i>x</i> -> libsmw_pkcs11.so.<i>x.y</i>
     |   |-- libsmw_pkcs11.so.<i>x.y</i>
+    |   |-- libtss2-tcti-smw.so.<i>n</i> -> libtss2-tcti-smw.so.<i>n.m</i>
+    |   |-- libtss2-tcti-smw.so.<i>n.m</i>
     |   `-- <span style="color:orange">optee_armtz</span>
     |       `-- 11b5c4aa-6d20-11ea-bc55-0242ac130003.ta
     `-- <span style="color:orange">share</span>
@@ -1098,7 +1189,7 @@ The `./scripts/smw_build.sh` is a multi-function script that can be used to:
 - Install the toolchains (see [Toolchains](#2-toolchains))
 - Build and install SMW's external dependencies (see [External Dependencies](#3-external-dependencies))
 - Configure and build the SMW project (see [Project configuration and compilation](#4-project-configuration-and-compilation))
-- Install the SMW objects (see [SMW/PKCS#11 Libraries installation](#5-smwpkcs11-libraries-installation))
+- Install the SMW objects (see [Libraries installation](#5-libraries-installation))
 - Package the SMW objects and required external dependencies into a tarball.
 
 More help is available by executing:

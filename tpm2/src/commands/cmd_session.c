@@ -404,3 +404,158 @@ end:
 end_handle_error:
 	return build_rc_response(ctx, TPM_HEADER_SIZE, tag, TPM2_RC_HANDLE);
 }
+
+uint32_t handle_contextload(tcti_smw_context_t *ctx, uint16_t tag,
+			    const uint8_t *cmd, size_t cmd_size)
+{
+	TPM2_RC rc = TPM2_RC_SUCCESS;
+	TSS2_RC tss2_rc = TSS2_TCTI_RC_GENERAL_FAILURE;
+	TPMS_CONTEXT tpms_context = { 0 };
+	size_t offset = TPM_HEADER_SIZE;
+	size_t resp_offset = TPM_HEADER_SIZE;
+	TPM2_HANDLE loaded_handle = 0;
+	smw_object_blob_t *obj_blob = NULL;
+	smw_session_blob_t *sess_blob = NULL;
+	tcti_smw_session_t *session = NULL;
+	tcti_smw_object_t *object = NULL;
+	bool is_session = false;
+
+	/* 1. Unmarshal TPMS_CONTEXT from command */
+	tss2_rc = Tss2_MU_TPMS_CONTEXT_Unmarshal(cmd, cmd_size, &offset,
+						 &tpms_context);
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to unmarshal TPMS_CONTEXT\n");
+		goto end;
+	}
+
+	DBG_TRACE("ContextLoad: sequence=%llu, savedHandle=0x%08x, ",
+		  (unsigned long long)tpms_context.sequence,
+		  tpms_context.savedHandle);
+	DBG_TRACE("hierarchy=0x%08x, blobSize=%u\n", tpms_context.hierarchy,
+		  tpms_context.contextBlob.size);
+
+	/* 2. Determine if it's a session or transient object based on hierarchy */
+	is_session = (tpms_context.hierarchy == TPM2_RH_NULL);
+
+	if (is_session) {
+		/* 3a. Restore session from context blob */
+		if (tpms_context.contextBlob.size !=
+		    sizeof(smw_session_blob_t)) {
+			DBG_TRACE("Invalid session blob size: %u ",
+				  tpms_context.contextBlob.size);
+			DBG_TRACE("(expected %zu)\n",
+				  sizeof(smw_session_blob_t));
+			tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
+			goto end;
+		}
+
+		sess_blob =
+			(smw_session_blob_t *)tpms_context.contextBlob.buffer;
+
+		DBG_TRACE("Restoring session: handle=0x%08x, type=%d, hash=%d\n",
+			  sess_blob->handle, sess_blob->type,
+			  sess_blob->auth_hash);
+
+		/* Find a free session slot */
+		session = find_session_by_handle(ctx, sess_blob->handle);
+		if (!session) {
+			/* Allocate new session slot */
+			for (int i = 0; i < SMW_MAX_SESSIONS; i++) {
+				if (!ctx->sessions[i].active) {
+					session = &ctx->sessions[i];
+					break;
+				}
+			}
+		}
+
+		if (!session) {
+			DBG_TRACE("No free session slots available\n");
+			tss2_rc = TSS2_TCTI_RC_INSUFFICIENT_BUFFER;
+			goto end;
+		}
+
+		/* Restore session data */
+		session->active = true;
+		session->handle = sess_blob->handle;
+		session->type = sess_blob->type;
+		session->auth_hash = sess_blob->auth_hash;
+
+		loaded_handle = sess_blob->handle;
+
+		DBG_TRACE("Session 0x%08x successfully loaded\n",
+			  loaded_handle);
+
+	} else {
+		/* 3b. Restore transient object from context blob */
+		if (tpms_context.contextBlob.size !=
+		    sizeof(smw_object_blob_t)) {
+			DBG_TRACE("Invalid object blob size: %u ",
+				  tpms_context.contextBlob.size);
+			DBG_TRACE("(expected %zu)\n",
+				  sizeof(smw_object_blob_t));
+			tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
+			goto end;
+		}
+
+		obj_blob = (smw_object_blob_t *)tpms_context.contextBlob.buffer;
+
+		DBG_TRACE("Restoring object: handle=0x%08x, SMW ID=%u, ",
+			  obj_blob->handle, obj_blob->smw_key_id);
+		DBG_TRACE("hierarchy=0x%08x\n", tpms_context.hierarchy);
+
+		/* Find a free object slot or reuse existing */
+		object = find_object_by_handle(ctx, obj_blob->handle);
+		if (!object) {
+			/* Allocate new object slot */
+			for (int i = 0; i < SMW_MAX_OBJECTS; i++) {
+				if (!ctx->objects[i].active) {
+					object = &ctx->objects[i];
+					break;
+				}
+			}
+		}
+
+		if (!object) {
+			DBG_TRACE("No free object slots available\n");
+			tss2_rc = TSS2_TCTI_RC_INSUFFICIENT_BUFFER;
+			goto end;
+		}
+
+		/* Restore object data */
+		object->active = true;
+		object->handle = obj_blob->handle;
+		object->smw_key_id = obj_blob->smw_key_id;
+		object->hierarchy = tpms_context.hierarchy;
+		object->attributes = obj_blob->attributes;
+
+		loaded_handle = obj_blob->handle;
+
+		DBG_TRACE("Object 0x%08x successfully loaded (SMW ID=%u)\n",
+			  loaded_handle, object->smw_key_id);
+	}
+
+	/* 4. Build response: header + loaded handle */
+	tss2_rc = build_rc_response(ctx, TPM_HEADER_SIZE + sizeof(TPM2_HANDLE),
+				    tag, TPM2_RC_SUCCESS);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		return tss2_rc;
+
+	/* Marshal the loaded handle */
+	tss2_rc = Tss2_MU_TPM2_HANDLE_Marshal(loaded_handle, ctx->resp_buf,
+					      ctx->resp_size, &resp_offset);
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to marshal loaded handle\n");
+		goto end;
+	}
+
+	DBG_TRACE("ContextLoad successful: loaded handle=0x%08x\n",
+		  loaded_handle);
+
+end:
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		rc = tcti_rc_to_tpm2_rc(tss2_rc);
+		return build_rc_response(ctx, TPM_HEADER_SIZE, tag, rc);
+	}
+
+	return tss2_rc;
+}

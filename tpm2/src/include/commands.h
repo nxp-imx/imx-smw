@@ -190,4 +190,35 @@ uint32_t handle_getcapability(tcti_smw_context_t *ctx, uint16_t tag,
  */
 uint32_t handle_createprimary(tcti_smw_context_t *ctx, uint16_t tag,
 			      const uint8_t *cmd, size_t cmd_size);
+
+/**
+ * handle_contextload() - Handle TPM2_ContextLoad command
+ * @ctx:      Pointer to the SMW TCTI context structure.
+ * @tag:      TPM structure tag from the command header.
+ * @cmd:      Pointer to the command buffer containing the full TPM command.
+ * @cmd_size: Size of the command buffer in bytes.
+ *
+ * Restores a previously saved TPM context (session or transient object) from
+ * a TPMS_CONTEXT structure. The context must have been saved earlier using
+ * TPM2_ContextSave.
+ *
+ * Context Blob Format:
+ * - Session: smw_session_blob_t (handle, type, auth_hash, metadata)
+ * - Object:  smw_object_blob_t (handle, smw_key_id, hierarchy, attributes)
+ *
+ * Handle Allocation:
+ * - Sessions: Restored to original handle (0x02000000-0x03FFFFFF)
+ * - Objects:  Restored to original handle (0x80000000-0x80000002)
+ *
+ * TPM2 Spec Reference:
+ * - Part 3, Section 28.2: TPM2_ContextLoad
+ * - Part 2, Section 14.6: Context Management
+ *
+ * Return:
+ * - TSS2_RC_SUCCESS: Context successfully loaded
+ * - TPM2_RC_SIZE: Invalid TPMS_CONTEXT structure
+ * - TPM2_RC_VALUE: Invalid context blob size or content
+ */
+uint32_t handle_contextload(tcti_smw_context_t *ctx, uint16_t tag,
+			    const uint8_t *cmd, size_t cmd_size);
 #endif /* __COMMANDS_H__ */

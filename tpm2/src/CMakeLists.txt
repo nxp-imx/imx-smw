@@ -1,9 +1,7 @@
 file(GLOB tss2_src *.c)
 
 if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-	find_file(TRACE_C trace.c ${CMAKE_CURRENT_SOURCE_DIR})
-	list(REMOVE_ITEM tss2_src ${TRACE_C})
-	unset(TRACE_C CACHE)
+	list(FILTER tss2_src EXCLUDE REGEX "trace.c$")
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE ${tss2_src})

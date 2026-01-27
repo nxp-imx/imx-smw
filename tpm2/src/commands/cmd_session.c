@@ -15,37 +15,55 @@
 #include "trace.h"
 
 static uint32_t context_save_transient(TPMS_CONTEXT *tpms_context,
-				       TPMI_DH_CONTEXT handle)
+				       TPMI_DH_CONTEXT handle,
+				       tcti_smw_object_t *object)
 {
 	TSS2_RC tss2_rc = TSS2_RC_SUCCESS;
+	smw_object_blob_t blob = { 0 };
+	int ret = 0;
 
-	/*
-	 * For transient objects, the hierarchy depends on how they were created
-	 * Since we don't track object creation yet,
-	 * we use TPM2_RH_NULL for simplicity (valid for temporary objects)
-	 */
-	tpms_context->hierarchy = TPM2_RH_NULL;
+	if (object && object->active) {
+		/*
+		 * For transient objects, the hierarchy depends on how they were created
+		 * Since we track object creation, we can determine the hierarchy
+		 */
+		tpms_context->hierarchy = object->hierarchy;
+		/*
+		 * Fulfillment of contextBlob (TPM2B_CONTEXT_DATA)
+		 * Store necessary info for SMW (object ID, attributes)
+		 */
+		ret = snprintf((char *)blob.metadata, sizeof(blob.metadata),
+			       "SMW_OBJECT_ID_%03lu", tpms_context->sequence);
+		if (ret < 0 || (size_t)ret >= sizeof(blob.metadata)) {
+			DBG_TRACE("Failed to format object metadata\n");
+			tss2_rc = TSS2_TCTI_RC_GENERAL_FAILURE;
+			goto end;
+		}
 
-	DBG_TRACE("Transient object context - ");
-	DBG_TRACE("hierarchy set to TPM2_RH_NULL\n");
+		blob.handle = handle;
+		blob.smw_key_id = object->smw_key_id;
+		blob.attributes = object->attributes;
+		blob.metadata_size = sizeof(blob.metadata);
+		tpms_context->contextBlob.size = sizeof(blob);
 
-	/*
-	 * In a full implementation, you would track:
-	 * - TPM2_RH_OWNER: for objects created under owner hierarchy
-	 * - TPM2_RH_PLATFORM: for objects created under platform hierarchy
-	 * - TPM2_RH_ENDORSEMENT: for objects created under endorsement hierarchy
-	 * - TPM2_RH_NULL: for temporary objects
-	 *
-	 * Transient object - for now just store handle
-	 * In a full implementation, would store object's public/private data
-	 */
-	DBG_TRACE("Transient object save ");
-	DBG_TRACE("(minimal implementation)\n");
+		memcpy(tpms_context->contextBlob.buffer, &blob,
+		       tpms_context->contextBlob.size);
 
-	tpms_context->contextBlob.size = sizeof(uint32_t);
+		if (tpms_context->contextBlob.size > TPM2_MAX_CONTEXT_SIZE) {
+			DBG_TRACE("Context blob too large!\n");
+			tss2_rc = TSS2_TCTI_RC_INSUFFICIENT_BUFFER;
+			goto end;
+		}
 
-	memcpy(tpms_context->contextBlob.buffer, &handle, sizeof(uint32_t));
+		DBG_TRACE("Transient object saved: handle=0x%08x, SMW ID=%u\n",
+			  handle, object->smw_key_id);
+	} else {
+		DBG_TRACE("No object found linked to handle 0x%08x\n", handle);
+		tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
 
+end:
 	return tss2_rc;
 }
 
@@ -57,7 +75,6 @@ static uint32_t context_save_session(TPMS_CONTEXT *tpms_context,
 	smw_session_blob_t blob = { 0 };
 	int ret = 0;
 
-	tpms_context->hierarchy = TPM2_RH_NULL;
 	DBG_TRACE("Session context - hierarchy set to TPM2_RH_NULL\n");
 
 	if (session) {
@@ -195,6 +212,7 @@ uint32_t handle_contextsave(tcti_smw_context_t *ctx, uint16_t tag,
 	uint32_t total_resp_size = 0;
 	TPMS_CONTEXT tpms_context = { 0 };
 	tcti_smw_session_t *session = NULL;
+	tcti_smw_object_t *object = NULL;
 
 	/* 1. Extract handle from command (Parameter 1: handle_to_save) */
 	tss2_rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset,
@@ -230,6 +248,7 @@ uint32_t handle_contextsave(tcti_smw_context_t *ctx, uint16_t tag,
 	/* Sequence number incremented for each save */
 	tpms_context.sequence = ctx->ctx_sequence++;
 	tpms_context.savedHandle = handle_to_save;
+	tpms_context.hierarchy = TPM2_RH_NULL;
 
 	/*
 	 * 3. Set hierarchy based on handle type
@@ -238,13 +257,25 @@ uint32_t handle_contextsave(tcti_smw_context_t *ctx, uint16_t tag,
 	if (is_session) {
 		/* Try to find this session in our SMW context */
 		session = find_session_by_handle(ctx, handle_to_save);
+		if (!session || !session->active) {
+			tss2_rc = TSS2_TCTI_RC_IO_ERROR;
+			goto end;
+		}
 
 		tss2_rc = context_save_session(&tpms_context, handle_to_save,
 					       session);
 		if (tss2_rc != TSS2_RC_SUCCESS)
 			goto end;
 	} else if (is_transient) {
-		tss2_rc = context_save_transient(&tpms_context, handle_to_save);
+		/* Try to find this object in our SMW context */
+		object = find_object_by_handle(ctx, handle_to_save);
+		if (!object || !object->active) {
+			tss2_rc = TSS2_TCTI_RC_IO_ERROR;
+			goto end;
+		}
+
+		tss2_rc = context_save_transient(&tpms_context, handle_to_save,
+						 object);
 		if (tss2_rc != TSS2_RC_SUCCESS)
 			goto end;
 	}
@@ -295,6 +326,7 @@ uint32_t handle_flushcontext(tcti_smw_context_t *ctx, uint16_t tag,
 	size_t offset = TPM_HEADER_SIZE;
 	bool is_transient = false, is_session = false;
 	tcti_smw_session_t *session = NULL;
+	tcti_smw_object_t *object = NULL;
 
 	/* Extract the handle to flush from command */
 	tss2_rc =
@@ -309,6 +341,8 @@ uint32_t handle_flushcontext(tcti_smw_context_t *ctx, uint16_t tag,
 		      flush_handle <= TPM2_HMAC_SESSION_LAST) ||
 		     (flush_handle >= TPM2_POLICY_SESSION_FIRST &&
 		      flush_handle <= TPM2_POLICY_SESSION_LAST);
+	is_transient = (flush_handle >= TPM2_TRANSIENT_FIRST &&
+			flush_handle <= (TPM2_TRANSIENT_FIRST + 0x2));
 
 	if (is_session) {
 		/* Find and free the session */
@@ -332,10 +366,23 @@ uint32_t handle_flushcontext(tcti_smw_context_t *ctx, uint16_t tag,
 		DBG_TRACE("Session 0x%08x successfully flushed\n",
 			  flush_handle);
 	} else if (is_transient) {
-		/* For transient objects or other handles */
-		DBG_TRACE("Flushing non-session handle 0x%08x ", flush_handle);
-		DBG_TRACE("(not implemented)\n");
-		/* In a full implementation, it should handle transient objects here */
+		/* Find the transient object */
+		object = find_object_by_handle(ctx, flush_handle);
+
+		if (!object || !object->active) {
+			DBG_TRACE("Transient object 0x%08x ", flush_handle);
+			DBG_TRACE("not found or not active\n");
+			goto end_handle_error;
+		}
+
+		DBG_TRACE("Flushing transient object 0x%08x (SMW ID=%u)\n",
+			  flush_handle, object->smw_key_id);
+
+		/* Clear the objet data */
+		memset(object, 0, sizeof(tcti_smw_object_t));
+
+		DBG_TRACE("Transient object 0x%08x successfully flushed\n",
+			  flush_handle);
 	} else {
 		DBG_TRACE("Invalid handle type: 0x%08x\n", flush_handle);
 		goto end_handle_error;

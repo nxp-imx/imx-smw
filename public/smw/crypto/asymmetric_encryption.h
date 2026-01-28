@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2025 NXP
+ * Copyright 2025-2026 NXP
  */
 
 #ifndef __SMW_ASYMMETRIC_ENCRYPTION_H__
@@ -54,6 +54,8 @@ struct smw_asymmetric_encryption_args {
  * This function updates @args->output_length field to required output
  * buffer length if @args->output is a NULL pointer and returns error code
  * SMW_STATUS_OK.
+ *
+ * If @args->output is a NULL pointer, then @args-output_length must be 0.
  *
  * @args->output_length field is updated to the correct value in the following
  * cases

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #ifndef __SMW_CRYPTO_H__
@@ -336,7 +336,8 @@ struct smw_cipher_args {
  *
  * This function computes a hash.
  *
- * To query the required digest buffer length, set @args->output to NULL.
+ * To query the required digest buffer length, set @args->output to NULL
+ * and @args->output_length to 0.
  * The function will then set the required digest buffer length in
  * @args->output_length and return SMW_STATUS_OK.
  *
@@ -404,7 +405,8 @@ enum smw_status_code smw_hash_update(struct smw_hash_update_args *args);
  * used.
  *
  * Output data field of @args can be a NULL pointer to get the required output
- * buffer length. If this feature succeed, returned error code is SMW_STATUS_OK
+ * buffer length. In this case @args->output_length must be set to 0.
+ * If this feature succeeds, returned error code is SMW_STATUS_OK
  * and the operation is not terminated (context remains valid) unless required
  * output buffer length is 0.
  *
@@ -432,7 +434,8 @@ enum smw_status_code smw_hash_final(struct smw_hash_final_args *args);
  * When TLS_MAC_FINISH attribute is set, the key type must be TLS_MASTER.
  *
  * To query the required signature buffer length, set @args->signature to
- * NULL. The function will then set the required signature buffer length in
+ * NULL and @args->signature_length to 0.
+ * The function will then set the required signature buffer length in
  * @args->signature_length and return SMW_STATUS_OK.
  *
  * On operation completion, the @args->signature_length is updated to
@@ -502,7 +505,9 @@ enum smw_status_code smw_sign_update(struct smw_sign_verify_update_args *args);
  * used.
  *
  * Output signature field of @args can be a NULL pointer to get the required
- * output buffer length. If this feature succeed, returned error code
+ * output buffer length. In this case output signature length field of @args
+ * must be set to 0.
+ * If this feature succeeds, returned error code
  * is SMW_STATUS_OK and the operation is not terminated (context remains valid)
  * unless required output signature length is 0.
  *
@@ -619,7 +624,8 @@ enum smw_status_code smw_rng(struct smw_rng_args *args);
  * This function executes a cipher encryption or decryption.
  *
  * Output data field of @args can be a NULL pointer to get the required output
- * buffer length. If this feature succeed, returned error code is SMW_STATUS_OK.
+ * buffer length.  In this case output length field of @args must be set to 0.
+ * If this feature succeeds, returned error code is SMW_STATUS_OK.
  *
  * Output length @args field is updated to the correct value when:
  *
@@ -648,6 +654,10 @@ enum smw_status_code smw_cipher(struct smw_cipher_args *args);
  * The operation context must be allocated using smw_allocate_context() API
  * prior to invoking this API.
  *
+ * Output data field of @args can be a NULL pointer to get the required output
+ * buffer length. In this case output length field of @args must be set to 0.
+ * If this feature succeeds, returned error code is SMW_STATUS_OK.
+ *
  * If the returned error code is SMW_STATUS_OK or SMW_STATUS_INVALID_PARAM, the
  * operation is not terminated and the context remains valid.
  *
@@ -673,7 +683,8 @@ enum smw_status_code smw_cipher_init(struct smw_cipher_init_args *args);
  * The context used must be initialized by the cipher multi-part initialization.
  *
  * Output data field of @args can be a NULL pointer to get the required output
- * buffer length. If this feature succeed, returned error code is SMW_STATUS_OK.
+ * buffer length. In this case output length field of @args must be set to 0.
+ * If this feature succeeds, returned error code is SMW_STATUS_OK.
  *
  * Output length @args field is updated to the correct value when:
  *
@@ -705,8 +716,9 @@ enum smw_status_code smw_cipher_update(struct smw_cipher_data_args *args);
  * used.
  *
  * Output data field of @args can be a NULL pointer to get the required output
- * buffer length. If this feature succeed, returned error code is SMW_STATUS_OK
- * and the operation is no terminated (context remains valid) unless required
+ * buffer length. In this case output length field of @args must be set to 0.
+ * If this feature succeeds, returned error code is SMW_STATUS_OK
+ * and the operation is not terminated (context remains valid) unless required
  * output buffer length is 0.
  *
  * Output length @args field is updated to the correct value when:
@@ -731,9 +743,9 @@ enum smw_status_code smw_cipher_final(struct smw_cipher_data_args *args);
  *
  * This function computes a Message Authentication Code.
  *
- * To query the required MAC buffer length, set @args->mac to NULL. The function
- * will then set the required MAC buffer length in @args->mac_length and return
- * SMW_STATUS_OK.
+ * To query the required MAC buffer length, set @args->mac to NULL and
+ * args->mac_length to 0. The function will then set the required MAC buffer
+ * length in @args->mac_length and return SMW_STATUS_OK.
  *
  * On operation completion, the @args->mac_length is updated to
  * the correct value when

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2024, 2026 NXP
  */
 
 #ifndef __SMW_AEAD_H__
@@ -157,8 +157,10 @@ struct smw_aead_args {
  *    - If the computed tag does not match the supplied tag, the operation
  *      will be terminated.
  *
- * If @args->final->data->output is a NULL pointer, then the function updates
- * @args->final->data->output_length field and returns error code SMW_STATUS_OK.
+ * If @args->final->data->output is NULL, the field
+ * @args->final->data->output_length must be set to 0. The function will update
+ * @args->final->data->output_length with the required buffer size and return
+ * SMW_STATUS_OK.
  * Additionally, if the operation is encryption, the tag length
  * @args->final->tag_length and output IV length @args->final->output_iv_length
  * are updated with generated tag value length and IV length, respectively.
@@ -249,7 +251,8 @@ enum smw_status_code smw_aead_update_aad(struct smw_aead_aad_args *args);
  * The context used must be initialized by the AEAD multi-part initialization.
  *
  * The @args->output can be a NULL pointer to get the required output buffer
- * length. If this feature succeeds, returned error code is SMW_STATUS_OK.
+ * length. In this case @args->output_length must be set to 0.
+ * If this feature succeeds, returned error code is SMW_STATUS_OK.
  *
  * The @args->output_length field is updated to the correct value when:
  *
@@ -296,8 +299,9 @@ enum smw_status_code smw_aead_update(struct smw_aead_data_args *args);
  *      @args->data->input field should be sufficiently large to accommodate
  *      both the ciphertext and the tag.
  *
- * If @args->data->output is a NULL pointer, then the function updates
- * @args->data->output_length field and returns error code SMW_STATUS_OK.
+ * If @args->data->output is NULL, the field @args->data->output_length must be
+ * set to 0. The function will update @args->data->output_length with the
+ * required buffer size and return SMW_STATUS_OK.
  * In this case, if the operation is encryption, the function also updates the
  * required tag buffer length @args->tag_length.
  *

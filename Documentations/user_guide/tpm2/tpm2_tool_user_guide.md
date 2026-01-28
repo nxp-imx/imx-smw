@@ -101,6 +101,31 @@ Hash data using TPM2:
 tpm2_hash -g sha256 -o hash.out data.txt
 ```
 
+## Start Authorization Session
+Start a TPM2 authorization session (TPM2_SE_HMAC type) and save its context
+in a file, use the startauthsession command:
+```sh
+tpm2_startauthsession --hmac-session -S session.ctx
+```
+
+## Create Primary object
+Creates an ECC primary key (P-256) under the Owner hierarchy with SHA-256 as
+the name hash, using restricted fixed attributes, and saves the resulting key
+context to primary_ecdsa.ctx
+```sh
+tpm2_createprimary -C o -g sha256 -G ecc256 \
+  -a "fixedtpm|fixedparent|sensitivedataorigin|userwithauth|restricted" \
+  -c primary_ecdsa.ctx \
+```
+
+## Get Capability
+Lists all currently loaded transient object handles in the TPM,
+showing which temporary keys or objects are active in memory, use the
+getcap command:
+```sh
+tpm2_getcap handles-transient
+```
+
 # TPM2 Commands Supported
 
 Following table lists TPM2 Commands implemented in the SMW's TSS2 TCTI library.
@@ -110,3 +135,9 @@ Following table lists TPM2 Commands implemented in the SMW's TSS2 TCTI library.
 | `TPM2_Startup`          |
 | `TPM2_Shutdown`         |
 | `TPM2_Hash`             |
+| `TPM2_StartAuthSession` |
+| `TPM2_CreatePrimary`    |
+| `TPM2_GetCapability`    |
+| `TPM2_ContextLoad`      |
+| `TPM2_ContextSave`      |
+| `TPM2_FlushContext`     |

@@ -77,6 +77,8 @@ uint32_t handle_getcapability(tcti_smw_context_t *ctx, uint16_t tag,
 	TPM2_RC rc = TPM2_RC_SUCCESS;
 	TSS2_RC tss2_rc = TSS2_TCTI_RC_GENERAL_FAILURE;
 	size_t offset = TPM_HEADER_SIZE;
+	uint32_t prop = 0;
+	TPMS_TAGGED_PROPERTY *tagged_prop = NULL;
 
 	/* Input parameters */
 	TPM2_CAP capability = 0;
@@ -125,6 +127,49 @@ uint32_t handle_getcapability(tcti_smw_context_t *ctx, uint16_t tag,
 	case TPM2_CAP_TPM_PROPERTIES:
 		/* Return minimal TPM properties */
 		cap_data.data.tpmProperties.count = 0;
+
+		for (prop = property;
+		     (prop < property + property_count) &&
+		     (cap_data.data.tpmProperties.count) <
+			     /* Without this comment clang-format does not */
+			     /* meet the checkpatch requirement. */
+			     TPM2_MAX_TPM_PROPERTIES;
+		     prop++) {
+			tagged_prop =
+				&cap_data.data.tpmProperties.tpmProperty
+					 [cap_data.data.tpmProperties.count];
+
+			tagged_prop->property = prop;
+
+			switch (prop) {
+			case TPM2_PT_MAX_DIGEST:
+				tagged_prop->value = TPM2_SHA512_DIGEST_SIZE;
+				cap_data.data.tpmProperties.count++;
+				break;
+
+			case TPM2_PT_FAMILY_INDICATOR:
+				tagged_prop->value =
+					TPM2_SPEC_FAMILY; /* "2.0" */
+				cap_data.data.tpmProperties.count++;
+				break;
+
+			case TPM2_PT_LEVEL:
+				tagged_prop->value = 0; /* Level 0 */
+				cap_data.data.tpmProperties.count++;
+				break;
+
+			case TPM2_PT_REVISION:
+				tagged_prop->value =
+					184; /* Specification version is v184 */
+				cap_data.data.tpmProperties.count++;
+				break;
+
+			/* Add other properties as needed */
+			default:
+				/* Property not supported - skip it */
+				break;
+			}
+		}
 		cap_data_size += sizeof(uint32_t); /* count */
 		cap_data_size += cap_data.data.tpmProperties.count *
 				 sizeof(TPMS_TAGGED_PROPERTY);

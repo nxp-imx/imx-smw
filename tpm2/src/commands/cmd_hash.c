@@ -369,3 +369,84 @@ end:
 
 	return tss2_rc;
 }
+
+uint32_t handle_getrandom(tcti_smw_context_t *ctx, uint16_t tag,
+			  const uint8_t *cmd, size_t cmd_size)
+{
+	TSS2_RC tss2_rc = TSS2_TCTI_RC_GENERAL_FAILURE;
+	TPM2_RC rc = TPM2_RC_SUCCESS;
+	size_t offset = TPM_HEADER_SIZE;
+	uint16_t bytes_to_generate = 0;
+	enum smw_status_code smw_status = SMW_STATUS_OK;
+	struct smw_rng_args rng_args = { 0 };
+
+	/* Input parameter */
+	uint16_t bytes_requested = 0;
+
+	/* Output parameter */
+	size_t resp_offset = TPM_HEADER_SIZE, resp_params_size = 0;
+	uint32_t total_size = 0;
+	TPM2B_DIGEST random_bytes = { 0 };
+
+	/* 1. Unmarshal input parameter */
+	tss2_rc = Tss2_MU_UINT16_Unmarshal(cmd, cmd_size, &offset,
+					   &bytes_requested);
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to unmarshal bytes_requested\n");
+		goto end;
+	}
+
+	DBG_TRACE("GetRandom: %u bytes requested\n", bytes_requested);
+
+	/* 2. Limit to maximum TPM capacity */
+	DBG_TRACE_COND(bytes_to_generate > sizeof(random_bytes.buffer),
+		       "Requested %u bytes exceeds max %zu, truncating\n",
+		       bytes_requested, sizeof(random_bytes.buffer));
+	bytes_to_generate = MIN(bytes_requested, sizeof(random_bytes.buffer));
+
+	/* 3. Generate bytes randomly through SMW */
+	rng_args.subsystem_name = SMW_SUBSYSTEM_NAME_ELE;
+	rng_args.output = random_bytes.buffer;
+	rng_args.output_length = bytes_to_generate;
+
+	smw_status = smw_rng(&rng_args);
+	if (smw_status != SMW_STATUS_OK) {
+		DBG_TRACE("SMW RNG generation failed\n");
+		tss2_rc = smw_rc_to_tcti_rc(smw_status);
+		goto end;
+	}
+
+	random_bytes.size = bytes_to_generate;
+
+	DBG_TRACE("Generated %u random bytes (requested: %u)\n",
+		  random_bytes.size, bytes_requested);
+
+	DBG_TRACE_COND(bytes_requested > bytes_to_generate,
+		       "Note: Returned %u bytes instead of %u (TPM limit)\n",
+		       bytes_to_generate, bytes_requested);
+
+	/* 4. Compute response size */
+	tss2_rc = Tss2_MU_TPM2B_DIGEST_Marshal(&random_bytes, NULL, 0,
+					       &resp_params_size);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	total_size = TPM_HEADER_SIZE + resp_params_size;
+
+	/* 5. Build response */
+	tss2_rc = build_rc_response(ctx, total_size, tag, TPM2_RC_SUCCESS);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		return tss2_rc;
+
+	/* 6. Marshal random bytes in response */
+	tss2_rc = Tss2_MU_TPM2B_DIGEST_Marshal(&random_bytes, ctx->resp_buf,
+					       ctx->resp_size, &resp_offset);
+
+end:
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		rc = tcti_rc_to_tpm2_rc(tss2_rc);
+		tss2_rc = build_rc_response(ctx, TPM_HEADER_SIZE, tag, rc);
+	}
+
+	return tss2_rc;
+}

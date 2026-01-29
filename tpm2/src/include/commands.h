@@ -221,4 +221,25 @@ uint32_t handle_createprimary(tcti_smw_context_t *ctx, uint16_t tag,
  */
 uint32_t handle_contextload(tcti_smw_context_t *ctx, uint16_t tag,
 			    const uint8_t *cmd, size_t cmd_size);
+
+/**
+ * handle_getrandom() - Process TPM2_GetRandom command.
+ * @ctx:      Pointer to the SMW TCTI context structure.
+ * @tag:      TPM structure tag from the command header.
+ * @cmd:      Pointer to the command buffer containing the full TPM command.
+ * @cmd_size: Size of the command buffer in bytes.
+ *
+ * This function handles the TPM2_GetRandom command which generates random
+ * bytes using the TPM's random number generator. It unmarshals the number
+ * of bytes requested, validates and limits the request to the maximum TPM
+ * capacity (TPM2B_DIGEST buffer size), generates random data through the
+ * SMW RNG API backed by the ELE subsystem, and builds a response containing
+ * the generated random bytes.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful random generation, or the corresponding error
+ * code
+ */
+uint32_t handle_getrandom(tcti_smw_context_t *ctx, uint16_t tag,
+			  const uint8_t *cmd, size_t cmd_size);
 #endif /* __COMMANDS_H__ */

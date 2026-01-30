@@ -233,3 +233,11 @@ end:
 	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
 	return rc;
 }
+
+uint32_t create_unmarshal(const uint8_t *cmd, size_t cmd_size,
+			  create_input_t *input, TPM2B_NONCE *nonce_caller,
+			  uint32_t *session_handle)
+{
+	return create_primary_unmarshal(cmd, cmd_size, input, nonce_caller,
+					session_handle);
+}

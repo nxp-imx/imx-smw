@@ -124,4 +124,28 @@ uint32_t create_primary_unmarshal(const uint8_t *cmd, size_t cmd_size,
 				  createprimary_input_t *input,
 				  TPM2B_NONCE *nonce_caller,
 				  uint32_t *session_handle);
+
+/**
+ * create_unmarshal() - Parse TPM2_Create command parameters from buffer.
+ * @cmd:            Pointer to the command buffer containing the TPM2_Create command.
+ * @cmd_size:       Size of the command buffer in bytes.
+ * @input:          Pointer to the structure to be populated with unmarshaled
+ *                  command parameters.
+ * @nonce_caller:   Pointer to the structure to be populated with the caller's
+ *                  nonce from the authorization session area.
+ * @session_handle: Pointer to the variable to be populated with the session
+ *                  handle extracted from the authorization area.
+ *
+ * This function unmarshals the TPM2_Create command parameters from the command
+ * buffer after the TPM header. It extracts the parent handle, sensitive data
+ * area, public area template, outside info, and creation PCR selection. It also
+ * processes the authorization session area to extract the session handle and
+ * caller nonce for HMAC validation.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful parsing, or the corresponding error code on failure.
+ */
+uint32_t create_unmarshal(const uint8_t *cmd, size_t cmd_size,
+			  create_input_t *input, TPM2B_NONCE *nonce_caller,
+			  uint32_t *session_handle);
 #endif /* __UTILS_H__ */

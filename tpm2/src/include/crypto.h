@@ -27,7 +27,7 @@
  * command parameters during TPM2_CreatePrimary processing.
  */
 typedef struct {
-	TPMI_RH_HIERARCHY primary_handle;
+	TPM2_HANDLE primary_handle;
 	TPM2B_SENSITIVE_CREATE in_sensitive;
 	TPM2B_PUBLIC in_public;
 	TPM2B_DATA outside_info;
@@ -54,6 +54,27 @@ typedef struct {
 	TPM2B_DIGEST creation_hash;
 	TPMT_TK_CREATION creation_ticket;
 } createprimary_output_t;
+
+typedef createprimary_input_t create_input_t;
+
+/**
+ * struct create_output_t - Output parameters for TPM2_Create command.
+ * @out_private:     Private area of the created object.
+ * @out_public:      Public area of the created object.
+ * @creation_data:   Data associated with the object creation event.
+ * @creation_hash:   Hash of the creation data.
+ * @creation_ticket: Ticket proving the object was created by the TPM.
+ *
+ * This structure encapsulates all output parameters returned by the
+ * TPM2_Create command.
+ */
+typedef struct {
+	TPM2B_PRIVATE out_private;
+	TPM2B_PUBLIC out_public;
+	TPM2B_CREATION_DATA creation_data;
+	TPM2B_DIGEST creation_hash;
+	TPMT_TK_CREATION creation_ticket;
+} create_output_t;
 
 /**
  * struct smw_object_blob_t - Object data structure for SMW storage.

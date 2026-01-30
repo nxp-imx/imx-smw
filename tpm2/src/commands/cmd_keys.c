@@ -138,7 +138,7 @@ uint32_t handle_createprimary(tcti_smw_context_t *ctx, uint16_t tag,
 	uint16_t response_hmac_size = 0;
 	uint8_t tpma_attrs = TPMA_SESSION_CONTINUESESSION;
 	uint8_t *params_buffer = NULL;
-	size_t params_size = 0, params_offset = 0;
+	size_t public_area_size = 0, params_offset = 0;
 	tcti_smw_session_t *sess = NULL;
 
 	struct smw_key_descriptor key_desc = { 0 };
@@ -149,7 +149,6 @@ uint32_t handle_createprimary(tcti_smw_context_t *ctx, uint16_t tag,
 	/*
 	 * Workaround: Some TSS2 Marshal functions don't handle NULL buffer correctly
 	 * for size calculation.
-	 * params_size must be compute with temp buffers.
 	 */
 	uint8_t *params_marshal_scratch = NULL;
 	size_t params_marshal_scratch_size = 1024;
@@ -253,10 +252,11 @@ uint32_t handle_createprimary(tcti_smw_context_t *ctx, uint16_t tag,
 		output.out_public.publicArea.nameAlg & 0xFF;
 
 	/* 6. Get response parameters size */
+
 	tss2_rc = Tss2_MU_TPMT_PUBLIC_Marshal(&output.out_public.publicArea,
 					      public_area_marshal_buf,
 					      sizeof(public_area_marshal_buf),
-					      &params_size);
+					      &public_area_size);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
@@ -266,7 +266,7 @@ uint32_t handle_createprimary(tcti_smw_context_t *ctx, uint16_t tag,
 	 */
 	hash_args.algo_name = smw_hash_alg;
 	hash_args.input = public_area_marshal_buf;
-	hash_args.input_length = params_size;
+	hash_args.input_length = public_area_size;
 	hash_args.output =
 		&output.object_name.name[2]; /* After the algorithm ID */
 	hash_args.output_length = digest_size;
@@ -284,6 +284,13 @@ uint32_t handle_createprimary(tcti_smw_context_t *ctx, uint16_t tag,
 	output.creation_ticket.hierarchy = input.primary_handle;
 	output.creation_ticket.digest.size = 0;
 
+	tss2_rc = Tss2_MU_TPM2B_PUBLIC_Marshal(&output.out_public,
+					       params_marshal_scratch,
+					       params_marshal_scratch_size,
+					       &marshaled_param_size);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
 	tss2_rc =
 		Tss2_MU_TPM2B_CREATION_DATA_Marshal(/* Without this comment */
 						    /*clang-format does not meet the checkpatch */
@@ -295,16 +302,12 @@ uint32_t handle_createprimary(tcti_smw_context_t *ctx, uint16_t tag,
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
-	params_size += marshaled_param_size;
-
 	tss2_rc = Tss2_MU_TPM2B_DIGEST_Marshal(&output.creation_hash,
 					       params_marshal_scratch,
 					       params_marshal_scratch_size,
 					       &marshaled_param_size);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
-
-	params_size += marshaled_param_size;
 
 	tss2_rc = Tss2_MU_TPMT_TK_CREATION_Marshal(&output.creation_ticket,
 						   params_marshal_scratch,
@@ -313,8 +316,6 @@ uint32_t handle_createprimary(tcti_smw_context_t *ctx, uint16_t tag,
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
-	params_size += marshaled_param_size;
-
 	tss2_rc = Tss2_MU_TPM2B_NAME_Marshal(&output.object_name,
 					     params_marshal_scratch,
 					     params_marshal_scratch_size,
@@ -322,10 +323,8 @@ uint32_t handle_createprimary(tcti_smw_context_t *ctx, uint16_t tag,
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
-	params_size += marshaled_param_size;
-
 	/* 7. Prepare parameters buffer for HMAC calculation */
-	params_buffer = malloc(params_size);
+	params_buffer = malloc(marshaled_param_size);
 	if (!params_buffer) {
 		tss2_rc = TSS2_TCTI_RC_MEMORY;
 		goto end;
@@ -333,31 +332,35 @@ uint32_t handle_createprimary(tcti_smw_context_t *ctx, uint16_t tag,
 
 	tss2_rc =
 		Tss2_MU_TPM2B_PUBLIC_Marshal(&output.out_public, params_buffer,
-					     params_size, &params_offset);
+					     marshaled_param_size,
+					     &params_offset);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
-	tss2_rc =
-		Tss2_MU_TPM2B_CREATION_DATA_Marshal(&output.creation_data,
-						    params_buffer, params_size,
-						    &params_offset);
+	tss2_rc = Tss2_MU_TPM2B_CREATION_DATA_Marshal(&output.creation_data,
+						      params_buffer,
+						      marshaled_param_size,
+						      &params_offset);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
 	tss2_rc = Tss2_MU_TPM2B_DIGEST_Marshal(&output.creation_hash,
-					       params_buffer, params_size,
+					       params_buffer,
+					       marshaled_param_size,
 					       &params_offset);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
 	tss2_rc = Tss2_MU_TPMT_TK_CREATION_Marshal(&output.creation_ticket,
-						   params_buffer, params_size,
+						   params_buffer,
+						   marshaled_param_size,
 						   &params_offset);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
 	tss2_rc = Tss2_MU_TPM2B_NAME_Marshal(&output.object_name, params_buffer,
-					     params_size, &params_offset);
+					     marshaled_param_size,
+					     &params_offset);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 

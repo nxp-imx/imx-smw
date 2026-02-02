@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2025 NXP
+ * Copyright 2022-2026 NXP
  */
 
 #include "smw_osal.h"
@@ -504,6 +504,10 @@ int ele_convert_err(hsm_err_t err)
 	case HSM_INVALID_LIFECYCLE:
 	case HSM_INVALID_LIFECYCLE_OP:
 		status = SMW_STATUS_INVALID_LIFECYCLE;
+		break;
+
+	case HSM_LIB_ERR_IO_BUF_SETUP_OUT_OF_MEM:
+		status = SMW_STATUS_INPUT_TOO_LARGE;
 		break;
 
 	default:

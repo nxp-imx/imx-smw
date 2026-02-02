@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #ifndef __SMW_STATUS_H__
@@ -29,6 +29,7 @@
  * @SMW_STATUS_NO_KEY_BUFFER: No Key buffer is set in the Key descriptor structure.
  * @SMW_STATUS_OUTPUT_TOO_SHORT: Output buffer is too small. Output size field is updated with
  * the expected size.
+ * @SMW_STATUS_INPUT_TOO_LARGE: Input buffer is too large.
  * @SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY: Subsystem memory allocation failure.
  * @SMW_STATUS_SUBSYSTEM_STORAGE_NO_SPACE: Not enough space in the secure subsystem to handle
  * the requested operation.
@@ -131,6 +132,7 @@
  *	- SMW_STATUS_OPERATION_FAILURE
  *	- SMW_STATUS_NO_KEY_BUFFER
  *	- SMW_STATUS_OUTPUT_TOO_SHORT
+ *	- SMW_STATUS_INPUT_TOO_LARGE
  *	- SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY
  *	- SMW_STATUS_SUBSYSTEM_STORAGE_NO_SPACE
  *	- SMW_STATUS_SUBSYSTEM_STORAGE_ERROR
@@ -283,7 +285,8 @@ enum smw_status_code {
 	SMW_STATUS_PUBLIC_EXPONENT_NOT_SUPPORTED,
 	SMW_STATUS_KEY_ID_ALREADY_EXIST, /* 70 */
 	SMW_STATUS_PERMITTED_ALGO_INVALID,
-	SMW_STATUS_OPERATION_ALREADY_INIT
+	SMW_STATUS_OPERATION_ALREADY_INIT,
+	SMW_STATUS_INPUT_TOO_LARGE
 };
 
 #endif /* __SMW_STATUS_H__ */

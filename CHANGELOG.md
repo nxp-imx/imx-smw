@@ -57,6 +57,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Fix `smw_get_key_buffers_lengths()`: in case the key ID field only is set in the key descriptor structure, the function returns the subsystem key buffers' lengths (only the exportable ones) instead of returning an error.
 * `smw_update_object_db`: Existing object can only update their label and/or user id field.
+* Add `SMW_STATUS_INPUT_TOO_LARGE` status when the input buffer is too large.
 
 ##### 2. Subsystems
 

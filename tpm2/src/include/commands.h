@@ -242,4 +242,26 @@ uint32_t handle_contextload(tcti_smw_context_t *ctx, uint16_t tag,
  */
 uint32_t handle_getrandom(tcti_smw_context_t *ctx, uint16_t tag,
 			  const uint8_t *cmd, size_t cmd_size);
+
+/**
+ * handle_readpublic() - Process TPM2_ReadPublic command.
+ * @ctx:      Pointer to the SMW TCTI context structure.
+ * @tag:      TPM structure tag from the command header.
+ * @cmd:      Pointer to the command buffer containing the full TPM command.
+ * @cmd_size: Size of the command buffer in bytes.
+ *
+ * This function handles the TPM2_ReadPublic command which retrieves the public
+ * area of a loaded object. It unmarshals the object handle, locates the
+ * corresponding object in the context, retrieves its stored public area, and
+ * calculates the object name by hashing the public area. The qualified name
+ * is set equal to the name since ELE does not support hierarchy-based name
+ * qualification. The function builds a response containing the public area,
+ * name, and qualified name.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful public area retrieval, or the corresponding
+ * error code.
+ */
+uint32_t handle_readpublic(tcti_smw_context_t *ctx, uint16_t tag,
+			   const uint8_t *cmd, size_t cmd_size);
 #endif /* __COMMANDS_H__ */

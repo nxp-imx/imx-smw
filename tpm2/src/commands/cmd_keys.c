@@ -413,3 +413,113 @@ end:
 
 	return tss2_rc;
 }
+
+uint32_t handle_readpublic(tcti_smw_context_t *ctx, uint16_t tag,
+			   const uint8_t *cmd, size_t cmd_size)
+{
+	TPM2_RC rc = TPM2_RC_SUCCESS;
+	TSS2_RC tss2_rc = TSS2_TCTI_RC_GENERAL_FAILURE;
+	size_t offset = TPM_HEADER_SIZE;
+	size_t resp_offset = TPM_HEADER_SIZE;
+	tcti_smw_object_t *obj = NULL;
+	uint32_t total_resp_size = 0;
+	size_t public_size = 0;
+
+	/* Input parameters */
+	TPM2_HANDLE object_handle = 0;
+
+	/* Output parameters */
+	TPM2B_PUBLIC out_public = { 0 };
+	TPM2B_NAME name = { 0 };
+	TPM2B_NAME qualified_name = { 0 };
+
+	/*
+	 * Workaround: Some TSS2 Marshal functions don't handle NULL buffer correctly
+	 * for size calculation.
+	 */
+	size_t marshaled_public_size = 128;
+	uint8_t *public_marshaled_scratch = NULL;
+
+	/* 1. Check initialization */
+	if (!ctx->initialized) {
+		tss2_rc = TSS2_TCTI_RC_BAD_SEQUENCE;
+		goto end;
+	}
+
+	/* 2. Unmarshal input parameters */
+	tss2_rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset,
+					   &object_handle);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	DBG_TRACE("ReadPublic for handle 0x%08x\n", object_handle);
+
+	/* 3. Find the object in context */
+	obj = find_object_by_handle(ctx, object_handle);
+	if (!obj) {
+		DBG_TRACE("Object handle 0x%08x not found\n", object_handle);
+		tss2_rc = TSS2_TCTI_RC_IO_ERROR;
+		goto end;
+	}
+
+	public_marshaled_scratch = calloc(1, marshaled_public_size);
+	if (!public_marshaled_scratch) {
+		tss2_rc = TSS2_TCTI_RC_MEMORY;
+		goto end;
+	}
+
+	/* 4. Copy the public area stored during object creation */
+	memcpy(&out_public, &obj->public_area, sizeof(TPM2B_PUBLIC));
+
+	/* 5. Calculate object name (hash of public area) */
+	tss2_rc = calculate_object_name(&out_public, &name);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* 6. As ELE does not handle hierarchy, qualified name = name */
+	memcpy(&qualified_name, &name, sizeof(TPM2B_NAME));
+
+	/* 7. Calculate response size */
+	tss2_rc = Tss2_MU_TPM2B_PUBLIC_Marshal(&out_public,
+					       public_marshaled_scratch,
+					       marshaled_public_size,
+					       &public_size);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	total_resp_size = TPM_HEADER_SIZE + public_size + sizeof(uint16_t) +
+			  name.size + sizeof(uint16_t) + qualified_name.size;
+
+	/* 8. Build response header */
+	tss2_rc = build_rc_response(ctx, total_resp_size, tag, TPM2_RC_SUCCESS);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		return tss2_rc;
+
+	/* 9. Marshal output parameters */
+	tss2_rc = Tss2_MU_TPM2B_PUBLIC_Marshal(&out_public, ctx->resp_buf,
+					       ctx->resp_size, &resp_offset);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	tss2_rc = Tss2_MU_TPM2B_NAME_Marshal(&name, ctx->resp_buf,
+					     ctx->resp_size, &resp_offset);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	tss2_rc = Tss2_MU_TPM2B_NAME_Marshal(&qualified_name, ctx->resp_buf,
+					     ctx->resp_size, &resp_offset);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+end:
+	/* Free allocated memory */
+	if (public_marshaled_scratch)
+		free(public_marshaled_scratch);
+
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		rc = tcti_rc_to_tpm2_rc(tss2_rc);
+		tss2_rc = build_rc_response(ctx, TPM_HEADER_SIZE, tag, rc);
+	}
+
+	return tss2_rc;
+}

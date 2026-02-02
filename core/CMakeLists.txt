@@ -1,32 +1,40 @@
 cmake_minimum_required(VERSION ${CMAKE_MINIMUM_REQUIRED_VERSION})
 
-project(smw VERSION ${CMAKE_PROJECT_VERSION} LANGUAGES C)
-
-if(POLICY CMP0144)
-  cmake_policy(SET CMP0144 NEW)
-endif()
-
-add_library(${PROJECT_NAME} SHARED "")
-
-include(gcov)
-
-# add_compile_options defines coverage options to
-# the objects built in the subdirectories
-add_compile_options(${CMAKE_C_FLAGS_COVERAGE})
-
-#
-# Force Position independent code to build object
-# Fix some build toolchain like "arm-none-linux-gnueabihf"
-#
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-include(add_component)
-
 set(CORE_SRC_INC ${CMAKE_CURRENT_SOURCE_DIR}/inc)
 set(CORE_BIN_INC ${CMAKE_CURRENT_BINARY_DIR}/inc)
-set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/public
-                ${CMAKE_SOURCE_DIR}/inc
-                ${CORE_SRC_INC} ${CORE_BIN_INC})
+
+if(NOT BUILD_ZEPHYR)
+    project(smw VERSION ${CMAKE_PROJECT_VERSION} LANGUAGES C)
+
+    if(POLICY CMP0144)
+        cmake_policy(SET CMP0144 NEW)
+    endif()
+
+    add_library(${PROJECT_NAME} SHARED "")
+
+    include(gcov)
+
+    # add_compile_options defines coverage options to
+    # the objects built in the subdirectories
+    add_compile_options(${CMAKE_C_FLAGS_COVERAGE})
+
+    #
+    # Force Position independent code to build object
+    # Fix some build toolchain like "arm-none-linux-gnueabihf"
+    #
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+    set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/public
+        ${CMAKE_SOURCE_DIR}/inc
+        ${CORE_SRC_INC} ${CORE_BIN_INC})
+
+else()
+    set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../public
+        ${CMAKE_CURRENT_SOURCE_DIR}/../inc
+        ${CORE_SRC_INC} ${CORE_BIN_INC})
+endif()
+
+include(add_component)
 
 #
 # Initialize Cache variables use to build source files
@@ -99,14 +107,28 @@ macro(add_operation_implicit operation)
                   PROP_OPERATION_FUNC)
 endmacro()
 
+if(NOT BUILD_ZEPHYR)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        C_STANDARD 99
+        VERSION ${PROJECT_VERSION}
+        SOVERSION ${PROJECT_VERSION_MAJOR})
+else()
+    set(smw_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+    set(smw_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+endif()
+
 # Create the library information file
 configure_file(${CORE_SRC_INC}/info.h.in ${CORE_BIN_INC}/info.h)
 
 add_subdirectory(utils)
 add_subdirectory(init)
-add_subdirectory(subsystems/ele)
-add_subdirectory(subsystems/seco)
-add_subdirectory(subsystems/tee)
+
+if(NOT BUILD_ZEPHYR)
+    add_subdirectory(subsystems/ele)
+    add_subdirectory(subsystems/seco)
+    add_subdirectory(subsystems/tee)
+endif()
+
 add_subdirectory(keymgr)
 add_subdirectory(object)
 add_subdirectory(crypto)
@@ -125,13 +147,6 @@ get_property(LIST_OPERATION_STRING GLOBAL PROPERTY PROP_OPERATION_STRING)
 get_property(LIST_OPERATION_NAME GLOBAL PROPERTY PROP_OPERATION_NAME)
 get_property(LIST_OPERATION_FUNC GLOBAL PROPERTY PROP_OPERATION_FUNC)
 
-if(${NB_SUBSYSTEM} EQUAL 0)
-    message(FATAL_ERROR "No subsystem defined, at least one must be defined")
-endif()
-if(${NB_OPERATION} EQUAL 0)
-    message(FATAL_ERROR "No operation defined, at least one must be defined")
-endif()
-
 #[[The subdirectory config must be the last one to be added because
 config/CMakeLists.txt calls configure_file() that requires cache variables
 that are set by several CMakeLists.txt from the subdirectories above.]]
@@ -140,41 +155,44 @@ add_subdirectory(config)
 configure_file(${CORE_SRC_INC}/operations.h.in ${CORE_BIN_INC}/operations.h)
 configure_file(${CORE_SRC_INC}/subsystems.h.in ${CORE_BIN_INC}/subsystems.h)
 
-set(OBJ_LIST ${OBJ_LIST} PARENT_SCOPE)
-set(EXT_LIBS ${EXT_LIBS} PARENT_SCOPE)
-set(INTERFACE_LIBS ${INTERFACE_LIBS} PARENT_SCOPE)
-set(STATIC_EXT_LIBS ${STATIC_EXT_LIBS} PARENT_SCOPE)
-set(FIND_DEPENDENCIES ${FIND_DEPENDENCIES} PARENT_SCOPE)
+if(NOT BUILD_ZEPHYR)
+    if(${NB_SUBSYSTEM} EQUAL 0)
+        message(FATAL_ERROR "No subsystem defined, at least one must be defined")
+    endif()
 
-target_sources(${PROJECT_NAME} PRIVATE ${OBJ_LIST})
+    if(${NB_OPERATION} EQUAL 0)
+        message(FATAL_ERROR "No operation defined, at least one must be defined")
+    endif()
 
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    C_STANDARD 99
-    VERSION ${PROJECT_VERSION}
-    SOVERSION ${PROJECT_VERSION_MAJOR})
+    set(OBJ_LIST ${OBJ_LIST} PARENT_SCOPE)
+    set(EXT_LIBS ${EXT_LIBS} PARENT_SCOPE)
+    set(INTERFACE_LIBS ${INTERFACE_LIBS} PARENT_SCOPE)
+    set(STATIC_EXT_LIBS ${STATIC_EXT_LIBS} PARENT_SCOPE)
+    set(FIND_DEPENDENCIES ${FIND_DEPENDENCIES} PARENT_SCOPE)
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_DIR})
+    target_sources(${PROJECT_NAME} PRIVATE ${OBJ_LIST})
+    target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_DIR})
 
-# Define the library header interface, when the library is included
-# in another target in the same build.
-# Else header files are installed in system include path.
-target_include_directories(${PROJECT_NAME}
-	PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/public>
-	       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}>)
+    # Define the library header interface, when the library is included
+    # in another target in the same build.
+    # Else header files are installed in system include path.
+    target_include_directories(${PROJECT_NAME}
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/public>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}>)
 
+    # Add external library dependency as target interface but
+    # don't use them to link the target
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${STATIC_EXT_LIBS})
+    target_link_libraries(${PROJECT_NAME} INTERFACE ${EXT_LIBS})
 
-# Add external library dependency as target interface but
-# don't use them to link the target
-target_link_libraries(${PROJECT_NAME} PRIVATE ${STATIC_EXT_LIBS})
-target_link_libraries(${PROJECT_NAME} INTERFACE ${EXT_LIBS})
+    install(TARGETS ${PROJECT_NAME} EXPORT SMWTargets DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-install(TARGETS ${PROJECT_NAME} EXPORT SMWTargets DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    # Install library headers interface
+    install(DIRECTORY ${CMAKE_SOURCE_DIR}/public/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
+        FILES_MATCHING PATTERN "*.h")
 
-# Install library headers interface
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/public/
-	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
-	FILES_MATCHING PATTERN "*.h")
-
-if(NOT YOCTO_BUILD)
-  install(IMPORTED_RUNTIME_ARTIFACTS ${EXT_LIBS})
+    if(NOT YOCTO_BUILD)
+        install(IMPORTED_RUNTIME_ARTIFACTS ${EXT_LIBS})
+    endif()
 endif()

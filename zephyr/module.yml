@@ -1,0 +1,4 @@
+name: smw
+build:
+  cmake: zephyr
+  kconfig: zephyr/Kconfig

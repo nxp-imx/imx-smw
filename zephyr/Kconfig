@@ -1,0 +1,228 @@
+menu "Security Middleware (SMW) Options"
+
+config SMW
+  bool "Enable Security Middleware (SMW)"
+  default y
+  help
+    Enables the Security Middleware (SMW) module and its associated options.
+    Provides cryptographic operations, key management, and secure storage capabilities.
+    Supports device management, attestation, and lifecycle operations.
+    Full API documentations and user guide can be found at:
+    https://github.com/nxp-imx/imx-smw
+
+if SMW
+
+menu "OSAL options"
+    rsource "../osal/zephyr/OSALconfig"
+endmenu
+
+# ----------------------
+# Core Key Manager
+# ----------------------
+config ENABLE_KEYMGR_MODULE
+    bool "Enable Key Manager module"
+    default y
+    help
+      Enables the SMW Key Manager subsystem for cryptographic key operations.
+      It will provide key generation, derivation, import, export and lifecycle management.
+      - Key Management
+              smw_generate_key() - Generate new cryptographic keys (symmetric/asymmetric)
+              smw_import_key() - Import existing keys into secure storage
+              smw_export_key() - Export keys from secure storage
+              smw_delete_key() - Delete keys from secure storage
+      - Key Derivation
+              smw_derive_key() - Derive keys using various KDF algorithms
+                  - TLS 1.2 key exchange (legacy and operation-based)
+                  - TLS 1.3 key derivation
+                  - HKDF (HMAC-based KDF) - extract, expand, or full
+                  - ECDH (Elliptic Curve Diffie-Hellman)
+                  - OEM master key derivation
+      - Key Information
+              smw_get_key_buffers_lengths() - Query required buffer sizes for key data
+              smw_get_key_type_name() - Retrieve key type from key ID
+              smw_get_security_size() - Get key security size in bits
+              smw_get_key_attributes() - Get comprehensive key attributes
+      - Storage & Attestation
+              smw_commit_key_storage() - Commit non-volatile key storage to physical memory
+              smw_key_attestation() - Generate attestation certificate for a key
+
+# ----------------------
+# Cryptographic Primitives
+# ----------------------
+config ENABLE_HASH
+    bool "Enable Hash support"
+    default y
+    help
+      Enable hashing operations support in SMW.
+      Supports various hash algorithms for cryptographic operations.
+      - Hash Operations
+              smw_hash() - Compute hash digest of input data
+              smw_hash_init() - Initialize hash operation context
+              smw_hash_update() - Process data blocks in hash operation
+              smw_hash_final() - Finalize hash operation and retrieve digest
+
+
+config ENABLE_SIGN_VERIFY
+    bool "Enable Signature and Verification"
+    default y
+    depends on ENABLE_KEYMGR_MODULE
+    help
+      Enables signature generation and verification operations support in SMW.
+      Supports various signature algorithms for cryptographic operations.
+      - Signature Operations
+              smw_sign() - Generate digital signature using private key
+              smw_sign_init() - Initialize signature operation context
+              smw_sign_update() - Process data blocks in signature operation
+              smw_sign_final() - Finalize signature operation and retrieve signature
+              smw_verify() - Verify digital signature using public key
+              smw_verify_init() - Initialize verification operation context
+              smw_verify_update() - Process data blocks in verification operation
+              smw_verify_final() - Finalize verification operation and validate signature
+
+config ENABLE_CIPHER
+    bool "Enable Cipher operations"
+    default y
+    depends on ENABLE_KEYMGR_MODULE
+    help
+      Enables symmetric cipher algorithms (encrypt/decrypt) support in SMW.
+      Supports various cipher modes for cryptographic operations.
+      - Cipher Operations
+              smw_cipher() - Encrypt or decrypt data using symmetric keys
+              smw_cipher_init() - Initialize cipher operation context
+              smw_cipher_update() - Process data blocks in cipher operation
+              smw_cipher_final() - Finalize cipher operation and retrieve ciphertext
+
+config ENABLE_MAC
+    bool "Enable MAC operations"
+    default y
+    depends on ENABLE_KEYMGR_MODULE
+    help
+      Enables message authentication codes (MAC) support in SMW.
+      Supports various MAC algorithms for cryptographic operations.
+      - MAC Operations
+              smw_mac() - Compute message authentication code
+              smw_mac_init() - Initialize MAC operation context
+              smw_mac_update() - Process data blocks in MAC operation
+              smw_mac_final() - Finalize MAC operation and retrieve authentication code
+
+config ENABLE_AEAD
+    bool "Enable Authenticated Encryption (AEAD)"
+    default y
+    depends on ENABLE_KEYMGR_MODULE
+    help
+      Enables authenticated encryption with associated data (AEAD) support in SMW.
+      Supports various AEAD algorithms for cryptographic operations.
+      - AEAD Operations
+              smw_aead() - Encrypt/decrypt and authenticate data
+              smw_aead_init() - Initialize AEAD operation context
+              smw_aead_update() - Process data blocks in AEAD operation
+              smw_aead_final() - Finalize AEAD operation and retrieve ciphertext/tag
+
+config ENABLE_RNG
+    bool "Enable Random Number Generator"
+    default y
+    help
+      Enables random number generation support in SMW.
+      Supports RNG algorithms for cryptographic operations.
+      - RNG Operations
+              smw_rng() - Compute cryptographic random number
+
+config ENABLE_TLS
+    bool "Enable TLS features"
+    default n
+    depends on ENABLE_KEYMGR_MODULE
+    depends on ENABLE_SIGN_VERIFY
+    depends on ENABLE_MAC
+    help
+      Enable/disable the support of TLS key derivation features.
+      This covers TLS 1.2 and TLS 1.3, depending on subsystem support.
+      Supports various TLS key derivation algorithms for cryptographic operations
+      as well as MAC operation for TLS.
+
+config ENABLE_ASYMMETRIC_ENCRYPTION
+    bool "Enable Asymmetric Encryption"
+    default y
+    depends on ENABLE_KEYMGR_MODULE
+    help
+      Enables public‑key based encryption/decryption support in SMW.
+      Supports various asymmetric encryption algorithms for cryptographic operations.
+      - Asymmetric Encryption Operations
+              smw_asymmetric_encrypt() - Encrypt data using public key
+              smw_asymmetric_decrypt() - Decrypt data using private key
+
+# ----------------------
+# Device Manager subsystem
+# ----------------------
+config ENABLE_DEVMGR_MODULE
+    bool "Enable Device Manager module"
+    default y
+    help
+      Enables SMW's device manager subsystem support in SMW.
+      Supports device management operations for cryptographic operations.
+
+config ENABLE_DEVICE_ATTESTATION
+    bool "Enable Device Attestation"
+    default y
+    depends on ENABLE_DEVMGR_MODULE
+    help
+      Enables device attestation support in SMW.
+      Supports device attestations operations for security verification.
+      - Device Attestation Operations
+              smw_device_attestation() - Generate device attestation certificate
+
+config ENABLE_DEVICE_LIFECYCLE
+    bool "Enable Device Lifecycle"
+    default y
+    depends on ENABLE_DEVMGR_MODULE
+    help
+      Enable lifecycle management mechanisms.
+      Supports device lifecycle operations for security management.
+      - Set the device to given lifecycle
+              smw_device_set_lifecycle() - Forward the device lifecycle to the given value.
+                                           The device must be reset to propagate the new lifecycle.
+      - Get the current device lifecycle
+              smw_device_get_lifecycle()
+
+config ENABLE_DEVICE_REPROVISION
+    bool "Enable Device Reprovisioning"
+    default y
+    depends on ENABLE_DEVMGR_MODULE
+    help
+      Enables reprovisioning of device secure storage.
+      Supports device reprovisioning operations for security management.
+      - Device Reprovisioning Operations
+              smw_device_reprovision_prepare() - Fill the device reprovisioning message.
+              smw_device_reprovision() - Request device storage reprovisioning.
+
+# ----------------------
+# Storage & Object subsystem
+# ----------------------
+config ENABLE_STORAGE_MODULE
+    bool "Enable Storage module"
+    default y
+    depends on ENABLE_KEYMGR_MODULE
+    help
+      Enable secure storage subsystem in SMW.
+      Supports secure storage operations for cryptographic keys and objects.
+      - Storage Operations
+          smw_store_data() - Store data in secure storage
+          smw_retrieve_data() - Retrieve data from secure storage
+          smw_delete_data() - Delete data from secure storage
+
+config ENABLE_OBJECT_MODULE
+    bool "Enable Object module"
+    default y
+    depends on ENABLE_KEYMGR_MODULE
+    help
+      Enable secure object management in SMW.
+      Supports object management operations for cryptographic keys and data.
+      - Object Management Operations
+          smw_update_object_db() - Update a database object.
+          smw_find_object_db() - Find an object by its id.
+          smw_find_object_db_init() - Initialize the find object context.
+          smw_find_object_db_next() - Get next object from search results.
+          smw_find_object_db_final() - Finalize the find context.
+
+endif # SMW
+
+endmenu

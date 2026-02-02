@@ -1,6 +1,3 @@
-set(OBJ_LIST ${OBJ_LIST} $<TARGET_OBJECTS:devmgr> PARENT_SCOPE)
-
-
 if(ENABLE_DEVMGR_MODULE)
    add_operation_implicit(DEVICE_GET_UUID)
 endif()
@@ -17,13 +14,19 @@ if(ENABLE_DEVICE_REPROVISION)
    add_operation(DEVICE_REPROVISION)
 endif()
 
-add_library(devmgr OBJECT "")
-target_sources(devmgr PRIVATE
-               devmgr_weak.c
-               $<$<BOOL:${ENABLE_DEVMGR_MODULE}>:devmgr.c>
-               $<$<BOOL:${ENABLE_DEVICE_ATTESTATION}>:attestation.c>
-               $<$<BOOL:${ENABLE_DEVICE_LIFECYCLE}>:lifecycle.c>
-               $<$<BOOL:${ENABLE_DEVICE_REPROVISION}>:reprovision.c>)
+if(NOT BUILD_ZEPHYR)
+   set(OBJ_LIST ${OBJ_LIST} $<TARGET_OBJECTS:devmgr> PARENT_SCOPE)
 
-target_include_directories(devmgr PRIVATE ${INCLUDE_DIR})
+   add_library(devmgr OBJECT "")
+endif()
 
+include(add_target_sources)
+
+add_private_sources(devmgr devmgr_weak.c)
+
+add_private_sources_ifdef(devmgr ENABLE_DEVMGR_MODULE devmgr.c)
+add_private_sources_ifdef(devmgr ENABLE_DEVICE_ATTESTATION attestation.c)
+add_private_sources_ifdef(devmgr ENABLE_DEVICE_LIFECYCLE lifecycle.c)
+add_private_sources_ifdef(devmgr ENABLE_DEVICE_REPROVISION reprovision.c)
+
+add_private_directories(devmgr ${INCLUDE_DIR})

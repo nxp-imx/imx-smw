@@ -14,6 +14,18 @@
 
 #define SMW_OBJECT_METADATA_SIZE 20
 
+/**
+ * struct createprimary_input_t - Input parameters for TPM2_CreatePrimary command.
+ * @primary_handle: Hierarchy handle where the primary object will be created.
+ * @in_sensitive:   Sensitive creation data including user auth and seed values.
+ * @in_public:      Public template defining the object's type, algorithm, and attributes.
+ * @outside_info:   External data to be included in the creation data.
+ * @creation_pcr:   PCR selection for binding the object to specific PCR values.
+ *
+ * This structure encapsulates all input parameters required for creating a
+ * primary object in a TPM hierarchy. It is used to organize and validate
+ * command parameters during TPM2_CreatePrimary processing.
+ */
 typedef struct {
 	TPMI_RH_HIERARCHY primary_handle;
 	TPM2B_SENSITIVE_CREATE in_sensitive;
@@ -22,6 +34,19 @@ typedef struct {
 	TPML_PCR_SELECTION creation_pcr;
 } createprimary_input_t;
 
+/**
+ * struct createprimary_output_t - Output parameters for TPM2_CreatePrimary command.
+ * @out_public:      Public area of the created object.
+ * @object_name:     Computed name of the object (nameAlg || Hash(public)).
+ * @creation_data:   Data associated with the object creation event.
+ * @creation_hash:   Hash of the creation data.
+ * @creation_ticket: Ticket proving the object was created by the TPM.
+ *
+ * This structure encapsulates all output parameters returned by the
+ * TPM2_CreatePrimary command. It contains the created object's public
+ * information, cryptographic proofs, and metadata for verification and
+ * future operations.
+ */
 typedef struct {
 	TPM2B_PUBLIC out_public;
 	TPM2B_NAME object_name;
@@ -35,6 +60,7 @@ typedef struct {
  * @handle:        TPM object handle identifier.
  * @smw_key_id:    SMW key identifier for the underlying cryptographic key.
  * @attributes:    TPM object attributes defining usage and properties.
+ * @public_area:   Complete public area of the object.
  * @metadata:      Additional object-specific metadata or context information.
  * @metadata_size: Size of valid data in the metadata buffer.
  *
@@ -47,6 +73,7 @@ typedef struct {
 	uint32_t handle;
 	uint32_t smw_key_id;
 	TPMA_OBJECT attributes;
+	TPM2B_PUBLIC public_area;
 	uint8_t metadata[SMW_OBJECT_METADATA_SIZE];
 	size_t metadata_size;
 } smw_object_blob_t;

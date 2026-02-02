@@ -44,6 +44,10 @@ static uint32_t context_save_transient(TPMS_CONTEXT *tpms_context,
 		blob.smw_key_id = object->smw_key_id;
 		blob.attributes = object->attributes;
 		blob.metadata_size = sizeof(blob.metadata);
+
+		memcpy(&blob.public_area, &object->public_area,
+		       sizeof(TPM2B_PUBLIC));
+
 		tpms_context->contextBlob.size = sizeof(blob);
 
 		memcpy(tpms_context->contextBlob.buffer, &blob,
@@ -55,8 +59,10 @@ static uint32_t context_save_transient(TPMS_CONTEXT *tpms_context,
 			goto end;
 		}
 
-		DBG_TRACE("Transient object saved: handle=0x%08x, SMW ID=%u\n",
-			  handle, object->smw_key_id);
+		DBG_TRACE("Transient object saved:\n"
+			  "handle=0x%08x, SMW ID=%u, type=0x%04x\n",
+			  handle, object->smw_key_id,
+			  object->public_area.publicArea.type);
 	} else {
 		DBG_TRACE("No object found linked to handle 0x%08x\n", handle);
 		tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
@@ -419,6 +425,7 @@ uint32_t handle_contextload(tcti_smw_context_t *ctx, uint16_t tag,
 	tcti_smw_session_t *session = NULL;
 	tcti_smw_object_t *object = NULL;
 	bool is_session = false;
+	int i = 0;
 
 	/* 1. Unmarshal TPMS_CONTEXT from command */
 	tss2_rc = Tss2_MU_TPMS_CONTEXT_Unmarshal(cmd, cmd_size, &offset,
@@ -456,15 +463,18 @@ uint32_t handle_contextload(tcti_smw_context_t *ctx, uint16_t tag,
 			  sess_blob->handle, sess_blob->type,
 			  sess_blob->auth_hash);
 
-		/* Find a free session slot */
-		session = find_session_by_handle(ctx, sess_blob->handle);
-		if (!session) {
-			/* Allocate new session slot */
-			for (int i = 0; i < SMW_MAX_SESSIONS; i++) {
-				if (!ctx->sessions[i].active) {
-					session = &ctx->sessions[i];
-					break;
-				}
+		/* Verify the handle is not already in use */
+		if (find_session_by_handle(ctx, sess_blob->handle)) {
+			DBG_TRACE("Handle 0x%08x already in use\n",
+				  sess_blob->handle);
+			tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
+			goto end;
+		}
+
+		for (; i < SMW_MAX_SESSIONS; i++) {
+			if (!ctx->sessions[i].active) {
+				session = &ctx->sessions[i];
+				break;
 			}
 		}
 
@@ -503,15 +513,18 @@ uint32_t handle_contextload(tcti_smw_context_t *ctx, uint16_t tag,
 			  obj_blob->handle, obj_blob->smw_key_id);
 		DBG_TRACE("hierarchy=0x%08x\n", tpms_context.hierarchy);
 
-		/* Find a free object slot or reuse existing */
-		object = find_object_by_handle(ctx, obj_blob->handle);
-		if (!object) {
-			/* Allocate new object slot */
-			for (int i = 0; i < SMW_MAX_OBJECTS; i++) {
-				if (!ctx->objects[i].active) {
-					object = &ctx->objects[i];
-					break;
-				}
+		/* Verify the handle is not already in use */
+		if (find_object_by_handle(ctx, obj_blob->handle)) {
+			DBG_TRACE("Handle 0x%08x already in use\n",
+				  obj_blob->handle);
+			tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
+			goto end;
+		}
+
+		for (; i < SMW_MAX_OBJECTS; i++) {
+			if (!ctx->objects[i].active) {
+				object = &ctx->objects[i];
+				break;
 			}
 		}
 
@@ -527,6 +540,9 @@ uint32_t handle_contextload(tcti_smw_context_t *ctx, uint16_t tag,
 		object->smw_key_id = obj_blob->smw_key_id;
 		object->hierarchy = tpms_context.hierarchy;
 		object->attributes = obj_blob->attributes;
+
+		memcpy(&object->public_area, &obj_blob->public_area,
+		       sizeof(TPM2B_PUBLIC));
 
 		loaded_handle = obj_blob->handle;
 

@@ -34,6 +34,7 @@
  * @smw_key_id: ELE keystore identifier
  * @attributes: TPM2 object attributes (TPMA_OBJECT)
  * @hierarchy: TPM2 hierarchy where object was created
+ * @public_area: Public area of the object containing key parameters and metadata.
  * @active: Slot in use
  * @is_persistent: Eligible for TPM2_EvictControl
  *
@@ -44,6 +45,7 @@ typedef struct {
 	uint32_t smw_key_id;
 	TPMA_OBJECT attributes;
 	TPMI_RH_HIERARCHY hierarchy;
+	TPM2B_PUBLIC public_area;
 	bool active;
 	bool is_persistent;
 } tcti_smw_object_t;

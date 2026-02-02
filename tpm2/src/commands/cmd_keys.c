@@ -127,8 +127,6 @@ uint32_t handle_createprimary(tcti_smw_context_t *ctx, uint16_t tag,
 	TPMT_PUBLIC *pub = NULL;
 	TPMA_OBJECT attrs = { 0 };
 	TPM2_HANDLE object_handle = 0;
-	smw_hash_algo_t smw_hash_alg = SMW_HASH_ALGO_NAME_NONE;
-	uint16_t digest_size = 0;
 	size_t ecc_coord_size = 0;
 	unsigned char public_data_buf[TPM2_MAX_ECC_KEY_BYTES] = { 0 };
 
@@ -138,13 +136,12 @@ uint32_t handle_createprimary(tcti_smw_context_t *ctx, uint16_t tag,
 	uint16_t response_hmac_size = 0;
 	uint8_t tpma_attrs = TPMA_SESSION_CONTINUESESSION;
 	uint8_t *params_buffer = NULL;
-	size_t public_area_size = 0, params_offset = 0;
+	size_t params_offset = 0;
 	tcti_smw_session_t *sess = NULL;
 
 	struct smw_key_descriptor key_desc = { 0 };
 	struct smw_keypair_buffer key_buffer = { 0 };
 	struct smw_generate_key_args gen_args = { 0 };
-	struct smw_hash_args hash_args = { 0 };
 
 	/*
 	 * Workaround: Some TSS2 Marshal functions don't handle NULL buffer correctly
@@ -153,7 +150,6 @@ uint32_t handle_createprimary(tcti_smw_context_t *ctx, uint16_t tag,
 	uint8_t *params_marshal_scratch = NULL;
 	size_t params_marshal_scratch_size = 1024;
 	size_t marshaled_param_size = 0;
-	uint8_t public_area_marshal_buf[sizeof(TPM2B_PUBLIC) * 2];
 
 	/* 1. Check initialization */
 	if (!ctx->initialized) {
@@ -205,11 +201,6 @@ uint32_t handle_createprimary(tcti_smw_context_t *ctx, uint16_t tag,
 
 	DBG_TRACE("Key generated successfully, SMW ID: %d\n", key_desc.id);
 
-	tss2_rc = smw_object_alloc(ctx, &object_handle, attrs, key_desc.id,
-				   input.primary_handle);
-	if (tss2_rc != TSS2_RC_SUCCESS)
-		goto end;
-
 	/* 5. Prepare output structures */
 	output.out_public = input.in_public;
 
@@ -237,47 +228,16 @@ uint32_t handle_createprimary(tcti_smw_context_t *ctx, uint16_t tag,
 		       ecc_coord_size);
 	}
 
-	tss2_rc = map_hash_info(output.out_public.publicArea.nameAlg,
-				&digest_size, &smw_hash_alg);
-	if (tss2_rc != TSS2_RC_SUCCESS) {
-		DBG_TRACE("Unsupported name algorithm: 0x%04x\n",
-			  output.out_public.publicArea.nameAlg);
-		goto end;
-	}
-
-	output.object_name.size = sizeof(TPMI_ALG_HASH) + digest_size;
-	output.object_name.name[0] =
-		(output.out_public.publicArea.nameAlg >> 8) & 0xFF;
-	output.object_name.name[1] =
-		output.out_public.publicArea.nameAlg & 0xFF;
-
-	/* 6. Get response parameters size */
-
-	tss2_rc = Tss2_MU_TPMT_PUBLIC_Marshal(&output.out_public.publicArea,
-					      public_area_marshal_buf,
-					      sizeof(public_area_marshal_buf),
-					      &public_area_size);
+	/* 6. Create and setup object */
+	tss2_rc = smw_object_alloc(ctx, &object_handle, attrs, key_desc.id,
+				   input.primary_handle, &output.out_public);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
-	/*
-	 * Generate object name = Hash(publicArea)
-	 * Compute hash of the marshaled public area
-	 */
-	hash_args.algo_name = smw_hash_alg;
-	hash_args.input = public_area_marshal_buf;
-	hash_args.input_length = public_area_size;
-	hash_args.output =
-		&output.object_name.name[2]; /* After the algorithm ID */
-	hash_args.output_length = digest_size;
-
-	smw_status = smw_hash(&hash_args);
-	if (smw_status != SMW_STATUS_OK) {
-		DBG_TRACE("Failed to calculate object name hash: %d\n",
-			  smw_status);
-		tss2_rc = smw_rc_to_tcti_rc(smw_status);
+	tss2_rc =
+		calculate_object_name(&output.out_public, &output.object_name);
+	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
-	}
 
 	/* Set creation structures to empty (minimal implementation) */
 	output.creation_ticket.tag = TPM2_ST_CREATION;

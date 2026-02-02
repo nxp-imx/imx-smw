@@ -113,6 +113,7 @@ uint32_t calculate_response_hmac(tcti_smw_session_t *session,
  * @attributes: TPM2 object attributes (TPMA_OBJECT flags)
  * @key_id: SMW/ELE key identifier from smw_generate_key()
  * @hierarchy: TPM2 object hierarchy
+ * @public_area: Pointer to TPM2 public area structure
  *
  * Allocates a free slot in the transient object pool and assigns a TPM2
  * handle in the saveable range (0x80000000-0x80000002).
@@ -123,7 +124,8 @@ uint32_t calculate_response_hmac(tcti_smw_session_t *session,
  */
 uint32_t smw_object_alloc(tcti_smw_context_t *ctx, uint32_t *handle,
 			  TPMA_OBJECT attributes, unsigned int key_id,
-			  TPMI_RH_HIERARCHY hierarchy);
+			  TPMI_RH_HIERARCHY hierarchy,
+			  TPM2B_PUBLIC *public_area);
 
 /**
  * find_object_by_handle() - Find object by TPM2 handle
@@ -140,4 +142,23 @@ uint32_t smw_object_alloc(tcti_smw_context_t *ctx, uint32_t *handle,
  */
 tcti_smw_object_t *find_object_by_handle(tcti_smw_context_t *ctx,
 					 uint32_t handle);
+
+/**
+ * calculate_object_name() - Calculate TPM object name from public area.
+ * @public: Pointer to the TPM2B_PUBLIC structure containing the object's public area.
+ * @name:   Pointer to the TPM2B_NAME structure to store the calculated name.
+ *
+ * This function computes the TPM object name according to TPM 2.0 specification
+ * Part 1, Section 14 (Names). The name is calculated as:
+ *   Name = nameAlg || Hash(TPMT_PUBLIC)
+ * where nameAlg is the hash algorithm identifier and Hash() is the cryptographic
+ * hash of the marshaled public area using the specified algorithm. The function
+ * marshals the TPMT_PUBLIC structure, computes its hash using the SMW hash API,
+ * and constructs the final name by concatenating the algorithm ID and hash digest.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful name calculation, or the corresponding error code
+ * (TSS2_TCTI_RC_MEMORY for allocation failures, or converted SMW/TSS2 errors).
+ */
+uint32_t calculate_object_name(const TPM2B_PUBLIC *public, TPM2B_NAME *name);
 #endif /* __CRYPTO_H__ */

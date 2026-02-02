@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright 2026 NXP
+
+config SMW_OSAL_ZEPHYR
+	bool "Enable SMW OSAL for Zephyr"
+	depends on SMW
+	default y
+	help
+	  Enable Security Middleware OSAL implementation for Zephyr RTOS.
+	  This provides the operating system abstraction layer for SMW
+	  by implementing the smw_ops structure for Zephyr RTOS
+	  which includes mutex, thread, configuration and database operations.
+
+if SMW_OSAL_ZEPHYR
+
+config SMW_THREAD_STACK_SIZE
+    int "Thread stack size"
+    default 2048
+    range 1024 8192
+
+config SMW_LOG_LEVEL
+    int "SMW Log Level"
+    default 3
+    range 0 5
+    help
+        Set the log level for SMW OSAL
+        0 = OFF, 1 = ERROR, 2 = INFO, 3 = DEBUG, 4 = VERBOSE, 5 = TRACE
+
+endif # SMW_OSAL_ZEPHYR

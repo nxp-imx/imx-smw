@@ -77,6 +77,21 @@ typedef struct {
 } create_output_t;
 
 /**
+ * struct load_input_t - Input parameters for TPM2_Load command.
+ * @parent_handle: Handle of the parent object under which to load the object.
+ * @in_private:    Private area of the object to be loaded.
+ * @in_public:     Public area of the object to be loaded.
+ *
+ * This structure encapsulates all input parameters required for loading
+ * a previously created object into the TPM.
+ */
+typedef struct {
+	TPMI_DH_OBJECT parent_handle;
+	TPM2B_PRIVATE in_private;
+	TPM2B_PUBLIC in_public;
+} load_input_t;
+
+/**
  * struct smw_object_blob_t - Object data structure for SMW storage.
  * @handle:        TPM object handle identifier.
  * @smw_key_id:    SMW key identifier for the underlying cryptographic key.

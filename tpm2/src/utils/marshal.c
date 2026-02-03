@@ -241,3 +241,63 @@ uint32_t create_unmarshal(const uint8_t *cmd, size_t cmd_size,
 	return create_primary_unmarshal(cmd, cmd_size, input, nonce_caller,
 					session_handle);
 }
+
+uint32_t load_unmarshal(const uint8_t *cmd, size_t cmd_size,
+			load_input_t *input, TPM2B_NONCE *nonce_caller,
+			uint32_t *session_handle)
+{
+	TSS2_RC rc = TSS2_TCTI_RC_GENERAL_FAILURE;
+	size_t offset = TPM_HEADER_SIZE;
+	size_t auth_start = 0;
+	uint32_t auth_size = 0;
+
+	/* Unmarshal parent handle */
+	rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset,
+				      &input->parent_handle);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	DBG_TRACE("Parent handle=0x%08x\n", input->parent_handle);
+
+	/* Unmarshal authorization area */
+	rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset, &auth_size);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	auth_start = offset;
+
+	if (auth_size == 0) {
+		DBG_TRACE("Requires authorization area\n");
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	/* Parse session handle */
+	rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset, session_handle);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* Parse nonce */
+	rc = Tss2_MU_TPM2B_NONCE_Unmarshal(cmd, cmd_size, &offset,
+					   nonce_caller);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* Skip to end of auth area */
+	offset = auth_start + auth_size;
+
+	/* Unmarshal remaining parameters */
+	rc = Tss2_MU_TPM2B_PRIVATE_Unmarshal(cmd, cmd_size, &offset,
+					     &input->in_private);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	rc = Tss2_MU_TPM2B_PUBLIC_Unmarshal(cmd, cmd_size, &offset,
+					    &input->in_public);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+end:
+	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
+	return rc;
+}

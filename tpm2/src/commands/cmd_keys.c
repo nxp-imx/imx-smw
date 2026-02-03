@@ -707,3 +707,148 @@ end:
 
 	return tss2_rc;
 }
+
+uint32_t handle_load(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
+		     size_t cmd_size)
+{
+	TPM2_RC rc = TPM2_RC_SUCCESS;
+	TSS2_RC tss2_rc = TSS2_TCTI_RC_GENERAL_FAILURE;
+
+	/* Input parameters */
+	load_input_t input = { 0 };
+
+	/* Output parameters */
+	TPM2_HANDLE object_handle = 0;
+	TPM2B_NAME object_name = { 0 };
+	TPMT_PUBLIC *pub = NULL;
+	uint32_t smw_key_id = 0;
+
+	/* Session handling */
+	uint32_t session_handle = 0;
+	TPM2B_NONCE nonce_caller = { 0 };
+	tcti_smw_session_t *sess = NULL;
+
+	uint8_t *params_marshal_scratch = NULL;
+	size_t marshaled_param_size = 0;
+	uint8_t *params_buffer = NULL;
+
+	if (!ctx || !cmd) {
+		tss2_rc = TSS2_TCTI_RC_BAD_REFERENCE;
+		goto end;
+	}
+
+	/* 1. Check initialization */
+	if (!ctx->initialized) {
+		tss2_rc = TSS2_TCTI_RC_BAD_SEQUENCE;
+		goto end;
+	}
+
+	/* 2. Unmarshal command parameters */
+	tss2_rc = load_unmarshal(cmd, cmd_size, &input, &nonce_caller,
+				 &session_handle);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* Find session */
+	sess = find_session_by_handle(ctx, session_handle);
+	if (!sess || !sess->active) {
+		tss2_rc = TSS2_TCTI_RC_IO_ERROR;
+		goto end;
+	}
+
+	DBG_TRACE("Session found: handle=0x%08x\n", session_handle);
+
+	/* 3. Validate and extract SMW key ID from private blob */
+	if (input.in_private.size <
+	    (SMW_PRIVATE_BLOB_MAGIC_LEN + sizeof(uint32_t))) {
+		DBG_TRACE("Invalid private blob size: %u bytes\n",
+			  input.in_private.size);
+		tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	/* Verify magic string */
+	if (memcmp(input.in_private.buffer, SMW_PRIVATE_BLOB_MAGIC,
+		   SMW_PRIVATE_BLOB_MAGIC_LEN) != 0) {
+		DBG_TRACE("Invalid private blob magic string\n");
+		tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	/* Extract SMW key ID */
+	memcpy(&smw_key_id,
+	       &input.in_private.buffer[SMW_PRIVATE_BLOB_MAGIC_LEN],
+	       sizeof(uint32_t));
+
+	DBG_TRACE("Loading key with SMW ID: %u\n", smw_key_id);
+
+	/* 4. Validate key type from public area */
+	pub = &input.in_public.publicArea;
+
+	if (pub->type != TPM2_ALG_ECC) {
+		DBG_TRACE("Unsupported key type: 0x%04x\n", pub->type);
+		tss2_rc = TSS2_TCTI_RC_IO_ERROR;
+		goto end;
+	}
+
+	/* 5. Allocate object handle and associate with SMW key ID */
+	tss2_rc = smw_object_alloc(ctx, &object_handle, pub->objectAttributes,
+				   smw_key_id, input.parent_handle,
+				   &input.in_public);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* 6. Calculate object name */
+	tss2_rc = calculate_object_name(&input.in_public, &object_name);
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to calculate object name\n");
+		goto end;
+	}
+
+	/* 7. Prepare parameters buffer for HMAC calculation */
+	params_marshal_scratch = calloc(1, TPM2_MAX_CAP_BUFFER);
+	if (!params_marshal_scratch) {
+		tss2_rc = TSS2_TCTI_RC_MEMORY;
+		goto end;
+	}
+
+	tss2_rc =
+		Tss2_MU_TPM2B_NAME_Marshal(&object_name, params_marshal_scratch,
+					   TPM2_MAX_CAP_BUFFER,
+					   &marshaled_param_size);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	params_buffer = malloc(marshaled_param_size);
+	if (!params_buffer) {
+		tss2_rc = TSS2_TCTI_RC_MEMORY;
+		goto end;
+	}
+
+	memcpy(params_buffer, params_marshal_scratch, marshaled_param_size);
+
+	/* 8. Build auth response */
+	tss2_rc = build_auth_response(ctx, sess, TPM2_RC_SUCCESS, TPM2_CC_Load,
+				      tag, params_buffer, marshaled_param_size,
+				      &nonce_caller, &object_handle);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	DBG_TRACE("Load success: handle=0x%08x, SMW ID=%u\n", object_handle,
+		  smw_key_id);
+
+end:
+	/* Free allocated memory */
+	if (params_buffer)
+		free(params_buffer);
+
+	if (params_marshal_scratch)
+		free(params_marshal_scratch);
+
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		rc = tcti_rc_to_tpm2_rc(tss2_rc);
+		tss2_rc = build_rc_response(ctx, TPM_HEADER_SIZE, tag, rc);
+	}
+
+	return tss2_rc;
+}

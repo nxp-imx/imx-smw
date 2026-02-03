@@ -285,4 +285,23 @@ uint32_t handle_readpublic(tcti_smw_context_t *ctx, uint16_t tag,
  */
 uint32_t handle_create(tcti_smw_context_t *ctx, uint16_t tag,
 		       const uint8_t *cmd, size_t cmd_size);
+
+/**
+ * handle_load() - Process TPM2_Load command.
+ * @ctx:      Pointer to the SMW TCTI context structure.
+ * @tag:      TPM structure tag from the command header.
+ * @cmd:      Pointer to the command buffer containing the full TPM command.
+ * @cmd_size: Size of the command buffer in bytes.
+ *
+ * This function handles the TPM2_Load command which loads a previously created
+ * object into TPM memory under a parent key. It unmarshals the command parameters
+ * including parent handle, authorization session, private blob, and public area.
+ * The function validates the blob format, extracts the SMW key ID, allocates a
+ * transient object handle and builds a response containing the object handle.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful object load, or the corresponding error code.
+ */
+uint32_t handle_load(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
+		     size_t cmd_size);
 #endif /* __COMMANDS_H__ */

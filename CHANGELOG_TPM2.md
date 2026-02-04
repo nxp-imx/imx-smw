@@ -4,6 +4,23 @@ This file briefly describes the features/changes and fixes in the development pr
 This project delivers 1 components:
 * TPM2 Library: The core library itself. It exposes one public API: the SMW-TCTI API.
 
+
+---
+### </br>**xx-xx-2026**
+---
+#### Known Issues
+##### 1. TPM2
+The ELE Secure Enclave has the following limitations when used with TPM2:
+ - ELE does not support key hierarchy. Therefore, TPM object qualified names
+   cannot reflect parent-child relationships and are set equal to the object
+   name.
+
+#### TPM2 Library
+* Implement the following TPM2 commands:
+    - TPM2_CC_GetRandom, TPM2_CC_ReadPublic
+* Improvement of the following TPM2 commands:
+    - TPM2_CC_GetCapability
+
 ---
 ### </br>**01-28-2026**
 ---

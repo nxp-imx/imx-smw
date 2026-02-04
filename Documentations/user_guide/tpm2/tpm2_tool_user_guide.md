@@ -9,6 +9,8 @@
   - [Initialize TPM2](#initialize-tpm2)
   - [Shutdown TPM2](#shutdown-tpm2)
   - [Hash Data](#hash-data)
+  - [Get Random](#get-random)
+  - [Read Public](#read-public)
 - [TPM2 Commands Supported](#tpm2-commands-supported)
 
 # Introduction
@@ -111,7 +113,7 @@ tpm2_startauthsession --hmac-session -S session.ctx
 ## Create Primary object
 Creates an ECC primary key (P-256) under the Owner hierarchy with SHA-256 as
 the name hash, using restricted fixed attributes, and saves the resulting key
-context to primary_ecdsa.ctx
+context to primary_ecdsa.ctx. Use the createprimary command:
 ```sh
 tpm2_createprimary -C o -g sha256 -G ecc256 \
   -a "fixedtpm|fixedparent|sensitivedataorigin|userwithauth|restricted" \
@@ -124,6 +126,23 @@ showing which temporary keys or objects are active in memory, use the
 getcap command:
 ```sh
 tpm2_getcap handles-transient
+```
+
+## Get Random
+Generates 32 bytes of cryptographically secure random data from the TPM's
+random number generator and displays the output in hexadecimal format.
+Use the getrandom command:
+```sh
+tpm2_getrandom 32 --hex
+```
+
+## Read Public
+Retrieves and displays the public area of a loaded TPM object from the
+specified context file, showing the object's algorithm, attributes, and
+public key parameters.
+Use readpublic command:
+```sh
+tpm2_readpublic -c primary_ecdh.ctx
 ```
 
 # TPM2 Commands Supported
@@ -141,3 +160,5 @@ Following table lists TPM2 Commands implemented in the SMW's TSS2 TCTI library.
 | `TPM2_ContextLoad`      |
 | `TPM2_ContextSave`      |
 | `TPM2_FlushContext`     |
+| `TPM2_GetRandom`        |
+| `TPM2_ReadPublic`       |

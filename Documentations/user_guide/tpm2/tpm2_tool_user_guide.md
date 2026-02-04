@@ -11,6 +11,8 @@
   - [Hash Data](#hash-data)
   - [Get Random](#get-random)
   - [Read Public](#read-public)
+  - [Create Key object](#create-key-object)
+  - [Load Key object](#load-key-object)
 - [TPM2 Commands Supported](#tpm2-commands-supported)
 
 # Introduction
@@ -145,6 +147,37 @@ Use readpublic command:
 tpm2_readpublic -c primary_ecdh.ctx
 ```
 
+## Create Key object
+Creates an ECC (NIST P-256) key object. Use the create command:
+```sh
+tpm2_create -C primary_ecdsa.ctx -G ecc256:ecdsa \
+  -a "fixedtpm|fixedparent|sensitivedataorigin|userwithauth|sign" \
+  -u signing_key.pub -r signing_key.priv \
+```
+
+**Parameters**:
+- `-C primary_ecdsa.ctx`: Parent key context
+- `-G ecc256:ecdsa`: Key type: ECC NIST P-256 with ECDSA scheme
+- `-a`: Key attributes (sign, fixed TPM, fixed parent, sensitive data origin)
+- `-u signing_key.pub`: Output file for the public key
+- `-r signing_key.priv`: Output file for the private key blob
+
+## Load Key object
+Loads a previously created key object into TPM memory, making it available for
+cryptographic operations. Use the load command:
+```sh
+tpm2_load -C primary_ecdsa.ctx \
+  -u signing_key.pub \
+  -r signing_key.priv \
+  -c signing_key.ctx \
+```
+
+**Parameters**:
+- `-C primary_ecdsa.ctx`: Parent key context
+- `-u signing_key.pub`: Input file containing the public key
+- `-r signing_key.priv`: Input file containing the private key blob
+- `-c signing_key.ctx`: Output file for the loaded key context
+
 # TPM2 Commands Supported
 
 Following table lists TPM2 Commands implemented in the SMW's TSS2 TCTI library.
@@ -162,3 +195,5 @@ Following table lists TPM2 Commands implemented in the SMW's TSS2 TCTI library.
 | `TPM2_FlushContext`     |
 | `TPM2_GetRandom`        |
 | `TPM2_ReadPublic`       |
+| `TPM2_Create`           |
+| `TPM2_Load`             |

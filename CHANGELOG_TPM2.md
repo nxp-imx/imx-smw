@@ -14,12 +14,16 @@ The ELE Secure Enclave has the following limitations when used with TPM2:
  - ELE does not support key hierarchy. Therefore, TPM object qualified names
    cannot reflect parent-child relationships and are set equal to the object
    name.
+ - Since the Private part of the Asymmetric key cannot be exported, even in
+   encrypted format, private key blob returned by TPM2_Create contains a magic
+   string followed by the SMW key identifier.
 
 #### TPM2 Library
 * Implement the following TPM2 commands:
     - TPM2_CC_GetRandom, TPM2_CC_ReadPublic
 * Improvement of the following TPM2 commands:
     - TPM2_CC_GetCapability
+    - TPM2_CC_Create (ECC NIST P-256 only), TPM2_CC_Load
 
 ---
 ### </br>**01-28-2026**

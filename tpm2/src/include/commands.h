@@ -264,4 +264,25 @@ uint32_t handle_getrandom(tcti_smw_context_t *ctx, uint16_t tag,
  */
 uint32_t handle_readpublic(tcti_smw_context_t *ctx, uint16_t tag,
 			   const uint8_t *cmd, size_t cmd_size);
+
+/**
+ * handle_create() - Process TPM2_Create command.
+ * @ctx:      Pointer to the SMW TCTI context structure.
+ * @tag:      TPM structure tag from the command header.
+ * @cmd:      Pointer to the command buffer containing the full TPM command.
+ * @cmd_size: Size of the command buffer in bytes.
+ *
+ * This function handles the TPM2_Create command which creates a new object
+ * under a parent key. It unmarshals command parameters, generates the key
+ * using SMW/ELE, and returns the public portion and a private blob. Since ELE
+ * does not export private keys or support parent-child hierarchy, the private
+ * blob contains a magic string "SMWKEYID" followed by the SMW key identifier
+ * which references the key stored in ELE's NVM Secure Storage for later use
+ * with TPM2_Load.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful object creation, or the corresponding error code.
+ */
+uint32_t handle_create(tcti_smw_context_t *ctx, uint16_t tag,
+		       const uint8_t *cmd, size_t cmd_size);
 #endif /* __COMMANDS_H__ */

@@ -11,6 +11,7 @@
 #include "common.h"
 #include "session.h"
 #include "crypto.h"
+#include "builtin_macros.h"
 
 /**
  * free_resp() - Free the response buffer in the SMW TCTI context.
@@ -42,6 +43,34 @@ void free_resp(tcti_smw_context_t *ctx);
  */
 uint32_t build_rc_response(tcti_smw_context_t *ctx, uint32_t resp_size,
 			   uint16_t tag, TPM2_RC rc);
+
+/**
+ * build_auth_response() - Build a TPM response with authorization session support.
+ * @ctx:           Pointer to the SMW TCTI context structure.
+ * @sess:          Pointer to the active session for HMAC calculation (NULL if no auth).
+ * @response_code: TPM response code to include in the response.
+ * @command_code:  TPM command code that was executed.
+ * @tag:           TPM structure tag for the response (TPM2_ST_SESSIONS or TPM2_ST_NO_SESSIONS).
+ * @params_buffer: Pointer to marshaled response parameters buffer.
+ * @params_size:   Size of the response parameters in bytes.
+ * @nonce_caller:  Pointer to the caller's nonce from the request (NULL if no auth).
+ * @handle:        Pointer to optional handle to include in response (NULL if none).
+ *
+ * This function constructs a complete TPM response including header, optional handle,
+ * response parameters, and authorization area (if tag is TPM2_ST_SESSIONS). For
+ * authenticated sessions, it calculates the response HMAC over the parameters and
+ * includes the session's nonce, attributes, and HMAC in the authorization area.
+ * The function handles both authenticated (with sessions) and non-authenticated
+ * responses based on the tag parameter.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful response construction, or the corresponding error code.
+ */
+uint32_t build_auth_response(tcti_smw_context_t *ctx, tcti_smw_session_t *sess,
+			     TPM2_RC response_code, TPM2_CC command_code,
+			     uint16_t tag, uint8_t *params_buffer,
+			     size_t params_size, TPM2B_NONCE *nonce_caller,
+			     TPM2_HANDLE *handle);
 
 /**
  * header_unmarshal() - Parse the first 10 bytes of a buffer into a header structure.

@@ -1,6 +1,7 @@
+.. _objects_attributes_definition:
+
 Objects Attributes definitions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 Objects Attributes definitions provide bitmasks and macros to manage
 attributes associated to keys and data objects.
 
@@ -36,20 +37,16 @@ A data object is defined by the following attributes:
 
 Permitted algorithm
 """""""""""""""""""
-
 Definition of the key permitted algorithm restriction if supported by the
 subsystem.
 
-Refer to the :ref:`Cryptographic Algorithm smw_attr_algo_t encoding
-<algorithm-smw_attr_algo_t-encoding>`,
+Refer to the :ref:`algorithm-smw_attr_algo_t-encoding`,
 the 64-bit encoding is same as the cryptographic 64-bit algorithm encoding
 format with some exception detailed in the notes.
 
 
-
 Usage restriction
 """""""""""""""""
-
 Definition of the key usage restriction if supported by the subsystem.
 
 .. kdoc-extension:: /public/smw/attr.h
@@ -101,10 +98,8 @@ Definition of the key usage restriction if supported by the subsystem.
             SMW_ATTR_USAGE_SET_DERIVE SMW_ATTR_USAGE_IS_DERIVE
 
 
-
 Object attributes
 """""""""""""""""
-
 Definition of the object (key or data) attributes as Persistence, Lifecycle
 usage restriction (if supported by subsystem), ...
 
@@ -115,8 +110,8 @@ usage restriction (if supported by subsystem), ...
    :name: table_object_attribute_encoding
    :align: center
    :widths: 10 90
+   :width: 100%
    :class: wrap-table
-
 
    +-------------+--------------------------------------------------------------------------------+
    | **Bits**    | **Description**                                                                |
@@ -161,13 +156,13 @@ usage restriction (if supported by subsystem), ...
    |             |      - Current Lifecycle                                                       |
    |             |    * - 0x02                                                                    |
    |             |      - SMW_ATTR_LIFECYCLE_OPEN                                                 |
-   |             |      - Open Lifecycle                                                          |
+   |             |      - OEM Open Lifecycle                                                      |
    |             |    * - 0x04                                                                    |
    |             |      - SMW_ATTR_LIFECYCLE_CLOSED                                               |
-   |             |      - Closed Lifecycle                                                        |
+   |             |      - OEM Closed Lifecycle                                                    |
    |             |    * - 0x08                                                                    |
    |             |      - SMW_ATTR_LIFECYCLE_CLOSED_LOCKED                                        |
-   |             |      - Closed and Locked Lifecycle                                             |
+   |             |      - OEM Closed and Locked Lifecycle                                         |
    +-------------+--------------------------------------------------------------------------------+
    | **[7:4]**   | Reserved                                                                       |
    +-------------+--------------------------------------------------------------------------------+
@@ -213,10 +208,8 @@ usage restriction (if supported by subsystem), ...
    :macros: SMW_ATTR_SET_SENSITIVE SMW_ATTR_CLEAR_SENSITIVE SMW_ATTR_IS_SENSITIVE
 
 
-
 Storage location
 """"""""""""""""
-
 Definition of the object (key or data) storage location. Giving Information
 such as storage location, type of object.
 

@@ -67,6 +67,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix writing the AEAD encryption tag in a large output buffer to follow the ciphertext.
 * Add missing weak stubs for sign/verify multi-part and asymmetric
   encryption/decryption config check APIs.
+* Rework subsystems capabilities documentation.
 
 ##### 2. Subsystems
 

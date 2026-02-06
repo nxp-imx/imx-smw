@@ -1,7 +1,7 @@
 .. _algorithm-smw_attr_algo_t-encoding:
 
 Cryptographic Algorithm (smw_attr_algo_t) encoding
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------------------------------
 
 This chapter intends to detail the algorithm encoding definitions used to
 describe cryptographic algorithms and their parameters within the SMW API.
@@ -30,7 +30,13 @@ The same 64-bit encoding is used throughout the SMW API to specify:
    +=============+=============================================================================+
    | **[63:40]** | Reserved                                                                    |
    +-------------+-----------------------------------------------------------------------------+
-   | **[39:32]** | Additional Algorithm Parameters :numref:`table_additional_parameters`       |
+   | **[39:32]** | Additional Algorithm Parameters:                                            |
+   |             |                                                                             |
+   |             |  - RSA Salt Length :numref:`table_add_params_salt_length`                   |
+   |             |  - MAC Output Length :numref:`table_add_params_mac_length`                  |
+   |             |  - AEAD Tag Length :numref:`table_add_params_tag_length`                    |
+   |             |  - Signature Message :numref:`table_add_params_signature_message`           |
+   |             |  - EdDSA Signature :numref:`table_add_params_eddsa_signature`               |
    +-------------+-----------------------------------------------------------------------------+
    | **[31:24]** | Operation Class :numref:`table_algorithm_operation`                         |
    +-------------+-----------------------------------------------------------------------------+
@@ -48,7 +54,7 @@ The same 64-bit encoding is used throughout the SMW API to specify:
 
 
 Main algorithm
-""""""""""""""
+^^^^^^^^^^^^^^
 
 .. table:: Main Algorithm value
    :name: table_main_algorithm
@@ -108,7 +114,7 @@ Main algorithm
 
 
 Mode
-""""
+^^^^
 
 .. table:: Algorithm Mode value
    :name: table_algorithm_mode
@@ -165,7 +171,7 @@ Mode
    :macros: SMW_ATTR_GET_MODE SMW_ATTR_SET_MODE
 
 Curve
-"""""
+^^^^^
 
 .. table:: Algorithm Curve value
    :name: table_algorithm_curve
@@ -197,7 +203,7 @@ Curve
 
 
 Key Derivation Function
-"""""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. table:: Algorithm Key Derivation Function value
    :name: table_algorithm_kdf
@@ -216,7 +222,7 @@ Key Derivation Function
    :macros: SMW_ATTR_GET_KDF
 
 Hash
-""""
+^^^^
 
 .. table:: Algorithm Hash value
    :name: table_algorithm_hash
@@ -264,7 +270,7 @@ Hash
 
 
 Class
-"""""
+^^^^^
 
 .. table:: Algorithm Operation value
    :name: table_algorithm_operation
@@ -324,64 +330,238 @@ Class
             SMW_ATTR_ALGO_KEY_AGREEMENT
 
 
-Additional Parameters
-"""""""""""""""""""""
+Additional Parameters: Salt length
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. table:: Additional Algorithm bitmask value
-   :name: table_additional_parameters
+The Salt length parameter defines the number of bytes used as RSA PSS salt
+output length in RSA PSS signature operations.
+
+.. table:: Additional Algorithm Salt length bitmask value
+   :name: table_add_params_salt_length
    :align: center
    :widths: 27 8 25 40
    :class: wrap-table
 
-   +---------------------------+------------+----------------------+-------------------------------------------------+
-   | **Parameter**             | **Bit 39** | **Bits[38:32]**      | **Description**                                 |
-   +===========================+============+======================+=================================================+
-   | Salt length bytes         | 0x0        | 0 <= len <= hash len | RSA Signature Salt length.                      |
-   +---------------------------+------------+----------------------+                                                 +
-   | Min Salt length [1]_      | 0x1        | 0 <= len <= hash len |                                                 |
-   +---------------------------+------------+----------------------+-------------------------------------------------+
-   | MAC length bytes          | 0x0        | 0 <= len <= MAC len  | Truncated MAC length. `MAC len` is the          |
-   +---------------------------+------------+----------------------+                                                 +
-   | Min MAC length bytes [1]_ | 0x1        | 0 <= len <= MAC len  | algorithm length in bytes.                      |
-   +---------------------------+------------+----------------------+-------------------------------------------------+
-   | Tag length bytes          | 0x0        | 0 <= len <= Tag len  | AEAD Tag length. `Tag len` is                   |
-   +---------------------------+------------+----------------------+                                                 +
-   | Min Tag length bytes [1]_ | 0x1        | 0 <= len <= Tag len  | the algorithm length in bytes.                  |
-   +---------------------------+------------+----------------------+-------------------------------------------------+
-   | Signature Message Full    | 0x0        | \-                   | Asymmetric signature input message type.        |
-   +---------------------------+------------+----------------------+                                                 +
-   | Signature Message Hashed  | 0x1        | \-                   |                                                 |
-   +---------------------------+------------+----------------------+-------------------------------------------------+
-   | EDDSA pre-hashed          | \-         | 0x1                  | Asymmetric EDDSA signature type is pre-hashed.  |
-   +---------------------------+------------+----------------------+-------------------------------------------------+
-   | EDDSA context             | \-         | 0x2                  | Asymmetric EDDSA signature type is with context.|
-   +---------------------------+------------+----------------------+-------------------------------------------------+
+   +-----------------------+-------------+---------------------+-------------------------------------+
+   | **Parameter**         | **Bit[39]** | **Bits[38:32]**     | **Comment**                         |
+   +=======================+=============+=====================+=====================================+
+   | Salt length bytes     | 0x0         | 0 <= len <= SaltLen |                                     |
+   +-----------------------+-------------+---------------------+-------------------------------------+
+   | Min Salt length       | 0x1         | 0 <= len <= SaltLen | Use for the key permitted algorithm |
+   |                       |             |                     | definition only.                    |
+   +-----------------------+-------------+---------------------+-------------------------------------+
 
-.. [1] Used for the key permitted algorithm definition only.
+The ``SaltLen`` is the maximum salt length in bytes that can be used with the
+RSA PSS algorithm.
+
+The `RFC8017 <https://www.rfc-editor.org/rfc/rfc8017>`_ standard defines the
+RSA PSS signature scheme. The maximum ``SaltLen`` parameter is defined in the
+RFC8017, section 9.1.1 by the formula:
+
+.. code-block:: text
+
+   sLen <= emLen - hLen - 2
+
+Where emLen is the length in bytes of the RSA encoded message, and hLen is the
+length in bytes of the hash algorithm output.
+
+The typical salt lengths are the hash algorithm output lengths in bytes.
+
+The Bit[39] restricts the key usage to the RSA PSS algorithm with a Salt length
+of at least the ``SaltLen`` bytes size. ``SaltLen`` can't be 0.
+
+If this additional parameter is not set, the default salt length is the
+selected operation hash algorithm output length.
+
+.. kdoc-extension:: /public/smw/attr.h
+   :macros: SMW_ATTR_SET_SALT_LENGTH
+            SMW_ATTR_GET_SALT_LENGTH
+
+.. kdoc-extension:: /public/smw/attr.h
+   :macros: SMW_ATTR_SET_MIN_SALT_LENGTH
+            SMW_ATTR_IS_MIN_SALT_LENGTH
+
+Additional Parameters: MAC length
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The MAC length parameter defines the number of bytes used as MAC output length
+in MAC. It's used to truncate the MAC output to a shorter length.
+
+.. table:: Additional Algorithm MAC length bitmask value
+   :name: table_add_params_mac_length
+   :align: center
+   :widths: 27 8 25 40
+   :class: wrap-table
+
+   +---------------------------+-------------+--------------------+-------------------------------------+
+   | **Parameter**             | **Bit[39]** | **Bits[38:32]**    | **Comment**                         |
+   +===========================+=============+====================+=====================================+
+   | MAC length bytes          | 0x0         | 0 <= len <= MacLen |                                     |
+   +---------------------------+-------------+--------------------+-------------------------------------+
+   | Min MAC length bytes      | 0x1         | 0 <= len <= MacLen | Use for the key permitted algorithm |
+   +---------------------------+-------------+--------------------+-------------------------------------+
+
+The ``MacLen`` value depends on the selected MAC algorithm:
+
+  - For HMAC algorithms, ``MacLen`` is the hash output length. Refer to
+    :ref:`capabilities_digest` chapter.
+  - For CMAC algorithms, ``MacLen`` is the block size (16 bytes) of the AES cipher.
+
+The Bit[39] restricts the key usage to the MAC algorithm with a MAC length of
+at least the ``MacLen`` bytes size. ``MacLen`` can't be 0.
+
+If this additional algorithm parameter is not set, the default MAC length is
+the full MAC output length:
+
+  - For HMAC algorithms, the MAC output length is the hash output length.
+  - For CMAC algorithms, the MAC output length is the block size of the
+    underlying cipher.
+
+.. kdoc-extension:: /public/smw/attr.h
+   :macros: SMW_ATTR_SET_MAC_LENGTH
+            SMW_ATTR_GET_MAC_LENGTH
+
+.. kdoc-extension:: /public/smw/attr.h
+   :macros: SMW_ATTR_SET_MIN_MAC_LENGTH
+            SMW_ATTR_IS_MIN_MAC_LENGTH
+
+Additional Parameters: Tag length
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Tag length parameter defines the number of bytes used as AEAD output Tag
+length in AEAD. It's used to truncate the AEAD Tag length to a shorter length.
+
+.. table:: Additional Algorithm Tag length bitmask value
+   :name: table_add_params_tag_length
+   :align: center
+   :widths: 27 8 25 40
+   :class: wrap-table
+
+   +---------------------------+-------------+--------------------+-------------------------------------+
+   | **Parameter**             | **Bit[39]** | **Bits[38:32]**    | **Comment**                         |
+   +===========================+=============+====================+=====================================+
+   | Tag length bytes          | 0x0         | 0 <= len <= TagLen |                                     |
+   +---------------------------+-------------+--------------------+-------------------------------------+
+   | Min Tag length bytes      | 0x1         | 0 <= len <= TagLen | Use for the key permitted algorithm |
+   |                           |             |                    | definition only.                    |
+   +---------------------------+-------------+--------------------+-------------------------------------+
+
+The ``TagLen`` is the maximum tag length supported by the AEAD algorithm.
+
+The AEAD CCM supports authentication tag sizes of 4, 6, 8, 10, 12, 14, and 16
+bytes. The default tag length is 16 bytes.
+
+Refer to the `RFC3610 <https://www.rfc-editor.org/rfc/rfc3610>`_ for more
+details on AEAD CCM tag length specifications.
+
+The AEAD GCM supports authentication tag sizes of 4, 8, 12, 13, 14, 15, and 16
+bytes. The default tag length is 16 bytes.
+
+Refer to the `NIST800-38D <https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf>`_
+for more details on AEAD GCM tag length specifications.
+
+The Bit[39] restricts the key usage to the AEAD algorithm with a Tag length of
+at least the ``TagLen`` bytes size. ``TagLen`` can't be 0.
+
+If this additional algorithm parameter is not set, the default Tag length is
+the full Tag output length which is 16 bytes.
+
+.. kdoc-extension:: /public/smw/attr.h
+   :macros: SMW_ATTR_SET_TAG_LENGTH
+            SMW_ATTR_GET_TAG_LENGTH
+
+.. kdoc-extension:: /public/smw/attr.h
+   :macros: SMW_ATTR_SET_MIN_TAG_LENGTH
+            SMW_ATTR_IS_MIN_TAG_LENGTH
+
+Additional Parameters: Signature Message
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The Signature Message parameter defines the input message type for asymmetric
+signature operations. It specifies whether the input is a full message or a
+pre-computed hash digest.
 
 
+.. table:: Additional Algorithm Signature Message bitmask value
+   :name: table_add_params_signature_message
+   :align: center
+   :widths: 27 8 25
+   :class: wrap-table
+
+   +---------------------------+-------------+--------------------------------------+
+   | **Parameter**             | **Bit[39]** | **Bits[38:32]**                      |
+   +===========================+=============+======================================+
+   | Signature Message Full    | 0x0         | \-                                   |
+   +---------------------------+-------------+--------------------------------------+
+   | Signature Message Hashed  | 0x1         | \-                                   |
+   +---------------------------+-------------+--------------------------------------+
+
+.. kdoc-extension:: /public/smw/attr.h
+   :macros: SMW_ATTR_SET_MSG_HASHED
+            SMW_ATTR_IS_MSG_HASHED
+
+
+Additional Parameters: EdDSA Signature
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The EDDSA Signature parameter defines the signature scheme variant for
+Edwards-curve Digital Signature Algorithm operations. It specifies whether
+the signature uses the pre-hashed PureEDDSA variant or the context variant.
+
+.. table:: Additional Algorithm EdDSA Signature bitmask value
+   :name: table_add_params_eddsa_signature
+   :align: center
+   :widths: 27 8 25
+   :class: wrap-table
+
+   +---------------------------+-------------+--------------------------------------+
+   | **Parameter**             | **Bit[39]** | **Bits[38:32]**                      |
+   +===========================+=============+======================================+
+   | EDDSA pre-hashed          | \-          | 0x1                                  |
+   +---------------------------+-------------+--------------------------------------+
+   | EDDSA context             | \-          | 0x2                                  |
+   +---------------------------+-------------+--------------------------------------+
+
+.. kdoc-extension:: /public/smw/attr.h
+   :macros: SMW_ATTR_SET_SIGN_EDDSA_PREHASHED
+            SMW_ATTR_IS_SIGN_EDDSA_PREHASHED
+
+.. kdoc-extension:: /public/smw/attr.h
+   :macros: SMW_ATTR_SET_SIGN_EDDSA_CONTEXT
+            SMW_ATTR_IS_SIGN_EDDSA_CONTEXT
+
+Additional Parameter: generic length
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. kdoc-extension:: /public/smw/attr.h
    :macros: SMW_ATTR_SET_LENGTH
             SMW_ATTR_GET_LENGTH
-            SMW_ATTR_SET_MIN_LENGTH
+
+.. kdoc-extension:: /public/smw/attr.h
+   :macros: SMW_ATTR_SET_MIN_LENGTH
             SMW_ATTR_IS_MIN_LENGTH
-            SMW_ATTR_SET_SALT_LENGTH
-            SMW_ATTR_GET_SALT_LENGTH
-            SMW_ATTR_SET_MIN_SALT_LENGTH
-            SMW_ATTR_IS_MIN_SALT_LENGTH
-            SMW_ATTR_SET_MAC_LENGTH
-            SMW_ATTR_GET_MAC_LENGTH
-            SMW_ATTR_SET_MIN_MAC_LENGTH
-            SMW_ATTR_IS_MIN_MAC_LENGTH
-            SMW_ATTR_SET_TAG_LENGTH
-            SMW_ATTR_GET_TAG_LENGTH
-            SMW_ATTR_SET_MIN_TAG_LENGTH
-            SMW_ATTR_IS_MIN_TAG_LENGTH
-            SMW_ATTR_SET_MSG_HASHED
-            SMW_ATTR_IS_MSG_HASHED
+
+Additional Parameter: generic signature
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The following defines can be used to set or get signature parameters in the
+algorithm attributes.
+
+.. table:: Additional Algorithm Signature Parameter bitmask value
+   :name: table_add_params_signature
+   :align: center
+   :widths: 35 25
+   :class: wrap-table
+
+   +-------------------------------------+------------------------------+
+   | **Define**                          | **Description**              |
+   +=====================================+==============================+
+   | SMW_ATTR_SIGN_PARAM_EDDSA_NONE      | Pure-EdDSA Signature         |
+   +-------------------------------------+------------------------------+
+   | SMW_ATTR_SIGN_PARAM_EDDSA_PREHASHED | EdDSA Pre-hashed Signature   |
+   +-------------------------------------+------------------------------+
+   | SMW_ATTR_SIGN_PARAM_EDDSA_CONTEXT   | EdDSA Context Signature      |
+   +-------------------------------------+------------------------------+
+   | SMW_ATTR_SIGN_HASHED_FLAG           | Message to sign is hashed    |
+   +-------------------------------------+------------------------------+
+
+.. kdoc-extension:: /public/smw/attr.h
+   :macros: SMW_ATTR_SET_SIGN_PARAM
             SMW_ATTR_GET_SIGN_PARAM
-            SMW_ATTR_SET_SIGN_PARAM
-            SMW_ATTR_SET_SIGN_EDDSA_PREHASHED
-            SMW_ATTR_IS_SIGN_EDDSA_PREHASHED
-            SMW_ATTR_SET_SIGN_EDDSA_CONTEXT
-            SMW_ATTR_IS_SIGN_EDDSA_CONTEXT

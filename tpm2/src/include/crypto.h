@@ -110,6 +110,22 @@ typedef struct {
 } sign_input_t;
 
 /**
+ * struct verifysignature_input_t - Input parameters for TPM2_VerifySignature command.
+ * @key_handle: Handle of the key to use for verification.
+ * @digest:     Digest that was signed.
+ * @signature:  Signature to be verified.
+ *
+ * This structure encapsulates all input parameters required for the
+ * TPM2_VerifySignature command. It organizes the verification key handle,
+ * the digest that was signed, and the signature to verify.
+ */
+typedef struct {
+	TPMI_DH_OBJECT key_handle;
+	TPM2B_DIGEST digest;
+	TPMT_SIGNATURE signature;
+} verifysignature_input_t;
+
+/**
  * struct smw_object_blob_t - Object data structure for SMW storage.
  * @handle:        TPM object handle identifier.
  * @smw_key_id:    SMW key identifier for the underlying cryptographic key.

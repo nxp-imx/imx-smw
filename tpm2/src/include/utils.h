@@ -222,4 +222,22 @@ uint32_t load_unmarshal(const uint8_t *cmd, size_t cmd_size,
 uint32_t sign_unmarshal(const uint8_t *cmd, size_t cmd_size,
 			sign_input_t *input, TPM2B_NONCE *nonce_caller,
 			uint32_t *session_handle);
+
+/**
+ * verifysignature_unmarshal() - Parse TPM2_VerifySignature command parameters from buffer.
+ * @cmd:      Pointer to the command buffer containing the TPM2_VerifySignature
+ *            command.
+ * @cmd_size: Size of the command buffer in bytes.
+ * @input:    Pointer to the structure to be populated with unmarshaled
+ *            command parameters.
+ *
+ * This function unmarshals the TPM2_VerifySignature command parameters from the
+ * command buffer after the TPM header. It extracts the key handle, digest, and
+ * signature.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful parsing, or the corresponding error code on failure.
+ */
+uint32_t verifysignature_unmarshal(const uint8_t *cmd, size_t cmd_size,
+				   verifysignature_input_t *input);
 #endif /* __UTILS_H__ */

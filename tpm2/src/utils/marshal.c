@@ -368,3 +368,34 @@ end:
 	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
 	return rc;
 }
+
+uint32_t verifysignature_unmarshal(const uint8_t *cmd, size_t cmd_size,
+				   verifysignature_input_t *input)
+{
+	TSS2_RC rc = TSS2_TCTI_RC_GENERAL_FAILURE;
+	size_t offset = TPM_HEADER_SIZE;
+
+	/* Unmarshal key handle */
+	rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset,
+				      &input->key_handle);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	DBG_TRACE("Key handle=0x%08x\n", input->key_handle);
+
+	/* Unmarshal digest */
+	rc = Tss2_MU_TPM2B_DIGEST_Unmarshal(cmd, cmd_size, &offset,
+					    &input->digest);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* Unmarshal signature */
+	rc = Tss2_MU_TPMT_SIGNATURE_Unmarshal(cmd, cmd_size, &offset,
+					      &input->signature);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+end:
+	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
+	return rc;
+}

@@ -92,6 +92,24 @@ typedef struct {
 } load_input_t;
 
 /**
+ * struct sign_input_t - Input parameters for TPM2_Sign command.
+ * @key_handle:  Handle of the key to use for signing.
+ * @digest:      Digest to be signed.
+ * @in_scheme:   Signing scheme to use.
+ * @validation:  Proof that digest was created by the TPM (can be NULL ticket).
+ *
+ * This structure encapsulates all input parameters required for the
+ * TPM2_Sign command. It organizes the signing key handle, the digest
+ * to sign, the signature scheme, and an optional validation ticket.
+ */
+typedef struct {
+	TPMI_DH_OBJECT key_handle;
+	TPM2B_DIGEST digest;
+	TPMT_SIG_SCHEME in_scheme;
+	TPMT_TK_HASHCHECK validation;
+} sign_input_t;
+
+/**
  * struct smw_object_blob_t - Object data structure for SMW storage.
  * @handle:        TPM object handle identifier.
  * @smw_key_id:    SMW key identifier for the underlying cryptographic key.

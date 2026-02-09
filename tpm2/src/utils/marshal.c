@@ -301,3 +301,70 @@ end:
 	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
 	return rc;
 }
+
+uint32_t sign_unmarshal(const uint8_t *cmd, size_t cmd_size,
+			sign_input_t *input, TPM2B_NONCE *nonce_caller,
+			uint32_t *session_handle)
+{
+	TSS2_RC rc = TSS2_TCTI_RC_GENERAL_FAILURE;
+	size_t offset = TPM_HEADER_SIZE;
+	size_t auth_start = 0;
+	uint32_t auth_size = 0;
+
+	/* Unmarshal key handle */
+	rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset,
+				      &input->key_handle);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	DBG_TRACE("Key handle=0x%08x\n", input->key_handle);
+
+	/* Unmarshal authorization area */
+	rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset, &auth_size);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	auth_start = offset;
+
+	if (auth_size == 0) {
+		DBG_TRACE("Requires authorization area\n");
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	/* Parse session handle */
+	rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset, session_handle);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* Parse nonce */
+	rc = Tss2_MU_TPM2B_NONCE_Unmarshal(cmd, cmd_size, &offset,
+					   nonce_caller);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* Skip to end of auth area */
+	offset = auth_start + auth_size;
+
+	/* Unmarshal digest */
+	rc = Tss2_MU_TPM2B_DIGEST_Unmarshal(cmd, cmd_size, &offset,
+					    &input->digest);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* Unmarshal signing scheme */
+	rc = Tss2_MU_TPMT_SIG_SCHEME_Unmarshal(cmd, cmd_size, &offset,
+					       &input->in_scheme);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* Unmarshal validation ticket */
+	rc = Tss2_MU_TPMT_TK_HASHCHECK_Unmarshal(cmd, cmd_size, &offset,
+						 &input->validation);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+end:
+	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
+	return rc;
+}

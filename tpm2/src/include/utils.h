@@ -200,4 +200,26 @@ uint32_t create_unmarshal(const uint8_t *cmd, size_t cmd_size,
 uint32_t load_unmarshal(const uint8_t *cmd, size_t cmd_size,
 			load_input_t *input, TPM2B_NONCE *nonce_caller,
 			uint32_t *session_handle);
+
+/**
+ * sign_unmarshal() - Parse TPM2_Sign command parameters from buffer.
+ * @cmd:            Pointer to the command buffer containing the TPM2_Sign command.
+ * @cmd_size:       Size of the command buffer in bytes.
+ * @input:          Pointer to the structure to be populated with unmarshaled
+ *                  command parameters.
+ * @nonce_caller:   Pointer to the structure to be populated with the caller's
+ *                  nonce from the authorization session area.
+ * @session_handle: Pointer to the variable to be populated with the session
+ *                  handle extracted from the authorization area.
+ *
+ * This function unmarshals the TPM2_Sign command parameters from the command
+ * buffer after the TPM header. It extracts the key handle, digest to sign,
+ * signing scheme, validation ticket, and authorization session information.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful parsing, or the corresponding error code on failure.
+ */
+uint32_t sign_unmarshal(const uint8_t *cmd, size_t cmd_size,
+			sign_input_t *input, TPM2B_NONCE *nonce_caller,
+			uint32_t *session_handle);
 #endif /* __UTILS_H__ */

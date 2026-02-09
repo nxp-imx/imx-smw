@@ -13,6 +13,8 @@
   - [Read Public](#read-public)
   - [Create Key object](#create-key-object)
   - [Load Key object](#load-key-object)
+  - [Sign Data](#sign-data)
+  - [Verify Signature](#verify-signature)
 - [TPM2 Commands Supported](#tpm2-commands-supported)
 
 # Introduction
@@ -81,7 +83,9 @@ The ELE Secure Enclave has the following limitations when used with TPM2:
    persistent key.
  - None of the Symmetric and Private part of the Asymmetric key can be exported,
    even in encrypted format.
-
+ - For ECDSA algorithms, the algorithm digest size (in bits) must be equal to
+   the asymmetric keypair security size (in bits). Exception for SHA512:
+   keypair security size must be 521.
 
 # Commands and Examples
 
@@ -150,14 +154,14 @@ tpm2_readpublic -c primary_ecdh.ctx
 ## Create Key object
 Creates an ECC (NIST P-256) key object. Use the create command:
 ```sh
-tpm2_create -C primary_ecdsa.ctx -G ecc256:ecdsa \
+tpm2_create -C primary_ecdsa.ctx -G ecc256 \
   -a "fixedtpm|fixedparent|sensitivedataorigin|userwithauth|sign" \
   -u signing_key.pub -r signing_key.priv \
 ```
 
 **Parameters**:
 - `-C primary_ecdsa.ctx`: Parent key context
-- `-G ecc256:ecdsa`: Key type: ECC NIST P-256 with ECDSA scheme
+- `-G ecc256`: Key type: ECC NIST P-256
 - `-a`: Key attributes (sign, fixed TPM, fixed parent, sensitive data origin)
 - `-u signing_key.pub`: Output file for the public key
 - `-r signing_key.priv`: Output file for the private key blob
@@ -178,6 +182,72 @@ tpm2_load -C primary_ecdsa.ctx \
 - `-r signing_key.priv`: Input file containing the private key blob
 - `-c signing_key.ctx`: Output file for the loaded key context
 
+## Sign Data
+Signs a message or pre-computed digest using a loaded TPM signing key with ECDSA
+signature scheme.
+
+### Sign raw message
+The TPM computes the digest internally before signing. Use the sign command:
+```sh
+tpm2_sign -c signing_key.ctx -g sha256 -f tss -o signature.tss message.txt
+```
+
+**Parameters**:
+- `-c signing_key.ctx`: Context of the loaded signing key
+- `-g sha256`: Hash algorithm to use for computing the digest (SHA-256)
+- `-f tss`: Signature format (TSS format includes signature scheme information)
+- `-o signature.tss`: Output file for the signature in TSS format
+- `message.txt`: Input file containing the raw message to sign
+
+### Sign pre-computed digest
+Sign a digest that was computed externally or using `tpm2_hash`.
+
+**Step 1 - Compute the digest using tpm2_hash**:
+```sh
+tpm2_hash -g sha256 -o message.hash message.txt
+```
+
+**Step 2 - Sign the digest**:
+```sh
+tpm2_sign -c signing_key.ctx -g sha256 -f tss -d -o signature.tss message.hash
+```
+
+**Parameters**:
+- `-c signing_key.ctx`: Context of the loaded signing key
+- `-g sha256`: Hash algorithm used to compute the digest (SHA-256)
+- `-f tss`: Signature format (TSS format includes signature scheme information)
+- `-d`: Indicates that the input is a pre-computed digest (not a raw message)
+- `-o signature.tss`: Output file for the signature in TSS format
+- `message.hash`: Input file containing the pre-computed digest to sign
+
+## Verify Signature
+Verifies a signature against a message or pre-computed digest using the public key
+from a loaded TPM key object.
+
+### Verify signature with raw message
+The TPM computes the digest internally before verification. Use the verify signature
+command:
+```sh
+tpm2_verifysignature -c signing_key.ctx -g sha256 -s signature.tss -m message.txt
+```
+
+**Parameters**:
+- `-c signing_key.ctx`: Context of the loaded signing key
+- `-g sha256`: Hash algorithm to use for computing the digest (SHA-256)
+- `-s signature.tss`: Input file containing the signature to verify (in TSS format)
+- `-m message.txt`: Input file containing the raw message
+
+### Verify signature with pre-computed digest
+Verify a signature against a digest that was computed externally or using `tpm2_hash`:
+```sh
+tpm2_verifysignature -c signing_key.ctx -s signature.tss -d message.hash
+```
+
+**Parameters**:
+- `-c signing_key.ctx`: Context of the loaded signing key
+- `-s signature.tss`: Input file containing the signature to verify (in TSS format)
+- `-d message.hash`: Input file containing the pre-computed digest (message hash)
+
 # TPM2 Commands Supported
 
 Following table lists TPM2 Commands implemented in the SMW's TSS2 TCTI library.
@@ -197,3 +267,5 @@ Following table lists TPM2 Commands implemented in the SMW's TSS2 TCTI library.
 | `TPM2_ReadPublic`       |
 | `TPM2_Create`           |
 | `TPM2_Load`             |
+| `TPM2_Sign`             |
+| `TPM2_VerifySignature`  |

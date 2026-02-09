@@ -324,4 +324,24 @@ uint32_t handle_load(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
  */
 uint32_t handle_sign(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 		     size_t cmd_size);
+
+/**
+ * handle_verifysignature() - Process TPM2_VerifySignature command.
+ * @ctx:      Pointer to the SMW TCTI context structure.
+ * @tag:      TPM structure tag from the command header.
+ * @cmd:      Pointer to the command buffer containing the full TPM command.
+ * @cmd_size: Size of the command buffer in bytes.
+ *
+ * This function handles the TPM2_VerifySignature command which verifies a
+ * signature using a loaded verification key. It unmarshals the command parameters
+ * including key handle, digest, signature, and validation ticket. The function
+ * validates the key exists and has verification capabilities, maps the TPM
+ * signature scheme to SMW parameters, calls the SMW verify API to validate the
+ * signature, and builds a response containing the validation ticket.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful signature verification, or the corresponding error code.
+ */
+uint32_t handle_verifysignature(tcti_smw_context_t *ctx, uint16_t tag,
+				const uint8_t *cmd, size_t cmd_size);
 #endif /* __COMMANDS_H__ */

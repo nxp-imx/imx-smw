@@ -53,7 +53,8 @@ uint32_t handle_hash(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 		goto end;
 
 	/* 2. Configure algorithm */
-	tss2_rc = map_hash_info(hash_alg, &out_hash.size, &hash_args.algo_name);
+	tss2_rc = map_hash_info(hash_alg, &out_hash.size, &hash_args.algo_name,
+				NULL);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
@@ -208,7 +209,8 @@ uint32_t handle_hmac(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 	 */
 
 	/* 3. Computing HMAC via SMW using the object's key*/
-	tss2_rc = map_hash_info(hmac_hash_alg, &hmac_size, &smw_hash_name);
+	tss2_rc =
+		map_hash_info(hmac_hash_alg, &hmac_size, &smw_hash_name, NULL);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 

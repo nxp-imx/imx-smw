@@ -59,7 +59,7 @@ configure_smw_key_descriptor(TPMT_PUBLIC *pub,
 {
 	TSS2_RC rc = TSS2_RC_SUCCESS;
 	uint32_t attrs = 0;
-	smw_hash_algo_t smw_hash_attr = SMW_HASH_ALGO_NAME_NONE;
+	smw_attr_algo_t smw_hash_attr = SMW_ATTR_HASH_NONE;
 
 	if (!pub || !key_desc || !key_buffer) {
 		DBG_TRACE("Invalid parameters\n");
@@ -75,7 +75,7 @@ configure_smw_key_descriptor(TPMT_PUBLIC *pub,
 	}
 
 	/* Map TPM2 hash algorithm to SMW hash algorithm */
-	rc = map_hash_info(pub->nameAlg, NULL, &smw_hash_attr);
+	rc = map_hash_info(pub->nameAlg, NULL, NULL, &smw_hash_attr);
 	if (rc != TSS2_RC_SUCCESS) {
 		DBG_TRACE("Failed to map hash algorithm: 0x%04x\n",
 			  pub->nameAlg);

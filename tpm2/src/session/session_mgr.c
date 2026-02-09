@@ -62,7 +62,7 @@ uint32_t smw_session_alloc(tcti_smw_context_t *ctx, uint32_t *handle,
 				/* Simple case : empty session_key */
 
 				rc = map_hash_info(params->auth_hash, &key_size,
-						   NULL);
+						   NULL, NULL);
 
 				if (rc != TSS2_RC_SUCCESS)
 					goto end;

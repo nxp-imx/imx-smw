@@ -91,8 +91,8 @@ uint32_t calculate_object_name(const TPM2B_PUBLIC *public, TPM2B_NAME *name)
 		goto end;
 
 	/* Get hash algorithm info */
-	rc = map_hash_info(public->publicArea.nameAlg, &digest_size,
-			   &hash_name);
+	rc = map_hash_info(public->publicArea.nameAlg, &digest_size, &hash_name,
+			   NULL);
 	if (rc != TSS2_RC_SUCCESS)
 		goto end;
 

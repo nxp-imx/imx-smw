@@ -12,28 +12,33 @@
 #include "trace.h"
 
 uint32_t map_hash_info(TPMI_ALG_HASH hash_alg, uint16_t *digest_size,
-		       smw_hash_algo_t *smw_name)
+		       smw_hash_algo_t *smw_name, smw_attr_algo_t *smw_algo)
 {
 	TSS2_RC rc = TSS2_TCTI_RC_BAD_VALUE;
 	uint16_t size = 0;
 	smw_hash_algo_t name = SMW_HASH_ALGO_NAME_NONE;
+	smw_attr_algo_t algo = SMW_ATTR_HASH_NONE;
 
 	switch (hash_alg) {
 	case TPM2_ALG_SHA1:
 		size = TPM2_SHA1_DIGEST_SIZE;
 		name = SMW_HASH_ALGO_NAME_SHA1;
+		algo = SMW_ATTR_HASH_SHA1;
 		break;
 	case TPM2_ALG_SHA256:
 		size = TPM2_SHA256_DIGEST_SIZE;
 		name = SMW_HASH_ALGO_NAME_SHA256;
+		algo = SMW_ATTR_HASH_SHA256;
 		break;
 	case TPM2_ALG_SHA384:
 		size = TPM2_SHA384_DIGEST_SIZE;
 		name = SMW_HASH_ALGO_NAME_SHA384;
+		algo = SMW_ATTR_HASH_SHA384;
 		break;
 	case TPM2_ALG_SHA512:
 		size = TPM2_SHA512_DIGEST_SIZE;
 		name = SMW_HASH_ALGO_NAME_SHA512;
+		algo = SMW_ATTR_HASH_SHA512;
 		break;
 	default:
 		DBG_TRACE("Unknown hash algorithm 0x%04x\n", hash_alg);
@@ -45,6 +50,9 @@ uint32_t map_hash_info(TPMI_ALG_HASH hash_alg, uint16_t *digest_size,
 
 	if (smw_name)
 		*smw_name = name;
+
+	if (smw_algo)
+		*smw_algo = algo;
 
 	rc = TSS2_RC_SUCCESS;
 
@@ -128,7 +136,7 @@ uint32_t calculate_response_hmac(tcti_smw_session_t *session,
 		rp_offset += parameters_size;
 	}
 
-	rc = map_hash_info(session->auth_hash, hmac_size, &hash_name);
+	rc = map_hash_info(session->auth_hash, hmac_size, &hash_name, NULL);
 	if (rc != TSS2_RC_SUCCESS)
 		goto end;
 

@@ -119,17 +119,19 @@ typedef struct {
  * @hash_alg:     TPM2 hash algorithm identifier.
  * @digest_size:  Pointer to store the digest size in bytes (can be NULL).
  * @smw_name:     Pointer to store the SMW hash algorithm name (can be NULL).
+ * @smw_algo:     Pointer to store the SMW hash algorithm attribute (can be NULL).
  *
  * This function maps a TPM2 hash algorithm identifier to its corresponding
- * digest size and SMW hash algorithm name. It supports SHA1, SHA256, SHA384,
- * and SHA512 algorithms. If an unknown algorithm is provided, it defaults
- * to SHA256 and returns an error code.
+ * digest size, SMW hash algorithm name (smw_hash_algo_t), and SMW hash
+ * algorithm attribute (smw_attr_algo_t). It supports SHA1, SHA256, SHA384,
+ * and SHA512 algorithms. If an unknown algorithm is provided, it defaults to
+ * SHA256 and returns an error code.
  *
  * Return:
  * TSS2_RC_SUCCESS on successful mapping, TSS2_TCTI_RC_BAD_VALUE for unknown algorithm.
  */
 uint32_t map_hash_info(TPMI_ALG_HASH hash_alg, uint16_t *digest_size,
-		       smw_hash_algo_t *smw_name);
+		       smw_hash_algo_t *smw_name, smw_attr_algo_t *smw_algo);
 
 /**
  * calculate_response_hmac - Calculate HMAC for TPM2 response authentication

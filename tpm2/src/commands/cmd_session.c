@@ -145,7 +145,7 @@ uint32_t handle_startauthsession(tcti_smw_context_t *ctx, uint16_t tag,
 		goto end;
 
 	/* Prepare the nonce */
-	tss2_rc = map_hash_info(params.auth_hash, &nonce_size, NULL);
+	tss2_rc = map_hash_info(params.auth_hash, &nonce_size, NULL, NULL);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 

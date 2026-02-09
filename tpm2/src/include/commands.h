@@ -304,4 +304,24 @@ uint32_t handle_create(tcti_smw_context_t *ctx, uint16_t tag,
  */
 uint32_t handle_load(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 		     size_t cmd_size);
+
+/**
+ * handle_sign() - Process TPM2_Sign command.
+ * @ctx:      Pointer to the SMW TCTI context structure.
+ * @tag:      TPM structure tag from the command header.
+ * @cmd:      Pointer to the command buffer containing the full TPM command.
+ * @cmd_size: Size of the command buffer in bytes.
+ *
+ * This function handles the TPM2_Sign command which signs a digest using a
+ * loaded signing key. It unmarshals the command parameters including key handle,
+ * digest, signing scheme, and validation ticket. The function validates the key
+ * exists and has signing capabilities, maps the TPM signing scheme to SMW
+ * parameters, calls the SMW sign API to generate the signature, and builds a
+ * response containing the signature in TPM format (TPMT_SIGNATURE).
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful signature generation, or the corresponding error code.
+ */
+uint32_t handle_sign(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
+		     size_t cmd_size);
 #endif /* __COMMANDS_H__ */

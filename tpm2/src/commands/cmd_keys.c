@@ -15,43 +15,6 @@
 #define SMW_PRIVATE_BLOB_MAGIC	   "SMWKEYID"
 #define SMW_PRIVATE_BLOB_MAGIC_LEN 8
 
-static uint32_t map_ecc_curve(TPM2_ECC_CURVE curve, uint32_t *security_size,
-			      uint32_t *public_data_size)
-{
-	TSS2_RC rc = TSS2_RC_SUCCESS;
-
-	if (!security_size || !public_data_size) {
-		DBG_TRACE("Invalid parameters\n");
-		rc = TSS2_TCTI_RC_BAD_REFERENCE;
-		goto end;
-	}
-
-	switch (curve) {
-	case TPM2_ECC_NIST_P224:
-		*security_size = 224;
-		*public_data_size = 56;
-		break;
-	case TPM2_ECC_NIST_P256:
-		*security_size = 256;
-		*public_data_size = 64;
-		break;
-	case TPM2_ECC_NIST_P384:
-		*security_size = 384;
-		*public_data_size = 96;
-		break;
-	case TPM2_ECC_NIST_P521:
-		*security_size = 521;
-		*public_data_size = 132;
-		break;
-	default:
-		DBG_TRACE("Unknown ECC curve: 0x%04x\n", curve);
-		rc = TSS2_TCTI_RC_IO_ERROR;
-	}
-
-end:
-	return rc;
-}
-
 static uint32_t
 configure_smw_key_descriptor(TPMT_PUBLIC *pub,
 			     struct smw_key_descriptor *key_desc,
@@ -74,13 +37,12 @@ configure_smw_key_descriptor(TPMT_PUBLIC *pub,
 		goto end;
 	}
 
-	/* Map TPM2 hash algorithm to SMW hash algorithm */
-	rc = map_hash_info(pub->nameAlg, NULL, NULL, &smw_hash_attr);
-	if (rc != TSS2_RC_SUCCESS) {
-		DBG_TRACE("Failed to map hash algorithm: 0x%04x\n",
-			  pub->nameAlg);
+	/* Extract curve details and configure SMW key descriptor */
+	rc = map_curve_info(pub->parameters.eccDetail.curveID,
+			    &key_desc->security_size,
+			    &key_buffer->gen.public_length, &smw_hash_attr);
+	if (rc != TSS2_RC_SUCCESS)
 		goto end;
-	}
 
 	key_desc->type_name = SMW_KEY_TYPE_NAME_SECP_R1;
 	key_buffer->format_name = SMW_KEY_FORMAT_NAME_NONE;
@@ -112,12 +74,6 @@ configure_smw_key_descriptor(TPMT_PUBLIC *pub,
 		rc = TSS2_TCTI_RC_IO_ERROR;
 		goto end;
 	}
-
-	rc = map_ecc_curve(pub->parameters.eccDetail.curveID,
-			   &key_desc->security_size,
-			   &key_buffer->gen.public_length);
-	if (rc != TSS2_RC_SUCCESS)
-		goto end;
 
 	key_desc->buffer = key_buffer;
 	if (!(attrs & TPMA_OBJECT_STCLEAR) && (attrs & TPMA_OBJECT_FIXEDTPM)) {
@@ -214,7 +170,7 @@ uint32_t handle_createprimary(tcti_smw_context_t *ctx, uint16_t tag,
 	TPMT_PUBLIC *pub = NULL;
 	TPMA_OBJECT attrs = { 0 };
 	TPM2_HANDLE object_handle = 0;
-	unsigned char public_data_buf[TPM2_MAX_ECC_KEY_BYTES] = { 0 };
+	unsigned char public_data_buf[TPM2_MAX_ECC_KEY_BYTES * 2] = { 0 };
 
 	/* Session handling */
 	uint32_t session_handle = 0;
@@ -543,7 +499,7 @@ uint32_t handle_create(tcti_smw_context_t *ctx, uint16_t tag,
 	/* Output parameters */
 	create_output_t output = { 0 };
 	TPMT_PUBLIC *pub = NULL;
-	unsigned char public_data_buf[TPM2_MAX_ECC_KEY_BYTES] = { 0 };
+	unsigned char public_data_buf[TPM2_MAX_ECC_KEY_BYTES * 2] = { 0 };
 
 	/* Session handling */
 	uint32_t session_handle = 0;

@@ -244,4 +244,20 @@ tcti_smw_object_t *find_object_by_handle(tcti_smw_context_t *ctx,
  * (TSS2_TCTI_RC_MEMORY for allocation failures, or converted SMW/TSS2 errors).
  */
 uint32_t calculate_object_name(const TPM2B_PUBLIC *public, TPM2B_NAME *name);
+
+/**
+ * map_curve_info() - Map ECC curve information for TPM to SMW mapping.
+ * @curve:            TPM2 ECC curve identifier
+ * @security_size:    Output parameter for security size in bits (can be NULL)
+ * @public_data_size: Output parameter for public key data size in bytes (can be NULL)
+ * @hash_attr:        Output parameter for SMW hash algorithm attribute (can be NULL)
+ *
+ * Maps TPM2 ECC curve identifiers to their corresponding security sizes,
+ * public key data sizes, and hash algorithm attributes.
+ * Supports NIST P-224, P-256, P-384, and P-521 curves.
+ *
+ * Return: TSS2_RC_SUCCESS on success, error code otherwise
+ */
+uint32_t map_curve_info(TPM2_ECC_CURVE curve, uint32_t *security_size,
+			uint32_t *public_data_size, smw_attr_algo_t *hash_attr);
 #endif /* __CRYPTO_H__ */

@@ -41,11 +41,15 @@ uint32_t smw_object_alloc(tcti_smw_context_t *ctx, uint32_t *handle,
 {
 	TSS2_RC rc = TSS2_RC_SUCCESS;
 	uint8_t i = 0;
+	TPM2_HANDLE h = 0;
 
 	for (; i < SMW_MAX_OBJECTS; i++) {
 		if (!ctx->objects[i].active) {
-			TPM2_HANDLE h =
-				TPM2_TRANSIENT_FIRST + ctx->next_transient_id++;
+			/* Find an unused handle */
+			do {
+				h = TPM2_TRANSIENT_FIRST +
+				    ctx->next_transient_id++;
+			} while (find_object_by_handle(ctx, h));
 
 			ctx->objects[i].active = true;
 			ctx->objects[i].handle = h;
@@ -54,7 +58,6 @@ uint32_t smw_object_alloc(tcti_smw_context_t *ctx, uint32_t *handle,
 			ctx->objects[i].is_persistent =
 				!(attributes & TPMA_OBJECT_STCLEAR) &&
 				(attributes & TPMA_OBJECT_FIXEDTPM);
-			;
 			ctx->objects[i].hierarchy = hierarchy;
 			ctx->objects[i].public_area = *public_area;
 			*handle = h;

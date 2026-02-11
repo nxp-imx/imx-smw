@@ -773,7 +773,21 @@ size_t psa_hash_block_length(psa_algorithm_t alg);
  * recognized, return 0. An implementation can return either 0 or the correct size for a hash
  * algorithm that it recognizes, but does not support.
  */
-#define PSA_HASH_BLOCK_LENGTH(alg) psa_hash_block_length(alg)
+#define PSA_HASH_BLOCK_LENGTH(alg)                                             \
+	(alg == PSA_ALG_MD5	     ? 64u :                                   \
+	 alg == PSA_ALG_RIPEMD160    ? 64u :                                   \
+	 alg == PSA_ALG_SHA_1	     ? 64u :                                   \
+	 alg == PSA_ALG_SHA_224	     ? 64u :                                   \
+	 alg == PSA_ALG_SHA_256	     ? 64u :                                   \
+	 alg == PSA_ALG_SHA_384	     ? 128u :                                  \
+	 alg == PSA_ALG_SHA_512	     ? 128u :                                  \
+	 alg == PSA_ALG_SHA3_224     ? 144u :                                  \
+	 alg == PSA_ALG_SHA3_256     ? 136u :                                  \
+	 alg == PSA_ALG_SHA3_384     ? 104u :                                  \
+	 alg == PSA_ALG_SHA3_512     ? 72u :                                   \
+	 alg == PSA_ALG_SM3	     ? 64u :                                   \
+	 alg == PSA_ALG_SHAKE256_512 ? 136u :                                  \
+				       0u)
 
 size_t psa_hash_length(psa_algorithm_t alg);
 
@@ -791,7 +805,20 @@ size_t psa_hash_length(psa_algorithm_t alg);
  * 0. An implementation can return either 0 or the correct size for a hash algorithm that it
  * recognizes, but does not support.
  */
-#define PSA_HASH_LENGTH(alg) psa_hash_length(alg)
+#define PSA_HASH_LENGTH(alg)                                                   \
+	(alg == PSA_ALG_MD5	     ? 16u :                                   \
+	 alg == PSA_ALG_SHA_1	     ? 20u :                                   \
+	 alg == PSA_ALG_SHA_224	     ? 28u :                                   \
+	 alg == PSA_ALG_SHA_256	     ? 32u :                                   \
+	 alg == PSA_ALG_SHA_384	     ? 48u :                                   \
+	 alg == PSA_ALG_SHA_512	     ? 64u :                                   \
+	 alg == PSA_ALG_SHA3_224     ? 28u :                                   \
+	 alg == PSA_ALG_SHA3_256     ? 32u :                                   \
+	 alg == PSA_ALG_SHA3_384     ? 48u :                                   \
+	 alg == PSA_ALG_SHA3_512     ? 64u :                                   \
+	 alg == PSA_ALG_SM3	     ? 32u :                                   \
+	 alg == PSA_ALG_SHAKE256_512 ? 64u :                                   \
+				       0u)
 
 /**
  * DOC: PSA_HASH_MAX_SIZE

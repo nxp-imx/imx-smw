@@ -79,6 +79,13 @@ configure_smw_key_descriptor(TPMT_PUBLIC *pub,
 	attrs = pub->objectAttributes;
 	if (attrs & TPMA_OBJECT_RESTRICTED) {
 		DBG_TRACE("  - TPMA_OBJECT_RESTRICTED\n");
+		if (curve_hash_attr != SMW_ATTR_HASH_SHA256) {
+			DBG_TRACE("Unsupported ECC DERIVE algorithm,\n"
+				  "only SHA256 is supported\n");
+			rc = TSS2_TCTI_RC_IO_ERROR;
+			goto end;
+		}
+
 		key_desc->attributes.usage_flags |= SMW_ATTR_USAGE_DERIVE;
 		key_desc->attributes.permitted_algo =
 			SMW_ATTR_ALGO_KEY_AGREEMENT(ECDH, SMW_ATTR_ALGO_HKDF,

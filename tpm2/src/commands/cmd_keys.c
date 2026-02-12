@@ -22,7 +22,8 @@ configure_smw_key_descriptor(TPMT_PUBLIC *pub,
 {
 	TSS2_RC rc = TSS2_RC_SUCCESS;
 	uint32_t attrs = 0;
-	smw_attr_algo_t smw_hash_attr = SMW_ATTR_HASH_NONE;
+	smw_attr_algo_t curve_hash_attr = SMW_ATTR_HASH_NONE;
+	smw_attr_algo_t scheme_hash_attr = SMW_ATTR_HASH_NONE;
 
 	if (!pub || !key_desc || !key_buffer) {
 		DBG_TRACE("Invalid parameters\n");
@@ -37,12 +38,39 @@ configure_smw_key_descriptor(TPMT_PUBLIC *pub,
 		goto end;
 	}
 
+	if (pub->parameters.eccDetail.scheme.scheme != TPM2_ALG_NULL &&
+	    pub->parameters.eccDetail.scheme.scheme != TPM2_ALG_ECDSA) {
+		DBG_TRACE("Unsupported scheme: 0x%04x\n",
+			  pub->parameters.eccDetail.scheme.scheme);
+		rc = TSS2_TCTI_RC_IO_ERROR;
+		goto end;
+	}
+
 	/* Extract curve details and configure SMW key descriptor */
 	rc = map_curve_info(pub->parameters.eccDetail.curveID,
 			    &key_desc->security_size,
-			    &key_buffer->gen.public_length, &smw_hash_attr);
+			    &key_buffer->gen.public_length, &curve_hash_attr);
 	if (rc != TSS2_RC_SUCCESS)
 		goto end;
+
+	if (pub->parameters.eccDetail.scheme.scheme == TPM2_ALG_ECDSA) {
+		rc = map_hash_info(/* Without this comment clang-format does not */
+				   /* meet the checkpatch requirement. */
+				   pub->parameters.eccDetail.scheme.details
+					   .ecdsa.hashAlg,
+				   NULL, NULL, &scheme_hash_attr);
+		if (rc != TSS2_RC_SUCCESS)
+			goto end;
+
+		if (curve_hash_attr != scheme_hash_attr) {
+			DBG_TRACE(/* Without this comment clang-format does not */
+				  /* meet the checkpatch requirement. */
+				  "Hash algorithm mismatch: curve=0x%lx, scheme=0x%lx\n",
+				  curve_hash_attr, scheme_hash_attr);
+			rc = TSS2_TCTI_RC_BAD_VALUE;
+			goto end;
+		}
+	}
 
 	key_desc->type_name = SMW_KEY_TYPE_NAME_SECP_R1;
 	key_buffer->format_name = SMW_KEY_FORMAT_NAME_NONE;
@@ -54,7 +82,7 @@ configure_smw_key_descriptor(TPMT_PUBLIC *pub,
 		key_desc->attributes.usage_flags |= SMW_ATTR_USAGE_DERIVE;
 		key_desc->attributes.permitted_algo =
 			SMW_ATTR_ALGO_KEY_AGREEMENT(ECDH, SMW_ATTR_ALGO_HKDF,
-						    smw_hash_attr);
+						    curve_hash_attr);
 	}
 	if (attrs & TPMA_OBJECT_SIGN_ENCRYPT) {
 		DBG_TRACE("  - TPMA_OBJECT_SIGN_ENCRYPT\n");
@@ -67,7 +95,7 @@ configure_smw_key_descriptor(TPMT_PUBLIC *pub,
 								 /* does not meet the */
 								 /* checkpatch requirement. */
 								 SMW_ATTR_CURVE_SECP_R1,
-								 smw_hash_attr);
+								 curve_hash_attr);
 	}
 	if (attrs & TPMA_OBJECT_DECRYPT) {
 		DBG_TRACE("Unsupported ECC key usage (TPMA_OBJECT_DECRYPT)\n");

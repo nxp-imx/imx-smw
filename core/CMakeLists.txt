@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION ${CMAKE_MINIMUM_REQUIRED_VERSION})
 
 project(smw VERSION ${CMAKE_PROJECT_VERSION} LANGUAGES C)
 
+if(POLICY CMP0144)
+  cmake_policy(SET CMP0144 NEW)
+endif()
+
 add_library(${PROJECT_NAME} SHARED "")
 
 include(gcov)

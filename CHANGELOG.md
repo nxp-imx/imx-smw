@@ -75,6 +75,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add Hash multi-part support.
 * Fix `psa_hash_block_length()` return values for SHA-3 family of digests.
 * Fix `PSA_HASH_LENGTH()` and `PSA_HASH_BLOCK_LENGTH()` macros to return compile-time constant values if possible.
+* Initialize the SMW library from `psa_crypto_init()` so that applications won't need to initialize the SMW library separately.
 
 ##### 4. OSAL
 

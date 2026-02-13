@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION ${CMAKE_MINIMUM_REQUIRED_VERSION})
 
 project(smwtest VERSION ${CMAKE_PROJECT_VERSION} LANGUAGES C)
 
+if(POLICY CMP0144)
+  cmake_policy(SET CMP0144 NEW)
+endif()
+
 if(NOT DEFINED JSONC_ROOT)
     message(STATUS "Tests not enabled, JSONC_ROOT not defined")
     return()

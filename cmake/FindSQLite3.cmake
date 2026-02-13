@@ -20,23 +20,23 @@ This will define the following variables:
   name of the libraries without path.
 
 #]=======================================================================]
-if(NOT DEFINED SQLite3_DIR)
-    message("SQLite_DIR not defined")
+if(NOT DEFINED SQLite3_ROOT)
+    message("SQLite_ROOT not defined")
 endif()
 
-if(DEFINED SQLite3_DIR AND NOT IS_ABSOLUTE ${SQLite3_DIR})
-    set(SQLite3_DIR "${CMAKE_SOURCE_DIR}/${SQLite3_DIR}")
+if(DEFINED SQLite3_ROOT AND NOT IS_ABSOLUTE ${SQLite3_ROOT})
+    set(SQLite3_ROOT "${CMAKE_SOURCE_DIR}/${SQLite3_DIR}")
 endif()
 
 # Look for the necessary header
 find_path(SQLite3_INCLUDE_DIR NAMES sqlite3.h
-          PATHS ${SQLite3_DIR}
+          PATHS ${SQLite3_ROOT}
           PATH_SUFFIXES usr/${CMAKE_INSTALL_INCLUDEDIR} ${CMAKE_INSTALL_INCLUDEDIR}
           CMAKE_FIND_ROOT_PATH_BOTH)
 
 # Look for the necessary library
 find_library(SQLite3_LIBRARY NAMES sqlite3 sqlite
-             PATHS ${SQLite3_DIR}
+             PATHS ${SQLite3_ROOT}
              PATH_SUFFIXES usr/${CMAKE_INSTALL_LIBDIR} ${CMAKE_INSTALL_LIBDIR}
              CMAKE_FIND_ROOT_PATH_BOTH)
 
@@ -56,7 +56,9 @@ find_package_handle_standard_args(${CMAKE_FIND_PACKAGE_NAME}
     VERSION_VAR SQLite3_VERSION)
 
 # Create the imported target
-if(SQLite3_FOUND)
+get_property(MAKE_ROLE GLOBAL PROPERTY CMAKE_ROLE)
+
+if(${CMAKE_FIND_PACKAGE_NAME}_FOUND AND NOT ${MAKE_ROLE} STREQUAL "SCRIPT")
   set(SQLite3_INCLUDE_DIRS ${SQLite3_INCLUDE_DIR})
   set(SQLite3_LIBRARIES ${SQLite3_LIBRARY})
   get_filename_component(SQLite3_LIB_NAMES ${SQLite3_LIBRARY} NAME)

@@ -47,11 +47,13 @@ find_path(TA_DEV_KIT_MK_DIR ta_dev_kit.mk
           PATH_SUFFIXES mk)
 find_path(TA_HOST_INCLUDE_DIR tee_api_defines.h
           PATHS ${TA_DEV_KIT_ROOT}
-          PATH_SUFFIXES host_include)
+          PATH_SUFFIXES host_include
+          NO_DEFAULT_PATH)
 
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(${CMAKE_FIND_PACKAGE_NAME} REQUIRED_VARS
-                                  TA_DEV_KIT_INCLUDE_DIR TA_DEV_KIT_MK_DIR)
+                                  TA_DEV_KIT_INCLUDE_DIR TA_DEV_KIT_MK_DIR
+                                  TA_HOST_INCLUDE_DIR)
 
 set(TA_DEV_KIT_DIR ${TA_DEV_KIT_ROOT})
 mark_as_advanced(TA_DEV_KIT_INCLUDE_DIR TA_DEV_KIT_MK_DIR TA_HOST_INCLUDE_DIR)

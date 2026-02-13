@@ -1439,11 +1439,12 @@ __export psa_status_t psa_purge_key(psa_key_id_t key)
 	return PSA_ERROR_NOT_SUPPORTED;
 }
 
-psa_status_t psa_key_agreement(psa_key_id_t private_key,
-			       const uint8_t *peer_key, size_t peer_key_length,
-			       psa_algorithm_t alg,
-			       const psa_key_attributes_t *attributes,
-			       psa_key_id_t *key)
+__export psa_status_t psa_key_agreement(psa_key_id_t private_key,
+					const uint8_t *peer_key,
+					size_t peer_key_length,
+					psa_algorithm_t alg,
+					const psa_key_attributes_t *attributes,
+					psa_key_id_t *key)
 {
 	(void)private_key;
 	(void)peer_key;

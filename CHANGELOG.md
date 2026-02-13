@@ -71,6 +71,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Upgrade ARM PSA Crypto API to version 1.3.2.
 * For AEAD, asymmetric encryption, cipher, MAC and Sign operations, if the user requests the output buffer length by setting the output buffer address to NULL, the input parameters are ignored, except the input buffer length if it is used to compute the output buffer length.
 * Add Hash multi-part support.
+* Fix `psa_hash_block_length()` return values for SHA-3 family of digests.
+* Fix `PSA_HASH_LENGTH()` and `PSA_HASH_BLOCK_LENGTH()` macros to return compile-time constant values if possible.
 
 ##### 4. OSAL
 
@@ -133,6 +135,11 @@ The failure is due to the storage manager which is already loaded and a new inst
 * As some subsystems are not handling key usage and permitted algorithm, the
   find operation is not able to find all keys whose template defines key usage
   and permitted algorithm.
+
+##### 5. ARM PSA APIs
+
+* The macros `PSA_HASH_BLOCK_LENGTH` and `PSA_HASH_LENGTH` are implemented as
+  function calls and do not return a compile-time constant as specified by PSA.
 
 #### SMW Library
 ##### 1. SMW APIs
@@ -207,6 +214,11 @@ The failure is due to the storage manager which is already loaded and a new inst
 * As some subsystems are not handling key usage and permitted algorithm, the
   find operation is not able to find all keys whose template defines key usage
   and permitted algorithm.
+
+##### 5. ARM PSA APIs
+
+* The macros `PSA_HASH_BLOCK_LENGTH` and `PSA_HASH_LENGTH` are implemented as
+  function calls and do not return a compile-time constant as specified by PSA.
 
 #### SMW Library
 ##### 1. SMW APIs
@@ -345,6 +357,11 @@ The failure is due to the storage manager which is already loaded and a new inst
   find operation is not able to find all keys whose template defines key usage
   and permitted algorithm.
 
+##### 5. ARM PSA APIs
+
+* The macros `PSA_HASH_BLOCK_LENGTH` and `PSA_HASH_LENGTH` are implemented as
+  function calls and do not return a compile-time constant as specified by PSA.
+
 ##### 5. OSAL
 
  * OSAL's Linux SQLite database compatibility with previous version 5.0 is broken.
@@ -474,9 +491,11 @@ If the user repeat these kinds of operations several times, the TEE subsystem wi
   and permitted algorithm.
 * Twisted Edwads curve name is set to "ed25519" instead of "edwards25519" as describe in [rfc7748](https://datatracker.ietf.org/doc/html/rfc7748#section-4.1)
 
-##### 3. ARM PSA APIs
+##### 4. ARM PSA APIs
 
 * RSA key cannot be generated using ELE subsystem if permitted algorithm is an asymmetric encryption algorithm.
+* The macros `PSA_HASH_BLOCK_LENGTH` and `PSA_HASH_LENGTH` are implemented as
+  function calls and do not return a compile-time constant as specified by PSA.
 
 #### SMW Library
 ##### 1. SMW APIs
@@ -663,6 +682,11 @@ The failure is due to the storage manager which is already loaded and a new inst
   find operation is not able to find all keys whose template defines key usage
   and permitted algorithm.
 
+##### 4. ARM PSA APIs
+
+* The macros `PSA_HASH_BLOCK_LENGTH` and `PSA_HASH_LENGTH` are implemented as
+  function calls and do not return a compile-time constant as specified by PSA.
+
 #### SMW Library - _version 4.2_
 ##### 1. SMW APIs
 
@@ -762,6 +786,11 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Device manager returns `SMW_STATUS_INVALID_VERSION` instead of `SMW_STATUS_VERSION_NOT_SUPPORTED` if the arguments version is not supported in case of reprovisioning.
 
+##### 4. ARM PSA APIs
+
+* The macros `PSA_HASH_BLOCK_LENGTH` and `PSA_HASH_LENGTH` are implemented as
+  function calls and do not return a compile-time constant as specified by PSA.
+
 #### SMW Library - _version 4.1_
 ##### 1. SMW APIs
 
@@ -857,6 +886,11 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 3. OSAL
 
 * Cannot create the SMW datbase if the user specifies a directory that does not exist in the file system.
+
+##### 4. ARM PSA APIs
+
+* The macros `PSA_HASH_BLOCK_LENGTH` and `PSA_HASH_LENGTH` are implemented as
+  function calls and do not return a compile-time constant as specified by PSA.
 
 #### SMW Library - _version 4.0_
 ##### 1. SMW APIs

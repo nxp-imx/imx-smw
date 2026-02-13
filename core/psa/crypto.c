@@ -7,6 +7,7 @@
 #include "smw_keymgr.h"
 #include "smw_crypto.h"
 #include "smw_keymgr.h"
+#include "smw_osal.h"
 
 #include "psa/crypto.h"
 
@@ -1095,9 +1096,15 @@ __export psa_status_t psa_cipher_update(psa_cipher_operation_t *operation,
 
 __export psa_status_t psa_crypto_init(void)
 {
+	enum smw_status_code status = SMW_STATUS_OK;
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!smw_utils_is_lib_initialized())
+	if (smw_utils_is_lib_initialized())
+		return PSA_SUCCESS;
+
+	status = smw_osal_lib_init();
+	if (status != SMW_STATUS_OK)
 		return PSA_ERROR_GENERIC_ERROR;
 
 	return PSA_SUCCESS;

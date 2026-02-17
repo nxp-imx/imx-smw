@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2019-2025 NXP
+ * Copyright 2019-2026 NXP
  */
 
 #ifndef __UTILS_H__
@@ -12,7 +12,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
+#ifndef __ZEPHYR__
 #include <byteswap.h>
+#endif
 
 #include "builtin_macros.h"
 

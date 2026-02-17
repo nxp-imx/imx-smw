@@ -8,6 +8,9 @@
 
 #include <stdint.h>
 
+#undef typeof
+#define typeof __typeof__
+
 /**
  * typedef smw_attr_algo_t - Algorithm parameters
  *

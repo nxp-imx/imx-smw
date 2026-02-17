@@ -15,71 +15,109 @@
 #define SMW_PRIVATE_BLOB_MAGIC	   "SMWKEYID"
 #define SMW_PRIVATE_BLOB_MAGIC_LEN 8
 
-static uint32_t
-configure_smw_key_descriptor(TPMT_PUBLIC *pub,
-			     struct smw_key_descriptor *key_desc,
-			     struct smw_keypair_buffer *key_buffer)
+static uint32_t configure_hmac_key(TPMT_PUBLIC *pub, uint32_t attrs,
+				   struct smw_key_descriptor *key_desc)
 {
 	TSS2_RC rc = TSS2_RC_SUCCESS;
-	uint32_t attrs = 0;
-	smw_attr_algo_t curve_hash_attr = SMW_ATTR_HASH_NONE;
-	smw_attr_algo_t scheme_hash_attr = SMW_ATTR_HASH_NONE;
+	uint16_t key_size_bytes = 0;
+	smw_attr_algo_t keyed_hash_attr = SMW_ATTR_HASH_NONE;
+	TPMS_KEYEDHASH_PARMS *params = &pub->parameters.keyedHashDetail;
 
-	if (!pub || !key_desc || !key_buffer) {
-		DBG_TRACE("Invalid parameters\n");
-		rc = TSS2_TCTI_RC_BAD_REFERENCE;
-		goto end;
-	}
-
-	/* Verify that only ECC keys are supported */
-	if (pub->type != TPM2_ALG_ECC) {
-		DBG_TRACE("Unsupported key type: 0x%04x\n", pub->type);
+	/* Verify HMAC scheme */
+	if (params->scheme.scheme != TPM2_ALG_HMAC) {
+		DBG_TRACE("Unsupported keyedHash scheme: 0x%04x\n",
+			  params->scheme.scheme);
 		rc = TSS2_TCTI_RC_IO_ERROR;
 		goto end;
 	}
 
-	if (pub->parameters.eccDetail.scheme.scheme != TPM2_ALG_NULL &&
-	    pub->parameters.eccDetail.scheme.scheme != TPM2_ALG_ECDSA) {
-		DBG_TRACE("Unsupported scheme: 0x%04x\n",
-			  pub->parameters.eccDetail.scheme.scheme);
+	/* Map TPM2 hash algorithm to SMW hash algorithm */
+	rc = map_hash_info(params->scheme.details.hmac.hashAlg, &key_size_bytes,
+			   NULL, &keyed_hash_attr);
+	if (rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to map hash algorithm: 0x%04x\n",
+			  params->scheme.details.hmac.hashAlg);
+		goto end;
+	}
+
+	/* Configure SMW key descriptor for HMAC */
+	key_desc->type_name = SMW_KEY_TYPE_NAME_HMAC;
+	key_desc->security_size = BYTES_TO_BITS(key_size_bytes);
+
+	/* Configure usage flags and permitted algorithms based on key attributes */
+	if (attrs & TPMA_OBJECT_SIGN_ENCRYPT) {
+		DBG_TRACE("  - TPMA_OBJECT_SIGN_ENCRYPT (HMAC sign)\n");
+		key_desc->attributes.usage_flags |=
+			(SMW_ATTR_USAGE_SIGN_MESSAGE |
+			 SMW_ATTR_USAGE_VERIFY_MESSAGE);
+	}
+
+	if (attrs & TPMA_OBJECT_DECRYPT) {
+		DBG_TRACE("Unsupported HMAC key usage (TPMA_OBJECT_DECRYPT)\n");
+		rc = TSS2_TCTI_RC_IO_ERROR;
+		goto end;
+	}
+
+	key_desc->attributes.permitted_algo =
+		SMW_ATTR_ALGO_MAC_HMAC(keyed_hash_attr, 0);
+
+	DBG_TRACE("HMAC key configured: size=%u bits, hash_alg=0x%04x\n",
+		  key_desc->security_size, params->scheme.details.hmac.hashAlg);
+
+end:
+	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
+	return rc;
+}
+
+static uint32_t configure_ecc_key(TPMT_PUBLIC *pub, uint32_t attrs,
+				  struct smw_key_descriptor *key_desc)
+{
+	TSS2_RC rc = TSS2_RC_SUCCESS;
+	smw_attr_algo_t hash_attr = SMW_ATTR_HASH_NONE;
+	smw_attr_algo_t scheme_hash_attr = SMW_ATTR_HASH_NONE;
+	smw_attr_algo_t curve_secp_r1 = SMW_ATTR_CURVE_SECP_R1;
+	TPMS_ECC_PARMS *params = &pub->parameters.eccDetail;
+
+	if (!key_desc->buffer) {
+		rc = TSS2_TCTI_RC_BAD_REFERENCE;
+		goto end;
+	}
+
+	if (params->scheme.scheme != TPM2_ALG_NULL &&
+	    params->scheme.scheme != TPM2_ALG_ECDSA) {
+		DBG_TRACE("Unsupported ECC scheme: 0x%04x\n",
+			  params->scheme.scheme);
 		rc = TSS2_TCTI_RC_IO_ERROR;
 		goto end;
 	}
 
 	/* Extract curve details and configure SMW key descriptor */
-	rc = map_curve_info(pub->parameters.eccDetail.curveID,
-			    &key_desc->security_size,
-			    &key_buffer->gen.public_length, &curve_hash_attr);
+	rc = map_curve_info(params->curveID, &key_desc->security_size,
+			    &key_desc->buffer->gen.public_length, &hash_attr);
 	if (rc != TSS2_RC_SUCCESS)
 		goto end;
 
-	if (pub->parameters.eccDetail.scheme.scheme == TPM2_ALG_ECDSA) {
-		rc = map_hash_info(/* Without this comment clang-format does not */
-				   /* meet the checkpatch requirement. */
-				   pub->parameters.eccDetail.scheme.details
-					   .ecdsa.hashAlg,
-				   NULL, NULL, &scheme_hash_attr);
+	if (params->scheme.scheme == TPM2_ALG_ECDSA) {
+		rc = map_hash_info(params->scheme.details.ecdsa.hashAlg, NULL,
+				   NULL, &scheme_hash_attr);
 		if (rc != TSS2_RC_SUCCESS)
 			goto end;
 
-		if (curve_hash_attr != scheme_hash_attr) {
-			DBG_TRACE(/* Without this comment clang-format does not */
-				  /* meet the checkpatch requirement. */
-				  "Hash algorithm mismatch: curve=0x%lx, scheme=0x%lx\n",
-				  curve_hash_attr, scheme_hash_attr);
+		if (hash_attr != scheme_hash_attr) {
+			DBG_TRACE("Hash algorithm mismatch: curve=0x%lx,\n"
+				  "scheme=0x%lx\n",
+				  hash_attr, scheme_hash_attr);
 			rc = TSS2_TCTI_RC_BAD_VALUE;
 			goto end;
 		}
 	}
 
 	key_desc->type_name = SMW_KEY_TYPE_NAME_SECP_R1;
-	key_buffer->format_name = SMW_KEY_FORMAT_NAME_NONE;
 
 	/* Configure usage flags and permitted algorithms based on key attributes */
-	attrs = pub->objectAttributes;
 	if (attrs & TPMA_OBJECT_RESTRICTED) {
 		DBG_TRACE("  - TPMA_OBJECT_RESTRICTED\n");
-		if (curve_hash_attr != SMW_ATTR_HASH_SHA256) {
+		if (hash_attr != SMW_ATTR_HASH_SHA256) {
 			DBG_TRACE("Unsupported ECC DERIVE algorithm,\n"
 				  "only SHA256 is supported\n");
 			rc = TSS2_TCTI_RC_IO_ERROR;
@@ -89,42 +127,78 @@ configure_smw_key_descriptor(TPMT_PUBLIC *pub,
 		key_desc->attributes.usage_flags |= SMW_ATTR_USAGE_DERIVE;
 		key_desc->attributes.permitted_algo =
 			SMW_ATTR_ALGO_KEY_AGREEMENT(ECDH, SMW_ATTR_ALGO_HKDF,
-						    curve_hash_attr);
+						    hash_attr);
 	}
+
 	if (attrs & TPMA_OBJECT_SIGN_ENCRYPT) {
 		DBG_TRACE("  - TPMA_OBJECT_SIGN_ENCRYPT\n");
 		key_desc->attributes.usage_flags |=
 			(SMW_ATTR_USAGE_SIGN_HASH |
 			 SMW_ATTR_USAGE_SIGN_MESSAGE);
 		key_desc->attributes.permitted_algo =
-			SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(/* Without this comment */
-								 /* clang-format */
-								 /* does not meet the */
-								 /* checkpatch requirement. */
-								 SMW_ATTR_CURVE_SECP_R1,
-								 curve_hash_attr);
+			SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(curve_secp_r1,
+								 hash_attr);
 	}
+
 	if (attrs & TPMA_OBJECT_DECRYPT) {
 		DBG_TRACE("Unsupported ECC key usage (TPMA_OBJECT_DECRYPT)\n");
 		rc = TSS2_TCTI_RC_IO_ERROR;
 		goto end;
 	}
 
-	key_desc->buffer = key_buffer;
-	if (!(attrs & TPMA_OBJECT_STCLEAR) && (attrs & TPMA_OBJECT_FIXEDTPM)) {
-		key_desc->attributes.attributes =
-			SMW_ATTR_SET_PERSISTENCE(/*Without this comment clang-format*/
-						 /*does not meet the checkpatch requirement. */
-						 0,
-						 SMW_ATTR_PERSISTENCE_PERSISTENT);
-	} else {
-		DBG_TRACE("Key cannot be persistent ");
-		DBG_TRACE("because of attributes given\n");
+	DBG_TRACE("ECC key configured: size=%u bits, curve_id=0x%04x\n",
+		  key_desc->security_size, params->curveID);
+
+end:
+	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
+	return rc;
+}
+
+static uint32_t
+configure_smw_key_descriptor(TPMT_PUBLIC *pub,
+			     struct smw_key_descriptor *key_desc,
+			     struct smw_keypair_buffer *key_buffer)
+{
+	TSS2_RC rc = TSS2_RC_SUCCESS;
+	uint32_t attrs = 0;
+	smw_attr_algo_t persistent = SMW_ATTR_PERSISTENCE_PERSISTENT;
+
+	if (!pub || !key_desc || !key_buffer) {
+		DBG_TRACE("Invalid parameters\n");
 		rc = TSS2_TCTI_RC_BAD_REFERENCE;
+		goto end;
 	}
 
-	DBG_TRACE("ECC key configure success: size=%u bits\n",
-		  key_desc->security_size);
+	attrs = pub->objectAttributes;
+
+	/* Check persistence requirements first */
+	if (!(attrs & TPMA_OBJECT_STCLEAR) && (attrs & TPMA_OBJECT_FIXEDTPM)) {
+		key_desc->attributes.attributes =
+			SMW_ATTR_SET_PERSISTENCE(0, persistent);
+	} else {
+		DBG_TRACE("Key cannot be persistent\n"
+			  "because of attributes given\n");
+		rc = TSS2_TCTI_RC_BAD_REFERENCE;
+		goto end;
+	}
+
+	key_desc->buffer = key_buffer;
+
+	/* Handle different key types */
+	switch (pub->type) {
+	case TPM2_ALG_KEYEDHASH:
+		rc = configure_hmac_key(pub, attrs, key_desc);
+		break;
+
+	case TPM2_ALG_ECC:
+		rc = configure_ecc_key(pub, attrs, key_desc);
+		break;
+
+	default:
+		DBG_TRACE("Unsupported key type: 0x%04x\n", pub->type);
+		rc = TSS2_TCTI_RC_IO_ERROR;
+		goto end;
+	}
 
 end:
 	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
@@ -256,7 +330,9 @@ uint32_t handle_createprimary(tcti_smw_context_t *ctx, uint16_t tag,
 	pub = &input.in_public.publicArea;
 	attrs = pub->objectAttributes;
 
-	key_buffer.gen.public_data = public_data_buf;
+	if (pub->type == TPM2_ALG_ECC)
+		key_buffer.gen.public_data = public_data_buf;
+
 	tss2_rc = configure_smw_key_descriptor(pub, &key_desc, &key_buffer);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
@@ -308,14 +384,10 @@ uint32_t handle_createprimary(tcti_smw_context_t *ctx, uint16_t tag,
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
-	tss2_rc =
-		Tss2_MU_TPM2B_CREATION_DATA_Marshal(/* Without this comment */
-						    /*clang-format does not meet the checkpatch */
-						    /* requirement. */
-						    &output.creation_data,
-						    params_marshal_scratch,
-						    TPM2_MAX_CAP_BUFFER,
-						    &marshaled_param_size);
+	tss2_rc = Tss2_MU_TPM2B_CREATION_DATA_Marshal(&output.creation_data,
+						      params_marshal_scratch,
+						      TPM2_MAX_CAP_BUFFER,
+						      &marshaled_param_size);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
@@ -578,7 +650,9 @@ uint32_t handle_create(tcti_smw_context_t *ctx, uint16_t tag,
 	/* 3. Validate key type and prepare SMW structures */
 	pub = &input.in_public.publicArea;
 
-	key_buffer.gen.public_data = public_data_buf;
+	if (pub->type == TPM2_ALG_ECC)
+		key_buffer.gen.public_data = public_data_buf;
+
 	tss2_rc = configure_smw_key_descriptor(pub, &key_desc, &key_buffer);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
@@ -639,14 +713,10 @@ uint32_t handle_create(tcti_smw_context_t *ctx, uint16_t tag,
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
-	tss2_rc =
-		Tss2_MU_TPM2B_CREATION_DATA_Marshal(/* Without this comment */
-						    /*clang-format does not meet the checkpatch */
-						    /* requirement. */
-						    &output.creation_data,
-						    params_marshal_scratch,
-						    TPM2_MAX_CAP_BUFFER,
-						    &marshaled_param_size);
+	tss2_rc = Tss2_MU_TPM2B_CREATION_DATA_Marshal(&output.creation_data,
+						      params_marshal_scratch,
+						      TPM2_MAX_CAP_BUFFER,
+						      &marshaled_param_size);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
@@ -776,7 +846,7 @@ uint32_t handle_load(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 	/* 4. Validate key type from public area */
 	pub = &input.in_public.publicArea;
 
-	if (pub->type != TPM2_ALG_ECC) {
+	if (pub->type != TPM2_ALG_ECC && pub->type != TPM2_ALG_KEYEDHASH) {
 		DBG_TRACE("Unsupported key type: 0x%04x\n", pub->type);
 		tss2_rc = TSS2_TCTI_RC_IO_ERROR;
 		goto end;

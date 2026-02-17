@@ -369,9 +369,8 @@ enum smw_status_code smw_cipher(struct smw_cipher_args *args)
 
 end:
 	/* Free keys descriptor allocated in convert_init_args() */
-	if (cipher_args.keys_desc)
-		smw_keymgr_free_keys_ptr_array(cipher_args.keys_desc,
-					       cipher_args.nb_keys);
+	smw_keymgr_free_keys_ptr_array(cipher_args.keys_desc,
+				       cipher_args.nb_keys);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -418,9 +417,7 @@ enum smw_status_code smw_cipher_init(struct smw_cipher_init_args *args)
 
 end:
 	/* Free keys descriptor allocated in convert_init_args() */
-	if (init_args.keys_desc)
-		smw_keymgr_free_keys_ptr_array(init_args.keys_desc,
-					       init_args.nb_keys);
+	smw_keymgr_free_keys_ptr_array(init_args.keys_desc, init_args.nb_keys);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

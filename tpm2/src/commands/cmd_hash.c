@@ -122,7 +122,7 @@ uint32_t handle_hmac(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 {
 	TPM2_RC rc = TPM2_RC_SUCCESS;
 	TSS2_RC tss2_rc = TSS2_TCTI_RC_GENERAL_FAILURE;
-	uint32_t handle = 0, session_handle = 0, auth_size = 0;
+	uint32_t object_handle = 0, session_handle = 0, auth_size = 0;
 	uint16_t nonce_caller_size = 0, hmac_size = 0, response_hmac_size = 0;
 	uint16_t total_resp_size = 0;
 	size_t offset = TPM_HEADER_SIZE, auth_start = 0, resp_params_size = 0,
@@ -136,20 +136,33 @@ uint32_t handle_hmac(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 	uint8_t *params_buffer = NULL;
 	TPM2B_MAX_BUFFER data = { 0 };
 	TPM2B_DIGEST hmac_result = { 0 };
-	TPMT_TK_HASHCHECK validation = { 0 };
 	TPMI_ALG_HASH hmac_hash_alg = TPM2_ALG_ERROR;
 	struct smw_mac_args mac_args = { 0 };
 	struct smw_key_descriptor key_desc = { 0 };
-	struct smw_keypair_buffer key_buf = { 0 };
-	struct smw_key_attributes *attrs = &key_desc.attributes;
 	enum smw_status_code smw_status = SMW_STATUS_OK;
 	tcti_smw_session_t *sess = NULL;
 	smw_hash_algo_t smw_hash_name = SMW_HASH_ALGO_NAME_NONE;
 
-	/* 1. UNMARSHAL COMMAND (inputs) */
-	tss2_rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset, &handle);
+	tcti_smw_object_t *obj = NULL;
+
+	/* 1. Check initialization */
+	if (!ctx->initialized) {
+		tss2_rc = TSS2_TCTI_RC_BAD_SEQUENCE;
+		goto end;
+	}
+
+	/* 2. Unmarshal command (inputs) */
+	tss2_rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset,
+					   &object_handle);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
+
+	obj = find_object_by_handle(ctx, object_handle);
+	if (!obj) {
+		DBG_TRACE("Object handle 0x%08x not found\n", object_handle);
+		tss2_rc = TSS2_TCTI_RC_IO_ERROR;
+		goto end;
+	}
 
 	tss2_rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset, &auth_size);
 	if (tss2_rc != TSS2_RC_SUCCESS)
@@ -214,24 +227,7 @@ uint32_t handle_hmac(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
-	key_buf.format_name = SMW_KEY_FORMAT_NAME_NONE;
-
-	/*
-	 * Here using empty key instead of object one, related to the handle
-	 * because create function are not yet implemented
-	 */
-	key_buf.gen.private_data = sess->session_key;
-	key_buf.gen.private_length = sess->session_key_size;
-
-	key_desc.type_name = SMW_KEY_TYPE_NAME_HMAC;
-	key_desc.security_size = BYTES_TO_BITS(hmac_size);
-	key_desc.buffer = &key_buf;
-
-	attrs->usage_flags =
-		SMW_ATTR_USAGE_SIGN_MESSAGE | SMW_ATTR_USAGE_VERIFY_MESSAGE;
-	attrs->permitted_algo = SMW_ATTR_ALGO_HMAC;
-	attrs->attributes =
-		SMW_ATTR_SET_PERSISTENCE(0, SMW_ATTR_PERSISTENCE_TRANSIENT);
+	key_desc.id = obj->smw_key_id;
 
 	mac_args.algo_name = SMW_MAC_ALGO_NAME_HMAC;
 	mac_args.hash_name = smw_hash_name;
@@ -253,19 +249,9 @@ uint32_t handle_hmac(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 
 	DBG_TRACE("HMAC computed successfully\n");
 
-	/* 5. Prepare validation ticket (required by TPM2 spec) */
-	validation.tag = TPM2_ST_HASHCHECK;
-	validation.hierarchy = TPM2_RH_NULL;
-	validation.digest.size = 0; /* No ticket digest for HMAC */
-
 	/* 6. Compute response size */
 	tss2_rc = Tss2_MU_TPM2B_DIGEST_Marshal(&hmac_result, NULL, 0,
 					       &resp_params_size);
-	if (tss2_rc != TSS2_RC_SUCCESS)
-		goto end;
-
-	tss2_rc = Tss2_MU_TPMT_TK_HASHCHECK_Marshal(&validation, NULL, 0,
-						    &ticket_size);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
@@ -273,22 +259,15 @@ uint32_t handle_hmac(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 	params_buffer_size = resp_params_size + ticket_size;
 
 	params_buffer = malloc(params_buffer_size);
-
 	if (!params_buffer) {
 		tss2_rc = TSS2_TCTI_RC_MEMORY;
 		goto end;
 	}
 
-	/* Marshal HMAC result + validation ticket */
+	/* Marshal HMAC result */
 	tss2_rc = Tss2_MU_TPM2B_DIGEST_Marshal(&hmac_result, params_buffer,
 					       params_buffer_size,
 					       &params_offset);
-	if (tss2_rc != TSS2_RC_SUCCESS)
-		goto end;
-
-	tss2_rc = Tss2_MU_TPMT_TK_HASHCHECK_Marshal(&validation, params_buffer,
-						    params_buffer_size,
-						    &params_offset);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 

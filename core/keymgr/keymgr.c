@@ -1074,12 +1074,14 @@ void smw_keymgr_free_keys_ptr_array(struct smw_keymgr_descriptor **keys_desc,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	for (; i < nb_keys; i++) {
-		if (keys_desc[i])
-			SMW_UTILS_FREE(keys_desc[i]);
-	}
+	if (keys_desc) {
+		for (; i < nb_keys; i++) {
+			if (keys_desc[i])
+				SMW_UTILS_FREE(keys_desc[i]);
+		}
 
-	SMW_UTILS_FREE(keys_desc);
+		SMW_UTILS_FREE(keys_desc);
+	}
 }
 
 inline unsigned int

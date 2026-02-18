@@ -152,6 +152,8 @@ tpm2_readpublic -c primary_ecdh.ctx
 ```
 
 ## Create Key object
+
+### Create ECC Key object
 Creates an ECC (NIST P-256) key object. Use the create command:
 ```sh
 tpm2_create -C primary_ecdsa.ctx -G ecc256 \
@@ -162,6 +164,21 @@ tpm2_create -C primary_ecdsa.ctx -G ecc256 \
 **Parameters**:
 - `-C primary_ecdsa.ctx`: Parent key context
 - `-G ecc256`: Key type: ECC NIST P-256
+- `-a`: Key attributes (sign, fixed TPM, fixed parent, sensitive data origin)
+- `-u signing_key.pub`: Output file for the public key
+- `-r signing_key.priv`: Output file for the private key blob
+
+### Create HMAC Key object
+Creates a SHA384 HMAC key object. Use the create command:
+```sh
+tpm2_create -C primary_ecdsa.ctx -G hmac:sha384 \
+  -a "fixedtpm|fixedparent|sensitivedataorigin|userwithauth|sign" \
+  -u signing_key.pub -r signing_key.priv \
+```
+
+**Parameters**:
+- `-C primary_ecdsa.ctx`: Parent key context
+- `-G hmac:sha384`: Key type: HMAC, sha384, using only hmac will use default hash alg (sha256)
 - `-a`: Key attributes (sign, fixed TPM, fixed parent, sensitive data origin)
 - `-u signing_key.pub`: Output file for the public key
 - `-r signing_key.priv`: Output file for the private key blob
@@ -248,6 +265,20 @@ tpm2_verifysignature -c signing_key.ctx -s signature.tss -d message.hash
 - `-s signature.tss`: Input file containing the signature to verify (in TSS format)
 - `-d message.hash`: Input file containing the pre-computed digest (message hash)
 
+## HMAC
+Computes an HMAC over an input message using a previously created and loaded KeyedHash
+object configured for signing operations. The resulting HMAC digest is written to an
+output file. Use the hmac command:
+```sh
+tpm2_hmac -c hmac.ctx -g sha256 -o message.hmac message.txt
+```
+
+**Parameters**:
+- `-c hmac.ctx`: Context of the loaded KeyedHash object
+- `-g sha256`: Hash algorithm to use for computing the HMAC
+- `-o message.hmac`: Output file in which the resulting HMAC digest is written (in binary format)
+- `message.txt`: Input file over which the HMAC is computed
+
 # TPM2 Commands Supported
 
 Following table lists TPM2 Commands implemented in the SMW's TSS2 TCTI library.
@@ -269,3 +300,4 @@ Following table lists TPM2 Commands implemented in the SMW's TSS2 TCTI library.
 | `TPM2_Load`             |
 | `TPM2_Sign`             |
 | `TPM2_VerifySignature`  |
+| `TPM2_HMAC`             |

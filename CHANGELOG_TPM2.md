@@ -25,6 +25,7 @@ The ELE Secure Enclave has the following limitations when used with TPM2:
     - TPM2_CC_Sign, TPM2_CC_VerifySignature
 * Improvement of the following TPM2 commands:
     - TPM2_CC_GetCapability
+    - TPM2_CC_HMAC (the command is no longer mocked)
 * Set the signature flag indicating input message is hashed for TPM2_Sign and TPM2_VerifySignature commands.
 
 ---

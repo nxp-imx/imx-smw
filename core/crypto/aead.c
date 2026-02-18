@@ -256,7 +256,6 @@ static int get_tag_buffer(struct smw_crypto_aead_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 
-	unsigned int input_length = 0;
 	unsigned int tag_length = 0;
 	unsigned int output_length = 0;
 	unsigned int tag_index = 0;
@@ -294,12 +293,12 @@ static int get_tag_buffer(struct smw_crypto_aead_args *args)
 		return status;
 
 	tag_length = smw_crypto_get_aead_tag_len(args);
+	tag_index = smw_crypto_get_aead_input_len(args);
 
 	if (args->op_type_id == SMW_CONFIG_AEAD_OP_TYPE_ID_ENCRYPT) {
 		output_length = smw_crypto_get_aead_output_len(args);
-		tag_index = output_length;
 
-		if (!DEC_OVERFLOW(tag_index, tag_length)) {
+		if (!DEC_OVERFLOW(output_length, tag_length)) {
 			if (final->data->output) {
 				args->tag = &final->data->output[tag_index];
 				status = SMW_STATUS_OK;
@@ -309,9 +308,6 @@ static int get_tag_buffer(struct smw_crypto_aead_args *args)
 		}
 
 	} else if (args->op_type_id == SMW_CONFIG_AEAD_OP_TYPE_ID_DECRYPT) {
-		input_length = smw_crypto_get_aead_input_len(args);
-		tag_index = input_length;
-
 		if (!DEC_OVERFLOW(tag_index, tag_length)) {
 			if (final->data->input) {
 				args->tag = &final->data->input[tag_index];

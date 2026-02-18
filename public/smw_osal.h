@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2025 NXP
+ * Copyright 2021-2026 NXP
  */
 
 #ifndef __SMW_OSAL_H__
@@ -136,6 +136,13 @@ smw_subsystem_t smw_osal_latest_subsystem_name(void);
  * a library instance.
  * It loads the subsystem configuration set in the linux environment
  * variable SMW_CONFIG_FILE.
+ *
+ * .. note::
+ *	This function is not thread-safe. Other initialization functions
+ *	from the PSA or PKCS#11 APIs can call this function directly or
+ *	indirectly. When using those APIs, prefer using only those methods of
+ *	initialization, e.g. psa_crypto_init() or C_Initialize() respectively.
+ *	This function should only be called when using the SMW APIs.
  *
  * Return:
  * SMW_STATUS_OK                   - Library initialization success

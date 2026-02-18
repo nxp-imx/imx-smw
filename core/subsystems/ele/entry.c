@@ -252,14 +252,14 @@ static int load(void)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = open_session(&hdl->session);
-	if (status != SMW_STATUS_OK)
-		goto end;
-
 	if (smw_utils_mutex_init(&hdl->key_store_mutex)) {
 		status = SMW_STATUS_MUTEX_INIT_FAILURE;
 		goto end;
 	}
+
+	status = open_session(&hdl->session);
+	if (status != SMW_STATUS_OK)
+		goto end;
 
 	smw_utils_list_init(&ele_ctx.key_grp_list);
 

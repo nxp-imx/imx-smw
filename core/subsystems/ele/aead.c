@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2025 NXP
+ * Copyright 2023-2026 NXP
  */
 
 #include "smw_status.h"
@@ -306,14 +306,19 @@ static int get_output_data_len(struct smw_crypto_aead_args *args,
 			       unsigned int *output_data_length)
 {
 	int status = SMW_STATUS_OK;
+	unsigned int input_data_length = 0;
 
 	*output_data_length = smw_crypto_get_aead_output_len(args);
+	input_data_length = smw_crypto_get_aead_input_len(args);
 
 	if (args->op_type_id == SMW_CONFIG_AEAD_OP_TYPE_ID_ENCRYPT) {
 		if (!smw_crypto_is_aead_tag_field_set(args)) {
 			if (DEC_OVERFLOW(*output_data_length,
 					 smw_crypto_get_aead_tag_len(args)))
 				status = SMW_STATUS_OUTPUT_TOO_SHORT;
+
+			if (*output_data_length > input_data_length)
+				*output_data_length = input_data_length;
 		}
 	}
 

@@ -205,6 +205,7 @@ uint32_t handle_sign(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 	sign_args.sign_algo =
 		SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(SMW_ATTR_CURVE_SECP_R1,
 							 smw_hash_attr);
+	sign_args.sign_algo = SMW_ATTR_SET_MSG_HASHED(sign_args.sign_algo);
 	sign_args.message = input.digest.buffer;
 	sign_args.message_length = input.digest.size;
 	sign_args.signature = signature_buffer;

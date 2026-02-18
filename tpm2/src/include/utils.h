@@ -240,4 +240,25 @@ uint32_t sign_unmarshal(const uint8_t *cmd, size_t cmd_size,
  */
 uint32_t verifysignature_unmarshal(const uint8_t *cmd, size_t cmd_size,
 				   verifysignature_input_t *input);
+
+/**
+ * unmarshal_auth_area() - Unmarshal TPM command authorization area.
+ * @cmd:            Pointer to the command buffer.
+ * @cmd_size:       Size of the command buffer in bytes.
+ * @offset:         Pointer to the current offset in the buffer (updated on success).
+ * @nonce_caller:   Pointer to store the unmarshaled caller nonce.
+ * @session_handle: Pointer to store the unmarshaled session handle.
+ *
+ * This function extracts the authorization area from a TPM command buffer.
+ * It unmarshals the authorization size, session handle, and caller nonce,
+ * then advances the offset to the end of the authorization area. The function
+ * validates that an authorization area is present (non-zero size) and ensures
+ * all required parameters are properly extracted.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful parsing, or the corresponding error code on failure.
+ */
+uint32_t unmarshal_auth_area(const uint8_t *cmd, size_t cmd_size,
+			     size_t *offset, TPM2B_NONCE *nonce_caller,
+			     uint32_t *session_handle);
 #endif /* __UTILS_H__ */

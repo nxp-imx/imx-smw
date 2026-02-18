@@ -122,28 +122,31 @@ uint32_t handle_hmac(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 {
 	TPM2_RC rc = TPM2_RC_SUCCESS;
 	TSS2_RC tss2_rc = TSS2_TCTI_RC_GENERAL_FAILURE;
-	uint32_t object_handle = 0, session_handle = 0, auth_size = 0;
-	uint16_t nonce_caller_size = 0, hmac_size = 0, response_hmac_size = 0;
-	uint16_t total_resp_size = 0;
-	size_t offset = TPM_HEADER_SIZE, auth_start = 0, resp_params_size = 0,
-	       ticket_size = 0;
-	size_t params_buffer_size = 0;
-	size_t params_offset = 0;
-	size_t resp_offset = TPM_HEADER_SIZE;
-	uint8_t nonce_caller[64] = { 0 };
-	uint8_t tpm2_attrs = TPMA_SESSION_CONTINUESESSION; /* continueSession */
-	uint8_t *response_hmac = NULL;
-	uint8_t *params_buffer = NULL;
+
+	/* Input parameters */
+	uint32_t object_handle = 0;
 	TPM2B_MAX_BUFFER data = { 0 };
-	TPM2B_DIGEST hmac_result = { 0 };
 	TPMI_ALG_HASH hmac_hash_alg = TPM2_ALG_ERROR;
-	struct smw_mac_args mac_args = { 0 };
-	struct smw_key_descriptor key_desc = { 0 };
-	enum smw_status_code smw_status = SMW_STATUS_OK;
-	tcti_smw_session_t *sess = NULL;
+
+	/* Output parameters */
+	TPM2B_DIGEST hmac_result = { 0 };
+	uint16_t hmac_size = 0;
 	smw_hash_algo_t smw_hash_name = SMW_HASH_ALGO_NAME_NONE;
 
+	/* Session handling */
+	uint32_t session_handle = 0;
+	TPM2B_NONCE nonce_caller = { 0 };
+	tcti_smw_session_t *sess = NULL;
+
+	struct smw_mac_args mac_args = { 0 };
+	struct smw_key_descriptor key_desc = { 0 };
+
+	enum smw_status_code smw_status = SMW_STATUS_OK;
 	tcti_smw_object_t *obj = NULL;
+	size_t offset = TPM_HEADER_SIZE;
+	uint8_t *params_buffer = NULL;
+	uint8_t *params_marshal_scratch = NULL;
+	size_t marshaled_param_size = 0;
 
 	/* 1. Check initialization */
 	if (!ctx->initialized) {
@@ -157,6 +160,9 @@ uint32_t handle_hmac(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
+	/*
+	 * 2. Get the object referenced by handle
+	 */
 	obj = find_object_by_handle(ctx, object_handle);
 	if (!obj) {
 		DBG_TRACE("Object handle 0x%08x not found\n", object_handle);
@@ -164,47 +170,16 @@ uint32_t handle_hmac(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 		goto end;
 	}
 
-	tss2_rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset, &auth_size);
+	tss2_rc = unmarshal_auth_area(cmd, cmd_size, &offset, &nonce_caller,
+				      &session_handle);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
-
-	auth_start = offset;
-
-	if (auth_size == 0) {
-		DBG_TRACE("TPM2_CC_HMAC requires authorization area\n");
-		tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
-		goto end;
-	}
-
-	/*
-	 * Auth zone format : [SessionHandle(4)][NonceSize(2)][Nonce(n)]
-	 * [Attributes(1)][HMACSize(2)][HMAC(n)]
-	 */
-	tss2_rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset,
-					   &session_handle);
-	if (tss2_rc != TSS2_RC_SUCCESS)
-		goto end;
-
-	tss2_rc = Tss2_MU_UINT16_Unmarshal(cmd, cmd_size, &offset,
-					   &nonce_caller_size);
-	if (tss2_rc != TSS2_RC_SUCCESS)
-		goto end;
-
-	if (nonce_caller_size > 0 &&
-	    nonce_caller_size <= sizeof(nonce_caller)) {
-		memcpy(nonce_caller, &cmd[offset], nonce_caller_size);
-	}
 
 	sess = find_session_by_handle(ctx, session_handle);
 	if (!sess || !sess->active) {
 		tss2_rc = TSS2_TCTI_RC_IO_ERROR;
 		goto end;
 	}
-
-	/* Put back offset to the beginning of auth zone */
-	offset = auth_start;
-	/* Jump at the end of auth zone */
-	offset += auth_size;
 
 	tss2_rc = Tss2_MU_TPM2B_MAX_BUFFER_Unmarshal(cmd, cmd_size, &offset,
 						     &data);
@@ -215,11 +190,6 @@ uint32_t handle_hmac(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 					   &hmac_hash_alg);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
-
-	/*
-	 * 2. Get the HMAC key object referenced by handle
-	 * TODO when object will be implemented
-	 */
 
 	/* 3. Computing HMAC via SMW using the object's key*/
 	tss2_rc =
@@ -247,105 +217,51 @@ uint32_t handle_hmac(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 		goto end;
 	}
 
-	DBG_TRACE("HMAC computed successfully\n");
+	params_marshal_scratch = calloc(1, TPM2_MAX_CAP_BUFFER);
+	if (!params_marshal_scratch) {
+		tss2_rc = TSS2_TCTI_RC_MEMORY;
+		goto end;
+	}
 
-	/* 6. Compute response size */
-	tss2_rc = Tss2_MU_TPM2B_DIGEST_Marshal(&hmac_result, NULL, 0,
-					       &resp_params_size);
+	/* 6. Calculate params_size for all output parameters */
+	/* Marshal HMAC result */
+	tss2_rc = Tss2_MU_TPM2B_DIGEST_Marshal(&hmac_result,
+					       params_marshal_scratch,
+					       TPM2_MAX_CAP_BUFFER,
+					       &marshaled_param_size);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
-	/* 7. Prepare response parameters in buffer */
-	params_buffer_size = resp_params_size + ticket_size;
-
-	params_buffer = malloc(params_buffer_size);
+	/* 7. Prepare parameters buffer for HMAC calculation */
+	params_buffer = malloc(marshaled_param_size);
 	if (!params_buffer) {
 		tss2_rc = TSS2_TCTI_RC_MEMORY;
 		goto end;
 	}
 
-	/* Marshal HMAC result */
-	tss2_rc = Tss2_MU_TPM2B_DIGEST_Marshal(&hmac_result, params_buffer,
-					       params_buffer_size,
-					       &params_offset);
+	memcpy(params_buffer, params_marshal_scratch, marshaled_param_size);
+
+	/* 8. Build response */
+	tss2_rc = build_auth_response(ctx, sess, TPM2_RC_SUCCESS, TPM2_CC_HMAC,
+				      tag, params_buffer, marshaled_param_size,
+				      &nonce_caller, NULL);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
-	/* 8. Compute response HMAC if session present */
-	tss2_rc = calculate_response_hmac(sess, TPM2_RC_SUCCESS, TPM2_CC_HMAC,
-					  params_buffer, params_offset,
-					  nonce_caller, nonce_caller_size,
-					  &response_hmac, &response_hmac_size);
-
-	if (tss2_rc != TSS2_RC_SUCCESS) {
-		DBG_TRACE("Failed to calculate response HMAC: 0x%x\n", tss2_rc);
-		response_hmac_size = 0; /* Continue with empty HMAC */
-	}
-
-	/* Compute total response size */
-	total_resp_size = TPM_HEADER_SIZE + 4 +	  /* parameterSize */
-			  params_offset +	  /* response params */
-			  2 + sess->nonce.size +  /* nonceTPM */
-			  1 +			  /* attributes */
-			  2 + response_hmac_size; /* response HMAC */
-
-	DBG_TRACE("Total response size: %d bytes (tag=0x%04x)\n",
-		  total_resp_size, tag);
-
-	/* 9. Build response with correct tag */
-	tss2_rc = build_rc_response(ctx, total_resp_size, tag, TPM2_RC_SUCCESS);
-	if (tss2_rc != TSS2_RC_SUCCESS) {
-		free(params_buffer);
-		free(response_hmac);
-		return tss2_rc;
-	}
-
-	/* Marshal response */
-	tss2_rc = Tss2_MU_UINT32_Marshal(params_buffer_size, ctx->resp_buf,
-					 ctx->resp_size, &resp_offset);
-	if (tss2_rc != TSS2_RC_SUCCESS)
-		goto end;
-
-	/* Response parameters */
-	memcpy(&ctx->resp_buf[resp_offset], params_buffer, params_offset);
-
-	resp_offset += params_offset;
-
-	/* Auth response area */
-
-	/* nonceTPM */
-	tss2_rc = Tss2_MU_TPM2B_NONCE_Marshal(&sess->nonce, ctx->resp_buf,
-					      ctx->resp_size, &resp_offset);
-	if (tss2_rc != TSS2_RC_SUCCESS)
-		goto end;
-
-	/* attributes */
-	tss2_rc = Tss2_MU_UINT8_Marshal(tpm2_attrs, ctx->resp_buf,
-					ctx->resp_size, &resp_offset);
-	if (tss2_rc != TSS2_RC_SUCCESS)
-		goto end;
-
-	/* Response HMAC */
-	tss2_rc = Tss2_MU_UINT16_Marshal((uint16_t)response_hmac_size,
-					 ctx->resp_buf, ctx->resp_size,
-					 &resp_offset);
-	if (tss2_rc != TSS2_RC_SUCCESS)
-		goto end;
-
-	if (response_hmac_size > 0) {
-		memcpy(&ctx->resp_buf[resp_offset], response_hmac,
-		       response_hmac_size);
-
-		resp_offset += response_hmac_size;
-	}
+	DBG_TRACE("HMAC computed successfully, result:\n");
+	DBG_BUF_HEX(hmac_result.buffer, hmac_result.size);
 
 end:
-	free(params_buffer);
-	free(response_hmac);
+	/* Free allocated memory */
+	if (params_buffer)
+		free(params_buffer);
+
+	if (params_marshal_scratch)
+		free(params_marshal_scratch);
 
 	if (tss2_rc != TSS2_RC_SUCCESS) {
 		rc = tcti_rc_to_tpm2_rc(tss2_rc);
-		return build_rc_response(ctx, TPM_HEADER_SIZE, tag, rc);
+		tss2_rc = build_rc_response(ctx, TPM_HEADER_SIZE, tag, rc);
 	}
 
 	return tss2_rc;

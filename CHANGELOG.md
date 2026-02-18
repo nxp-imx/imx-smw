@@ -59,6 +59,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * `smw_update_object_db`: Existing object can only update their label and/or user id field.
 * Add `SMW_STATUS_INPUT_TOO_LARGE` status when the input buffer is too large.
 * For AEAD, asymmetric encryption, cipher, MAC and Sign operations, if the user requests the output buffer length by setting the output buffer address to NULL, the input parameters are ignored, except the input buffer length if it is used to compute the output buffer length.
+* Fix function smw_keymgr_free_keys_ptr_array(), checks input pointer parameter.
 
 ##### 2. Subsystems
 

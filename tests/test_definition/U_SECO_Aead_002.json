@@ -205,6 +205,40 @@
 		"result": "SMW_STATUS_INVALID_IV_SIZE"
 	},
 	"subtest 14": {
+		"description": "(GCM) Large output buffer encrypt",
+		"command": "AEAD",
+		"subsystem": "SECO",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"iv": "60cc50e0",
+		"iv_len": 12,
+		"aad": "353637383132333435363738",
+		"input": [
+			"30313233343536373839404142434445",
+			"30313233343536373839404142434445"
+		],
+		"tag": 16,
+		"aead_id": 5,
+		"output": 256,
+		"depends": 1
+	},
+	"subtest 15": {
+		"command": "AEAD",
+		"subsystem": "SECO",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"aad": "353637383132333435363738",
+		"output": [
+			"30313233343536373839404142434445",
+			"30313233343536373839404142434445"
+		],
+		"tag": 16,
+		"aead_id": 5,
+		"depends": 14
+	},
+	"subtest 16": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1

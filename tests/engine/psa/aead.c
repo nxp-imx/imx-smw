@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024 NXP
+ * Copyright 2024, 2026 NXP
  */
 
 #include <string.h>
@@ -96,6 +96,23 @@ static int set_output_params(struct subtest_data *subtest,
 		if (!exp_output->length && exp_output->data)
 			output->length = 0;
 	}
+
+	return ERR_CODE(PASSED);
+}
+
+static int check_tag_follows_output(struct tbuffer input, struct tbuffer output,
+				    size_t tag_length)
+{
+	static const unsigned char zeros[8] = { 0 };
+
+	if (!output.data)
+		return ERR_CODE(PASSED);
+
+	if (tag_length > sizeof(zeros))
+		tag_length = sizeof(zeros);
+
+	if (!memcmp(output.data + input.length, zeros, tag_length))
+		return ERR_CODE(FAILED);
 
 	return ERR_CODE(PASSED);
 }
@@ -210,20 +227,30 @@ int aead_operation_psa(struct subtest_data *subtest,
 			      aad.length, input.data, input.length, output.data,
 			      output.length, &ciphertext_length);
 
-	if (exp_output.data && exp_output.length)
+	if (exp_output.data && exp_output.length) {
 		res = util_compare_buffers(output.data, ciphertext_length,
 					   exp_output.data, exp_output.length);
+		if (res != ERR_CODE(PASSED))
+			goto end;
+	}
 
-	if (encrypt_op && aead_id != INT_MAX && ciphertext_length < UINT_MAX) {
-		// tag_length can still be 0 here, meaning the "default" for the specified
-		// algorithm. Update it according to the output length.
-		SET_OVERFLOW(ciphertext_length - input.length, tag_length);
+	if (!encrypt_op)
+		goto end;
 
+	/* tag_length can still be 0 here, meaning the "default" for the specified
+	 * algorithm. Update it according to the output length.
+	 */
+	SET_OVERFLOW(ciphertext_length - input.length, tag_length);
+
+	if (aead_id != INT_MAX && ciphertext_length < UINT_MAX) {
 		util_aead_add_output_data(list_aead_output(subtest), aead_id,
 					  output.data,
 					  (unsigned int)ciphertext_length, NULL,
 					  tag_length, iv.data, iv.length);
 	}
+
+	if (subtest->psa_status == PSA_SUCCESS)
+		res = check_tag_follows_output(input, output, tag_length);
 
 end:
 	if (encrypt_op || aead_id == INT_MAX) {

@@ -139,11 +139,44 @@
 		"depends": 1
 	},
 	"subtest 9": {
+		"description": "(CHACHA20_POLY1305) Large output buffer encrypt",
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "ENCRYPT",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"input": [
+			"30313233343536373839404142434445",
+			"30313233343536373839404142434445"
+		],
+		"tag": 16,
+		"aead_id": 4,
+		"output": 256,
+		"depends": 1
+	},
+	"subtest 10": {
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "DECRYPT",
+		"aad": "353637383132333435363738",
+		"output": [
+			"30313233343536373839404142434445",
+			"30313233343536373839404142434445"
+		],
+		"tag": 16,
+		"aead_id": 4,
+		"depends": 9
+	},
+	"subtest 11": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1
 	},
-	"subtest 10": {
+	"subtest 12": {
 		"description": [
 			"Encrypt using CHACHA20-POLY1305",
 			"Dedicated tag field is set",
@@ -199,7 +232,7 @@
 		"tag": "eead9d67890cbb22392336fea1851f38",
 		"restriction_list": "imx8ulp"
 	},
-	"subtest 11": {
+	"subtest 13": {
 		"description": "(CHACHA20-POLY1305) One-shot AEAD Decryption operation",
 		"command": "AEAD",
 		"subsystem": "ELE",
@@ -248,6 +281,6 @@
 			"2fe2809c776f726b20696e2070726f67",
 			"726573732e2fe2809d"
 		],
-		"depends": 10
+		"depends": 12
 	}
 }

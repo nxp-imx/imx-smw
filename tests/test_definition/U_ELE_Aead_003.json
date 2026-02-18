@@ -320,11 +320,44 @@
 		"result": "SMW_STATUS_INVALID_IV_SIZE"
 	},
 	"subtest 21": {
+		"description": "(GCM) Large output buffer encrypt",
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"input": [
+			"30313233343536373839404142434445",
+			"30313233343536373839404142434445"
+		],
+		"tag": 16,
+		"aead_id": 8,
+		"output": 256,
+		"depends": 1
+	},
+	"subtest 22": {
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"aad": "353637383132333435363738",
+		"output": [
+			"30313233343536373839404142434445",
+			"30313233343536373839404142434445"
+		],
+		"tag": 16,
+		"aead_id": 8,
+		"depends": 21
+	},
+	"subtest 23": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1
 	},
-	"subtest 22": {
+	"subtest 24": {
 		"description": [
 			"Encrypt using GCM mode with a dedicated tag field set",
 			"Plaintext key buffer (Base64 format) is set",
@@ -342,7 +375,7 @@
 		"tag": "c26a379b6d98ef2852ead8ce83a833a7",
 		"restriction_list": "imx8ulp"
 	},
-	"subtest 23": {
+	"subtest 25": {
 		"description": "Decrypt using GCM mode",
 		"command": "AEAD",
 		"subsystem": "ELE",
@@ -354,6 +387,6 @@
 		"input": "d2c78110ac7e8f107c0df0570bd7c90c",
 		"tag": "c26a379b6d98ef2852ead8ce83a833a7",
 		"output": "7789b41cb3ee548814ca0b388c10b343",
-		"depends": 22
+		"depends": 24
 	}
 }

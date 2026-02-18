@@ -135,11 +135,44 @@
 		"depends": 1
 	},
 	"subtest 9": {
+		"description": "(CCM) Large output buffer encrypt",
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"mode": "CCM",
+		"op_type": "ENCRYPT",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"input": [
+			"30313233343536373839404142434445",
+			"30313233343536373839404142434445"
+		],
+		"tag": 16,
+		"aead_id": 4,
+		"output": 256,
+		"depends": 1
+	},
+	"subtest 10": {
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"mode": "CCM",
+		"op_type": "DECRYPT",
+		"aad": "353637383132333435363738",
+		"output": [
+			"30313233343536373839404142434445",
+			"30313233343536373839404142434445"
+		],
+		"tag": 16,
+		"aead_id": 4,
+		"depends": 9
+	},
+	"subtest 11": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1
 	},
-	"subtest 10": {
+	"subtest 12": {
 		"description": [
 			"Encrypt using CCM mode and expected output is set",
 			"output buffer = ciphertext + tag",
@@ -174,7 +207,7 @@
 			"57001080003872271900d3f39c9661fd"
 		]
 	},
-	"subtest 11": {
+	"subtest 13": {
 		"description": "input buffer = ciphertext + tag",
 		"command": "AEAD",
 		"subsystem": "ELE",
@@ -204,6 +237,6 @@
 			"ac9701c02e5a973f39c2e1761a4b48c7",
 			"64bf6db215a54b285a06eca3af0a83f7"
 		],
-		"depends": 10
+		"depends": 12
 	}
 }

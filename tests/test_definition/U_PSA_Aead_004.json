@@ -358,6 +358,46 @@
 		"depends": 26
 	},
 	"subtest 28": {
+		"description": "AES-GCM with a large output buffer",
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"iv": "5be56ee5b824d65461e35c9b",
+		"aad": "e1ff76185869197578483b49c7caaadf",
+		"input": [
+			"a85367dbc3b416af88cc0cc006b2d5ea",
+			"d62a57b06ce7ce37c59d9cd489a2e568",
+			"0ccd28c5a4fb8ebedfeee1cb9aa5b876",
+			"b755308cfb302db3c0998fb87e1906a0",
+			"d7ba8df887ede5571343624eca6f7e0f",
+			"a0a72da28c41a1099614c323ec074954"
+		],
+		"output": 256,
+		"aead_id": 14,
+		"depends": 1
+	},
+	"subtest 29": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"iv": "5be56ee5b824d65461e35c9b",
+		"aad": "e1ff76185869197578483b49c7caaadf",
+		"aead_id": 14,
+		"output": [
+			"a85367dbc3b416af88cc0cc006b2d5ea",
+			"d62a57b06ce7ce37c59d9cd489a2e568",
+			"0ccd28c5a4fb8ebedfeee1cb9aa5b876",
+			"b755308cfb302db3c0998fb87e1906a0",
+			"d7ba8df887ede5571343624eca6f7e0f",
+			"a0a72da28c41a1099614c323ec074954"
+		],
+		"depends": 28
+	},
+	"subtest 30": {
 		"command": "DELETE",
 		"api": "PSA",
 		"key_name": "generated aes-gcm-128 key",

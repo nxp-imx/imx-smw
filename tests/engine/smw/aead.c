@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2025 NXP
+ * Copyright 2023-2026 NXP
  */
 
 #include <string.h>
@@ -668,6 +668,40 @@ static int compare_output_and_tag(struct smw_aead_final_args *args,
 	return res;
 }
 
+/**
+ * check_tag_follows_output() - Check that the tag follows the output
+ * @args: Pointer to SMW AEAD final API arguments
+ * @tag_length: Tag length
+ *
+ * In the cases where the output tag is NULL, check that the tag bytes are
+ * written after the output bytes.
+ *
+ * Return:
+ * PASSED   - Success
+ * FAILED   - Found an output buffer which might be misconstructed
+ */
+static int check_tag_follows_output(struct smw_aead_final_args *args,
+				    unsigned int tag_length)
+{
+	static const unsigned char zeros[8] = { 0 };
+
+	if (!args->data->output)
+		return ERR_CODE(PASSED);
+
+	/* Tag is not part of the output */
+	if (args->tag)
+		return ERR_CODE(PASSED);
+
+	if (tag_length > sizeof(zeros))
+		tag_length = sizeof(zeros);
+
+	if (!memcmp(args->data->output + args->data->input_length, zeros,
+		    tag_length))
+		return ERR_CODE(FAILED);
+
+	return ERR_CODE(PASSED);
+}
+
 static int set_final_output_iv_params(struct subtest_data *subtest,
 				      unsigned char **output_iv,
 				      unsigned int *output_iv_len)
@@ -842,6 +876,10 @@ static int aead_encrypt(struct subtest_data *subtest)
 		if (res != ERR_CODE(PASSED))
 			goto end;
 	}
+
+	res = check_tag_follows_output(args.final, args.final->tag_length);
+	if (res != ERR_CODE(PASSED))
+		goto end;
 
 	res = compare_output_and_tag(args.final, expected_output,
 				     expected_out_len, expected_tag,

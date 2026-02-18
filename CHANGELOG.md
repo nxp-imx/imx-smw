@@ -152,6 +152,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 2. Subsystems
 
 * All: Set Sensitive flag for generated and derived keys.
+* ELE: Fix key store mutex creation.
 
 ##### 3. ARM PSA APIs
 

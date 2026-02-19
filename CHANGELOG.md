@@ -64,6 +64,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Remove cmake CPM0144 warning when building the library.
 * Rework the SMW APIs documentation including the OSAL part. Split the public
   headers and organize them in subdirectories for better clarity.
+* Fix writing the AEAD encryption tag in a large output buffer to follow the ciphertext.
 
 ##### 2. Subsystems
 
@@ -98,6 +99,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add PSA tests for Hash multi-part (U_PSA_Hash_Multipart_XXX).
 * Add PSA tests to validate asymmetric encryption and decryption operations.
 * Update the U_ELE_Reprovision_001 test.
+* Check that the output tag is in the correct location and add few PSA tests with a larger output size.
 
 #### PKCS#11 Library
 
@@ -151,6 +153,12 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * The macros `PSA_HASH_BLOCK_LENGTH` and `PSA_HASH_LENGTH` are implemented as
   function calls and do not return a compile-time constant as specified by PSA.
+
+##### 5. SMW Library
+
+* When doing AEAD encryption with a large output size and the tag is part of
+  the output, the tag is written at the end of the output instead of following
+  the ciphertext.
 
 #### SMW Library
 ##### 1. SMW APIs
@@ -231,6 +239,12 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * The macros `PSA_HASH_BLOCK_LENGTH` and `PSA_HASH_LENGTH` are implemented as
   function calls and do not return a compile-time constant as specified by PSA.
+
+##### 6. SMW Library
+
+* When doing AEAD encryption with a large output size and the tag is part of
+  the output, the tag is written at the end of the output instead of following
+  the ciphertext.
 
 #### SMW Library
 ##### 1. SMW APIs
@@ -374,6 +388,12 @@ The failure is due to the storage manager which is already loaded and a new inst
 * The macros `PSA_HASH_BLOCK_LENGTH` and `PSA_HASH_LENGTH` are implemented as
   function calls and do not return a compile-time constant as specified by PSA.
 
+##### 6. SMW Library
+
+* When doing AEAD encryption with a large output size and the tag is part of
+  the output, the tag is written at the end of the output instead of following
+  the ciphertext.
+
 ##### 5. OSAL
 
  * OSAL's Linux SQLite database compatibility with previous version 5.0 is broken.
@@ -508,6 +528,12 @@ If the user repeat these kinds of operations several times, the TEE subsystem wi
 * RSA key cannot be generated using ELE subsystem if permitted algorithm is an asymmetric encryption algorithm.
 * The macros `PSA_HASH_BLOCK_LENGTH` and `PSA_HASH_LENGTH` are implemented as
   function calls and do not return a compile-time constant as specified by PSA.
+
+##### 5. SMW Library
+
+* When doing AEAD encryption with a large output size and the tag is part of
+  the output, the tag is written at the end of the output instead of following
+  the ciphertext.
 
 #### SMW Library
 ##### 1. SMW APIs
@@ -699,6 +725,12 @@ The failure is due to the storage manager which is already loaded and a new inst
 * The macros `PSA_HASH_BLOCK_LENGTH` and `PSA_HASH_LENGTH` are implemented as
   function calls and do not return a compile-time constant as specified by PSA.
 
+##### 5. SMW Library
+
+* When doing AEAD encryption with a large output size and the tag is part of
+  the output, the tag is written at the end of the output instead of following
+  the ciphertext.
+
 #### SMW Library - _version 4.2_
 ##### 1. SMW APIs
 
@@ -803,6 +835,12 @@ The failure is due to the storage manager which is already loaded and a new inst
 * The macros `PSA_HASH_BLOCK_LENGTH` and `PSA_HASH_LENGTH` are implemented as
   function calls and do not return a compile-time constant as specified by PSA.
 
+##### 5. SMW Library
+
+* When doing AEAD encryption with a large output size and the tag is part of
+  the output, the tag is written at the end of the output instead of following
+  the ciphertext.
+
 #### SMW Library - _version 4.1_
 ##### 1. SMW APIs
 
@@ -903,6 +941,12 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * The macros `PSA_HASH_BLOCK_LENGTH` and `PSA_HASH_LENGTH` are implemented as
   function calls and do not return a compile-time constant as specified by PSA.
+
+##### 5. SMW Library
+
+* When doing AEAD encryption with a large output size and the tag is part of
+  the output, the tag is written at the end of the output instead of following
+  the ciphertext.
 
 #### SMW Library - _version 4.0_
 ##### 1. SMW APIs

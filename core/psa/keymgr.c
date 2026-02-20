@@ -951,8 +951,7 @@ end:
 	return psa_status;
 }
 
-static smw_attr_algo_t get_smw_algo(psa_algorithm_t psa_alg,
-				    smw_key_type_t key_type)
+smw_attr_algo_t get_smw_algo(psa_algorithm_t psa_alg, smw_key_type_t key_type)
 {
 	smw_attr_algo_t smw_algo = 0;
 

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022-2025 NXP
+ * Copyright 2022-2026 NXP
  */
 
 #ifndef __KEYMGR__H__
@@ -118,5 +118,18 @@ struct psa_key_derivation_context {
  * Cipher PSA key type.
  */
 psa_key_type_t get_cipher_psa_key_type(smw_key_type_t smw_key_type);
+
+/**
+ * get_smw_algo() - Convert PSA algorithm to SMW algorithm attribute
+ * @psa_alg: PSA algorithm identifier
+ * @key_type: SMW key type
+ *
+ * This function converts a PSA Crypto API algorithm identifier to the
+ * corresponding SMW algorithm attribute based on the specified key type.
+ *
+ * Return:
+ * SMW algorithm attribute corresponding to the PSA algorithm.
+ */
+smw_attr_algo_t get_smw_algo(psa_algorithm_t psa_alg, smw_key_type_t key_type);
 
 #endif /* __KEYMGR__H__ */

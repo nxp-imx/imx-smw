@@ -774,6 +774,75 @@ __export psa_status_t psa_aead_verify(psa_aead_operation_t *operation,
 	return PSA_ERROR_NOT_SUPPORTED;
 }
 
+static psa_status_t
+asymmetric_encrypt_decrypt(bool is_encrypt_op, psa_key_id_t key,
+			   psa_algorithm_t alg, const uint8_t *input,
+			   size_t input_length, const uint8_t *salt,
+			   size_t salt_length, uint8_t *output,
+			   size_t output_size, size_t *output_length)
+{
+	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
+	enum smw_status_code status = SMW_STATUS_OK;
+
+	struct smw_asymmetric_encryption_args op_args = { 0 };
+	struct smw_key_descriptor key_desc = { 0 };
+	enum smw_status_code (*asymm_func)(void *) = NULL;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!smw_utils_is_lib_initialized())
+		return psa_status;
+
+	psa_status = PSA_ERROR_INVALID_ARGUMENT;
+
+	if (!PSA_ALG_IS_ASYMMETRIC_ENCRYPTION(alg) || !input || !input_length ||
+	    !output || !output_size || !output_length)
+		return psa_status;
+
+	if (alg == PSA_ALG_RSA_PKCS1V15_CRYPT && (salt || salt_length))
+		return psa_status;
+
+	key_desc.id = key;
+	op_args.key_descriptor = &key_desc;
+
+	status = smw_get_key_type_name(&key_desc);
+	if (status != SMW_STATUS_OK)
+		return util_smw_to_psa_status(status);
+
+	op_args.algo = get_smw_algo(alg, key_desc.type_name);
+
+	op_args.input = (unsigned char *)input;
+
+	if (SET_OVERFLOW(input_length, op_args.input_length))
+		return psa_status;
+
+	op_args.output = output;
+
+	if (SET_OVERFLOW(output_size, op_args.output_length))
+		return psa_status;
+
+	op_args.salt = (unsigned char *)salt;
+
+	if (SET_OVERFLOW(salt_length, op_args.salt_length))
+		return psa_status;
+
+	if (is_encrypt_op)
+		asymm_func =
+			(enum smw_status_code(*)(void *))smw_asymmetric_encrypt;
+	else
+		asymm_func =
+			(enum smw_status_code(*)(void *))smw_asymmetric_decrypt;
+
+	psa_status =
+		call_smw_api(asymm_func, &op_args, &op_args.subsystem_name);
+
+	if (psa_status == PSA_SUCCESS ||
+	    psa_status == PSA_ERROR_BUFFER_TOO_SMALL)
+		*output_length = op_args.output_length;
+
+	return psa_status;
+}
+
 __export psa_status_t
 /* Without this comment clang-format does not meet the checkpatch requirement. */
 psa_asymmetric_decrypt(psa_key_id_t key, psa_algorithm_t alg,
@@ -781,19 +850,9 @@ psa_asymmetric_decrypt(psa_key_id_t key, psa_algorithm_t alg,
 		       const uint8_t *salt, size_t salt_length, uint8_t *output,
 		       size_t output_size, size_t *output_length)
 {
-	(void)key;
-	(void)alg;
-	(void)input;
-	(void)input_length;
-	(void)salt;
-	(void)salt_length;
-	(void)output;
-	(void)output_size;
-	(void)output_length;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return PSA_ERROR_NOT_SUPPORTED;
+	return asymmetric_encrypt_decrypt(false, key, alg, input, input_length,
+					  salt, salt_length, output,
+					  output_size, output_length);
 }
 
 __export psa_status_t
@@ -803,19 +862,9 @@ psa_asymmetric_encrypt(psa_key_id_t key, psa_algorithm_t alg,
 		       const uint8_t *salt, size_t salt_length, uint8_t *output,
 		       size_t output_size, size_t *output_length)
 {
-	(void)key;
-	(void)alg;
-	(void)input;
-	(void)input_length;
-	(void)salt;
-	(void)salt_length;
-	(void)output;
-	(void)output_size;
-	(void)output_length;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return PSA_ERROR_NOT_SUPPORTED;
+	return asymmetric_encrypt_decrypt(true, key, alg, input, input_length,
+					  salt, salt_length, output,
+					  output_size, output_length);
 }
 
 __export psa_status_t psa_cipher_abort(psa_cipher_operation_t *operation)

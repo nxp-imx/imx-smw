@@ -16,6 +16,7 @@
 #include "storage.h"
 #include "aead.h"
 #include "derive.h"
+#include "asymmetric_encryption.h"
 
 /**
  * execute_delete_key_cmd() - Execute delete key command.
@@ -282,6 +283,22 @@ static int execute_derive_cmd(char *cmd, struct subtest_data *subtest)
 	return ERR_CODE(UNDEFINED_CMD);
 }
 
+static int execute_asymmetric_encrypt_cmd(char *cmd,
+					  struct subtest_data *subtest)
+{
+	(void)cmd;
+
+	return asymmetric_encrypt_decrypt_psa(subtest, true);
+}
+
+static int execute_asymmetric_decrypt_cmd(char *cmd,
+					  struct subtest_data *subtest)
+{
+	(void)cmd;
+
+	return asymmetric_encrypt_decrypt_psa(subtest, false);
+}
+
 int execute_command_psa(char *cmd, struct subtest_data *subtest)
 {
 	static struct cmd_op {
@@ -302,6 +319,8 @@ int execute_command_psa(char *cmd, struct subtest_data *subtest)
 		{ STORAGE, &execute_storage_cmd },
 		{ AEAD, &execute_aead_cmd },
 		{ DERIVE, &execute_derive_cmd },
+		{ ASYMMETRIC_ENCRYPT, &execute_asymmetric_encrypt_cmd },
+		{ ASYMMETRIC_DECRYPT, &execute_asymmetric_decrypt_cmd },
 	};
 
 	for (size_t idx = 0; idx < ARRAY_SIZE(cmd_list); idx++) {

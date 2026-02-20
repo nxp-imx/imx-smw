@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2025 NXP
+ * Copyright 2023-2026 NXP
  */
 
 #include <stdbool.h>
@@ -431,6 +431,8 @@ static const struct util_attr_info algo_info_psa[] = {
 	ATTR_ALGO_PSA(RSA_PSS, PSA_ALG_RSA_PSS_BASE),
 	ATTR_ALGO_PSA(TLS_1_2, PSA_ALG_TLS12_PRF_BASE),
 	ATTR_ALGO_PSA(TLS_1_3, PSA_ALG_VENDOR_TLS13_BASE),
+	ATTR_ALGO_PSA(RSA_PKCS1_V15, PSA_ALG_RSA_PKCS1V15_CRYPT),
+	ATTR_ALGO_PSA(RSA_OAEP, PSA_ALG_RSA_OAEP_BASE),
 	{ .string = NULL }
 };
 

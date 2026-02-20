@@ -1,6 +1,7 @@
 target_sources(${PROJECT_NAME}
                PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/aead.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/asymmetric_encryption.c
                ${CMAKE_CURRENT_SOURCE_DIR}/cipher.c
                ${CMAKE_CURRENT_SOURCE_DIR}/data.c
                ${CMAKE_CURRENT_SOURCE_DIR}/derive.c
@@ -16,7 +17,7 @@ target_sources(${PROJECT_NAME}
 
 #
 # Execute process with dependency to ensure that the
-# status.c is regrenerated each time psa/error.h changes
+# status.c is regenerated each time psa/error.h changes
 #
 execute_process(COMMAND ${CMAKE_COMMAND}
                         -DPREFIX=PSA

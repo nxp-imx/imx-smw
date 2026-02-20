@@ -264,7 +264,7 @@ and supported by the SMW Library.
 	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
-	<td>❌</td>
+	<td>✔️</td>
 </tr>
 <tr>
   <td colspan="3">Random Number Generation</td>

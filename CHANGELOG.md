@@ -78,6 +78,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix `psa_hash_block_length()` return values for SHA-3 family of digests.
 * Fix `PSA_HASH_LENGTH()` and `PSA_HASH_BLOCK_LENGTH()` macros to return compile-time constant values if possible.
 * Initialize the SMW library from `psa_crypto_init()` so that applications won't need to initialize the SMW library separately.
+* Add support for asymmetric encryption and decryption APIs: `psa_asymmetric_encrypt()` and `psa_asymmetric_decrypt()`.
 
 ##### 4. OSAL
 
@@ -93,6 +94,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * As plaintext key import isn't supported by all subsystems, update the test
   U_API_Object_002 to generate the key 3 instead of importing it.
 * Add PSA tests for Hash multi-part (U_PSA_Hash_Multipart_XXX).
+* Add PSA tests to validate asymmetric encryption and decryption operations.
 
 #### PKCS#11 Library
 

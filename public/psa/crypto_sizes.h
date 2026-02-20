@@ -278,12 +278,10 @@
  * A sufficient output buffer size for psa_asymmetric_decrypt(), for any supported asymmetric
  * decryption.
  *
- * **Warning: Not supported**
- *
  * See also PSA_ASYMMETRIC_DECRYPT_OUTPUT_SIZE().
  */
 #define PSA_ASYMMETRIC_DECRYPT_OUTPUT_MAX_SIZE                                 \
-/* implementation-defined value */
+	(PSA_BITS_TO_BYTES(PSA_VENDOR_RSA_MAX_KEY_BITS))
 
 /**
  * PSA_ASYMMETRIC_DECRYPT_OUTPUT_SIZE() - Sufficient output buffer size for
@@ -291,8 +289,6 @@
  * @key_type: An asymmetric key type, either a key pair or a public key.
  * @key_bits: The size of the key in bits.
  * @alg: The asymmetric encryption algorithm.
- *
- * **Warning: Not supported**
  *
  * This macro returns a sufficient buffer size for a plaintext produced using a key of the specified
  * type and size, with the specified algorithm. Note that the actual size of the plaintext might be
@@ -304,6 +300,16 @@
  *
  * See also PSA_ASYMMETRIC_DECRYPT_OUTPUT_MAX_SIZE.
  *
+ * As per RFC 8017 
+ * - For RSA PKCS #1 v1.5      : mLen <= k - 11
+ * - For RSA OAEP (hash)       : mLen <= k - 2*hLen - 2
+ * - For other key types/algos : 0 (not supported)
+ * 
+ * Where:
+ * - mLen = message (plaintext) length in bytes
+ * - k = RSA key modulus size in bytes
+ * - hLen = Hash output length in bytes
+ *
  * Return:
  * If the parameters are valid and supported, return a buffer size in bytes that guarantees that
  * psa_asymmetric_decrypt() will not fail with PSA_ERROR_BUFFER_TOO_SMALL. If the parameters are a
@@ -312,19 +318,26 @@
  *
  */
 #define PSA_ASYMMETRIC_DECRYPT_OUTPUT_SIZE(key_type, key_bits, alg)            \
-/* implementation-defined value */
+	(PSA_KEY_TYPE_IS_RSA(key_type) ?                                       \
+		 (((alg) == PSA_ALG_RSA_PKCS1V15_CRYPT) ?                      \
+			  (PSA_BITS_TO_BYTES(key_bits) - 11) :                 \
+		  PSA_ALG_IS_RSA_OAEP(alg) ?                                   \
+			  (PSA_BITS_TO_BYTES(key_bits) -                       \
+			   (2 *                                                \
+			    PSA_HASH_LENGTH(PSA_ALG_RSA_OAEP_GET_HASH(alg))) - \
+			   2) :                                                \
+			  0) :                                                 \
+		 0)
 
 /**
  * DOC: PSA_ASYMMETRIC_ENCRYPT_OUTPUT_MAX_SIZE
  * A sufficient output buffer size for psa_asymmetric_encrypt(), for any supported asymmetric
  * encryption.
  *
- * **Warning: Not supported**
- *
  * See also PSA_ASYMMETRIC_ENCRYPT_OUTPUT_SIZE().
  */
 #define PSA_ASYMMETRIC_ENCRYPT_OUTPUT_MAX_SIZE                                 \
-/* implementation-defined value */
+	(PSA_BITS_TO_BYTES(PSA_VENDOR_RSA_MAX_KEY_BITS))
 
 /**
  * PSA_ASYMMETRIC_ENCRYPT_OUTPUT_SIZE() - Sufficient output buffer size for
@@ -332,8 +345,6 @@
  * @key_type: An asymmetric key type, either a key pair or a public key.
  * @key_bits: The size of the key in bits.
  * @alg: The asymmetric encryption algorithm.
- *
- * **Warning: Not supported**
  *
  * This macro returns a sufficient buffer size for a ciphertext produced using a key of the
  * specified type and size, with the specified algorithm. Note that the actual size of the
@@ -353,7 +364,12 @@
  *
  */
 #define PSA_ASYMMETRIC_ENCRYPT_OUTPUT_SIZE(key_type, key_bits, alg)            \
-	/* implementation-defined value */
+	(PSA_KEY_TYPE_IS_RSA(key_type) ?                                       \
+		 (((alg) == PSA_ALG_RSA_PKCS1V15_CRYPT) ||                     \
+				  PSA_ALG_IS_RSA_OAEP(alg) ?                   \
+			  PSA_BITS_TO_BYTES(key_bits) :                        \
+			  0) :                                                 \
+		 0)
 
 /**
  * DOC: PSA_BLOCK_CIPHER_BLOCK_MAX_SIZE

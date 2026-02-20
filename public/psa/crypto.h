@@ -1242,8 +1242,6 @@ psa_status_t psa_aead_verify(psa_aead_operation_t *operation,
  * @output_size: Size of the @output buffer in bytes.
  * @output_length: On success, the number of bytes that make up the returned output.
  *
- * **Warning: Not supported**
- *
  * For PSA_ALG_RSA_PKCS1V15_CRYPT, no salt is supported.
  *
  * Parameter @output_size must be appropriate for the selected algorithm and key\:
@@ -1310,8 +1308,6 @@ psa_status_t psa_asymmetric_decrypt(psa_key_id_t key, psa_algorithm_t alg,
  * @output: Buffer where the encrypted message is to be written.
  * @output_size: Size of the @output buffer in bytes.
  * @output_length: On success, the number of bytes that make up the returned output.
- *
- * **Warning: Not supported**
  *
  * For PSA_ALG_RSA_PKCS1V15_CRYPT, no salt is supported.
  *

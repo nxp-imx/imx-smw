@@ -25,7 +25,7 @@ if(NOT DEFINED SQLite3_ROOT)
 endif()
 
 if(DEFINED SQLite3_ROOT AND NOT IS_ABSOLUTE ${SQLite3_ROOT})
-    set(SQLite3_ROOT "${CMAKE_SOURCE_DIR}/${SQLite3_DIR}")
+    set(SQLite3_ROOT "${CMAKE_SOURCE_DIR}/${SQLite3_ROOT}")
 endif()
 
 # Look for the necessary header

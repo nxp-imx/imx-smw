@@ -7,6 +7,7 @@
 #define __PSA_CRYPTO_SIZES_H__
 
 #define PSA_BITS_TO_BYTES(bits) (((bits) + 7) / 8)
+#define PSA_BYTES_TO_BITS(bytes) ((bytes) * 8u)
 
 #define PSA_ROUND_UP_TO_MULTIPLE(block_size, length)                           \
 	((((length) + (block_size) - (1)) / (block_size)) * (block_size))

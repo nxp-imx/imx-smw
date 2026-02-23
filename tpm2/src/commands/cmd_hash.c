@@ -4,6 +4,7 @@
  */
 
 #include <string.h>
+#include <byteswap.h>
 
 #include "smw_crypto.h"
 #include "utils.h"
@@ -12,6 +13,16 @@
 #include "smw_keymgr.h"
 #include "builtin_macros.h"
 #include "trace.h"
+
+static bool starts_with_tpm_generated(const uint8_t *data)
+{
+	uint32_t value;
+
+	/* Check if data starts with TPM2_GENERATED_VALUE (big-endian) */
+	value = bswap_32(*(uint32_t *)data);
+
+	return (value == TPM2_GENERATED_VALUE);
+}
 
 uint32_t handle_hash(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 		     size_t cmd_size)
@@ -25,15 +36,11 @@ uint32_t handle_hash(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 	/* Input parameters */
 	TPM2B_MAX_BUFFER data = { 0 };
 	TPMI_ALG_HASH hash_alg = TPM2_ALG_NULL;
-	TPMI_RH_HIERARCHY hierarchy;
+	TPMI_RH_HIERARCHY hierarchy = TPM2_RH_NULL;
 
 	/* Output parameters */
 	TPM2B_DIGEST out_hash = { 0 };
-	TPMT_TK_HASHCHECK validation = {
-		.tag = TPM2_ST_HASHCHECK,
-		.hierarchy = TPM2_RH_OWNER,
-		.digest = { .size = 0 } /* No HMAC proof (ticket NULL) */
-	};
+	TPMT_TK_HASHCHECK validation = { 0 };
 	size_t resp_offset = TPM_HEADER_SIZE, ticket_size = 0,
 	       resp_params_size = 0;
 	uint32_t total_size = 0;
@@ -44,6 +51,11 @@ uint32_t handle_hash(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
+	if (!data.size) {
+		tss2_rc = TSS2_TCTI_RC_GENERAL_FAILURE;
+		goto end;
+	}
+
 	tss2_rc = Tss2_MU_UINT16_Unmarshal(cmd, cmd_size, &offset, &hash_alg);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
@@ -51,6 +63,13 @@ uint32_t handle_hash(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 	tss2_rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset, &hierarchy);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
+
+	if (hierarchy != TPM2_RH_NULL && hierarchy != TPM2_RH_OWNER &&
+	    hierarchy != TPM2_RH_PLATFORM && hierarchy != TPM2_RH_ENDORSEMENT) {
+		DBG_TRACE("Invalid hierarchy: 0x%08x\n", hierarchy);
+		tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
 
 	/* 2. Configure algorithm */
 	tss2_rc = map_hash_info(hash_alg, &out_hash.size, &hash_args.algo_name,
@@ -84,6 +103,36 @@ uint32_t handle_hash(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 					       &resp_params_size);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
+
+	validation.tag = TPM2_ST_HASHCHECK;
+	if (!starts_with_tpm_generated(data.buffer) ||
+	    hierarchy == TPM2_RH_NULL) {
+		/* NULL ticket - data is not safe to sign */
+		validation.hierarchy = TPM2_RH_NULL;
+		validation.digest.size = 0;
+
+		DBG_TRACE("Returning NULL ticket\n"
+			  "(hierarchy=0x%08x, TPM_GEN=%s)\n",
+			  hierarchy,
+			  starts_with_tpm_generated(data.buffer) ? "yes" :
+								   "no");
+	} else {
+		/* Valid ticket - Data starts with TPM2_GENERATED_VALUE */
+		validation.hierarchy = hierarchy;
+		validation.digest.size = TPM2_SHA256_DIGEST_SIZE;
+		tss2_rc = compute_hashcheck_hmac(hierarchy, out_hash.buffer,
+						 out_hash.size,
+						 validation.digest.buffer);
+		if (tss2_rc == TSS2_RC_SUCCESS) {
+			DBG_TRACE("Valid ticket with HMAC (%u bytes)\n",
+				  validation.digest.size);
+		} else {
+			/* Fallback to empty digest if HMAC fails */
+			validation.digest.size = 0;
+			DBG_TRACE("Valid ticket but HMAC failed\n"
+				  "using empty digest\n");
+		}
+	}
 
 	tss2_rc = Tss2_MU_TPMT_TK_HASHCHECK_Marshal(&validation, NULL, 0,
 						    &ticket_size);

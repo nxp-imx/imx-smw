@@ -334,6 +334,26 @@ uint32_t handle_getrandom(tcti_smw_context_t *ctx, uint16_t tag,
 	uint32_t total_size = 0;
 	TPM2B_DIGEST random_bytes = { 0 };
 
+	/* Session handling */
+	uint32_t session_handle = 0;
+	TPM2B_NONCE nonce_caller = { 0 };
+	tcti_smw_session_t *sess = NULL;
+
+	uint8_t *params_buffer = NULL;
+
+	if (tag == TPM2_ST_SESSIONS) {
+		tss2_rc = unmarshal_auth_area(cmd, cmd_size, &offset,
+					      &nonce_caller, &session_handle);
+		if (tss2_rc != TSS2_RC_SUCCESS)
+			goto end;
+
+		sess = find_session_by_handle(ctx, session_handle);
+		if (!sess || !sess->active) {
+			tss2_rc = TSS2_TCTI_RC_IO_ERROR;
+			goto end;
+		}
+	}
+
 	/* 1. Unmarshal input parameter */
 	tss2_rc = Tss2_MU_UINT16_Unmarshal(cmd, cmd_size, &offset,
 					   &bytes_requested);
@@ -372,23 +392,42 @@ uint32_t handle_getrandom(tcti_smw_context_t *ctx, uint16_t tag,
 		       bytes_to_generate, bytes_requested);
 
 	/* 4. Compute response size */
-	tss2_rc = Tss2_MU_TPM2B_DIGEST_Marshal(&random_bytes, NULL, 0,
+	params_buffer = calloc(1, TPM2_MAX_CAP_BUFFER);
+	if (!params_buffer) {
+		tss2_rc = TSS2_TCTI_RC_MEMORY;
+		goto end;
+	}
+
+	tss2_rc = Tss2_MU_TPM2B_DIGEST_Marshal(&random_bytes, params_buffer,
+					       TPM2_MAX_CAP_BUFFER,
 					       &resp_params_size);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
-	total_size = TPM_HEADER_SIZE + resp_params_size;
+	if (tag == TPM2_ST_SESSIONS) {
+		/* Use build_auth_response for session response */
+		tss2_rc = build_auth_response(ctx, sess, TPM2_RC_SUCCESS,
+					      TPM2_CC_GetRandom, tag,
+					      params_buffer, resp_params_size,
+					      &nonce_caller, NULL);
+	} else {
+		/* Build simple response without auth */
+		total_size = TPM_HEADER_SIZE + resp_params_size;
 
-	/* 5. Build response */
-	tss2_rc = build_rc_response(ctx, total_size, tag, TPM2_RC_SUCCESS);
-	if (tss2_rc != TSS2_RC_SUCCESS)
-		return tss2_rc;
+		tss2_rc = build_rc_response(ctx, total_size, tag,
+					    TPM2_RC_SUCCESS);
+		if (tss2_rc != TSS2_RC_SUCCESS)
+			goto end;
 
-	/* 6. Marshal random bytes in response */
-	tss2_rc = Tss2_MU_TPM2B_DIGEST_Marshal(&random_bytes, ctx->resp_buf,
-					       ctx->resp_size, &resp_offset);
+		memcpy(ctx->resp_buf + resp_offset, params_buffer,
+		       resp_params_size);
+	}
 
 end:
+	/* Free allocated memory */
+	if (params_buffer)
+		free(params_buffer);
+
 	if (tss2_rc != TSS2_RC_SUCCESS) {
 		rc = tcti_rc_to_tpm2_rc(tss2_rc);
 		tss2_rc = build_rc_response(ctx, TPM_HEADER_SIZE, tag, rc);

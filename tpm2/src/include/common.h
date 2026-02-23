@@ -28,6 +28,8 @@
 
 #define SMW_MAX_OBJECTS 3
 
+#define SMW_PCR_SELECT_SIZE ((TPM2_MAX_PCRS + 7) / 8)
+
 /**
  * struct tcti_smw_object_t - TPM2 transient object slot
  * @handle: TPM2 handle (0x80000000-0x80000002)

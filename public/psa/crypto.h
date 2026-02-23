@@ -84,5 +84,6 @@ psa_status_t psa_crypto_init(void);
 
 #include "psa/crypto_sizes.h"
 #include "psa/crypto_struct.h"
+#include "psa/crypto_compat.h"
 
 #endif /* __PSA_CRYPTO_H__ */

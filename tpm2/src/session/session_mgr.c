@@ -36,13 +36,34 @@ uint32_t smw_session_alloc(tcti_smw_context_t *ctx, uint32_t *handle,
 	TSS2_RC rc = TSS2_TCTI_RC_MEMORY;
 	uint8_t i = 0;
 	uint16_t key_size = 0;
+	TPM2_HANDLE session_handle = 0;
+
+	if (params->session_type == TPM2_SE_HMAC) {
+		if (ctx->next_hmac_session_id == UINT8_MAX) {
+			rc = TSS2_TCTI_RC_BAD_VALUE;
+			goto end;
+		}
+
+		session_handle =
+			TPM2_HMAC_SESSION_FIRST + ctx->next_hmac_session_id++;
+	} else if (params->session_type == TPM2_SE_POLICY) {
+		if (ctx->next_policy_session_id == UINT8_MAX) {
+			rc = TSS2_TCTI_RC_BAD_VALUE;
+			goto end;
+		}
+
+		session_handle = TPM2_POLICY_SESSION_FIRST +
+				 ctx->next_policy_session_id++;
+	} else {
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
 
 	for (; i < SMW_MAX_SESSIONS; i++) {
 		if (!ctx->sessions[i].active) {
-			uint32_t h = SMW_SESSION_HANDLE_BASE +
-				     ctx->next_session_id++;
+			ctx->sessions[i].handle = session_handle;
 			ctx->sessions[i].active = true;
-			ctx->sessions[i].handle = h;
+			ctx->sessions[i].saved = false;
 			ctx->sessions[i].type = params->session_type;
 			ctx->sessions[i].auth_hash = params->auth_hash;
 			ctx->sessions[i].nonce = nonce;
@@ -50,13 +71,12 @@ uint32_t smw_session_alloc(tcti_smw_context_t *ctx, uint32_t *handle,
 			DBG_TRACE("ctx->sessions[%d].type: %d\n"
 				  "ctx->sessions[%d].auth_hash: %d\n"
 				  "ctx->sessions[%d].active: %d\n"
-				  "ctx->next_session_id: %d\n",
+				  "ctx->sessions[%d].handle: 0x%08x\n",
 				  i, ctx->sessions[i].type, i,
 				  ctx->sessions[i].auth_hash, i,
-				  ctx->sessions[i].active,
-				  ctx->next_session_id);
+				  ctx->sessions[i].active, i, session_handle);
 
-			*handle = h;
+			*handle = session_handle;
 			if (params->tpmKey == TPM2_RH_NULL &&
 			    params->bind == TPM2_RH_NULL) {
 				/* Simple case : empty session_key */

@@ -80,6 +80,7 @@ typedef struct {
  * @auth_hash:        Hash algorithm used for session authentication computations.
  * @handle:           Unique session handle identifier.
  * @active:           Flag indicating whether the session is currently active.
+ * @saved:            Flag indicating whether the session is saved or loaded.
  * @nonce:            TPM-generated nonce for replay protection and session freshness.
  * @attrs:            Session attributes controlling session behavior (continue, decrypt, etc.).
  * @auth:             Authorization value associated with the session.
@@ -96,6 +97,7 @@ typedef struct {
 	TPMI_ALG_HASH auth_hash;
 	uint32_t handle;
 	bool active;
+	bool saved;
 
 	TPM2B_NONCE nonce;
 	TPMA_SESSION attrs;
@@ -182,7 +184,8 @@ typedef struct {
  * @resp_buf:        Pointer to the last response buffer for Transmit/Receive operations.
  * @resp_size:       Size of the response buffer in bytes.
  * @sessions:        Array of active TPM sessions (max SMW_MAX_SESSIONS).
- * @next_session_id: Counter for generating unique session identifiers.
+ * @next_hmac_session_id: Counter for generating unique HMAC session identifiers.
+ * @next_policy_session_id: Counter for generating unique POLICY session identifiers.
  * @ctx_sequence:    Sequence number for context save/load operations.
  * @objects:         Array of TPM objects (keys, data) managed by the TCTI (max SMW_MAX_OBJECTS).
  * @next_transient_id: Counter for generating unique transient object handles.
@@ -210,7 +213,8 @@ typedef struct {
 
 	/* sessions */
 	tcti_smw_session_t sessions[SMW_MAX_SESSIONS];
-	uint8_t next_session_id;
+	uint8_t next_hmac_session_id;
+	uint8_t next_policy_session_id;
 	uint8_t ctx_sequence;
 
 	/* objects */

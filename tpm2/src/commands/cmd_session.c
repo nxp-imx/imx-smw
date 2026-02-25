@@ -272,6 +272,8 @@ uint32_t handle_contextsave(tcti_smw_context_t *ctx, uint16_t tag,
 					       session);
 		if (tss2_rc != TSS2_RC_SUCCESS)
 			goto end;
+
+		session->saved = true;
 	} else if (is_transient) {
 		/* Try to find this object in our SMW context */
 		object = find_object_by_handle(ctx, handle_to_save);
@@ -486,6 +488,7 @@ uint32_t handle_contextload(tcti_smw_context_t *ctx, uint16_t tag,
 
 		/* Restore session data */
 		session->active = true;
+		session->saved = false;
 		session->handle = sess_blob->handle;
 		session->type = sess_blob->type;
 		session->auth_hash = sess_blob->auth_hash;

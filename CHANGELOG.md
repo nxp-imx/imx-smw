@@ -69,6 +69,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * ELE: Fix the MAC operation key size when using a plaintext key encoded in base64.
 * ELE: Add support for cipher operation using plaintext private key buffer.
+* ELE: Simplify the storage reprovisioning procedure by re-creating the secure
+  storage immediately after sending the message.
 
 ##### 3. ARM PSA APIs
 
@@ -95,6 +97,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   U_API_Object_002 to generate the key 3 instead of importing it.
 * Add PSA tests for Hash multi-part (U_PSA_Hash_Multipart_XXX).
 * Add PSA tests to validate asymmetric encryption and decryption operations.
+* Update the U_ELE_Reprovision_001 test.
 
 #### PKCS#11 Library
 

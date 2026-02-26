@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024-2025 NXP
+ * Copyright 2024-2026 NXP
  */
 
 #include <time.h>
@@ -119,6 +119,11 @@ static int device_repro_send(struct subsystem_context *ele_ctx,
 	SMW_DBG_PRINTF(DEBUG, "hsm_key_store_reprov_en returned %d\n", err);
 
 	status = ele_convert_err(err);
+
+	if (status == SMW_STATUS_OK) {
+		ele_ctx->hdl.create_key_store = true;
+		status = ele_open_key_store_service(&ele_ctx->hdl);
+	}
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

@@ -66,8 +66,16 @@ int ele_open_key_store_service(struct hdl *hdl)
 	if (smw_utils_mutex_lock(hdl->key_store_mutex))
 		return SMW_STATUS_MUTEX_LOCK_FAILURE;
 
-	if (hdl->key_store)
-		goto end;
+	if (hdl->key_store) {
+		if (!hdl->create_key_store)
+			goto end;
+
+		err = hsm_close_key_store_service(hdl->key_store);
+		if (err != HSM_NO_ERROR)
+			goto finish;
+
+		hdl->key_store = HSM_HANDLE_NONE;
+	}
 
 	if (smw_utils_get_subsystem_info(SMW_SUBSYSTEM_NAME_ELE, &info)) {
 		status = SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED;
@@ -81,29 +89,38 @@ int ele_open_key_store_service(struct hdl *hdl)
 	if (info.storage_shared)
 		open_svc_key_store_args.flags = HSM_SVC_KEY_STORE_FLAGS_SHARED;
 
-	SMW_DBG_PRINTF(VERBOSE,
-		       "[%s (%d)] Call hsm_open_key_store_service()\n"
-		       "open_svc_key_store_args_t\n"
-		       "    session_hdl: %x\n"
-		       "    key_store_identifier: %x\n"
-		       "    authentication_nonce: %x\n"
-		       "    flags: %x\n",
-		       __func__, __LINE__, hdl->session,
-		       open_svc_key_store_args.key_store_identifier,
-		       open_svc_key_store_args.authentication_nonce,
-		       open_svc_key_store_args.flags);
+	if (!hdl->create_key_store) {
+		SMW_DBG_PRINTF(VERBOSE,
+			       "[%s (%d)] Call hsm_open_key_store_service()\n"
+			       "open_svc_key_store_args_t\n"
+			       "    session_hdl: %x\n"
+			       "    key_store_identifier: %x\n"
+			       "    authentication_nonce: %x\n"
+			       "    flags: %x\n",
+			       __func__, __LINE__, hdl->session,
+			       open_svc_key_store_args.key_store_identifier,
+			       open_svc_key_store_args.authentication_nonce,
+			       open_svc_key_store_args.flags);
 
-	err = hsm_open_key_store_service(hdl->session, &open_svc_key_store_args,
-					 &hdl->key_store);
+		err = hsm_open_key_store_service(hdl->session,
+						 &open_svc_key_store_args,
+						 &hdl->key_store);
 
-	SMW_DBG_PRINTF(DEBUG, "hsm_open_key_store_service returned %d\n", err);
+		SMW_DBG_PRINTF(DEBUG,
+			       "hsm_open_key_store_service returned %d\n", err);
 
-	if (err == HSM_NO_ERROR)
-		goto finish;
+		if (err == HSM_NO_ERROR)
+			goto finish;
+	} else {
+		/* Reset create key store flag */
+		hdl->create_key_store = false;
+	}
 
 	/* Key store does not exist. Try to create it */
 	flags = open_svc_key_store_args.flags;
-	open_svc_key_store_args.flags |= HSM_SVC_KEY_STORE_FLAGS_CREATE;
+	open_svc_key_store_args.flags |=
+		HSM_SVC_KEY_STORE_FLAGS_CREATE |
+		HSM_SVC_KEY_STORE_FLAGS_STRICT_OPERATION;
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_open_key_store_service()\n"

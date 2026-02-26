@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022-2025 NXP
+ * Copyright 2022-2026 NXP
  */
 
 #ifndef __COMMON_H__
@@ -21,6 +21,7 @@
  * struct hdl - ELE handles
  * @session: Session handle
  * @key_store: Key store service flow handle
+ * @create_key_store: Request the key storage creation
  * @key_store_mutex: Mutex of the key store
  *
  * This structure stores the ELE handles managed by the SMW library.
@@ -28,6 +29,7 @@
 struct hdl {
 	hsm_hdl_t session;
 	hsm_hdl_t key_store;
+	bool create_key_store;
 	void *key_store_mutex;
 };
 

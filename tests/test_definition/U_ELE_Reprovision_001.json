@@ -1,5 +1,57 @@
 {
+	"keys": {
+		"key 1": {
+			"id": 10,
+			"type": "AES",
+			"security_size": 128,
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"usage": [
+				"ENCRYPT"
+			],
+			"permitted_algo": [
+				"ECB_NO_PADDING"
+			]
+		},
+		"key 2": {
+			"id": 20,
+			"type": "AES",
+			"security_size": 128,
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"usage": [
+				"ENCRYPT"
+			],
+			"permitted_algo": [
+				"ECB_NO_PADDING"
+			]
+		}
+	},
 	"subtest 1": {
-		"command": "DEVICE_REPROVISION"
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 1"
+	},
+	"subtest 2": {
+		"command": "DEVICE_REPROVISION",
+		"depends": 1
+	},
+	"subtest 3": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"depends": 1
+	},
+	"subtest 4": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 5": {
+		"command": "DELETE",
+		"key_name": "key 2",
+		"depends": 3
 	}
 }

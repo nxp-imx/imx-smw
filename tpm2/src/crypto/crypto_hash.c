@@ -235,14 +235,119 @@ uint32_t calculate_response_hmac(tcti_smw_session_t *session,
 
 end:
 	/* Free all temp buffers */
-	free(rp_hash_buffer);
-	free(rp_hash);
-	free(hmac_message);
+	if (rp_hash_buffer)
+		free(rp_hash_buffer);
+
+	if (rp_hash)
+		free(rp_hash);
+
+	if (hmac_message)
+		free(hmac_message);
 
 	if (rc != TSS2_RC_SUCCESS && *hmac_out) {
 		free(*hmac_out);
 		*hmac_out = NULL;
 	}
+
+	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
+	return rc;
+}
+
+uint32_t compute_hashcheck_hmac(TPMI_RH_HIERARCHY hierarchy,
+				const uint8_t *digest, uint16_t digest_size,
+				uint8_t *hmac_out)
+{
+	TSS2_RC rc = TSS2_RC_SUCCESS;
+	enum smw_status_code smw_status = SMW_STATUS_OK;
+	struct smw_mac_args mac_args = { 0 };
+	struct smw_key_descriptor key_desc = { 0 };
+	struct smw_keypair_buffer key_buffer = { 0 };
+	uint8_t *hmac_input = NULL;
+	size_t hmac_input_size = 0;
+	size_t offset = 0;
+
+	uint8_t *proof = NULL;
+
+	if (!hmac_out || !digest) {
+		rc = TSS2_TCTI_RC_BAD_REFERENCE;
+		goto end;
+	}
+
+	proof = calloc(1, TPM2_SHA256_DIGEST_SIZE);
+	if (!proof) {
+		rc = TSS2_TCTI_RC_MEMORY;
+		goto end;
+	}
+
+	/*
+	 * Get hierarchy proof value
+	 * In a real TPM, this is a secret value stored in NV memory.
+	 * For this implementation, we use a simplified proof.
+	 */
+	rc = get_hierarchy_proof_key(hierarchy, proof);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/*
+	 * Build HMAC input: TPM_ST_HASHCHECK || digest
+	 *
+	 * TPM_ST_HASHCHECK = 0x8024 (2 bytes, big-endian)
+	 * digest = hash result (digest_size bytes)
+	 */
+	hmac_input_size = sizeof(TPM2_ST) + digest_size;
+	hmac_input = malloc(hmac_input_size);
+	if (!hmac_input) {
+		rc = TSS2_TCTI_RC_MEMORY;
+		goto end;
+	}
+
+	/* Marshal TPM_ST_HASHCHECK (big-endian) */
+	rc = Tss2_MU_UINT16_Marshal(TPM2_ST_HASHCHECK, hmac_input,
+				    hmac_input_size, &offset);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* Append digest */
+	memcpy(hmac_input + offset, digest, digest_size);
+	offset += digest_size;
+
+	/* Configure HMAC key descriptor */
+	key_buffer.gen.private_data = proof;
+	key_buffer.gen.private_length = TPM2_SHA256_DIGEST_SIZE;
+	key_buffer.format_name = SMW_KEY_FORMAT_NAME_NONE;
+
+	key_desc.type_name = SMW_KEY_TYPE_NAME_HMAC;
+	key_desc.security_size = BYTES_TO_BITS(TPM2_SHA256_DIGEST_SIZE);
+	key_desc.buffer = &key_buffer;
+	key_desc.attributes.usage_flags = SMW_ATTR_USAGE_SIGN_MESSAGE;
+	key_desc.attributes.permitted_algo = SMW_ATTR_ALGO_HMAC;
+	key_desc.attributes.attributes =
+		SMW_ATTR_SET_PERSISTENCE(0, SMW_ATTR_PERSISTENCE_TRANSIENT);
+
+	/* Configure MAC operation */
+	mac_args.key_descriptor = &key_desc;
+	mac_args.algo_name = SMW_MAC_ALGO_NAME_HMAC;
+	mac_args.hash_name = SMW_HASH_ALGO_NAME_SHA256;
+	mac_args.input = hmac_input;
+	mac_args.input_length = hmac_input_size;
+	mac_args.mac = hmac_out;
+	mac_args.mac_length = TPM2_SHA256_DIGEST_SIZE;
+
+	/* Compute HMAC */
+	smw_status = smw_mac(&mac_args);
+	if (smw_status != SMW_STATUS_OK) {
+		DBG_TRACE("Failed to compute HMAC: %d\n", smw_status);
+		rc = smw_rc_to_tcti_rc(smw_status);
+		goto end;
+	}
+
+end:
+	/* Free allocated memory */
+	if (hmac_input)
+		free(hmac_input);
+
+	if (proof)
+		free(proof);
 
 	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
 	return rc;

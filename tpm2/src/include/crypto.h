@@ -14,6 +14,11 @@
 
 #define SMW_OBJECT_METADATA_SIZE 20
 
+/* Mocked proof - in production, load from secure storage */
+extern uint8_t proof_owner[TPM2_SHA384_DIGEST_SIZE];
+extern uint8_t proof_platform[TPM2_SHA384_DIGEST_SIZE];
+extern uint8_t proof_endorsement[TPM2_SHA384_DIGEST_SIZE];
+
 /**
  * struct createprimary_input_t - Input parameters for TPM2_CreatePrimary command.
  * @primary_handle: Hierarchy handle where the primary object will be created.
@@ -276,4 +281,47 @@ uint32_t calculate_object_name(const TPM2B_PUBLIC *public, TPM2B_NAME *name);
  */
 uint32_t map_curve_info(TPM2_ECC_CURVE curve, uint32_t *security_size,
 			uint32_t *public_data_size, smw_attr_algo_t *hash_attr);
+/**
+ * compute_hashcheck_hmac() - Compute HMAC for TPMT_TK_HASHCHECK ticket
+ * @hierarchy: Hierarchy for the ticket (TPM_RH_OWNER, etc.)
+ * @hash_alg: Hash algorithm used
+ * @digest: The computed hash
+ * @digest_size: Size of the hash
+ * @hmac_out: Output buffer for HMAC
+ *
+ * Per TPM 2.0 Part 2, Section 10.7.6:
+ * HMAC = HMAC_contextAlg(proof, (TPM_ST_HASHCHECK || digest))
+ *
+ * Where:
+ * - proof = hierarchy proof value (secret associated with hierarchy)
+ * - TPM_ST_HASHCHECK = 0x8014 (2 bytes, big-endian)
+ * - contextAlg = SHA256
+ * - digest = the hash result
+ * - || = concatenation
+ *
+ * Return: TSS2_RC_SUCCESS on success, error code otherwise
+ */
+uint32_t compute_hashcheck_hmac(TPMI_RH_HIERARCHY hierarchy,
+				const uint8_t *digest, uint16_t digest_size,
+				uint8_t *hmac_out);
+
+/**
+ * get_hierarchy_proof_key() - Retrieve and copy the proof key for a TPM hierarchy.
+ * @hierarchy:  TPM hierarchy identifier (OWNER, PLATFORM, ENDORSEMENT, or NULL).
+ * @proof:      Pointer to the destination buffer where the proof key will be copied.
+ *
+ * This function retrieves the hierarchy-specific proof key and copies it into
+ * the provided buffer. Proof keys are used for generating cryptographic tickets
+ * and validating hierarchy-specific operations. Each hierarchy (Owner, Platform,
+ * Endorsement) has its own unique proof value. The NULL hierarchy has no
+ * associated proof key and results in no data being copied.
+ *
+ * The caller must ensure the destination buffer is large enough to hold the
+ * proof key data.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS if the hierarchy is valid and proof key is copied,
+ * error code otherwise.
+ */
+uint32_t get_hierarchy_proof_key(TPMI_RH_HIERARCHY hierarchy, uint8_t *proof);
 #endif /* __CRYPTO_H__ */

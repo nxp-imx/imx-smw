@@ -393,8 +393,10 @@ static CK_RV ec_key_smw_to_pkcs11(unsigned int op, CK_KEY_TYPE *ck_key_type,
 
 	if (ret == CKR_OK && (op & OP_KEY_DESC_GET_SECURITY_SIZE)) {
 		/* Convert the curve to EC params */
-		if (obj) {
+		if (obj)
 			key = get_subkey_from(obj);
+
+		if (key) {
 			key->params.number = params.number;
 			key->params.array = calloc(1, params.number);
 			if (key->params.array) {
@@ -437,6 +439,11 @@ static CK_RV ec_key_set_buffer_from_obj(struct smw_key_descriptor *desc,
 	}
 
 	key = get_subkey_from(obj);
+	if (!key) {
+		ret = CKR_FUNCTION_FAILED;
+		goto end;
+	}
+
 	smw_key = &desc->buffer->gen;
 
 	if (key->point_q.array) {
@@ -489,6 +496,11 @@ static CK_RV edwards_key_set_buffer_from_obj(struct smw_key_descriptor *desc,
 	}
 
 	key = get_subkey_from(obj);
+	if (!key) {
+		ret = CKR_FUNCTION_FAILED;
+		goto end;
+	}
+
 	smw_key = &desc->buffer->gen;
 
 	if (key->point_q.array) {
@@ -526,10 +538,11 @@ static CK_RV ec_key_pkcs11_to_smw(unsigned int op,
 
 	if (op & OP_KEY_DESC_SET_KEY_TYPE ||
 	    op & OP_KEY_DESC_SET_SECURITY_SIZE) {
-		if (obj) {
+		if (obj)
 			key = get_subkey_from(obj);
+
+		if (key)
 			params = &key->params;
-		}
 
 		if (!params)
 			goto end;
@@ -580,8 +593,10 @@ static CK_RV cipher_key_smw_to_pkcs11(unsigned int op, CK_KEY_TYPE *ck_key_type,
 		ret = get_cipher_type_from_smw(ck_key_type, desc->type_name);
 
 	if (ret == CKR_OK && (op & OP_KEY_DESC_GET_SECURITY_SIZE)) {
-		if (obj) {
+		if (obj)
 			key = get_subkey_from(obj);
+
+		if (key) {
 			key->value_len = desc->security_size / 8;
 			ret = CKR_OK;
 		} else {
@@ -616,6 +631,11 @@ static CK_RV cipher_key_pkcs11_to_smw(unsigned int op,
 		}
 
 		key = get_subkey_from(obj);
+		if (!key) {
+			ret = CKR_FUNCTION_FAILED;
+			goto end;
+		}
+
 		key_length = key->value_len;
 
 		switch (key_type) {
@@ -668,6 +688,11 @@ static CK_RV cipher_key_pkcs11_to_smw(unsigned int op,
 			}
 
 			key = get_subkey_from(obj);
+			if (!key) {
+				ret = CKR_FUNCTION_FAILED;
+				goto end;
+			}
+
 			smw_key = &desc->buffer->gen;
 			smw_key->private_data = key->value.array;
 			if (SET_OVERFLOW(key->value.number,
@@ -697,8 +722,10 @@ static CK_RV hmac_key_smw_to_pkcs11(unsigned int op, CK_KEY_TYPE *ck_key_type,
 		ret = get_hmac_type_from_smw(ck_key_type, desc);
 
 	if (ret == CKR_OK && (op & OP_KEY_DESC_GET_SECURITY_SIZE)) {
-		if (obj) {
+		if (obj)
 			key = get_subkey_from(obj);
+
+		if (key) {
 			key->value_len = desc->security_size / 8;
 			ret = CKR_OK;
 		} else {
@@ -733,6 +760,11 @@ static CK_RV hmac_key_pkcs11_to_smw(unsigned int op,
 		}
 
 		key = get_subkey_from(obj);
+		if (!key) {
+			ret = CKR_FUNCTION_FAILED;
+			goto end;
+		}
+
 		key_length = key->value_len;
 
 		if (MUL_OVERFLOW(key_length, 8, &desc->security_size)) {
@@ -753,6 +785,11 @@ static CK_RV hmac_key_pkcs11_to_smw(unsigned int op,
 			}
 
 			key = get_subkey_from(obj);
+			if (!key) {
+				ret = CKR_FUNCTION_FAILED;
+				goto end;
+			}
+
 			smw_key = &desc->buffer->gen;
 			smw_key->private_data = key->value.array;
 			if (SET_OVERFLOW(key->value.number,
@@ -785,8 +822,10 @@ static CK_RV rsa_key_smw_to_pkcs11(unsigned int op, CK_KEY_TYPE *ck_key_type,
 		/*
 		 * Modulus length defines the RSA security size
 		 */
-		if (obj) {
+		if (obj)
 			key = get_subkey_from(obj);
+
+		if (key) {
 			key->modulus_length = desc->security_size;
 
 			ret = CKR_OK;
@@ -821,6 +860,10 @@ static CK_RV rsa_key_pks11_to_smw(unsigned int op,
 		}
 
 		key = get_subkey_from(obj);
+		if (!key) {
+			ret = CKR_FUNCTION_FAILED;
+			goto end;
+		}
 
 		/*
 		 * Modulus length defines the RSA security size
@@ -856,6 +899,11 @@ static CK_RV rsa_key_pks11_to_smw(unsigned int op,
 			}
 
 			key = get_subkey_from(obj);
+			if (!key) {
+				ret = CKR_FUNCTION_FAILED;
+				goto end;
+			}
+
 			smw_key = &desc->buffer->rsa;
 			smw_key->modulus = key->modulus.value;
 
@@ -1045,7 +1093,8 @@ int base_key_desc_setup(struct libobj_obj *obj, struct smw_key_descriptor *desc)
 		case CKK_DES3:
 		case CKK_SM4:
 			cipher_key = get_subkey_from(obj);
-			key_value = &cipher_key->value;
+			if (cipher_key)
+				key_value = &cipher_key->value;
 			break;
 
 		case CKK_MD5_HMAC:
@@ -1061,7 +1110,8 @@ int base_key_desc_setup(struct libobj_obj *obj, struct smw_key_descriptor *desc)
 		case CKK_GENERIC_SECRET:
 		case CKK_HKDF:
 			hmac_key = get_subkey_from(obj);
-			key_value = &hmac_key->value;
+			if (hmac_key)
+				key_value = &hmac_key->value;
 			break;
 
 		case CKK_EC:

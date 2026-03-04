@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #include <stdlib.h>
@@ -469,9 +469,12 @@ CK_RV ulong_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 CK_RV attr_get_value(void *obj, const struct template_attr *tattr,
 		     struct libattr_list *attrs, enum attr_req req_overwrite)
 {
-	CK_RV ret = CKR_OK;
+	CK_RV ret = CKR_GENERAL_ERROR;
 	CK_ATTRIBUTE_PTR cattr = NULL_PTR;
 	enum attr_req req = tattr->req;
+
+	if (!obj)
+		return ret;
 
 	ret = obj_find_attr(&cattr, tattr->type, attrs);
 	if (ret != CKR_OK)
@@ -527,9 +530,12 @@ CK_RV attr_set_value(void *obj, CK_ATTRIBUTE_PTR cattr,
 		     const struct template_attr *tattr,
 		     struct libattr_list *attrs, enum attr_req req_overwrite)
 {
-	CK_RV ret = CKR_OK;
+	CK_RV ret = CKR_GENERAL_ERROR;
 	CK_ATTRIBUTE_PTR attr = NULL_PTR;
 	enum attr_req req = tattr->req;
+
+	if (!obj)
+		return ret;
 
 	ret = obj_find_attr(&attr, tattr->type, attrs);
 	if (ret != CKR_OK)
@@ -588,6 +594,9 @@ CK_RV attr_get_obj_prot_value(CK_ATTRIBUTE_PTR attr,
 	size_t idx = 0;
 	const struct template_attr *tattr = tattrs;
 
+	if (!obj)
+		return CKR_GENERAL_ERROR;
+
 	for (; idx < nb_tattrs; idx++, tattr++) {
 		if (attr->type == tattr->type) {
 			if (tattr->protect && protect) {
@@ -615,6 +624,9 @@ CK_RV attr_modify_obj_value(CK_ATTRIBUTE_PTR attr,
 {
 	size_t idx = 0;
 	const struct template_attr *tattr = tattrs;
+
+	if (!obj)
+		return CKR_GENERAL_ERROR;
 
 	for (; idx < nb_tattrs; idx++, tattr++) {
 		if (attr->type == tattr->type) {

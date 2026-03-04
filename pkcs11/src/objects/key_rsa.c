@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2025 NXP
+ * Copyright 2021-2026 NXP
  */
 
 #include <stdlib.h>
@@ -158,6 +158,10 @@ static void key_rsa_free(struct libobj_obj *obj, unsigned int type)
 			free(key->coeff.value);
 			key->coeff.value = NULL_PTR;
 		}
+
+		if (key->type == LIBOBJ_KEY_PAIR && key->pub_obj)
+			key_rsa_free(key->pub_obj, LIBOBJ_KEY_PUBLIC);
+
 		break;
 
 	default:
@@ -203,6 +207,10 @@ CK_RV key_rsa_public_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 		goto end;
 
 	new_key = get_subkey_from(obj);
+	if (!new_key) {
+		ret = CKR_FUNCTION_FAILED;
+		goto end;
+	}
 
 	DBG_TRACE("Create a new RSA public key (%p)", new_key);
 
@@ -264,6 +272,11 @@ CK_RV key_rsa_public_get_attribute(CK_ATTRIBUTE_PTR attr,
 
 	DBG_TRACE("Get attribute type=%#lx", attr->type);
 
+	if (!key) {
+		ret = CKR_ARGUMENTS_BAD;
+		goto end;
+	}
+
 	if (is_token_obj(obj, storage) &&
 	    (attr->type == CKA_MODULUS || attr->type == CKA_PUBLIC_EXPONENT)) {
 		if (!key->modulus.value && !key->pub_exp.value)
@@ -272,12 +285,12 @@ CK_RV key_rsa_public_get_attribute(CK_ATTRIBUTE_PTR attr,
 
 	if (ret == CKR_OK)
 		ret = attr_get_obj_value(attr, attr_key_rsa_public,
-					 ARRAY_SIZE(attr_key_rsa_public),
-					 get_subkey_from(obj));
+					 ARRAY_SIZE(attr_key_rsa_public), key);
 
 	if (ret == CKR_ATTRIBUTE_TYPE_INVALID)
 		attr->ulValueLen = CK_UNAVAILABLE_INFORMATION;
 
+end:
 	DBG_TRACE("Get attribute type=%#lx ret %ld", attr->type, ret);
 	return ret;
 }
@@ -289,10 +302,16 @@ CK_RV key_rsa_public_modify_attribute(CK_ATTRIBUTE_PTR attr,
 
 	DBG_TRACE("Modify attribute type=%#lx", attr->type);
 
+	if (!obj || !get_subkey_from(obj)) {
+		ret = CKR_ARGUMENTS_BAD;
+		goto end;
+	}
+
 	ret = attr_modify_obj_value(attr, attr_key_rsa_public,
 				    ARRAY_SIZE(attr_key_rsa_public),
 				    get_subkey_from(obj));
 
+end:
 	DBG_TRACE("Modify attribute type=%#lx ret %ld", attr->type, ret);
 	return ret;
 }
@@ -308,6 +327,10 @@ CK_RV key_rsa_private_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 		goto end;
 
 	new_key = get_subkey_from(obj);
+	if (!new_key) {
+		ret = CKR_FUNCTION_FAILED;
+		goto end;
+	}
 
 	DBG_TRACE("Create a new RSA private key (%p)", new_key);
 
@@ -400,6 +423,11 @@ CK_RV key_rsa_private_get_attribute(CK_ATTRIBUTE_PTR attr,
 	DBG_TRACE("Get attribute type=%#lx protected=%s", attr->type,
 		  protect ? "YES" : "NO");
 
+	if (!key) {
+		ret = CKR_ARGUMENTS_BAD;
+		goto end;
+	}
+
 	if (is_token_obj(obj, storage) &&
 	    (attr->type == CKA_MODULUS || attr->type == CKA_PUBLIC_EXPONENT)) {
 		if (!key->modulus.value && !key->pub_exp.value)
@@ -407,11 +435,12 @@ CK_RV key_rsa_private_get_attribute(CK_ATTRIBUTE_PTR attr,
 	}
 
 	ret = attr_get_obj_prot_value(attr, attr_key_rsa_private,
-				      ARRAY_SIZE(attr_key_rsa_private),
-				      get_subkey_from(obj), protect);
+				      ARRAY_SIZE(attr_key_rsa_private), key,
+				      protect);
 	if (ret == CKR_ATTRIBUTE_TYPE_INVALID)
 		attr->ulValueLen = CK_UNAVAILABLE_INFORMATION;
 
+end:
 	DBG_TRACE("Get attribute type=%#lx ret %ld", attr->type, ret);
 	return ret;
 }
@@ -423,10 +452,16 @@ CK_RV key_rsa_private_modify_attribute(CK_ATTRIBUTE_PTR attr,
 
 	DBG_TRACE("Modify attribute type=%#lx", attr->type);
 
+	if (!obj || !get_subkey_from(obj)) {
+		ret = CKR_ARGUMENTS_BAD;
+		goto end;
+	}
+
 	ret = attr_modify_obj_value(attr, attr_key_rsa_private,
 				    ARRAY_SIZE(attr_key_rsa_private),
 				    get_subkey_from(obj));
 
+end:
 	DBG_TRACE("Modify attribute type=%#lx ret %ld", attr->type, ret);
 	return ret;
 }
@@ -446,6 +481,10 @@ CK_RV key_rsa_keypair_generate(CK_SESSION_HANDLE hsession,
 		goto end;
 
 	keypair = get_subkey_from(priv_obj);
+	if (!keypair) {
+		ret = CKR_FUNCTION_FAILED;
+		goto end;
+	}
 
 	DBG_TRACE("Generate a RSA keypair (%p)", keypair);
 

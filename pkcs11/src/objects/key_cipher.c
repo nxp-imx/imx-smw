@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #include <stdlib.h>
@@ -79,6 +79,10 @@ CK_RV key_cipher_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 		goto end;
 
 	new_key = get_subkey_from(obj);
+	if (!new_key) {
+		ret = CKR_FUNCTION_FAILED;
+		goto end;
+	}
 
 	DBG_TRACE("Create a new Cipher secret key (%p)", new_key);
 
@@ -120,6 +124,10 @@ CK_RV key_cipher_retrieve(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 		goto end;
 
 	new_key = get_subkey_from(obj);
+	if (!new_key) {
+		ret = CKR_FUNCTION_FAILED;
+		goto end;
+	}
 
 	DBG_TRACE("Retrieve a Cipher secret key (%p)", new_key);
 
@@ -148,12 +156,18 @@ CK_RV key_cipher_get_attribute(CK_ATTRIBUTE_PTR attr,
 	DBG_TRACE("Get attribute type=%#lx protected=%s", attr->type,
 		  protect ? "YES" : "NO");
 
+	if (!obj || !get_subkey_from(obj)) {
+		ret = CKR_ARGUMENTS_BAD;
+		goto end;
+	}
+
 	ret = attr_get_obj_prot_value(attr, attr_key_cipher,
 				      ARRAY_SIZE(attr_key_cipher),
 				      get_subkey_from(obj), protect);
 	if (ret == CKR_ATTRIBUTE_TYPE_INVALID)
 		attr->ulValueLen = CK_UNAVAILABLE_INFORMATION;
 
+end:
 	DBG_TRACE("Get attribute type=%#lx ret %ld", attr->type, ret);
 	return ret;
 }
@@ -164,10 +178,16 @@ CK_RV key_cipher_modify_attribute(CK_ATTRIBUTE_PTR attr, struct libobj_obj *obj)
 
 	DBG_TRACE("Modify attribute type=%#lx", attr->type);
 
+	if (!obj || !get_subkey_from(obj)) {
+		ret = CKR_ARGUMENTS_BAD;
+		goto end;
+	}
+
 	ret = attr_modify_obj_value(attr, attr_key_cipher,
 				    ARRAY_SIZE(attr_key_cipher),
 				    get_subkey_from(obj));
 
+end:
 	DBG_TRACE("Modify attribute type=%#lx ret %ld", attr->type, ret);
 	return ret;
 }
@@ -184,6 +204,10 @@ CK_RV key_cipher_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 		goto end;
 
 	new_key = get_subkey_from(obj);
+	if (!new_key) {
+		ret = CKR_FUNCTION_FAILED;
+		goto end;
+	}
 
 	DBG_TRACE("Generate a Cipher key (%p)", new_key);
 
@@ -231,6 +255,10 @@ CK_RV key_cipher_derive(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 		goto end;
 
 	cipher_key = get_subkey_from(derive_params->derived_key);
+	if (!cipher_key) {
+		ret = CKR_FUNCTION_FAILED;
+		goto end;
+	}
 
 	DBG_TRACE("Derive a cipher key (%p)", cipher_key);
 

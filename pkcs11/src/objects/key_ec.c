@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #include <stdlib.h>
@@ -124,10 +124,15 @@ static void key_ec_free(struct libobj_obj *obj, unsigned int type)
 			free(key->value_d.value);
 			key->value_d.value = NULL_PTR;
 		}
+
 		if (key->type == LIBOBJ_KEY_PRIVATE && key->point_q.array) {
 			free(key->point_q.array);
 			key->point_q.array = NULL_PTR;
 		}
+
+		if (key->type == LIBOBJ_KEY_PAIR && key->pub_obj)
+			key_ec_free(key->pub_obj, LIBOBJ_KEY_PUBLIC);
+
 		break;
 
 	default:
@@ -171,6 +176,10 @@ CK_RV key_ec_public_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 		goto end;
 
 	new_key = get_subkey_from(obj);
+	if (!new_key) {
+		ret = CKR_FUNCTION_FAILED;
+		goto end;
+	}
 
 	DBG_TRACE("Create a new EC public key (%p)", new_key);
 
@@ -226,6 +235,11 @@ CK_RV key_ec_public_get_attribute(CK_ATTRIBUTE_PTR attr,
 
 	DBG_TRACE("Get attribute type=%#lx", attr->type);
 
+	if (!key) {
+		ret = CKR_ARGUMENTS_BAD;
+		goto end;
+	}
+
 	if (is_token_obj(obj, storage) && attr->type == CKA_EC_POINT) {
 		if (!key->point_q.array)
 			ret = libdev_export_public_key(obj);
@@ -233,12 +247,12 @@ CK_RV key_ec_public_get_attribute(CK_ATTRIBUTE_PTR attr,
 
 	if (ret == CKR_OK)
 		ret = attr_get_obj_value(attr, attr_key_ec_public,
-					 ARRAY_SIZE(attr_key_ec_public),
-					 get_subkey_from(obj));
+					 ARRAY_SIZE(attr_key_ec_public), key);
 
 	if (ret == CKR_ATTRIBUTE_TYPE_INVALID)
 		attr->ulValueLen = CK_UNAVAILABLE_INFORMATION;
 
+end:
 	DBG_TRACE("Get attribute type=%#lx ret %ld", attr->type, ret);
 	return ret;
 }
@@ -250,10 +264,16 @@ CK_RV key_ec_public_modify_attribute(CK_ATTRIBUTE_PTR attr,
 
 	DBG_TRACE("Modify attribute type=%#lx", attr->type);
 
+	if (!obj || !get_subkey_from(obj)) {
+		ret = CKR_ARGUMENTS_BAD;
+		goto end;
+	}
+
 	ret = attr_modify_obj_value(attr, attr_key_ec_public,
 				    ARRAY_SIZE(attr_key_ec_public),
 				    get_subkey_from(obj));
 
+end:
 	DBG_TRACE("Modify attribute type=%#lx ret %ld", attr->type, ret);
 	return ret;
 }
@@ -269,6 +289,10 @@ CK_RV key_ec_private_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 		goto end;
 
 	new_key = get_subkey_from(obj);
+	if (!new_key) {
+		ret = CKR_FUNCTION_FAILED;
+		goto end;
+	}
 
 	DBG_TRACE("Create a new EC private key (%p)", new_key);
 
@@ -335,6 +359,11 @@ CK_RV key_ec_private_get_attribute(CK_ATTRIBUTE_PTR attr,
 	DBG_TRACE("Get attribute type=%#lx protected=%s", attr->type,
 		  protect ? "YES" : "NO");
 
+	if (!key) {
+		ret = CKR_ARGUMENTS_BAD;
+		goto end;
+	}
+
 	if (is_token_obj(obj, storage) && attr->type == CKA_EC_POINT) {
 		if (!key->point_q.array)
 			ret = libdev_export_public_key(obj);
@@ -343,11 +372,12 @@ CK_RV key_ec_private_get_attribute(CK_ATTRIBUTE_PTR attr,
 	if (ret == CKR_OK)
 		ret = attr_get_obj_prot_value(attr, attr_key_ec_private,
 					      ARRAY_SIZE(attr_key_ec_private),
-					      get_subkey_from(obj), protect);
+					      key, protect);
 
 	if (ret == CKR_ATTRIBUTE_TYPE_INVALID)
 		attr->ulValueLen = CK_UNAVAILABLE_INFORMATION;
 
+end:
 	DBG_TRACE("Get attribute type=%#lx ret %ld", attr->type, ret);
 	return ret;
 }
@@ -359,10 +389,16 @@ CK_RV key_ec_private_modify_attribute(CK_ATTRIBUTE_PTR attr,
 
 	DBG_TRACE("Modify attribute type=%#lx", attr->type);
 
+	if (!obj || !get_subkey_from(obj)) {
+		ret = CKR_ARGUMENTS_BAD;
+		goto end;
+	}
+
 	ret = attr_modify_obj_value(attr, attr_key_ec_private,
 				    ARRAY_SIZE(attr_key_ec_private),
 				    get_subkey_from(obj));
 
+end:
 	DBG_TRACE("Modify attribute type=%#lx ret %ld", attr->type, ret);
 	return ret;
 }
@@ -381,6 +417,10 @@ CK_RV key_ec_keypair_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 		goto end;
 
 	keypair = get_subkey_from(priv_obj);
+	if (!keypair) {
+		ret = CKR_FUNCTION_FAILED;
+		goto end;
+	}
 
 	DBG_TRACE("Generate an EC keypair (%p)", keypair);
 

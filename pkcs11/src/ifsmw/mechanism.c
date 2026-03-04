@@ -816,6 +816,8 @@ static CK_RV get_key_permitted_algo(smw_attr_algo_t *permitted_algo,
 	size_t i = 1;
 
 	mech_list = get_key_mech_list(obj);
+	if (!mech_list)
+		return ret;
 
 	if (mech_list->number) {
 		ret = find_mechanism(slotid, mech_list->mech[0], NULL, &entry,
@@ -1085,7 +1087,7 @@ static CK_RV get_key_allowed_algo(struct libobj_obj *obj,
 	smw_attr_algo_t algo = SMW_ATTR_ALGO_NONE;
 	smw_attr_algo_t mode = SMW_ATTR_MODE_NONE;
 	smw_key_type_t smw_key_type = SMW_KEY_TYPE_NAME_NONE;
-	struct libmech_list *mech_list = get_key_mech_list(obj);
+	struct libmech_list *mech_list = NULL;
 	CK_MECHANISM_TYPE mech = 0;
 	CK_MECHANISM_TYPE_PTR key_allowed_mech = NULL;
 	size_t nb_allowed_mech = 0;
@@ -1175,12 +1177,15 @@ static CK_RV get_key_allowed_algo(struct libobj_obj *obj,
 	}
 
 	if (found) {
-		if (mech_list->mech)
-			free(mech_list->mech);
+		mech_list = get_key_mech_list(obj);
+		if (mech_list) {
+			if (mech_list->mech)
+				free(mech_list->mech);
 
-		mech_attr.pValue = key_allowed_mech;
-		mech_attr.ulValueLen = nb_allowed_mech;
-		ret = attr_to_mech_list(mech_list, &mech_attr);
+			mech_attr.pValue = key_allowed_mech;
+			mech_attr.ulValueLen = nb_allowed_mech;
+			ret = attr_to_mech_list(mech_list, &mech_attr);
+		}
 	}
 
 	return ret;
@@ -1708,7 +1713,7 @@ static CK_RV op_export_common(struct smw_key_descriptor *key_desc,
 static CK_RV export_ec_public_key(struct smw_key_descriptor *key_desc,
 				  const struct libobj_obj *obj)
 {
-	CK_RV ret = CKR_OK;
+	CK_RV ret = CKR_ARGUMENTS_BAD;
 
 	struct libobj_key_ec_pair *key = get_subkey_from(obj);
 
@@ -1717,22 +1722,21 @@ static CK_RV export_ec_public_key(struct smw_key_descriptor *key_desc,
 
 	DBG_TRACE("Export EC Public Key");
 
+	if (!key)
+		goto end;
+
 	/*
 	 * Allocate the EC public key that will be DER-encoded
 	 * of the ANSI X9.62 EC public point value
 	 */
 	/* Assign EC public key length */
 	public_length = key_desc->buffer->gen.public_length;
-	if (!public_length) {
-		ret = CKR_ARGUMENTS_BAD;
+	if (!public_length)
 		goto end;
-	}
 
 	/* Add DER ANSI X9.62 uncompress code byte */
-	if (INC_OVERFLOW(public_length, 1)) {
-		ret = CKR_ARGUMENTS_BAD;
+	if (INC_OVERFLOW(public_length, 1))
 		goto end;
-	}
 
 	ret = util_asn1_encode_octet_string(NULL, public_length, NULL,
 					    &key->point_q.number);
@@ -1769,7 +1773,7 @@ static CK_RV export_ec_public_key(struct smw_key_descriptor *key_desc,
 	}
 
 end:
-	if (ret != CKR_OK) {
+	if (ret != CKR_OK && key) {
 		if (key->point_q.array)
 			free(key->point_q.array);
 
@@ -1785,19 +1789,20 @@ end:
 static CK_RV export_edwards_public_key(struct smw_key_descriptor *key_desc,
 				       const struct libobj_obj *obj)
 {
-	CK_RV ret = CKR_OK;
+	CK_RV ret = CKR_ARGUMENTS_BAD;
 
 	struct libobj_key_ec_pair *key = get_subkey_from(obj);
 	size_t public_length = 0;
 
 	DBG_TRACE("Export Edwards Public Key");
 
+	if (!key)
+		goto end;
+
 	/* Assign EC public key length */
 	public_length = key_desc->buffer->gen.public_length;
-	if (!public_length) {
-		ret = CKR_ARGUMENTS_BAD;
+	if (!public_length)
 		goto end;
-	}
 
 	ret = util_asn1_encode_octet_string(NULL, public_length, NULL,
 					    &key->point_q.number);
@@ -1823,7 +1828,7 @@ static CK_RV export_edwards_public_key(struct smw_key_descriptor *key_desc,
 	ret = op_export_common(key_desc, obj);
 
 end:
-	if (ret != CKR_OK) {
+	if (ret != CKR_OK && key) {
 		if (key->point_q.array)
 			free(key->point_q.array);
 
@@ -1839,11 +1844,14 @@ end:
 static CK_RV export_rsa_public_key(struct smw_key_descriptor *key_desc,
 				   const struct libobj_obj *obj)
 {
-	CK_RV ret = CKR_OK;
+	CK_RV ret = CKR_ARGUMENTS_BAD;
 
 	struct libobj_key_rsa_pair *key = get_subkey_from(obj);
 
 	DBG_TRACE("Export RSA Public Key");
+
+	if (!key)
+		goto end;
 
 	/* Assign RSA public buffer length */
 	key->modulus.length = key_desc->buffer->rsa.modulus_length;
@@ -1851,10 +1859,8 @@ static CK_RV export_rsa_public_key(struct smw_key_descriptor *key_desc,
 				  key_desc->buffer->rsa.public_exponent_length);
 
 	/* Allocate the public buffer */
-	if (!key->modulus_length || !key->pub_exp.length) {
-		ret = CKR_ARGUMENTS_BAD;
+	if (!key->modulus_length || !key->pub_exp.length)
 		goto end;
-	}
 
 	key->modulus.value = calloc(1, key->modulus_length);
 	if (!key->modulus.value) {
@@ -1871,7 +1877,7 @@ static CK_RV export_rsa_public_key(struct smw_key_descriptor *key_desc,
 	ret = op_export_common(key_desc, obj);
 
 end:
-	if (ret != CKR_OK) {
+	if (ret != CKR_OK && key) {
 		if (key->modulus.value)
 			free(key->modulus.value);
 

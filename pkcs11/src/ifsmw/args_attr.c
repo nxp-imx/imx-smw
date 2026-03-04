@@ -149,6 +149,9 @@ static void set_ec_key_usage(smw_attr_usage_t *usage_flags,
 {
 	struct libobj_key_ec_pair *key = get_subkey_from(obj);
 
+	if (!key)
+		return;
+
 	switch (key->type) {
 	case LIBOBJ_KEY_PUBLIC:
 		set_public_key_usage(usage_flags, obj);
@@ -174,6 +177,9 @@ static void get_ec_key_usage(struct libobj_obj *obj,
 {
 	struct libobj_key_ec_pair *key = get_subkey_from(obj);
 
+	if (!key)
+		return;
+
 	switch (key->type) {
 	case LIBOBJ_KEY_PUBLIC:
 		get_public_key_usage(obj, usage_flags);
@@ -197,6 +203,9 @@ static void set_rsa_key_usage(smw_attr_usage_t *usage_flags,
 			      struct libobj_obj *obj)
 {
 	struct libobj_key_rsa_pair *key = get_subkey_from(obj);
+
+	if (!key)
+		return;
 
 	switch (key->type) {
 	case LIBOBJ_KEY_PUBLIC:
@@ -222,6 +231,9 @@ static void get_rsa_key_usage(struct libobj_obj *obj,
 
 {
 	struct libobj_key_rsa_pair *key = get_subkey_from(obj);
+
+	if (!key)
+		return;
 
 	switch (key->type) {
 	case LIBOBJ_KEY_PUBLIC:

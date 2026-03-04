@@ -367,4 +367,26 @@ uint32_t handle_verifysignature(tcti_smw_context_t *ctx, uint16_t tag,
  */
 uint32_t handle_pcrread(tcti_smw_context_t *ctx, uint16_t tag,
 			const uint8_t *cmd, size_t cmd_size);
+
+/**
+ * handle_pcrextend() - Process TPM2_PCR_Extend command.
+ * @ctx:      Pointer to the SMW TCTI context structure.
+ * @tag:      TPM structure tag from the command header.
+ * @cmd:      Pointer to the command buffer containing the full TPM command.
+ * @cmd_size: Size of the command buffer in bytes.
+ *
+ * This function handles the TPM2_PCR_Extend command which extends a Platform
+ * Configuration Register with one or more digest values. It unmarshals the
+ * PCR handle, authorization area, and digest values, validates the PCR index
+ * is within range (0 to TPM2_MAX_PCRS-1), then extends the PCR for each
+ * provided digest using the corresponding hash algorithm. The PCR extension
+ * follows the formula: PCR_new = Hash(PCR_old || digest). Upon successful
+ * extension, the global PCR update counter is incremented to track state
+ * changes.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful PCR extension, or the corresponding error code.
+ */
+uint32_t handle_pcrextend(tcti_smw_context_t *ctx, uint16_t tag,
+			  const uint8_t *cmd, size_t cmd_size);
 #endif /* __COMMANDS_H__ */

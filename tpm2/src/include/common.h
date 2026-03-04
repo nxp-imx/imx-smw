@@ -30,6 +30,28 @@
 
 #define SMW_PCR_SELECT_SIZE ((TPM2_MAX_PCRS + 7) / 8)
 
+#define SMW_MAX_PCR_BANKS 4
+
+/**
+ * struct pcr_bank_t - PCR bank structure for a specific hash algorithm.
+ * @hash_alg:     Hash algorithm identifier (e.g. TPM2_ALG_SHA256, TPM2_ALG_SHA384).
+ * @digest_size:  Size of digests in bytes for this hash algorithm.
+ * @pcr:          Array of PCR values, indexed by PCR number (0 to TPM2_MAX_PCRS-1).
+ *                Each PCR stores a digest of size @digest_size, with storage allocated
+ *                for the maximum digest size (TPM2_SHA512_DIGEST_SIZE).
+ *
+ * This typedef represents a single PCR bank in the TPM implementation. A PCR bank
+ * contains all Platform Configuration Registers using a specific hash algorithm.
+ * Multiple banks can coexist (e.g., SHA-256 bank, SHA-384 bank) allowing the same
+ * PCR index to have different digest values computed with different algorithms.
+ * Each PCR value is extended using the formula: PCR_new = Hash(PCR_old || data).
+ */
+typedef struct {
+	TPMI_ALG_HASH hash_alg;
+	uint16_t digest_size;
+	uint8_t pcr[TPM2_MAX_PCRS][TPM2_SHA512_DIGEST_SIZE];
+} pcr_bank_t;
+
 /**
  * struct tcti_smw_object_t - TPM2 transient object slot
  * @handle: TPM2 handle (0x80000000-0x80000002)
@@ -162,11 +184,21 @@ typedef struct {
  * @sessions:        Array of active TPM sessions (max SMW_MAX_SESSIONS).
  * @next_session_id: Counter for generating unique session identifiers.
  * @ctx_sequence:    Sequence number for context save/load operations.
+ * @objects:         Array of TPM objects (keys, data) managed by the TCTI (max SMW_MAX_OBJECTS).
+ * @next_transient_id: Counter for generating unique transient object handles.
+ * @pcr_banks:         Array of PCR banks, each supporting a different hash algorithm.
+ * @pcr_bank_count:    Number of active PCR banks configured in the system.
+ * @pcr_update_counter: Global counter incremented on each PCR extend/event/reset operation.
  *
  * This typedef represents the TCTI context used by the SMW TCTI layer.
  * It embeds the common TCTI context as the first field to maintain
- * compatibility with generic TCTI operations, and it tracks initialization
- * state, response buffers, active sessions, and context management state.
+ * compatibility with generic TCTI operations.
+ * The structure tracks:
+ * - Initialization state and response buffers for command/response handling
+ * - Active sessions for authorization and policy management
+ * - TPM objects (keys) with their SMW key descriptors
+ * - PCR banks and update tracking for integrity measurement
+ * - Sequence counters for generating unique handles and context identifiers
  */
 typedef struct {
 	tcti_context_t common; /* must be first */
@@ -184,6 +216,11 @@ typedef struct {
 	/* objects */
 	tcti_smw_object_t objects[SMW_MAX_OBJECTS];
 	uint8_t next_transient_id;
+
+	/* PCR management */
+	pcr_bank_t pcr_banks[SMW_MAX_PCR_BANKS];
+	uint8_t pcr_bank_count;
+	uint32_t pcr_update_counter;
 } tcti_smw_context_t;
 
 /**

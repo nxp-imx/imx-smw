@@ -344,4 +344,27 @@ uint32_t handle_sign(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
  */
 uint32_t handle_verifysignature(tcti_smw_context_t *ctx, uint16_t tag,
 				const uint8_t *cmd, size_t cmd_size);
+
+/**
+ * handle_pcrread() - Process TPM2_PCR_Read command.
+ * @ctx:      Pointer to the SMW TCTI context structure.
+ * @tag:      TPM structure tag from the command header.
+ * @cmd:      Pointer to the command buffer containing the full TPM command.
+ * @cmd_size: Size of the command buffer in bytes.
+ *
+ * This function handles the TPM2_PCR_Read command which reads Platform
+ * Configuration Register (PCR) values. It unmarshals the requested PCR
+ * selections (hash algorithm and PCR indices), generates PCR values for
+ * each selected register, and builds a response containing the PCR update
+ * counter, selection list, and digest values. In this implementation, all
+ * PCRs return zero-filled values representing uninitialized state, as PCR
+ * extend operations are not yet supported. The function supports multiple
+ * hash algorithms (SHA1, SHA256, SHA384, SHA512) and returns appropriately
+ * sized digests for each.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful PCR read, or the corresponding error code.
+ */
+uint32_t handle_pcrread(tcti_smw_context_t *ctx, uint16_t tag,
+			const uint8_t *cmd, size_t cmd_size);
 #endif /* __COMMANDS_H__ */

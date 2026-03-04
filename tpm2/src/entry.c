@@ -16,6 +16,27 @@
 #include "commands.h"
 #include "utils.h"
 
+static void init_pcr_bank(tcti_smw_context_t *ctx)
+{
+	/* Automotive-Thin, only 1 bank SHA-256
+	 * Initialize PCR bank supported
+	 */
+	ctx->pcr_bank_count = 1;
+
+	/* Bank SHA256 */
+	ctx->pcr_banks[0].hash_alg = TPM2_ALG_SHA256;
+	ctx->pcr_banks[0].digest_size = TPM2_SHA256_DIGEST_SIZE;
+
+	/* Initialize PCR0 to 0 */
+	memset(ctx->pcr_banks[0].pcr[0], 0, TPM2_SHA256_DIGEST_SIZE);
+
+	ctx->pcr_update_counter = 0;
+
+	DBG_TRACE("PCR banks initialized (Automotive-Thin Profile):\n");
+	DBG_TRACE("  - 1 bank (SHA-256)\n");
+	DBG_TRACE("  - PCR 0 supported\n");
+}
+
 /* tcti_smw_down_cast() - Down-cast SMW TCTI context to common context.
  * @tcti_smw: Pointer to the SMW TCTI context structure.
  *
@@ -279,6 +300,8 @@ __export TSS2_RC Tss2_Tcti_Smw_Init(TSS2_TCTI_CONTEXT *tcti_ctx, size_t *size,
 		DBG_TRACE("Error: Impossible to initialize SMW: %d\n", status);
 		return smw_rc_to_tcti_rc(status);
 	}
+
+	init_pcr_bank(smw);
 
 	smw->initialized = 1;
 

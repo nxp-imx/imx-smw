@@ -2126,6 +2126,188 @@ end:
 	return status;
 }
 
+static int pkcs11_tool_delete_keypair(CK_FUNCTION_LIST_PTR pfunc)
+{
+	int status = TEST_FAIL;
+	psa_status_t psa_status = PSA_SUCCESS;
+	psa_key_attributes_t attributes = PSA_KEY_ATTRIBUTES_INIT;
+	psa_key_id_t psa_id = PSA_KEY_ID_NULL;
+	psa_key_type_t key_type =
+		PSA_KEY_TYPE_ECC_KEY_PAIR(PSA_ECC_FAMILY_SECP_R1);
+	psa_algorithm_t ecdsa_algo_type = PSA_ALG_ECDSA(PSA_ALG_SHA_256);
+
+	CK_RV ret = CKR_OK;
+	CK_BBOOL btrue = CK_TRUE;
+	CK_SESSION_HANDLE sess = 0;
+
+	CK_OBJECT_HANDLE hprivkey = 0;
+	CK_ULONG nb_match = 0;
+
+	CK_ULONG key_length = 32;
+	CK_ULONG public_unique_id_len = 0;
+	CK_UTF8CHAR_PTR public_unique_id = NULL_PTR;
+	CK_ULONG private_unique_id_len = 0;
+	CK_UTF8CHAR_PTR private_unique_id = NULL_PTR;
+	CK_OBJECT_CLASS public_key_class = CKO_PUBLIC_KEY;
+	CK_OBJECT_CLASS private_key_class = CKO_PRIVATE_KEY;
+
+	CK_ATTRIBUTE public_key_attrs[] = {
+		{ CKA_CLASS, &public_key_class, sizeof(public_key_class) },
+		{ CKA_UNIQUE_ID, public_unique_id, public_unique_id_len },
+		{ CKA_TOKEN, &btrue, sizeof(CK_BBOOL) },
+	};
+
+	CK_ATTRIBUTE private_key_attrs[] = {
+		{ CKA_CLASS, &private_key_class, sizeof(private_key_class) },
+		{ CKA_UNIQUE_ID, private_unique_id, private_unique_id_len },
+		{ CKA_TOKEN, &btrue, sizeof(CK_BBOOL) },
+	};
+
+	CK_C_INITIALIZE_ARGS init = { 0 };
+
+	init.CreateMutex = mutex_create;
+	init.DestroyMutex = mutex_destroy;
+	init.LockMutex = mutex_lock;
+	init.UnlockMutex = mutex_unlock;
+
+	SUBTEST_START();
+
+	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
+		goto end;
+
+	TEST_OUT("Login to R/W Session as User\n");
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_Login"))
+		goto end;
+
+	/* Initialize PSA Crypto */
+	psa_status = psa_crypto_init();
+	if (psa_status != PSA_SUCCESS)
+		goto end;
+
+	/* Set key attributes */
+	psa_set_key_lifetime(&attributes, PSA_KEY_LIFETIME_PERSISTENT);
+	psa_set_key_usage_flags(&attributes,
+				PSA_KEY_USAGE_SIGN_MESSAGE |
+					PSA_KEY_USAGE_SIGN_HASH |
+					PSA_KEY_USAGE_VERIFY_MESSAGE |
+					PSA_KEY_USAGE_VERIFY_HASH);
+	psa_set_key_type(&attributes, key_type);
+	psa_set_key_bits(&attributes, BYTES_TO_BITS(key_length));
+	psa_set_key_algorithm(&attributes, ecdsa_algo_type);
+
+	psa_status = psa_generate_key(&attributes, &psa_id);
+	if (psa_status != PSA_SUCCESS)
+		goto end;
+
+	ret = util_set_unique_id(public_unique_id, &public_unique_id_len,
+				 public_key_class, psa_id);
+	if (ret != CKR_BUFFER_TOO_SMALL)
+		goto end;
+
+	public_unique_id = calloc(1, public_unique_id_len);
+	if (!public_unique_id)
+		goto end;
+
+	ret = util_set_unique_id(public_unique_id, &public_unique_id_len,
+				 public_key_class, psa_id);
+	if (ret != CKR_OK)
+		goto end;
+
+	public_key_attrs[1].pValue = public_unique_id;
+	public_key_attrs[1].ulValueLen = public_unique_id_len;
+
+	ret = util_set_unique_id(private_unique_id, &private_unique_id_len,
+				 private_key_class, psa_id);
+	if (ret != CKR_BUFFER_TOO_SMALL)
+		goto end;
+
+	private_unique_id = calloc(1, private_unique_id_len);
+	if (!private_unique_id)
+		goto end;
+
+	ret = util_set_unique_id(private_unique_id, &private_unique_id_len,
+				 private_key_class, psa_id);
+	if (ret != CKR_OK)
+		goto end;
+
+	private_key_attrs[1].pValue = private_unique_id;
+	private_key_attrs[1].ulValueLen = private_unique_id_len;
+
+	TEST_OUT("Find ECDSA private key\n");
+	ret = pfunc->C_FindObjectsInit(sess, private_key_attrs,
+				       ARRAY_SIZE(private_key_attrs));
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjectsInit"))
+		goto end;
+
+	ret = pfunc->C_FindObjects(sess, &hprivkey, 1, &nb_match);
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjects"))
+		goto end;
+
+	ret = pfunc->C_FindObjectsFinal(sess);
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjectsFinal"))
+		goto end;
+
+	if (CHECK_EXPECTED(nb_match == 1, "Got %lu but expected one object",
+			   nb_match))
+		goto end;
+
+	ret = pfunc->C_DestroyObject(sess, hprivkey);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	util_close_session(pfunc, &sess);
+
+	ret = pfunc->C_Finalize(NULL_PTR);
+	if (CHECK_CK_RV(CKR_OK, "C_Finalize"))
+		goto end;
+
+	ret = pfunc->C_Initialize(&init);
+	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
+		goto end;
+
+	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
+		goto end;
+
+	TEST_OUT("Login to R/W Session as User\n");
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_Login"))
+		goto end;
+
+	TEST_OUT("Find ECDSA public key\n");
+	ret = pfunc->C_FindObjectsInit(sess, public_key_attrs,
+				       ARRAY_SIZE(public_key_attrs));
+	if (CHECK_CK_RV(CKR_OBJECT_HANDLE_INVALID, "C_FindObjectsInit"))
+		goto end;
+
+	TEST_OUT("Find ECDSA private key\n");
+	ret = pfunc->C_FindObjectsInit(sess, private_key_attrs,
+				       ARRAY_SIZE(private_key_attrs));
+	if (CHECK_CK_RV(CKR_OBJECT_HANDLE_INVALID, "C_FindObjectsInit"))
+		goto end;
+
+	status = TEST_PASS;
+
+end:
+	util_close_session(pfunc, &sess);
+
+	/* Free the attributes */
+	psa_reset_key_attributes(&attributes);
+
+	/* Destroy the key */
+	if (status != TEST_PASS)
+		psa_destroy_key(psa_id);
+
+	if (public_unique_id)
+		free(public_unique_id);
+
+	if (private_unique_id)
+		free(private_unique_id);
+
+	SUBTEST_END(status);
+	return status;
+}
+
 void tests_pkcs11_objects(void *lib_hdl, CK_VOID_PTR pfunc)
 {
 	(void)lib_hdl;
@@ -2185,6 +2367,9 @@ void tests_pkcs11_objects(void *lib_hdl, CK_VOID_PTR pfunc)
 		goto end;
 
 	if (object_attribute_update(pfunc) == TEST_FAIL)
+		goto end;
+
+	if (pkcs11_tool_delete_keypair(pfunc) == TEST_FAIL)
 		goto end;
 
 	/*

@@ -389,4 +389,27 @@ uint32_t handle_pcrread(tcti_smw_context_t *ctx, uint16_t tag,
  */
 uint32_t handle_pcrextend(tcti_smw_context_t *ctx, uint16_t tag,
 			  const uint8_t *cmd, size_t cmd_size);
+
+/**
+ * handle_pcrevent() - Process TPM2_PCR_Event command.
+ * @ctx:      Pointer to the SMW TCTI context structure.
+ * @tag:      TPM structure tag from the command header.
+ * @cmd:      Pointer to the command buffer containing the full TPM command.
+ * @cmd_size: Size of the command buffer in bytes.
+ *
+ * This function handles the TPM2_PCR_Event command which hashes event data
+ * and extends a Platform Configuration Register with the resulting digests.
+ * Unlike TPM2_PCR_Extend which takes pre-computed digests, this command
+ * accepts raw event data and computes the hash internally. The event data
+ * is hashed using each active PCR bank's algorithm (SHA1, SHA256, etc.),
+ * and the resulting digests are used to extend the specified PCR. The
+ * function validates the PCR handle, computes hashes through the SMW hash
+ * API, extends the PCR for each bank, increments the PCR update counter,
+ * and returns all computed digests in the response.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful PCR event processing, or the corresponding error code.
+ */
+uint32_t handle_pcrevent(tcti_smw_context_t *ctx, uint16_t tag,
+			 const uint8_t *cmd, size_t cmd_size);
 #endif /* __COMMANDS_H__ */

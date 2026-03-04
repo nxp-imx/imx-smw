@@ -405,3 +405,170 @@ end:
 
 	return tss2_rc;
 }
+
+uint32_t handle_pcrevent(tcti_smw_context_t *ctx, uint16_t tag,
+			 const uint8_t *cmd, size_t cmd_size)
+{
+	TSS2_RC tss2_rc = TSS2_TCTI_RC_GENERAL_FAILURE;
+	TPM2_RC rc = TPM2_RC_SUCCESS;
+	enum smw_status_code smw_status = SMW_STATUS_OK;
+
+	size_t offset = TPM_HEADER_SIZE;
+	uint8_t i = 0;
+	pcr_bank_t *bank = NULL;
+	TPM2B_DIGEST hash_result = { 0 };
+	struct smw_hash_args hash_args = { 0 };
+	uint8_t *params_buffer = NULL;
+	uint8_t *params_marshal_scratch = NULL;
+	size_t marshaled_param_size = 0;
+
+	/* Input parameters */
+	TPMI_DH_PCR pcr_handle = 0;
+	TPM2B_EVENT event_data = { 0 };
+	uint8_t pcr_index = 0;
+
+	/* Output parameters */
+	TPML_DIGEST_VALUES digests = { 0 };
+
+	/* Session handling */
+	tcti_smw_session_t *sess = NULL;
+	uint32_t session_handle = 0;
+	TPM2B_NONCE nonce_caller = { 0 };
+
+	/* 1. Check initialization */
+	if (!ctx->initialized) {
+		tss2_rc = TSS2_TCTI_RC_BAD_SEQUENCE;
+		goto end;
+	}
+
+	/* 2. Unmarshal PCR handle */
+	tss2_rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset, &pcr_handle);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* 3. Unmarshal authorization area */
+	tss2_rc = unmarshal_auth_area(cmd, cmd_size, &offset, &nonce_caller,
+				      &session_handle);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* 4. Unmarshal event data */
+	tss2_rc = Tss2_MU_TPM2B_EVENT_Unmarshal(cmd, cmd_size, &offset,
+						&event_data);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	if (session_handle != TPM2_RH_PW) {
+		sess = find_session_by_handle(ctx, session_handle);
+		if (!sess || !sess->active) {
+			tss2_rc = TSS2_TCTI_RC_IO_ERROR;
+			goto end;
+		}
+	}
+
+	/* 5. Validate PCR handle */
+	if ((pcr_handle >> TPM2_HR_SHIFT) != TPM2_HT_PCR) {
+		DBG_TRACE("Invalid PCR handle type: 0x%08x\n", pcr_handle);
+		tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	pcr_index = pcr_handle & 0xFF;
+	if (pcr_index >= TPM2_MAX_PCRS) {
+		DBG_TRACE("PCR index out of range: %d\n", pcr_index);
+		tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	DBG_TRACE("PCR_Event: PCR[%d], event_size=%d\n", pcr_index,
+		  event_data.size);
+
+	/* 6. Hash event data and extend PCR for each bank */
+	digests.count = ctx->pcr_bank_count;
+
+	for (i = 0; i < ctx->pcr_bank_count; i++) {
+		bank = &ctx->pcr_banks[i];
+
+		/* Hash the event data */
+		tss2_rc = map_hash_info(bank->hash_alg, &hash_result.size,
+					&hash_args.algo_name, NULL);
+		if (tss2_rc != TSS2_RC_SUCCESS)
+			goto end;
+		hash_args.input = event_data.buffer;
+		hash_args.input_length = event_data.size;
+		hash_args.output = hash_result.buffer;
+		hash_args.output_length = hash_result.size;
+
+		smw_status = smw_hash(&hash_args);
+		if (smw_status != SMW_STATUS_OK) {
+			DBG_TRACE("SMW Hash failed with status: %d\n",
+				  smw_status);
+			tss2_rc = smw_rc_to_tcti_rc(smw_status);
+			goto end;
+		}
+
+		/* Store the digest in response */
+		digests.digests[i].hashAlg = bank->hash_alg;
+		if (bank->digest_size > 0)
+			memcpy(digests.digests[i].digest.sha512,
+			       hash_result.buffer, bank->digest_size);
+
+		/* Extend the PCR */
+		tss2_rc = pcr_extend_single(ctx, pcr_index, bank->hash_alg,
+					    hash_result.buffer,
+					    bank->digest_size);
+		if (tss2_rc != TSS2_RC_SUCCESS)
+			goto end;
+
+		DBG_TRACE("  Bank %d (alg 0x%04x): extended\n", i,
+			  bank->hash_alg);
+	}
+
+	/* 7. Update counter */
+	ctx->pcr_update_counter++;
+
+	/* 8. Calculate params_size for all output parameters */
+	params_marshal_scratch = calloc(1, TPM2_MAX_CAP_BUFFER);
+	if (!params_marshal_scratch) {
+		tss2_rc = TSS2_TCTI_RC_MEMORY;
+		goto end;
+	}
+
+	tss2_rc = Tss2_MU_TPML_DIGEST_VALUES_Marshal(&digests,
+						     params_marshal_scratch,
+						     TPM2_MAX_CAP_BUFFER,
+						     &marshaled_param_size);
+
+	params_buffer = malloc(marshaled_param_size);
+	if (!params_buffer) {
+		tss2_rc = TSS2_TCTI_RC_MEMORY;
+		goto end;
+	}
+
+	if (marshaled_param_size > 0 && params_marshal_scratch)
+		memcpy(params_buffer, params_marshal_scratch,
+		       marshaled_param_size);
+
+	/* 9. Build response */
+	tss2_rc =
+		build_auth_response(ctx, sess, TPM2_RC_SUCCESS,
+				    TPM2_CC_PCR_Event, tag, params_buffer,
+				    marshaled_param_size, &nonce_caller, NULL);
+
+	DBG_TRACE("PCR_Event successful\n");
+
+end:
+	/* Free allocated memory */
+	if (params_buffer)
+		free(params_buffer);
+
+	if (params_marshal_scratch)
+		free(params_marshal_scratch);
+
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		rc = tcti_rc_to_tpm2_rc(tss2_rc);
+		tss2_rc = build_rc_response(ctx, TPM_HEADER_SIZE, tag, rc);
+	}
+
+	return tss2_rc;
+}

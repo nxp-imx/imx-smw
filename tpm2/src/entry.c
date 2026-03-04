@@ -165,6 +165,10 @@ static TSS2_RC tcti_smw_transmit(TSS2_TCTI_CONTEXT *tcti_ctx, size_t size,
 	case TPM2_CC_PCR_Read:
 		rc = handle_pcrread(tcti_smwtpm, header.tag, cmd, header.size);
 		break;
+	case TPM2_CC_PCR_Extend:
+		rc = handle_pcrextend(tcti_smwtpm, header.tag, cmd,
+				      header.size);
+		break;
 	default:
 		/* Unsupported command */
 		DBG_TRACE("Unsupported TPM command: 0x%x", header.code);

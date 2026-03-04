@@ -106,6 +106,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add CKM_EC_MONTGOMERY_KEY_PAIR_GEN mechanism support.
 * Fix attribute handling for profile object.
 * For AEAD, asymmetric encryption, cipher, MAC and Sign operations, if the user requests the output buffer length by setting the output buffer address to NULL, the input parameters are ignored, except the input buffer length if it is used to compute the output buffer length.
+* Delete the SMW key pair when the associated PKCS#11 private key is deleted
 
 #### PKCS#11 Tests
 
@@ -123,6 +124,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add object label attribute update tests to validate label and user id field modifications.
 * Add profile get attribute test.
 * Remove include header not needed.
+* Add delete key pair test.
 
 ---
 ### <a id ="rel_5_3"></a></br>**Release 5.3**

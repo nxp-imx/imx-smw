@@ -668,3 +668,120 @@ end:
 
 	return tss2_rc;
 }
+
+uint32_t handle_pcrallocate(tcti_smw_context_t *ctx, uint16_t tag,
+			    const uint8_t *cmd, size_t cmd_size)
+{
+	TPM2_RC rc = TPM2_RC_SUCCESS;
+	TSS2_RC tss2_rc = TSS2_TCTI_RC_GENERAL_FAILURE;
+	size_t offset = TPM_HEADER_SIZE;
+	uint8_t i = 0;
+	uint32_t size_current = 0;
+
+	/* Input parameters */
+	TPMI_RH_PLATFORM auth_handle = 0;
+	TPML_PCR_SELECTION pcr_allocation = { 0 };
+
+	/* Output parameters - report current state */
+	TPMI_YES_NO allocation_success = TPM2_YES;
+	uint32_t max_pcr = TPM2_MAX_PCRS;
+	uint32_t size_needed = 0;
+	uint32_t size_available = 0;
+
+	/* Session handling */
+	tcti_smw_session_t *sess = NULL;
+	uint32_t session_handle = 0;
+	TPM2B_NONCE nonce_caller = { 0 };
+
+	/* Parameters buffer */
+	uint8_t *params_buffer = NULL;
+	size_t params_offset = 0;
+
+	/* 1. Check initialization */
+	if (!ctx->initialized) {
+		tss2_rc = TSS2_TCTI_RC_BAD_SEQUENCE;
+		goto end;
+	}
+
+	/* 2. Unmarshal auth handle */
+	tss2_rc =
+		Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset, &auth_handle);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* 3. Unmarshal authorization area */
+	tss2_rc = unmarshal_auth_area(cmd, cmd_size, &offset, &nonce_caller,
+				      &session_handle);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* 4. Unmarshal PCR allocation (but ignore it) */
+	tss2_rc = Tss2_MU_TPML_PCR_SELECTION_Unmarshal(cmd, cmd_size, &offset,
+						       &pcr_allocation);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	DBG_TRACE("PCR_Allocate: %u bank(s) requested (mock - no change)\n",
+		  pcr_allocation.count);
+
+	if (session_handle != TPM2_RH_PW) {
+		sess = find_session_by_handle(ctx, session_handle);
+		if (!sess || !sess->active) {
+			tss2_rc = TSS2_TCTI_RC_IO_ERROR;
+			goto end;
+		}
+	}
+
+	/* 5. Calculate current allocation size */
+	for (i = 0; i < ctx->pcr_bank_count; i++)
+		size_current += TPM2_MAX_PCRS * ctx->pcr_banks[i].digest_size;
+
+	size_needed = size_current;
+	size_available = size_current;
+
+	/* 6. Marshal output parameters */
+	params_buffer = calloc(1, TPM2_MAX_CAP_BUFFER);
+	if (!params_buffer) {
+		tss2_rc = TSS2_TCTI_RC_MEMORY;
+		goto end;
+	}
+
+	tss2_rc = Tss2_MU_UINT8_Marshal(allocation_success, params_buffer,
+					TPM2_MAX_CAP_BUFFER, &params_offset);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	tss2_rc = Tss2_MU_UINT32_Marshal(max_pcr, params_buffer,
+					 TPM2_MAX_CAP_BUFFER, &params_offset);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	tss2_rc = Tss2_MU_UINT32_Marshal(size_needed, params_buffer,
+					 TPM2_MAX_CAP_BUFFER, &params_offset);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	tss2_rc = Tss2_MU_UINT32_Marshal(size_available, params_buffer,
+					 TPM2_MAX_CAP_BUFFER, &params_offset);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* 7. Build response */
+	tss2_rc = build_auth_response(ctx, sess, TPM2_RC_SUCCESS,
+				      TPM2_CC_PCR_Allocate, tag, params_buffer,
+				      params_offset, &nonce_caller, NULL);
+
+	DBG_TRACE("PCR_Allocate: mock success (no actual change)\n");
+
+end:
+	/* Free allocated memory */
+	if (params_buffer)
+		free(params_buffer);
+
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		rc = tcti_rc_to_tpm2_rc(tss2_rc);
+		tss2_rc = build_rc_response(ctx, TPM_HEADER_SIZE, tag, rc);
+	}
+
+	return tss2_rc;
+}

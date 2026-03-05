@@ -572,3 +572,99 @@ end:
 
 	return tss2_rc;
 }
+
+uint32_t handle_pcrreset(tcti_smw_context_t *ctx, uint16_t tag,
+			 const uint8_t *cmd, size_t cmd_size)
+{
+	TSS2_RC tss2_rc = TSS2_TCTI_RC_GENERAL_FAILURE;
+	TPM2_RC rc = TPM2_RC_SUCCESS;
+	size_t offset = TPM_HEADER_SIZE;
+
+	/* Input parameters */
+	TPMI_DH_PCR pcr_handle = 0;
+	uint8_t pcr_index = 0;
+	pcr_bank_t *bank = NULL;
+	uint8_t i = 0;
+
+	/* Session handling */
+	tcti_smw_session_t *sess = NULL;
+	uint32_t session_handle = 0;
+	TPM2B_NONCE nonce_caller = { 0 };
+
+	/* 1. Check initialization */
+	if (!ctx->initialized) {
+		tss2_rc = TSS2_TCTI_RC_BAD_SEQUENCE;
+		goto end;
+	}
+
+	/* 2. Unmarshal PCR handle */
+	tss2_rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset, &pcr_handle);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* 3. Unmarshal authorization area */
+	tss2_rc = unmarshal_auth_area(cmd, cmd_size, &offset, &nonce_caller,
+				      &session_handle);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	if (session_handle != TPM2_RH_PW) {
+		sess = find_session_by_handle(ctx, session_handle);
+		if (!sess || !sess->active) {
+			tss2_rc = TSS2_TCTI_RC_IO_ERROR;
+			goto end;
+		}
+	}
+
+	/* 4. Validate PCR handle type */
+	if ((pcr_handle >> TPM2_HR_SHIFT) != TPM2_HT_PCR) {
+		DBG_TRACE("Invalid PCR handle type: 0x%08x\n", pcr_handle);
+		tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	/* 5. Validate PCR index */
+	pcr_index = pcr_handle & 0xFF;
+	if (pcr_index >= TPM2_MAX_PCRS) {
+		DBG_TRACE("PCR index out of range: %d\n", pcr_index);
+		tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	DBG_TRACE("PCR_Reset: handle=0x%08x, index=%d\n", pcr_handle,
+		  pcr_index);
+
+	/* 6. Check if PCR can be reset (only PCR 16-23 are resettable) */
+	if (pcr_index < 16) {
+		DBG_TRACE("PCR[%d] cannot be reset (protected)\n", pcr_index);
+		tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	/* 7. Reset PCR in all banks */
+	for (i = 0; i < ctx->pcr_bank_count; i++) {
+		bank = &ctx->pcr_banks[i];
+		memset(bank->pcr[pcr_index], 0, bank->digest_size);
+
+		DBG_TRACE("PCR[%d] reset in bank %d (alg=0x%04x)\n", pcr_index,
+			  i, bank->hash_alg);
+	}
+
+	/* 8. Update counter */
+	ctx->pcr_update_counter++;
+
+	/* 9. Build response */
+	tss2_rc = build_auth_response(ctx, sess, TPM2_RC_SUCCESS,
+				      TPM2_CC_PCR_Reset, tag, NULL, 0,
+				      &nonce_caller, NULL);
+
+	DBG_TRACE("PCR_Reset successful\n");
+
+end:
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		rc = tcti_rc_to_tpm2_rc(tss2_rc);
+		tss2_rc = build_rc_response(ctx, TPM_HEADER_SIZE, tag, rc);
+	}
+
+	return tss2_rc;
+}

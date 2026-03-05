@@ -412,4 +412,26 @@ uint32_t handle_pcrextend(tcti_smw_context_t *ctx, uint16_t tag,
  */
 uint32_t handle_pcrevent(tcti_smw_context_t *ctx, uint16_t tag,
 			 const uint8_t *cmd, size_t cmd_size);
+
+/**
+ * handle_pcrreset() - Process TPM2_PCR_Reset command.
+ * @ctx:      Pointer to the SMW TCTI context structure.
+ * @tag:      TPM structure tag from the command header.
+ * @cmd:      Pointer to the command buffer containing the full TPM command.
+ * @cmd_size: Size of the command buffer in bytes.
+ *
+ * This function handles the TPM2_PCR_Reset command which resets a Platform
+ * Configuration Register to its initial zero-filled state. It unmarshals
+ * the PCR handle and authorization area, validates the PCR index, and
+ * checks reset permissions. Per TPM 2.0 specification, only PCRs 16-23
+ * are resettable at runtime; attempts to reset PCRs 0-15 return
+ * TPM2_RC_LOCALITY. Upon successful validation, the PCR is reset to zeros
+ * across all active PCR banks, and the global PCR update counter is
+ * incremented to reflect the state change.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful PCR reset, or the corresponding error code.
+ */
+uint32_t handle_pcrreset(tcti_smw_context_t *ctx, uint16_t tag,
+			 const uint8_t *cmd, size_t cmd_size);
 #endif /* __COMMANDS_H__ */

@@ -72,6 +72,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE: Add support for cipher operation using plaintext private key buffer.
 * ELE: Simplify the storage reprovisioning procedure by re-creating the secure
   storage immediately after sending the message.
+* TEE: Data can be overwritten to be aligned with other subsystems behavior.
 
 ##### 3. ARM PSA APIs
 
@@ -107,6 +108,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix attribute handling for profile object.
 * For AEAD, asymmetric encryption, cipher, MAC and Sign operations, if the user requests the output buffer length by setting the output buffer address to NULL, the input parameters are ignored, except the input buffer length if it is used to compute the output buffer length.
 * Delete the SMW key pair when the associated PKCS#11 private key is deleted
+* CKA_OBJECT_ID attribute do not discard 0x00 bytes.
 
 #### PKCS#11 Tests
 
@@ -125,6 +127,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add profile get attribute test.
 * Remove include header not needed.
 * Add delete key pair test.
+* Add Data OID 1.2.0 find and verify test.
 
 ---
 ### <a id ="rel_5_3"></a></br>**Release 5.3**

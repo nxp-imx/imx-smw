@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2025 NXP
+ * Copyright 2023-2026 NXP
  */
 
 #include <util.h>
@@ -294,6 +294,12 @@ TEE_Result ta_register_persistent_object(struct obj_data *obj_data)
 
 	if (!obj_data->data != !obj_data->data_size)
 		return res;
+
+	if (obj_data->data) {
+		res = ta_find_and_delete_persistent_id(obj_data->id);
+		if (res != TEE_SUCCESS && res != TEE_ERROR_ITEM_NOT_FOUND)
+			return res;
+	}
 
 	res = TEE_CreatePersistentObject(SMW_TEE_STORAGE, &obj_data->id,
 					 sizeof(obj_data->id),

@@ -28,6 +28,14 @@ The ELE Secure Enclave has the following limitations when used with TPM2:
  - Since the Private part of the Asymmetric key cannot be exported, even in
    encrypted format, private key blob returned by TPM2_Create contains a magic
    string followed by the SMW key identifier.
+ - TPMT_TK_HASHCHECK ticket is computed with HMAC using the context integrity
+   hash algorithm, which is fixed to SHA256 in this implementation. This choice
+   aligns with the TPM2 specification requirement that tickets use a consistent
+   hash algorithm for integrity verification, and SHA256 provides adequate security.
+   The HMAC computation uses hardcoded proof keys specific to each TPM hierarchy
+   (Owner, Platform, and Endorsement). These proof keys serve as the HMAC secret
+   for generating cryptographic tickets that validate hash operations within
+   their respective hierarchy contexts.
 
 #### TPM2 Library
 * Create Shared library named libtss2-tcti-smw.so.0.1, bundling tpm2 code as well as tss2-mu and tss2-rc libraries
@@ -40,4 +48,5 @@ The ELE Secure Enclave has the following limitations when used with TPM2:
     - TPM2_CC_GetRandom, TPM2_CC_ReadPublic
     - TPM2_CC_Create (ECC NIST P-XXX only), TPM2_CC_Load
     - TPM2_CC_Sign, TPM2_CC_VerifySignature
+    - TPM2_CC_PCR_Read, TPM2_CC_PCR_Extend, TPM2_CC_PCR_Event, TPM2_CC_PCR_Reset, TPM2_CC_PCR_Allocate
 * Set the signature flag indicating input message is hashed for TPM2_Sign and TPM2_VerifySignature commands.

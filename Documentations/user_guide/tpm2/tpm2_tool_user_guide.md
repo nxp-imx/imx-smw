@@ -95,6 +95,10 @@ The ELE Secure Enclave has the following limitations when used with TPM2:
  - For ECDSA algorithms, the algorithm digest size (in bits) must be equal to
    the asymmetric keypair security size (in bits). Exception for SHA512:
    keypair security size must be 521.
+ - For TPMT_TK_HASHCHECK ticket, the HMAC computation uses hardcoded proof keys
+   specific to each TPM hierarchy (Owner, Platform, and Endorsement). These
+   proof keys serve as the HMAC secret for generating cryptographic tickets
+   that validate hash operations within their respective hierarchy contexts.
 
 # Commands and Examples
 
@@ -288,6 +292,62 @@ tpm2_hmac -c hmac.ctx -g sha256 -o message.hmac message.txt
 - `-o message.hmac`: Output file in which the resulting HMAC digest is written (in binary format)
 - `message.txt`: Input file over which the HMAC is computed
 
+## PCR Read
+Reads the current values of Platform Configuration Registers (PCRs) for specified hash algorithms
+and PCR indices. The command displays the PCR values and can optionally save them
+to an output file. Use the pcrread command:
+```sh
+tpm2_pcrread sha256:0 -o pcrs.bin
+```
+
+**Parameters**:
+- `sha256:0`: Specify hash algorithm and PCR indices to read (e.g., SHA-256 PCR 0)
+- `-o pcrs.bin`: Output file in which the resulting PCR values are written (in binary format)
+
+## PCR Reset
+Resets a Platform Configuration Register to its initial zero-filled state.
+Only PCRs 16-23 can be reset at runtime; attempting to reset other PCRs will fail
+with a locality error. Use the pcrreset command:
+```sh
+tpm2_pcrreset 16
+```
+
+**Parameters**:
+- `16`: PCR index to reset
+
+## PCR Extend
+Extends a Platform Configuration Register with a provided digest value.
+The PCR is updated using the formula: PCR_new = Hash(PCR_old || digest).
+This operation is fundamental for building chains of trust in measured boot
+scenarios. Use the pcrextend command:
+```sh
+tpm2_pcrextend 0:sha256=<digest_value>
+```
+
+**Parameters**:
+- `0`: PCR index to extend
+- `sha256`: Hash algorithm to use for the extension operation
+- `digest_value`: Digest value to extend into the PCR (hexadecimal format) with
+the correct size regarding hash algorithm used
+
+## PCR Allocate
+Configures the allocation of PCR banks by specifying which hash algorithms should be active.
+This command requires platform authorization and typically causes a TPM reset.
+Use the pcrallocate command:
+```sh
+tpm2_pcrallocate sha256:0
+```
+
+**Parameters**:
+- `sha256`: Hash algorithm to enable for PCR banks
+- `0`: PCR indices to include (:0 means PCR 0, can specify multiple like :0,1,2 or :all)
+
+> 📝 **Note:**
+> In the current SMW TCTI implementation, this command is processed as a mock
+> operation. The requested allocation is acknowledged but not applied, and the
+> response reports the current allocation state unchanged. This allows compatibility
+> with TPM tools while maintaining the existing PCR bank configuration.
+
 # TPM2 Commands Supported
 
 Following table lists TPM2 Commands implemented in the SMW's TSS2 TCTI library.
@@ -310,3 +370,7 @@ Following table lists TPM2 Commands implemented in the SMW's TSS2 TCTI library.
 | `TPM2_Sign`             |
 | `TPM2_VerifySignature`  |
 | `TPM2_HMAC`             |
+| `TPM2_PCR_Read`         |
+| `TPM2_PCR_Reset`        |
+| `TPM2_PCR_Extend`       |
+| `TPM2_PCR_Allocate`     |

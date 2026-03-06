@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021, 2023-2025 NXP
+ * Copyright 2020-2021, 2023-2026 NXP
  */
 #include <stdarg.h>
 #include <stdio.h>
@@ -61,18 +61,6 @@ static void multiply_add_128(CK_BYTE_PTR bytes, size_t *len, CK_BYTE value)
 		bytes[*len] = carry & 0xFF;
 		(*len)++;
 	}
-}
-
-static int is_zero(CK_BYTE_PTR bytes, size_t len)
-{
-	size_t i = 0;
-
-	for (; i < len; i++) {
-		if (bytes[i] != 0)
-			return 0;
-	}
-
-	return 1;
 }
 
 static size_t get_b64_from_hex_len(size_t hex_len)
@@ -469,19 +457,7 @@ CK_RV util_base128_encode(struct libbytes *out, struct libbytes *in)
 	/* First pass, calculate the out->number */
 	memcpy(work, in->array, in->number);
 
-	out->number = 0;
-	while (!is_zero(work, in->number)) {
-		(void)divide_by_128(work, in->number);
-		if (INC_OVERFLOW(out->number, 1)) {
-			ret = CKR_DATA_INVALID;
-			goto end;
-		}
-	}
-
-	if (!out->number) {
-		ret = CKR_DATA_INVALID;
-		goto end;
-	}
+	out->number = in->number;
 
 	/* Allocate the out->array buffer */
 	out->array = malloc(out->number);
@@ -494,7 +470,7 @@ CK_RV util_base128_encode(struct libbytes *out, struct libbytes *in)
 	/* Second pass, fill the out->array */
 	memcpy(work, in->array, in->number);
 
-	while (!is_zero(work, in->number))
+	while (i < in->number)
 		out->array[i++] = divide_by_128(work, in->number);
 
 	/* Reverse in-place and apply continuation bits after */

@@ -22,6 +22,12 @@
       - [Example on i.MX93 platform](#example-on-imx93-platform-4)
     - [Generate an AES secret key:](#generate-an-aes-secret-key)
       - [Example on i.MX93 platform](#example-on-imx93-platform-5)
+  - [🔑 Key Deletion](#-key-deletion)
+    - [Basic syntax](#basic-syntax-1)
+    - [Delete an ECC key pair:](#delete-an-ecc-key-pair)
+      - [Example on i.MX93 platform](#example-on-imx93-platform-6)
+    - [Delete an AES secret key:](#delete-an-aes-secret-key)
+      - [Example on i.MX93 platform](#example-on-imx93-platform-7)
   - [🔐 Encryption](#-encryption)
   - [🔓 Decryption](#-decryption)
   - [✍️ Signing](#️-signing)
@@ -457,6 +463,76 @@ warning: PKCS11 function C_GetAttributeValue(VERIFY_RECOVER) failed: rv = CKR_AT
   uri:        pkcs11:model=;manufacturer=NXP%20Semiconductor;serial=;token=smw;id=%03;object=MyAESKey;type=secret-key
 ```
 
+## 🔑 Key Deletion
+
+**Definition**: Destroying cryptographic keys directly on the token.
+
+### Basic syntax
+
+- To delete an asymmetric key
+
+```sh
+pkcs11-tool --module $MODULE_PKCS11 \
+            --login \
+            --delete \
+            --type privkey \
+            --id <hex_id> \
+            --label "<label>"
+```
+
+- To delete a symmetric key
+
+```sh
+pkcs11-tool --module $MODULE_PKCS11 \
+            --login \
+            --delete \
+            --type secrkey \
+            --id <hex_id> \
+            --label "<label>"
+```
+
+> 📝 **Note 1:**
+> For asymmetric key, deleting the public key is not going to delete the token key pair 
+> and public key will be regenerated from the private key.
+> To delete the key pair, delete the private key object.
+> This will automatically delete the associated public key as well.
+
+### Delete an ECC key pair:
+
+```sh
+pkcs11-tool --module $MODULE_PKCS11 \
+            --login \
+            --delete \
+            --type privkey \
+            --id 02 \
+            --label "MyECCKey"
+```
+
+#### Example on i.MX93 platform
+
+```sh
+root@imx93evk:~# pkcs11-tool --module $MODULE_PKCS11 --login --delete --type privkey --id 02 --label "MyECCKey"
+Using slot 0 with a present token (0x0)
+```
+
+### Delete an AES secret key:
+
+```sh
+pkcs11-tool --module $MODULE_PKCS11 \
+            --login \
+            --delete \
+            --type secrkey \
+            --id 03 \
+            --label "MyAESKey"
+```
+
+#### Example on i.MX93 platform
+
+
+```sh
+root@imx93evk:~# pkcs11-tool --module $MODULE_PKCS11 --login --delete --type secrkey --id 03 --label "MyAESKey"
+Using slot 0 with a present token (0x0)
+```
 
 ## 🔐 Encryption
 

@@ -84,6 +84,7 @@ uint32_t handle_getcapability(tcti_smw_context_t *ctx, uint16_t tag,
 	TPM2_CAP capability = 0;
 	uint32_t property = 0;
 	uint32_t property_count = 0;
+	uint32_t max_prop = 0;
 
 	/* Output parameters */
 	TPMI_YES_NO more_data = TPM2_NO;
@@ -128,12 +129,13 @@ uint32_t handle_getcapability(tcti_smw_context_t *ctx, uint16_t tag,
 		/* Return minimal TPM properties */
 		cap_data.data.tpmProperties.count = 0;
 
+		if (ADD_OVERFLOW(property, property_count, &max_prop)) {
+			rc = TSS2_TCTI_RC_BAD_VALUE;
+			goto end;
+		}
 		for (prop = property;
-		     (prop < property + property_count) &&
-		     (cap_data.data.tpmProperties.count) <
-			     /* Without this comment clang-format does not */
-			     /* meet the checkpatch requirement. */
-			     TPM2_MAX_TPM_PROPERTIES;
+		     prop < max_prop && cap_data.data.tpmProperties.count <
+						TPM2_MAX_TPM_PROPERTIES;
 		     prop++) {
 			tagged_prop =
 				&cap_data.data.tpmProperties.tpmProperty

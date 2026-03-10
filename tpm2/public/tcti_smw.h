@@ -32,10 +32,7 @@
  * - TSS2_TCTI_RC_NOT_IMPLEMENTED: A required feature is not supported.
  */
 TSS2_RC
-Tss2_Tcti_Smw_Init(TSS2_TCTI_CONTEXT * /* Without this comment clang-format */
-			   /*does not meet the checkpatch requirement. */
-			   tcti_ctx,
-		   size_t *size, const char *conf);
+Tss2_Tcti_Smw_Init(TSS2_TCTI_CONTEXT *tcti_ctx, size_t *size, const char *conf);
 
 /**
  * Tss2_Tcti_Info() - Return static information about the SMW TCTI.

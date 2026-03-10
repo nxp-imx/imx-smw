@@ -124,8 +124,9 @@ uint32_t handle_verifysignature(tcti_smw_context_t *ctx, uint16_t tag,
 	smw_attr_algo_t smw_hash_attr = SMW_ATTR_HASH_NONE;
 	smw_attr_algo_t curve_hash_attr = SMW_ATTR_HASH_NONE;
 
-	/* Curve security size */
+	/* Curve parameters */
 	unsigned int security_size = 0;
+	TPMI_ECC_CURVE curveID = TPM2_ECC_NONE;
 
 	/* Response marshaling */
 	uint8_t *params_marshal_scratch = NULL;
@@ -173,12 +174,9 @@ uint32_t handle_verifysignature(tcti_smw_context_t *ctx, uint16_t tag,
 	}
 
 	/* 7. Get curve information and validate */
+	curveID = obj->public_area.publicArea.parameters.eccDetail.curveID;
 	tss2_rc =
-		map_curve_info(/* Without this comment clang-format does not */
-			       /* meet the checkpatch requirement. */
-			       obj->public_area.publicArea.parameters.eccDetail
-				       .curveID,
-			       &security_size, NULL, &curve_hash_attr);
+		map_curve_info(curveID, &security_size, NULL, &curve_hash_attr);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 

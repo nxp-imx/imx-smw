@@ -45,11 +45,7 @@ static tcti_context_t *tcti_smw_down_cast(tcti_smw_context_t *tcti_smw)
  * Return:
  * Pointer to the tcti_smw_context_t structure, or NULL if tcti_ctx is NULL.
  */
-static tcti_smw_context_t *
-tcti_smw_context_cast(TSS2_TCTI_CONTEXT *
-			      /*Without this comment clang-format does */
-			      /*not meet the checkpatch requirement. */
-			      tcti_ctx)
+static tcti_smw_context_t *tcti_smw_context_cast(TSS2_TCTI_CONTEXT *tcti_ctx)
 {
 	if (!tcti_ctx)
 		return NULL;

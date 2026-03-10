@@ -26,6 +26,12 @@ through the SMW's TSS2 TCTI library.
 This guide provides practical examples of how to use `tpm2-tool` with NXP
 platforms to perform cryptographic operations, manage TPM resources.
 
+> **WARNING:**
+> The TPM2 TCTI support is currently in early development stage with limited
+> command coverage. This implementation is provided as a proof of concept for
+> evaluation purposes and may not handle all TPM2 operations correctly. It is
+> not recommended for production use at this time.
+
 
 # Prerequisites
 
@@ -76,6 +82,9 @@ More information on how to set the TCTI library are available in the
 <a href="https://tpm2-tools.readthedocs.io/en/latest/man/common/tcti/">tpm2-tool TCTI Configuration</a>.
 
 # Limitations
+
+The current implementation targets the TPM 2.0 Automotive Thin Profile
+as defined in the TCG specification.
 
 The ELE Secure Enclave has the following limitations when used with TPM2:
  - The TPM2_EvictControl allowing to convert a transient object into a

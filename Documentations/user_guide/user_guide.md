@@ -624,10 +624,21 @@ The TPM2 TCTI library is built as part of the SMW project build process. Refer
 to the [Build instruction](./build_instructions.md) for details on how to
 enable and configure the TPM2 TCTI library.
 
+The current implementation targets the TPM 2.0 Automotive Thin Profile
+as defined in the TCG specification. This profile is designed for resource-
+constrained automotive applications and includes a subset of TPM 2.0 commands
+optimized for secure boot, key management, and basic cryptographic operations.
+
 The [TPM2-Tool User Guide](./tpm2/tpm2_tool_user_guide.md) details and gives
 some command lines description to start manipulating objects with `tpm2-tools`.
 This user guide provides also more information on the TPM2 commands
 supported.
+
+> **WARNING:**
+> The TPM2 TCTI support is currently in early development stage with limited
+> command coverage. This implementation is provided as a proof of concept for
+> evaluation purposes and may not handle all TPM2 operations correctly. It is
+> not recommended for production use at this time.
 
 # 7. Files Organization
 Below is the organization of the project sources.

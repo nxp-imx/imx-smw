@@ -1,4 +1,4 @@
-project(tss2-tcti-smw VERSION 1.0 LANGUAGES C)
+project(tss2-tcti-smw VERSION 0.1 LANGUAGES C)
 
 if(NOT DEFINED TSS2_ROOT)
     message(STATUS "TPM2 not enabled")

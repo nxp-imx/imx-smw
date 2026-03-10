@@ -7,13 +7,27 @@ trap 'error ${LINENO}' ERR
 #
 opt_build=all
 opt_jsonc_lib=
-opt_coverage=
 opt_buildtype=
 opt_verbose=
 opt_format=
-opt_psa=
-opt_tls=
-opt_cmake_ver="3.13"
+opt_cmake_ver="3.28"
+opt_config=""
+opt_feature_flags=""
+opt_package_name=""
+default_package_name="libsmw_pkg"
+opt_toolname=""
+opt_toolpath=""
+opt_toolscript=""
+opt_seco=""
+opt_libuuid_config=""
+opt_teec=""
+opt_tadevkit=""
+opt_ele=""
+opt_version=""
+opt_pkg_config=""
+opt_jsonc=""
+opt_psaarchtests=""
+opt_libsqlite=""
 
 #
 # Get script name and path
@@ -21,6 +35,9 @@ opt_cmake_ver="3.13"
 script_name=$0
 script_full=$(realpath "${script_name}")
 script_dir=$(dirname "${script_full}")
+
+# Source feature options definitions
+source "${script_dir}/smw_feature_options.sh"
 
 function pr_err()
 {
@@ -304,14 +321,15 @@ function configure()
     fi
 
     cmd_script="cmake -S . -B ${opt_out} ${opt_toolchain}"
-    cmd_script="${cmd_script} ${opt_coverage}"
     cmd_script="${cmd_script} ${opt_buildtype} ${opt_verbose}"
     cmd_script="${cmd_script} ${opt_seco} ${opt_ele}"
     cmd_script="${cmd_script} ${opt_libuuid_config} ${opt_teec} ${opt_tadevkit}"
     cmd_script="${cmd_script} ${opt_jsonc} ${opt_psaarchtests}"
-    cmd_script="${cmd_script} ${opt_psa}"
-    cmd_script="${cmd_script} ${opt_tls}"
     cmd_script="${cmd_script} ${opt_libsqlite}"
+
+    if [[ -n ${opt_feature_flags} ]]; then
+        cmd_script="${cmd_script} ${opt_feature_flags}"
+    fi
 
     printf "Execute %s\n" "${cmd_script}"
     eval "${cmd_script}"
@@ -371,7 +389,7 @@ function build()
             build_docs
             ;;
         *)
-            pr_err "Unknwon build option: \"${opt_build}\""
+            pr_err "Unknown build option: \"${opt_build}\""
             usage_build
             exit 1
             ;;
@@ -402,14 +420,24 @@ function install()
     eval "${cmd_make} install ${cmd_script}"
 
     if [[ -n ${opt_jsonc_lib} ]]; then
-    	eval "${cmd_make} install_tests ${cmd_script}"
+        eval "${cmd_make} install_tests ${cmd_script}"
     fi
 }
 
 function package()
 {
-    local package_name="libsmw_package.tar.gz"
+    local package_name="${opt_package_name:-${default_package_name}}"
     local tmp_inst_dir="tmp_install"
+
+    if [[ ! "${package_name}" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+        pr_err "Package name '${package_name}' contains invalid characters"
+        pr_err "Only alphanumeric characters, hyphens, and underscores are allowed"
+        usage_package
+        exit 1
+    fi
+
+    # Append .tar.gz extension to package name
+    package_name="${package_name}.tar.gz"
 
     printf "\033[0;32m\n"
     printf "***************************************\n"
@@ -434,6 +462,8 @@ function package()
     if [[ -n ${opt_jsonc_lib} ]]; then
         eval "cp -P ${opt_jsonc_lib}.* ${opt_dest}/usr/lib/."
     fi
+
+    local opt_sqlite_lib=""
 
     get_cmakecache opt_sqlite_lib "SQLite3_LIBRARY"
 
@@ -590,16 +620,17 @@ function usage_configure()
     printf "\n"
     printf "To configure the Secure Middleware\n"
     printf " - Note: all dependencies must be present\n"
-    printf "  %s configure out=[dir] coverage debug " "${script_name}"
+    printf "  %s configure out=[dir] debug " "${script_name}"
     printf "verbose=[lvl] seco=[dir] "
     printf "ele=[dir] "
     printf "libuuid_config=[dir] teec=[dir] tadevkit=[dir] "
     printf "arch=[arch] toolpath=[dir] toolname=[name] jsonc=[dir] "
-    printf "psaarchtests=[dir]"
+    printf "psaarchtests=[dir] "
+    printf "config=[name] "
+    printf "enable_<feature>=<on|off> "
     printf "format=[name] ...\n"
     printf "    out      = Build directory\n"
-    printf "    coverage = [optional] if set enable code coverage tool\n"
-    printf "    debug    = [optional] if set build type to debug\n"
+    printf "    debug    = [optional] Set build type to debug\n"
     printf "    arch     = [optional] Toolchain architecture (aarch32|aarch64)\n"
     printf "    toolpath = [optional] Toolchain path where installed\n"
     printf "    toolname = [optional] Toolchain name\n"
@@ -611,14 +642,16 @@ function usage_configure()
     printf "  To enable TEE subsystem [optional]\n"
     printf "    teec     = OPTEE Client export directory\n"
     printf "    tadevkit = OPTEE TA Development Kit export directory\n"
-    printf "  To enable tests [optionnal]\n"
+    printf "  To enable tests [optional]\n"
     printf "    jsonc = JSON-C export directory\n"
-    printf "  To enable PSA Architecture tests [optionnal]\n"
+    printf "  To set config name [optional]\n"
+    printf "%s\n" "$(get_config_descriptions | sed 's/^/  /')"
+    printf "\n"
+    printf "  To set feature Options (can override config settings) [optional]\n"
+    printf "%s\n" "$(get_feature_options_usage | sed 's/^/    /')"
+    printf "\n"
+    printf "  To enable PSA Architecture tests [optional]\n"
     printf "    psaarchtests = psa-arch-tests sources directory\n"
-    printf "  To enable library option off by default\n"
-    printf "    all_options     = [optional] Enable all options described below\n"
-    printf "    tls             = [optional] Enable TLS\n"
-    printf "    psa_default_alt = [optional] Enable PSA interface\n"
     printf "\n"
 }
 
@@ -679,9 +712,12 @@ function usage_package()
 {
     printf "\n"
     printf "To package the Security Middleware objects\n"
-    printf "  %s package out=[dir] dest=[dir]\n" "${script_name}"
-    printf "    out      = Build directory\n"
-    printf "    dest     = [optional] Installation directory\n"
+    printf "  %s package out=[dir] dest=[dir] package_name=[name]\n" "${script_name}"
+    printf "    out          = Build directory\n"
+    printf "    dest         = [optional] Installation directory\n"
+    printf "    package_name = [optional] Package name (default: %s)\n" "${default_package_name}"
+    printf "                   Allowed characters: alphanumeric, hyphen, and underscore.\n"
+    printf "                   Any other characters are not permitted.\n"
     printf "\n"
 }
 
@@ -716,6 +752,8 @@ fi
 
 opt_action="$1"
 shift
+opt_config=""
+opt_features=""
 
 for arg in "$@"
 do
@@ -766,6 +804,10 @@ do
             opt_dest="${arg#*=}"
             ;;
 
+        package_name=*)
+            opt_package_name="${arg#*=}"
+            ;;
+
         seco=*)
             opt_seco="${arg#*=}"
             opt_seco="-DSECO_ROOT=${opt_seco}"
@@ -797,17 +839,13 @@ do
         pkg_config=*)
             opt_pkg_config="${arg#*=}"
             check_directory opt_pkg_config
-            opt_pkg_config="-DPKG_CONFIG_ROOT=${opt_pk_config}"
+            opt_pkg_config="-DPKG_CONFIG_ROOT=${opt_pkg_config}"
             ;;
 
         tadevkit=*)
             opt_tadevkit="${arg#*=}"
             check_directory opt_tadevkit
             opt_tadevkit="-DTA_DEV_KIT_ROOT=${opt_tadevkit}"
-            ;;
-
-        coverage)
-            opt_coverage="-DENABLE_CODE_COVERAGE=ON"
             ;;
 
         debug)
@@ -844,17 +882,15 @@ do
             opt_psaarchtests="-DPSA_ARCH_TESTS_SRC_PATH=${opt_psaarchtests}"
             ;;
 
-        psa_default_alt)
-            opt_psa="-DENABLE_PSA_DEFAULT_ALT=ON"
+        config=*)
+            config_value="${arg#*=}"
+            opt_config=$(convert_config_to_cmake_flag "${config_value}")
             ;;
 
-        tls)
-            opt_tls="-DENABLE_TLS=ON"
-            ;;
-
-        all_options)
-            opt_psa="-DENABLE_PSA_DEFAULT_ALT=ON"
-            opt_tls="-DENABLE_TLS=ON"
+        # Handle individual feature options dynamically
+        enable_*=*)
+            # Convert feature option to cmake format
+            opt_features="${opt_features} $(convert_feature_to_cmake_flag "${arg}")"
             ;;
 
         #
@@ -886,6 +922,16 @@ do
 done
 
 opt_toolchain="${opt_toolname} ${opt_toolpath} ${opt_toolscript}"
+
+# Add config option to configuration (applied first)
+if [[ -n ${opt_config} ]]; then
+    opt_feature_flags="${opt_feature_flags} ${opt_config}"
+fi
+
+# Add feature options (applied after config to override)
+if [[ -n ${opt_features} ]]; then
+    opt_feature_flags="${opt_feature_flags} ${opt_features}"
+fi
 
 case ${opt_action} in
     toolchain)

@@ -1,5 +1,9 @@
 #!/bin/bash
-set -e
+set -eu
+
+# Source feature options definitions
+script_dir="$(dirname "$(realpath "$0")")"
+source "${script_dir}/smw_feature_options.sh"
 
 function check_directory()
 {
@@ -9,6 +13,13 @@ function check_directory()
     if [[ ! -d "${mydir}" ]]; then
         pr_err "${mydir} is not a directory"
     fi
+}
+
+function pr_err()
+{
+    printf "\033[1;31m\n"
+    printf "%s" "$@"
+    printf "\033[0m\n"
 }
 
 function usage()
@@ -42,9 +53,52 @@ function usage()
           tee,ele        : ELE + TEE
           coverity       : Coverity analysis
 
-      Optional Configuration:
-      toolpath=<dir> : Toolchain installation path
+    ═══════════════════════════════════════════════════════════════
+    Optional Configuration Parameters: [OPTIONS]
+    ═══════════════════════════════════════════════════════════════
+      toolpath=<path> : Toolchain installation path
                        Default: /toolchains
+      debug          : Build in Debug mode instead of Release
+
+$(get_config_descriptions | sed 's/^/  /')
+
+      Feature Options: Can override config settings
+$(get_feature_options_usage | sed 's/^/      /')
+
+    ═══════════════════════════════════════════════════════════════
+    Examples:
+    ═══════════════════════════════════════════════════════════════
+      # Basic configuration with single subsystem
+      $(basename "$0") build aarch64 tee
+
+      # Multiple subsystems with custom toolchain path
+      $(basename "$0") build aarch64 tee,ele toolpath=/opt/toolchains
+
+      # Multiple subsystems with crypto-basic config
+      $(basename "$0") build aarch64 tee,seco config=crypto-basic
+
+      # Custom feature configuration
+      $(basename "$0") build aarch64 tee,ele \\
+          config=crypto-basic \\
+          enable_keymgr_module=on \\
+          enable_sign_verify=on
+
+      # All features except AEAD and cipher support
+      $(basename "$0") build aarch64 tee,ele \\
+          toolpath=/opt/toolchains \\
+          config=all \\
+          enable_aead=off \\
+          enable_cipher=off
+
+      # Custom debug build with AEAD, key manager and  code coverage enabled
+      $(basename "$0") build aarch64 tee,ele \\
+          enable_keymgr_module=on \\
+          enable_aead=on \\
+          enable_code_coverage=on \\
+          debug
+
+      # Coverity analysis
+      $(basename "$0") build aarch64 coverity
 
 EOF
     exit 1
@@ -66,8 +120,6 @@ optee_plat=
 opt_tee=0
 opt_seco=0
 opt_ele=0
-opt_tls=0
-subsystem=
 
 if [[ "${subsystems}" == "coverity" ]]; then
     opt_tee=1
@@ -75,6 +127,7 @@ if [[ "${subsystems}" == "coverity" ]]; then
     if [[ ${arch} =~ "aarch32" ]]; then
         optee_plat="imx-mx7dsabresd"
     else
+        # For aarch64, enable all subsystems for maximum coverage
         opt_seco=1
         opt_ele=1
         optee_plat="imx-mx93evk"
@@ -93,7 +146,6 @@ else
                 ;;
             ele)
                 opt_ele=1
-                opt_tls=1
                 ;;
             *)
                 echo "ERROR: Unknown subsystem: \"${subsystem}\""
@@ -136,6 +188,9 @@ ele_export="${out}/export-ele"
 ta_export="${export}/export-ta_arm""${arch//[^0-9]/}"
 tee_build="../build_arm""${arch//[^0-9]/}"
 psaarchtests_src_path="../psa-arch-tests"
+opt_config=""
+opt_feature_options=""
+opt_debug=0
 
 for arg in "$@"
 do
@@ -145,6 +200,32 @@ do
             check_directory opt_toolpath
             opt_toolpath="toolpath=${opt_toolpath}"
             ;;
+
+        config=*)
+            config_value="${arg#*=}"
+
+            if validate_config "${config_value}"; then
+                opt_config="${arg}"
+            else
+                exit 1
+            fi
+            ;;
+
+        enable_*=*)
+            # Extract option name and validate
+            option_name="${arg%%=*}"
+            option_value="${arg#*=}"
+
+            if validate_feature_option "${option_name}" "${option_value}"; then
+                opt_feature_options="${opt_feature_options} ${arg}"
+            else
+                exit 1
+            fi
+            ;;
+
+        debug)
+            opt_debug=1
+        ;;
 
         *)
             pr_err "Unknown argument \"${arg}\""
@@ -201,11 +282,6 @@ if [[ ${opt_ele} -eq 1 ]]; then
     conf_opts="${conf_opts} ele=${ele_export}"
 fi
 
-# Enable TLS features if supported
-if [[ ${opt_tls} -eq 1 ]]; then
-    conf_opts="${conf_opts} tls"
-fi
-
 # Enable optee if supported
 if [[ ${opt_tee} -eq 1 ]]; then
     conf_opts="${conf_opts} libuuid_config=${export}/usr teec=${export} tadevkit=${ta_export}"
@@ -217,6 +293,21 @@ conf_opts="${conf_opts} jsonc=${export}"
 conf_opts="${conf_opts} psaarchtests=${psaarchtests_src_path}"
 # Enable SQLite
 conf_opts="${conf_opts} libsqlite=${export}/usr"
+
+# Add config option to configuration (applied first)
+if [[ -n ${opt_config} ]]; then
+    conf_opts="${conf_opts} ${opt_config}"
+fi
+
+# Add feature options to configuration (applied after config to override)
+if [[ -n ${opt_feature_options} ]]; then
+    conf_opts="${conf_opts} ${opt_feature_options}"
+fi
+
+# Enable debug build if requested
+if [[ ${opt_debug} -eq 1 ]]; then
+    conf_opts="${conf_opts} debug"
+fi
 
 #
 # Configure build targets

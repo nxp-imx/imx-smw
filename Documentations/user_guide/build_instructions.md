@@ -582,6 +582,12 @@ The default option value is in **bold**.
 </thead>
 <tbody>
 <tr>
+  <td>-DENABLE_CLI=[<b>ON</b>|OFF]</td>
+  <td>Enable/disable the build of CLI tools (nxp_smw and nxp_psa binaries).
+	Default is ON (enable).</td>
+	<td></td>
+</tr>
+<tr>
   <td>-DENABLE_KEYMGR_MODULE=[<b>ON</b>|OFF]</td>
   <td>Enable/disable the support of Key Manager operations. Default is ON (enable).</td>
 	<td></td>

@@ -84,6 +84,8 @@ include(enable_TLS)
 enable_tls_option()
 option(ENABLE_TLS "Enable TLS features" ${ENABLE_TLS})
 
+option(ENABLE_CLI "Enable CLI tools" ON)
+
 #
 # Define all targets compiler options
 #
@@ -123,6 +125,10 @@ add_subdirectory(osal/${OS})
 
 # Include SMW Library (using osal)
 add_subdirectory(core)
+
+if(ENABLE_CLI)
+  add_subdirectory(cli)
+endif()
 
 # Include SMW Library tests
 add_subdirectory(tests)

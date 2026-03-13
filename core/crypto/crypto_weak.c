@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021, 2023-2025 NXP
+ * Copyright 2020-2021, 2023-2026 NXP
  */
 
 #include "compiler.h"
@@ -58,6 +58,66 @@ __weak enum smw_status_code smw_sign(struct smw_sign_verify_args *args)
 }
 
 __weak enum smw_status_code smw_verify(struct smw_sign_verify_args *args)
+{
+	(void)args;
+
+	SMW_DBG_TRACE_API_CALL;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__weak enum smw_status_code
+smw_sign_init(struct smw_sign_verify_init_args *args)
+{
+	(void)args;
+
+	SMW_DBG_TRACE_API_CALL;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__weak enum smw_status_code
+smw_sign_update(struct smw_sign_verify_update_args *args)
+{
+	(void)args;
+
+	SMW_DBG_TRACE_API_CALL;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__weak enum smw_status_code
+smw_sign_final(struct smw_sign_verify_final_args *args)
+{
+	(void)args;
+
+	SMW_DBG_TRACE_API_CALL;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__weak enum smw_status_code
+smw_verify_init(struct smw_sign_verify_init_args *args)
+{
+	(void)args;
+
+	SMW_DBG_TRACE_API_CALL;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__weak enum smw_status_code
+smw_verify_update(struct smw_sign_verify_update_args *args)
+{
+	(void)args;
+
+	SMW_DBG_TRACE_API_CALL;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__weak enum smw_status_code
+smw_verify_final(struct smw_sign_verify_final_args *args)
 {
 	(void)args;
 

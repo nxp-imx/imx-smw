@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #include <stdbool.h>
@@ -122,6 +122,26 @@ smw_config_check_aead(smw_subsystem_t subsystem, struct smw_aead_info *info)
 
 __export __weak enum smw_status_code
 smw_config_check_mac(smw_subsystem_t subsystem, struct smw_mac_info *info)
+{
+	(void)subsystem;
+	(void)info;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__export __weak enum smw_status_code
+smw_config_check_asymmetric_encrypt(smw_subsystem_t subsystem,
+				    struct smw_asymmetric_encrypt_info *info)
+{
+	(void)subsystem;
+	(void)info;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__export __weak enum smw_status_code
+smw_config_check_asymmetric_decrypt(smw_subsystem_t subsystem,
+				    struct smw_asymmetric_encrypt_info *info)
 {
 	(void)subsystem;
 	(void)info;

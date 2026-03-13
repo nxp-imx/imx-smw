@@ -58,7 +58,7 @@ end:
 uint32_t smw_object_alloc(tcti_smw_context_t *ctx, uint32_t *handle,
 			  TPMA_OBJECT attributes, unsigned int key_id,
 			  TPMI_RH_HIERARCHY hierarchy,
-			  TPM2B_PUBLIC *public_area)
+			  TPM2B_PUBLIC *public_area, TPM2B_NAME *object_name)
 {
 	TSS2_RC rc = TSS2_RC_SUCCESS;
 	uint8_t i = 0;
@@ -82,6 +82,13 @@ uint32_t smw_object_alloc(tcti_smw_context_t *ctx, uint32_t *handle,
 			ctx->objects[i].hierarchy = hierarchy;
 			ctx->objects[i].public_area = *public_area;
 			*handle = h;
+
+			rc = calculate_object_name(public_area, object_name);
+			if (rc != TSS2_RC_SUCCESS) {
+				DBG_TRACE("Failed to calculate object name\n");
+				goto end;
+			}
+			ctx->objects[i].object_name = *object_name;
 
 			DBG_TRACE("Object registered:\n");
 			DBG_TRACE("  Handle: 0x%08x\n", ctx->objects[i].handle);

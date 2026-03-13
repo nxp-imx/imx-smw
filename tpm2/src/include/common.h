@@ -70,6 +70,7 @@ typedef struct {
 	TPMA_OBJECT attributes;
 	TPMI_RH_HIERARCHY hierarchy;
 	TPM2B_PUBLIC public_area;
+	TPM2B_NAME object_name;
 	bool active;
 	bool is_persistent;
 } tcti_smw_object_t;

@@ -363,12 +363,8 @@ uint32_t handle_createprimary(tcti_smw_context_t *ctx, uint16_t tag,
 
 	/* 6. Create and setup object */
 	tss2_rc = smw_object_alloc(ctx, &object_handle, attrs, key_desc.id,
-				   input.primary_handle, &output.out_public);
-	if (tss2_rc != TSS2_RC_SUCCESS)
-		goto end;
-
-	tss2_rc =
-		calculate_object_name(&output.out_public, &output.object_name);
+				   input.primary_handle, &output.out_public,
+				   &output.object_name);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
@@ -607,6 +603,7 @@ uint32_t handle_create(tcti_smw_context_t *ctx, uint16_t tag,
 	create_output_t output = { 0 };
 	TPMT_PUBLIC *pub = NULL;
 	unsigned char public_data_buf[TPM2_MAX_ECC_KEY_BYTES * 2] = { 0 };
+	TPM2B_NAME object_name = { 0 };
 
 	/* Session handling */
 	uint32_t session_handle = 0;
@@ -691,6 +688,9 @@ uint32_t handle_create(tcti_smw_context_t *ctx, uint16_t tag,
 	output.creation_ticket.tag = TPM2_ST_CREATION;
 	output.creation_ticket.hierarchy = input.primary_handle;
 	output.creation_ticket.digest.size = 0;
+	tss2_rc = calculate_object_name(&output.out_public, &object_name);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
 
 	params_marshal_scratch = calloc(1, TPM2_MAX_CAP_BUFFER);
 	if (!params_marshal_scratch) {
@@ -855,18 +855,11 @@ uint32_t handle_load(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 	/* 5. Allocate object handle and associate with SMW key ID */
 	tss2_rc = smw_object_alloc(ctx, &object_handle, pub->objectAttributes,
 				   smw_key_id, input.parent_handle,
-				   &input.in_public);
+				   &input.in_public, &object_name);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
-	/* 6. Calculate object name */
-	tss2_rc = calculate_object_name(&input.in_public, &object_name);
-	if (tss2_rc != TSS2_RC_SUCCESS) {
-		DBG_TRACE("Failed to calculate object name\n");
-		goto end;
-	}
-
-	/* 7. Prepare parameters buffer for HMAC calculation */
+	/* 6. Prepare parameters buffer for HMAC calculation */
 	params_marshal_scratch = calloc(1, TPM2_MAX_CAP_BUFFER);
 	if (!params_marshal_scratch) {
 		tss2_rc = TSS2_TCTI_RC_MEMORY;
@@ -888,7 +881,7 @@ uint32_t handle_load(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 
 	memcpy(params_buffer, params_marshal_scratch, marshaled_param_size);
 
-	/* 8. Build auth response */
+	/* 7. Build auth response */
 	tss2_rc = build_auth_response(ctx, sess, TPM2_RC_SUCCESS, TPM2_CC_Load,
 				      tag, params_buffer, marshaled_param_size,
 				      &nonce_caller, &object_handle);

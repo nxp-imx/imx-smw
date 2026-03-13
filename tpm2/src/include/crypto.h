@@ -218,6 +218,7 @@ uint32_t calculate_response_hmac(tcti_smw_session_t *session,
  * @key_id: SMW/ELE key identifier from smw_generate_key()
  * @hierarchy: TPM2 object hierarchy
  * @public_area: Pointer to TPM2 public area structure
+ * @object_name: Pointer to TPM2 name area structure
  *
  * Allocates a free slot in the transient object pool and assigns a TPM2
  * handle in the saveable range (0x80000000-0x80000002).
@@ -229,7 +230,7 @@ uint32_t calculate_response_hmac(tcti_smw_session_t *session,
 uint32_t smw_object_alloc(tcti_smw_context_t *ctx, uint32_t *handle,
 			  TPMA_OBJECT attributes, unsigned int key_id,
 			  TPMI_RH_HIERARCHY hierarchy,
-			  TPM2B_PUBLIC *public_area);
+			  TPM2B_PUBLIC *public_area, TPM2B_NAME *object_name);
 
 /**
  * find_object_by_handle() - Find object by TPM2 handle

@@ -65,6 +65,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Rework the SMW APIs documentation including the OSAL part. Split the public
   headers and organize them in subdirectories for better clarity.
 * Fix writing the AEAD encryption tag in a large output buffer to follow the ciphertext.
+* Add missing weak stubs for sign/verify multi-part and asymmetric
+  encryption/decryption config check APIs.
 
 ##### 2. Subsystems
 
@@ -73,6 +75,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE: Simplify the storage reprovisioning procedure by re-creating the secure
   storage immediately after sending the message.
 * TEE: Data can be overwritten to be aligned with other subsystems behavior.
+* TEE: Fix build failure when `-DENABLE_SIGN_VERIFY=OFF` (and operation_context is enabled) by adding missing weak stub for tee_copy_sign_context().
 
 ##### 3. ARM PSA APIs
 

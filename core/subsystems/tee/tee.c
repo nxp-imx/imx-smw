@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #include <tee_client_api.h>
@@ -385,6 +385,17 @@ __weak void *tee_get_ctx_ops(void)
 __weak void tee_free_sign_context(struct smw_op_context *ctx)
 {
 	(void)ctx;
+}
+
+__weak int tee_copy_sign_context(struct smw_op_context *src_context,
+				 struct smw_op_context *dst_context,
+				 struct shared_context *tee_dst_ctx)
+{
+	(void)src_context;
+	(void)dst_context;
+	(void)tee_dst_ctx;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
 
 int tee_convert_result(TEEC_Result result)

@@ -112,6 +112,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * For AEAD, asymmetric encryption, cipher, MAC and Sign operations, if the user requests the output buffer length by setting the output buffer address to NULL, the input parameters are ignored, except the input buffer length if it is used to compute the output buffer length.
 * Delete the SMW key pair when the associated PKCS#11 private key is deleted
 * CKA_OBJECT_ID attribute do not discard 0x00 bytes.
+* Update interface to PKCS#11 3.2 specification.
 
 #### PKCS#11 Tests
 
@@ -131,6 +132,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Remove include header not needed.
 * Add delete key pair test.
 * Add Data OID 1.2.0 find and verify test.
+* Update test to the new PKCS#11 3.2 interface.
 
 ---
 ### <a id ="rel_5_3"></a></br>**Release 5.3**

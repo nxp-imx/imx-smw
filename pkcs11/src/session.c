@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020, 2024 NXP
+ * Copyright 2020, 2024, 2026 NXP
  */
 
 #include "lib_session.h"
@@ -44,6 +44,17 @@ CK_RV C_GetSessionInfo(CK_SESSION_HANDLE hSession, CK_SESSION_INFO_PTR pInfo)
 		return CKR_ARGUMENTS_BAD;
 
 	return libsess_get_info(hSession, pInfo);
+}
+
+CK_RV C_GetSessionValidationFlags(CK_SESSION_HANDLE hSession,
+				  CK_SESSION_VALIDATION_FLAGS_TYPE type,
+				  CK_FLAGS_PTR pFlags)
+{
+	(void)hSession;
+	(void)type;
+	(void)pFlags;
+
+	return CKR_FUNCTION_NOT_SUPPORTED;
 }
 
 CK_RV C_SessionCancel(CK_SESSION_HANDLE hSession, CK_FLAGS flags)

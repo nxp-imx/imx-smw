@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020, 2023-2025 NXP
+ * Copyright 2020, 2023-2026 NXP
  */
 
 #include <string.h>
@@ -15,8 +15,8 @@
 
 #define FUNCTION(_field, _name) ._field = _name
 
-static struct CK_FUNCTION_LIST_3_0 pkcs11smw_v3_functions = {
-	VERSION(3, 1),
+static struct CK_FUNCTION_LIST_3_2 pkcs11smw_v3_functions = {
+	VERSION(3, 2),
 	FUNCTION(C_Initialize, C_Initialize),
 	FUNCTION(C_Finalize, C_Finalize),
 	FUNCTION(C_GetInfo, C_GetInfo),
@@ -109,6 +109,18 @@ static struct CK_FUNCTION_LIST_3_0 pkcs11smw_v3_functions = {
 	FUNCTION(C_VerifyMessageBegin, C_VerifyMessageBegin),
 	FUNCTION(C_VerifyMessageNext, C_VerifyMessageNext),
 	FUNCTION(C_MessageVerifyFinal, C_MessageVerifyFinal),
+	FUNCTION(C_EncapsulateKey, C_EncapsulateKey),
+	FUNCTION(C_DecapsulateKey, C_DecapsulateKey),
+	FUNCTION(C_VerifySignatureInit, C_VerifySignatureInit),
+	FUNCTION(C_VerifySignature, C_VerifySignature),
+	FUNCTION(C_VerifySignatureUpdate, C_VerifySignatureUpdate),
+	FUNCTION(C_VerifySignatureFinal, C_VerifySignatureFinal),
+	FUNCTION(C_GetSessionValidationFlags, C_GetSessionValidationFlags),
+	FUNCTION(C_AsyncComplete, C_AsyncComplete),
+	FUNCTION(C_AsyncGetID, C_AsyncGetID),
+	FUNCTION(C_AsyncJoin, C_AsyncJoin),
+	FUNCTION(C_WrapKeyAuthenticated, C_WrapKeyAuthenticated),
+	FUNCTION(C_UnwrapKeyAuthenticated, C_UnwrapKeyAuthenticated),
 };
 
 static struct CK_FUNCTION_LIST pkcs11smw_v2_functions = {

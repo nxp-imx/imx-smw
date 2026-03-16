@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023-2024 NXP
+ * Copyright 2021, 2023-2024, 2026 NXP
  */
 
 #include <dlfcn.h>
@@ -27,7 +27,7 @@ static struct test_interface {
 	},
 	{
 		.name = def_if_name,
-		.version = { .major = 3, .minor = 1 },
+		.version = { .major = 3, .minor = 2 },
 		.flags = 0,
 	},
 };

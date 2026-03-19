@@ -130,7 +130,7 @@ uint32_t handle_getcapability(tcti_smw_context_t *ctx, uint16_t tag,
 		cap_data.data.tpmProperties.count = 0;
 
 		if (ADD_OVERFLOW(property, property_count, &max_prop)) {
-			rc = TSS2_TCTI_RC_BAD_VALUE;
+			tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
 			goto end;
 		}
 		for (prop = property;

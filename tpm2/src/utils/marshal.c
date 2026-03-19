@@ -8,6 +8,7 @@
 #include "common.h"
 #include "session.h"
 #include "crypto.h"
+#include "utils.h"
 #include "trace.h"
 
 uint32_t header_unmarshal(const uint8_t *buf, tpm_smw_header_t *header)
@@ -169,6 +170,7 @@ uint32_t unmarshal_auth_area(const uint8_t *cmd, size_t cmd_size,
 {
 	TSS2_RC rc = TSS2_TCTI_RC_GENERAL_FAILURE;
 	size_t auth_start = 0;
+	size_t auth_end = 0;
 	uint32_t auth_size = 0;
 
 	if (!cmd || !offset || !nonce_caller || !session_handle) {
@@ -189,6 +191,17 @@ uint32_t unmarshal_auth_area(const uint8_t *cmd, size_t cmd_size,
 		goto end;
 	}
 
+	/*
+	 * Ensure the authorization area fits in the remaining command buffer
+	 * Use overflow-safe checks instead of computing *offset + auth_size directly
+	 */
+	if (*offset > cmd_size || auth_size > cmd_size - *offset) {
+		DBG_TRACE("Authorization area exceeds\n"
+			  "remaining command buffer\n");
+		rc = TSS2_TCTI_RC_INSUFFICIENT_BUFFER;
+		goto end;
+	}
+
 	/* Parse session handle */
 	rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, offset, session_handle);
 	if (rc != TSS2_RC_SUCCESS)
@@ -200,7 +213,14 @@ uint32_t unmarshal_auth_area(const uint8_t *cmd, size_t cmd_size,
 		goto end;
 
 	/* Skip to end of auth area */
-	*offset = auth_start + auth_size;
+	if (ADD_OVERFLOW(auth_start, (size_t)auth_size, &auth_end) ||
+	    auth_end > cmd_size) {
+		DBG_TRACE("Invalid authorization area size\n");
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	*offset = auth_end;
 
 end:
 	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);

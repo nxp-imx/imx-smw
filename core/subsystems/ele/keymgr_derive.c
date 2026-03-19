@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022, 2024-2025 NXP
+ * Copyright 2022, 2024-2026 NXP
  */
 #include "smw_status.h"
 
@@ -35,10 +35,10 @@ __weak int derive_tls12_op(struct hdl *hdl,
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
 
-__weak int derive_tls13(struct hdl *hdl,
+__weak int derive_tls13(struct subsystem_context *ele_ctx,
 			struct smw_keymgr_derive_key_args *args)
 {
-	(void)hdl;
+	(void)ele_ctx;
 	(void)args;
 
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
@@ -63,7 +63,7 @@ int ele_derive_key(struct subsystem_context *ele_ctx,
 		break;
 
 	case SMW_CONFIG_KDF_ID_TLS13_KEY_EXCHANGE:
-		status = derive_tls13(&ele_ctx->hdl, args);
+		status = derive_tls13(ele_ctx, args);
 		break;
 
 	case SMW_CONFIG_KDF_ID_HKDF:

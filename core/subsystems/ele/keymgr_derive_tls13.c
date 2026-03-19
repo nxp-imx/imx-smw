@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2025 NXP
+ * Copyright 2025-2026 NXP
  */
 #include "smw_osal.h"
 #include "smw_status.h"
@@ -310,10 +310,14 @@ end:
 	return status;
 }
 
-static void tls13_set_derive_args(struct smw_keymgr_derive_key_args *args,
-				  struct tls13_ele_payload *payload,
-				  op_key_exchange_args_t *key_ex_args)
+static int tls13_set_derive_args(struct subsystem_context *ele_ctx,
+				 struct smw_keymgr_derive_key_args *args,
+				 struct tls13_ele_payload *payload,
+				 op_key_exchange_args_t *key_ex_args)
 {
+	int status = SMW_STATUS_OK;
+	unsigned char *pub = NULL;
+
 	key_ex_args->flags = HSM_OP_KEY_EXCHANGE_FLAGS_INPUT_PLAINTEXT_CONTENT;
 
 	key_ex_args->in_content_sz = (unsigned int)sizeof(*payload);
@@ -329,7 +333,23 @@ static void tls13_set_derive_args(struct smw_keymgr_derive_key_args *args,
 
 	key_ex_args->in_pub_buffer_sz =
 		smw_keymgr_get_peer_pub_buffer_len(args);
-	key_ex_args->in_pub_buffer = smw_keymgr_get_peer_pub_buffer(args);
+
+	pub = smw_keymgr_get_peer_pub_buffer(args);
+	if (!pub)
+		return status;
+
+	status = check_and_convert_endian(ele_ctx, pub,
+					  &key_ex_args->in_pub_buffer,
+					  key_ex_args->in_pub_buffer_sz,
+					  args->key_base.identifier.type_id);
+	if (status != SMW_STATUS_OK)
+		return status;
+
+	/* If conversion is not needed, use the original buffer */
+	if (!key_ex_args->in_pub_buffer)
+		key_ex_args->in_pub_buffer = pub;
+
+	return status;
 }
 
 static void
@@ -376,7 +396,7 @@ tls13_set_derived_identifier(struct smw_keymgr_derive_key_args *args,
 	smw_keymgr_set_shared_secret_id(&args->key_derived, key_id);
 }
 
-static int tls13_do_derive(struct hdl *hdl,
+static int tls13_do_derive(struct subsystem_context *ele_ctx,
 			   struct smw_keymgr_derive_key_args *args)
 {
 	enum smw_status_code status = SMW_STATUS_OK;
@@ -391,9 +411,11 @@ static int tls13_do_derive(struct hdl *hdl,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	tls13_set_derive_args(args, payload, &key_ex_args);
+	status = tls13_set_derive_args(ele_ctx, args, payload, &key_ex_args);
+	if (status != SMW_STATUS_OK)
+		goto end;
 
-	status = open_key_mgmt_service(hdl, &key_mgt_hdl);
+	status = open_key_mgmt_service(&ele_ctx->hdl, &key_mgt_hdl);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -429,6 +451,10 @@ end:
 			status = tmp_status;
 	}
 
+	if (key_ex_args.in_pub_buffer &&
+	    key_ex_args.in_pub_buffer != smw_keymgr_get_peer_pub_buffer(args))
+		SMW_UTILS_FREE(key_ex_args.in_pub_buffer);
+
 	if (payload)
 		SMW_UTILS_FREE(payload);
 
@@ -436,7 +462,8 @@ end:
 	return status;
 }
 
-int derive_tls13(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
+int derive_tls13(struct subsystem_context *ele_ctx,
+		 struct smw_keymgr_derive_key_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 
@@ -445,7 +472,7 @@ int derive_tls13(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 	if (!args || !args->kdf_args)
 		goto end;
 
-	status = tls13_do_derive(hdl, args);
+	status = tls13_do_derive(ele_ctx, args);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

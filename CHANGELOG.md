@@ -76,6 +76,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   storage immediately after sending the message.
 * TEE: Data can be overwritten to be aligned with other subsystems behavior.
 * TEE: Fix build failure when `-DENABLE_SIGN_VERIFY=OFF` (and operation_context is enabled) by adding missing weak stub for tee_copy_sign_context().
+* ELE: For X25519/X448 key exchange, convert the public key to the format required by ELE.
 
 ##### 3. ARM PSA APIs
 

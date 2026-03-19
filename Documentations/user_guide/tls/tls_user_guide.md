@@ -105,8 +105,15 @@ To do so, add the following sections to your `openssl.cnf` file:
 
 ```ini
 [openssl_init]
+ssl_conf = ssl_module
 providers = provider_sect
 alg_section = algorithm_sect
+
+[ssl_module]
+system_default = tls_system_default
+
+[tls_system_default]
+Groups = secp521r1:secp384r1:prime256v1
 
 [provider_sect]
 default = default_sect
@@ -149,25 +156,47 @@ Only following EC keys are supported for certificate generation and TLS connecti
 - edwards25519
 - edwards448
 ### Montgomery curves
-Not yet supported by pkcs11-provider.
-Support will be added for [1.2 release](https://github.com/latchset/pkcs11-provider/milestone/2).
+- x25519
+- x448
+
+⚠️ These are supported only with TLS 1.3.
+
+pkcs11-provider added support for these curves in the [1.2 release](https://github.com/latchset/pkcs11-provider/milestone/2).
 
 ## Supported algorithms
 ### TLS 1.2 supported cipher suites
+- ECDHE-ECDSA-AES128-SHA256
+- ECDHE-ECDSA-AES256-SHA384
 - ECDHE-ECDSA-AES128-GCM-SHA256
 - ECDHE-ECDSA-AES256-GCM-SHA384
+- ECDHE-ECDSA-CHACHA20-POLY1305
 
 ### TLS 1.3 supported cipher suites
 - TLS_AES_128_GCM_SHA256
 - TLS_AES_256_GCM_SHA384
 - TLS_CHACHA20_POLY1305_SHA256
 
-## Known issue
+## Known issues
+
+### pkcs11-tool URI encoding limitation
+
 `pkcs11-tool` uri encoding fail to encode id bigger than `0xff`
 As specified in [PKCS#11 URI Scheme](https://datatracker.ietf.org/doc/html/rfc7512)
 The value of the attribute "id" MUST be compared using the simple
 string comparison after **all bytes** are percent-encoded using
 uppercase letters for digits A-F (i.e. `0x102` is encoded as `%01%02`).
+
+### TLS groups for key exchange
+
+Typically, both the `pkcs11` and the `default` providers are loaded, as is the example
+configuration file in [Environment Setup](#environment-setup). OpenSSL gathers all the
+supported algorithms from both providers, and may negociate an algorithm that is only
+supported by the `default` provider, leading to failures because the result of the key
+exchange cannot be used by the `pkcs11` provider. To avoid this, make sure the list of
+TLS groups only includes the supported algorithms.
+
+The example configuration file includes all the supported groups with both TLS 1.2 and
+TLS 1.3.
 
 # TLS using ECDSA Key
 ## Create the ECDSA Certificate and Key

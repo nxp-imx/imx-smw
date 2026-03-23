@@ -807,7 +807,7 @@ do
             ;;
 
         coverage)
-            opt_coverage="-DCODE_COVERAGE=ON"
+            opt_coverage="-DENABLE_CODE_COVERAGE=ON"
             ;;
 
         debug)

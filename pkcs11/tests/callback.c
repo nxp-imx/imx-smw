@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2025 NXP
+ * Copyright 2021-2026 NXP
  */
 #include <stdlib.h>
 #include <string.h>
@@ -245,7 +245,7 @@ void tests_pkcs11_callback(void *lib_hdl, CK_VOID_PTR pfunc)
 
 	TEST_START();
 
-	mp_args.testname = strrchr(__func__, '_');
+	mp_args.testname = (char *) strrchr(__func__, '_');
 	if (CHECK_EXPECTED(mp_args.testname, "Unable to get function name\n") ||
 	    !mp_args.testname)
 		goto end;

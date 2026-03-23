@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2025 NXP
+ * Copyright 2023-2026 NXP
  */
 
 #include <errno.h>
@@ -1203,7 +1203,7 @@ static void close_db_file(struct obj_db *db)
 static int create_directory(const char *filename)
 {
 	int ret = -1;
-	char *end = NULL;
+	const char *end = NULL;
 	char *directory = NULL;
 	size_t length = 0;
 	int *err = NULL;

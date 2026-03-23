@@ -16,9 +16,9 @@ else()
     message(STATUS "Build type ${CMAKE_BUILD_TYPE}.")
 endif()
 
-option(CODE_COVERAGE "Enable Code Coverage analysis" OFF)
+option(ENABLE_CODE_COVERAGE "Enable Code Coverage analysis" OFF)
 
-if(CODE_COVERAGE)
+if(ENABLE_CODE_COVERAGE)
     if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
         message(FATAL_ERROR "Code coverage required build type \"Debug\"")
     endif()

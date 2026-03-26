@@ -11,7 +11,7 @@ Key manager
    +--------------------+--------------------------+--------------------------------+
    | **Key type**       | **Key security size(s)** |         **Devices**            |
    |                    |                          +------+---------+------+--------+
-   |                    |                          | 8ULP |  91/93  |  943 |  95    |
+   |                    |                          | 8ULP |  91/93  |  943 | 95/952 |
    +====================+==========================+======+=========+======+========+
    | AES                | 128 / 192 / 256          |  X   |   X     |  X   |  X     |
    +--------------------+--------------------------+------+---------+------+--------+
@@ -34,7 +34,7 @@ Key manager
    | EL2GO_PROV_OEM_KEY | N/A                      |      |   X     |      |  X     |
    +--------------------+--------------------------+------+---------+------+--------+
 
-.. [1] i.MX95 Pre-Hashed signature is not supported.
+.. [1] Pre-Hashed signature is not supported on i.MX95 and i.MX952.
 
 .. note:: The `EL2GO_PROV_OEM_KEY` key type is limited to the EdgeLock 2GO
   key import of the OEM Shared secret.

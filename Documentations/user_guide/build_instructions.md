@@ -1018,6 +1018,10 @@ $ ./scripts/smw_configure.sh [build directory] [architecture] [platform] toolpat
   <td>imx95evk</td>
   <td>aarch64</td>
 </tr>
+<tr>
+  <td>imx952evk</td>
+  <td>aarch64</td>
+</tr>
 </tbody>
 </table>
 
@@ -1063,12 +1067,13 @@ $ ./scripts/smw_configure.sh [build directory] [architecture] [platform] toolpat
 </tr>
 <tr>
   <td><ul>
-	<li>imx95evk</li>
+  <li>imx952evk</li>
+  <li>imx95evk</li>
   <li>imx943evk</li>
-	<li>imx93evk</li>
-	<li>imx91evk</li>
-	<li>imx8ulpevk</li>
-	</ul></td>
+  <li>imx93evk</li>
+  <li>imx91evk</li>
+  <li>imx8ulpevk</li>
+</ul></td>
   <td>https://github.com/nxp-imx/imx-secure-enclave.git</td>
 	<td>../secure_enclave</td>
   <td>ELE library sources</td>

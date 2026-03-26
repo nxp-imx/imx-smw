@@ -15,6 +15,112 @@
 #define SMW_PRIVATE_BLOB_MAGIC	   "SMWKEYID"
 #define SMW_PRIVATE_BLOB_MAGIC_LEN 8
 
+static uint32_t build_creation_hash(const TPM2B_CREATION_DATA *creation_data,
+				    TPM2B_DIGEST *creation_hash,
+				    TPMI_ALG_HASH hash_alg)
+{
+	TSS2_RC rc = TSS2_TCTI_RC_BAD_REFERENCE;
+	enum smw_status_code smw_status;
+	struct smw_hash_args hash_args = { 0 };
+	uint8_t buffer[sizeof(TPM2B_CREATION_DATA)] = { 0 };
+	size_t buffer_size = 0;
+
+	uint16_t hmac_size = 0;
+	smw_hash_algo_t hash_name = SMW_HASH_ALGO_NAME_NONE;
+
+	if (!creation_data || !creation_hash)
+		return rc;
+
+	/* Marshal creation data */
+	rc = Tss2_MU_TPM2B_CREATION_DATA_Marshal(creation_data, buffer,
+						 sizeof(buffer), &buffer_size);
+	if (rc != TSS2_RC_SUCCESS)
+		return rc;
+
+	rc = map_hash_info(hash_alg, &hmac_size, &hash_name, NULL);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* Hash with SHA256 */
+	hash_args.algo_name = hash_name;
+	hash_args.input = buffer;
+	hash_args.input_length = buffer_size;
+	hash_args.output = creation_hash->buffer;
+	hash_args.output_length = hmac_size;
+
+	smw_status = smw_hash(&hash_args);
+	if (smw_status != SMW_STATUS_OK) {
+		DBG_TRACE("SMW hash failed: %d\n", smw_status);
+		rc = smw_rc_to_tcti_rc(smw_status);
+		goto end;
+	}
+
+	creation_hash->size = TPM2_SHA256_DIGEST_SIZE;
+
+end:
+	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
+	return rc;
+}
+
+static uint32_t build_creation_data(const TPM2B_PUBLIC *public_area,
+				    const TPM2B_NAME *parent_name,
+				    const TPML_PCR_SELECTION *creation_pcr,
+				    const TPM2B_DATA *outside_info,
+				    TPM2B_CREATION_DATA *creation_data)
+{
+	TSS2_RC rc = TSS2_RC_SUCCESS;
+	size_t size = 0;
+	uint8_t *temp_buffer = NULL;
+
+	if (!public_area || !parent_name || !creation_data) {
+		rc = TSS2_TCTI_RC_BAD_REFERENCE;
+		goto end;
+	}
+
+	temp_buffer = malloc(TPM2_MAX_CAP_BUFFER);
+	if (!temp_buffer) {
+		rc = TSS2_TCTI_RC_MEMORY;
+		goto end;
+	}
+
+	memset(creation_data, 0, sizeof(*creation_data));
+
+	/* PCR selection */
+	if (creation_pcr)
+		creation_data->creationData.pcrSelect = *creation_pcr;
+
+	/* Parent name algorithm */
+	creation_data->creationData.parentNameAlg = TPM2_ALG_SHA256;
+
+	/* Parent name */
+	creation_data->creationData.parentName = *parent_name;
+
+	/* Parent qualified name */
+	creation_data->creationData.parentQualifiedName = *parent_name;
+
+	/* Outside info */
+	if (outside_info)
+		creation_data->creationData.outsideInfo = *outside_info;
+
+	/* Calculate size */
+	rc = Tss2_MU_TPMS_CREATION_DATA_Marshal(&creation_data->creationData,
+						temp_buffer,
+						TPM2_MAX_CAP_BUFFER, &size);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	if (SET_OVERFLOW(size, creation_data->size))
+		rc = TSS2_TCTI_RC_MEMORY;
+
+end:
+	/* Free allocated memory */
+	if (temp_buffer)
+		free(temp_buffer);
+
+	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
+	return rc;
+}
+
 static uint32_t configure_hmac_key(TPMT_PUBLIC *pub, uint32_t attrs,
 				   struct smw_key_descriptor *key_desc)
 {
@@ -369,9 +475,38 @@ uint32_t handle_createprimary(tcti_smw_context_t *ctx, uint16_t tag,
 		goto end;
 
 	/* Set creation structures to empty (minimal implementation) */
-	output.creation_ticket.tag = TPM2_ST_CREATION;
-	output.creation_ticket.hierarchy = input.primary_handle;
-	output.creation_ticket.digest.size = 0;
+	tss2_rc = build_creation_data(&output.out_public, &output.object_name,
+				      &input.creation_pcr, &input.outside_info,
+				      &output.creation_data);
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to build creation data\n");
+		goto end;
+	}
+
+	DBG_TRACE("Creation data built: %u bytes\n", output.creation_data.size);
+
+	tss2_rc = build_creation_hash(&output.creation_data,
+				      &output.creation_hash,
+				      output.out_public.publicArea.nameAlg);
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to compute creation hash\n");
+		goto end;
+	}
+
+	DBG_TRACE("Creation hash computed: %u bytes\n",
+		  output.creation_hash.size);
+
+	tss2_rc =
+		build_creation_ticket(input.primary_handle, output.object_name,
+				      &output.creation_hash,
+				      &output.creation_ticket);
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to create creation ticket\n");
+		goto end;
+	}
+
+	DBG_TRACE("Creation ticket created: tag=0x%04x, hierarchy=0x%08x\n",
+		  output.creation_ticket.tag, output.creation_ticket.hierarchy);
 
 	tss2_rc = Tss2_MU_TPM2B_PUBLIC_Marshal(&output.out_public,
 					       params_marshal_scratch,
@@ -617,6 +752,7 @@ uint32_t handle_create(tcti_smw_context_t *ctx, uint16_t tag,
 	uint8_t *params_marshal_scratch = NULL;
 	size_t marshaled_param_size = 0;
 	uint8_t *params_buffer = NULL;
+	tcti_smw_object_t *object = NULL;
 
 	if (!ctx || !cmd) {
 		tss2_rc = TSS2_TCTI_RC_BAD_REFERENCE;
@@ -643,6 +779,15 @@ uint32_t handle_create(tcti_smw_context_t *ctx, uint16_t tag,
 	}
 
 	DBG_TRACE("Session found: handle=0x%08x\n", session_handle);
+
+	/* Find parent object */
+	object = find_object_by_handle(ctx, input.primary_handle);
+	if (!object) {
+		DBG_TRACE("Object handle 0x%08x not found\n",
+			  input.primary_handle);
+		tss2_rc = TSS2_TCTI_RC_IO_ERROR;
+		goto end;
+	}
 
 	/* 3. Validate key type and prepare SMW structures */
 	pub = &input.in_public.publicArea;
@@ -685,12 +830,41 @@ uint32_t handle_create(tcti_smw_context_t *ctx, uint16_t tag,
 	}
 
 	/* Set creation structures to empty (minimal implementation) */
-	output.creation_ticket.tag = TPM2_ST_CREATION;
-	output.creation_ticket.hierarchy = input.primary_handle;
-	output.creation_ticket.digest.size = 0;
 	tss2_rc = calculate_object_name(&output.out_public, &object_name);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
+
+	tss2_rc = build_creation_data(&output.out_public, &object_name,
+				      &input.creation_pcr, &input.outside_info,
+				      &output.creation_data);
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to build creation data\n");
+		goto end;
+	}
+
+	DBG_TRACE("Creation data built: %u bytes\n", output.creation_data.size);
+
+	tss2_rc = build_creation_hash(&output.creation_data,
+				      &output.creation_hash,
+				      output.out_public.publicArea.nameAlg);
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to compute creation hash\n");
+		goto end;
+	}
+
+	DBG_TRACE("Creation hash computed: %u bytes\n",
+		  output.creation_hash.size);
+
+	tss2_rc = build_creation_ticket(object->hierarchy, object_name,
+					&output.creation_hash,
+					&output.creation_ticket);
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to create creation ticket\n");
+		goto end;
+	}
+
+	DBG_TRACE("Creation ticket created: tag=0x%04x, hierarchy=0x%08x\n",
+		  output.creation_ticket.tag, output.creation_ticket.hierarchy);
 
 	params_marshal_scratch = calloc(1, TPM2_MAX_CAP_BUFFER);
 	if (!params_marshal_scratch) {

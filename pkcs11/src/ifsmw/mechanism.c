@@ -904,7 +904,7 @@ static smw_aead_mode_t get_aead_mode(CK_MECHANISM_TYPE mech_type)
 }
 
 static bool get_aead_mech(smw_attr_algo_t perm_algo, smw_key_type_t smw_key,
-			  CK_MECHANISM_TYPE *mech)
+			  CK_MECHANISM_TYPE_PTR mech)
 {
 	bool found = false;
 	unsigned int i = 0;
@@ -923,31 +923,33 @@ static bool get_aead_mech(smw_attr_algo_t perm_algo, smw_key_type_t smw_key,
 	return found;
 }
 
-static CK_RV get_all_mech(CK_MECHANISM_TYPE *mech, size_t *nb_mech,
+static CK_RV get_all_mech(CK_MECHANISM_TYPE_PTR *mech, size_t *nb_mech,
 			  struct mentry *array, size_t array_size)
 {
+	CK_MECHANISM_TYPE_PTR all_mech = NULL_PTR;
 	unsigned int i = 0;
 
 	if (!mech || !nb_mech)
 		return CKR_ARGUMENTS_BAD;
 
-	if (*nb_mech < array_size) {
-		*nb_mech = array_size;
-		return CKR_BUFFER_TOO_SMALL;
-	}
+	*nb_mech = array_size;
+	all_mech = calloc(array_size, sizeof(CK_MECHANISM_TYPE));
+	if (!all_mech)
+		return CKR_HOST_MEMORY;
 
 	for (; i < array_size; i++)
-		mech[i] = array[i].type;
+		all_mech[i] = array[i].type;
 
+	*mech = all_mech;
 	return CKR_OK;
 }
 
-static CK_RV get_all_aead_mech(CK_MECHANISM_TYPE *mech, size_t *nb_mech)
+static CK_RV get_all_aead_mech(CK_MECHANISM_TYPE_PTR *mech, size_t *nb_mech)
 {
 	return get_all_mech(mech, nb_mech, maead, ARRAY_SIZE(maead));
 }
 
-static bool get_sign_mech(smw_attr_algo_t perm_algo, CK_MECHANISM_TYPE *mech)
+static bool get_sign_mech(smw_attr_algo_t perm_algo, CK_MECHANISM_TYPE_PTR mech)
 {
 	bool found = false;
 	unsigned int i = 0;
@@ -996,7 +998,7 @@ static bool get_sign_mech(smw_attr_algo_t perm_algo, CK_MECHANISM_TYPE *mech)
 }
 
 static bool get_asymm_encrypt_mech(smw_attr_algo_t perm_algo,
-				   CK_MECHANISM_TYPE *mech)
+				   CK_MECHANISM_TYPE_PTR mech)
 {
 	bool found = false;
 	unsigned int i = 0;
@@ -1020,7 +1022,7 @@ static bool get_asymm_encrypt_mech(smw_attr_algo_t perm_algo,
 }
 
 static bool get_mac_mech(smw_attr_algo_t perm_algo, smw_key_type_t smw_key,
-			 CK_MECHANISM_TYPE *mech)
+			 CK_MECHANISM_TYPE_PTR mech)
 {
 	bool found = false;
 	unsigned int i = 0;
@@ -1053,13 +1055,13 @@ static bool get_mac_mech(smw_attr_algo_t perm_algo, smw_key_type_t smw_key,
 	return found;
 }
 
-static CK_RV get_all_cipher_mech(CK_MECHANISM_TYPE *mech, size_t *nb_mech)
+static CK_RV get_all_cipher_mech(CK_MECHANISM_TYPE_PTR *mech, size_t *nb_mech)
 {
 	return get_all_mech(mech, nb_mech, mcipher, ARRAY_SIZE(mcipher));
 }
 
 static bool get_cipher_mech(smw_attr_algo_t perm_algo, smw_key_type_t smw_key,
-			    CK_MECHANISM_TYPE *mech)
+			    CK_MECHANISM_TYPE_PTR mech)
 {
 	bool found = false;
 	unsigned int i = 0;
@@ -1088,7 +1090,6 @@ static CK_RV get_key_allowed_algo(struct libobj_obj *obj,
 	smw_attr_algo_t mode = SMW_ATTR_MODE_NONE;
 	smw_key_type_t smw_key_type = SMW_KEY_TYPE_NAME_NONE;
 	struct libmech_list *mech_list = NULL;
-	CK_MECHANISM_TYPE mech = 0;
 	CK_MECHANISM_TYPE_PTR key_allowed_mech = NULL;
 	size_t nb_allowed_mech = 0;
 	struct CK_ATTRIBUTE mech_attr = { .type = CKA_ALLOWED_MECHANISMS,
@@ -1103,48 +1104,31 @@ static CK_RV get_key_allowed_algo(struct libobj_obj *obj,
 	if (mode == SMW_ATTR_MODE_ANY) {
 		switch (class) {
 		case SMW_ATTR_CLASS_AEAD:
-			ret = get_all_aead_mech(key_allowed_mech,
+			ret = get_all_aead_mech(&key_allowed_mech,
 						&nb_allowed_mech);
-			if (ret != CKR_BUFFER_TOO_SMALL)
+			if (ret != CKR_OK)
 				return ret;
 
-			key_allowed_mech = calloc(nb_allowed_mech,
-						  sizeof(CK_MECHANISM_TYPE));
-			if (!key_allowed_mech)
-				return CKR_HOST_MEMORY;
-
-			ret = get_all_aead_mech(key_allowed_mech,
-						&nb_allowed_mech);
-			if (ret == CKR_OK)
-				found = true;
-
+			found = true;
 			break;
 
 		case SMW_ATTR_CLASS_SYMMETRIC_ENCRYPTION:
-			ret = get_all_cipher_mech(key_allowed_mech,
+			ret = get_all_cipher_mech(&key_allowed_mech,
 						  &nb_allowed_mech);
-			if (ret != CKR_BUFFER_TOO_SMALL)
+			if (ret != CKR_OK)
 				return ret;
 
-			key_allowed_mech = calloc(nb_allowed_mech,
-						  sizeof(CK_MECHANISM_TYPE));
-			if (!key_allowed_mech)
-				return CKR_HOST_MEMORY;
-
-			ret = get_all_cipher_mech(key_allowed_mech,
-						  &nb_allowed_mech);
-			if (ret == CKR_OK)
-				found = true;
-
+			found = true;
 			break;
 
 		default:
 			break;
 		}
-	}
+	} else {
+		key_allowed_mech = calloc(1, sizeof(CK_MECHANISM_TYPE));
+		if (!key_allowed_mech)
+			return CKR_HOST_MEMORY;
 
-	if (!found) {
-		key_allowed_mech = &mech;
 		nb_allowed_mech = 1;
 
 		switch (class) {
@@ -1183,10 +1167,14 @@ static CK_RV get_key_allowed_algo(struct libobj_obj *obj,
 				free(mech_list->mech);
 
 			mech_attr.pValue = key_allowed_mech;
-			mech_attr.ulValueLen = nb_allowed_mech;
+			mech_attr.ulValueLen =
+				nb_allowed_mech * sizeof(CK_MECHANISM_TYPE);
 			ret = attr_to_mech_list(mech_list, &mech_attr);
 		}
 	}
+
+	if (key_allowed_mech)
+		free(key_allowed_mech);
 
 	return ret;
 }

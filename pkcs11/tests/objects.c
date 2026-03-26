@@ -1165,13 +1165,15 @@ static int generate_cipher_key(CK_FUNCTION_LIST_PTR pfunc)
 			   "Got %lu but expected %d objects", nb_keys_match, 1))
 		goto end;
 
-	TEST_OUT("Key Destroy #%lu\n", hkey);
-	ret = pfunc->C_DestroyObject(sess, hkey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
 	status = TEST_PASS;
 end:
+	if (hkey != CK_INVALID_HANDLE) {
+		TEST_OUT("Key Destroy #%lu\n", hkey);
+		ret = pfunc->C_DestroyObject(sess, hkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			status = TEST_FAIL;
+	}
+
 	util_close_session(pfunc, &sess);
 
 	SUBTEST_END(status);
@@ -1263,13 +1265,15 @@ static int generate_cipher_key_user_id(CK_FUNCTION_LIST_PTR pfunc)
 			   "Got %lu but expected %d objects", nb_keys_match, 1))
 		goto end;
 
-	TEST_OUT("Key Destroy #%lu\n", hkey);
-	ret = pfunc->C_DestroyObject(sess, hkey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
 	status = TEST_PASS;
 end:
+	if (hkey != CK_INVALID_HANDLE) {
+		TEST_OUT("Key Destroy #%lu\n", hkey);
+		ret = pfunc->C_DestroyObject(sess, hkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			status = TEST_FAIL;
+	}
+
 	util_close_session(pfunc, &sess);
 
 	SUBTEST_END(status);
@@ -1412,17 +1416,19 @@ static int get_secret_key_size(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_GetObjectSize"))
 		goto end;
 
-	TEST_OUT("Key Destroy #%lu\n", hkey);
-	ret = pfunc->C_DestroyObject(sess, hkey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
 	if (CHECK_EXPECTED(key_len == size, "Got %lu but expected %lu size",
 			   size, key_len))
 		goto end;
 
 	status = TEST_PASS;
 end:
+	if (hkey != CK_INVALID_HANDLE) {
+		TEST_OUT("Key Destroy #%lu\n", hkey);
+		ret = pfunc->C_DestroyObject(sess, hkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			status = TEST_FAIL;
+	}
+
 	util_close_session(pfunc, &sess);
 
 	SUBTEST_END(status);
@@ -1497,16 +1503,6 @@ static int get_key_pair_size(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_GetObjectSize"))
 		goto end;
 
-	TEST_OUT("Key Destroy #%lu\n", hpubkey);
-	ret = pfunc->C_DestroyObject(sess, hpubkey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Key Destroy #%lu\n", hprivkey);
-	ret = pfunc->C_DestroyObject(sess, hprivkey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
 	if (CHECK_EXPECTED(key_size == pubkey_size,
 			   "Got %lu but expected %lu size", pubkey_size,
 			   key_size))
@@ -1520,6 +1516,13 @@ static int get_key_pair_size(CK_FUNCTION_LIST_PTR pfunc)
 	status = TEST_PASS;
 
 end:
+	if (hprivkey != CK_INVALID_HANDLE) {
+		TEST_OUT("Key Destroy #%lu\n", hprivkey);
+		ret = pfunc->C_DestroyObject(sess, hprivkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			status = TEST_FAIL;
+	}
+
 	util_close_session(pfunc, &sess);
 
 	if (pubkey_attrs[0].pValue)
@@ -1770,11 +1773,6 @@ static int get_data_size(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_GetObjectSize"))
 		goto end;
 
-	TEST_OUT("Destroy %sData\n", token ? "Token " : "");
-	ret = pfunc->C_DestroyObject(sess, hdata);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
 	if (CHECK_EXPECTED(sizeof(data) == size,
 			   "Got %lu but expected %lu size", size, sizeof(data)))
 		goto end;
@@ -1782,6 +1780,13 @@ static int get_data_size(CK_FUNCTION_LIST_PTR pfunc)
 	status = TEST_PASS;
 
 end:
+	if (hdata != CK_INVALID_HANDLE) {
+		TEST_OUT("Destroy %sData\n", token ? "Token " : "");
+		ret = pfunc->C_DestroyObject(sess, hdata);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			status = TEST_FAIL;
+	}
+
 	util_close_session(pfunc, &sess);
 
 	SUBTEST_END(status);
@@ -1892,16 +1897,16 @@ static int generate_cipher_key_check_user_id(CK_FUNCTION_LIST_PTR pfunc)
 			goto end;
 	}
 
+	status = TEST_PASS;
+
+end:
 	for (i = 0; i < nb_keys_match; i++) {
 		TEST_OUT("Key Destroy #%lu\n", hkey[i]);
 		ret = pfunc->C_DestroyObject(sess, hkey[i]);
 		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-			goto end;
+			status = TEST_FAIL;
 	}
 
-	status = TEST_PASS;
-
-end:
 	util_close_session(pfunc, &sess);
 
 	SUBTEST_END(status);
@@ -2117,7 +2122,7 @@ end:
 		TEST_OUT("Key Destroy #%lu\n", hkey);
 		ret = pfunc->C_DestroyObject(sess, hkey);
 		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-			goto end;
+			status = TEST_FAIL;
 	}
 
 	util_close_session(pfunc, &sess);
@@ -2308,6 +2313,139 @@ end:
 	return status;
 }
 
+static int generate_cipher_key_check_mode(CK_FUNCTION_LIST_PTR pfunc)
+{
+	int status = TEST_FAIL;
+	enum smw_status_code smw_status = SMW_STATUS_OK;
+	struct smw_generate_key_args args = { 0 };
+	struct smw_key_descriptor key_desc = { 0 };
+
+	CK_RV ret = CKR_OK;
+	CK_SESSION_HANDLE sess = 0;
+	CK_OBJECT_HANDLE hkey = CK_INVALID_HANDLE;
+	CK_KEY_TYPE key_type = CKK_AES;
+	CK_BBOOL btrue = CK_TRUE;
+	CK_ULONG nb_keys_match = 0;
+	CK_ATTRIBUTE match_attrs[] = {
+		{ CKA_KEY_TYPE, &key_type, sizeof(key_type) },
+		{ CKA_TOKEN, &btrue, sizeof(CK_BBOOL) },
+	};
+
+	CK_MECHANISM_TYPE_PTR mech_list = NULL_PTR;
+	CK_ATTRIBUTE getkeyAttr[] = {
+		{ CKA_ALLOWED_MECHANISMS, NULL_PTR, 0 },
+	};
+
+	unsigned int i = 0;
+
+	SUBTEST_START();
+
+	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
+		goto end;
+
+	TEST_OUT("Login to R/W Session as User\n");
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_Login"))
+		goto end;
+
+	TEST_OUT("Generate Key Secret key\n");
+	key_desc.type_name = SMW_KEY_TYPE_NAME_AES;
+	key_desc.security_size = 256;
+	key_desc.attributes.attributes =
+		SMW_ATTR_SET_PERSISTENCE(key_desc.attributes.attributes,
+					 SMW_ATTR_PERSISTENCE_PERSISTENT);
+	key_desc.attributes.permitted_algo =
+		SMW_ATTR_ALGO_SYMMETRIC_ENCRYPTION(SMW_ATTR_ALGO_AES,
+						   SMW_ATTR_MODE_ANY);
+	key_desc.attributes.usage_flags =
+		SMW_ATTR_USAGE_ENCRYPT | SMW_ATTR_USAGE_DECRYPT;
+	args.key_descriptor = &key_desc;
+	smw_status = smw_generate_key(&args);
+	if (CHECK_EXPECTED(smw_status == SMW_STATUS_OK, "smw_generate_key"))
+		goto end;
+
+	TEST_OUT("Find generated AES key\n");
+	ret = pfunc->C_FindObjectsInit(sess, match_attrs,
+				       ARRAY_SIZE(match_attrs));
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjectsInit"))
+		goto end;
+
+	ret = pfunc->C_FindObjects(sess, &hkey, 1, &nb_keys_match);
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjects"))
+		goto end;
+
+	ret = pfunc->C_FindObjectsFinal(sess);
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjectsFinal"))
+		goto end;
+
+	if (CHECK_EXPECTED(nb_keys_match == 1,
+			   "Got %lu but expected one object", nb_keys_match))
+		goto end;
+
+	TEST_OUT("Get Key allowed mechanism attributes\n");
+	ret = pfunc->C_GetAttributeValue(sess, hkey, getkeyAttr,
+					 ARRAY_SIZE(getkeyAttr));
+	if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
+		goto end;
+
+	if (CHECK_EXPECTED(getkeyAttr->ulValueLen != 0,
+			   "CKA_ALLOWED_MECHANISM attribute not found"))
+		goto end;
+
+	mech_list = malloc(getkeyAttr->ulValueLen);
+	if (!mech_list)
+		goto end;
+
+	getkeyAttr->pValue = mech_list;
+
+	TEST_OUT("Get Key allowed mechanism attributes\n");
+	ret = pfunc->C_GetAttributeValue(sess, hkey, getkeyAttr,
+					 ARRAY_SIZE(getkeyAttr));
+	if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
+		goto end;
+
+	for (; i < getkeyAttr->ulValueLen / sizeof(CK_MECHANISM_TYPE); i++) {
+		switch (mech_list[i]) {
+		case CKM_AES_XTS:
+		case CKM_AES_ECB:
+		case CKM_AES_CBC:
+		case CKM_AES_CTR:
+		case CKM_AES_CTS:
+		case CKM_DES_CBC:
+		case CKM_DES_ECB:
+		case CKM_DES3_CBC:
+		case CKM_DES3_ECB:
+		case CKM_SM4_CBC:
+		case CKM_SM4_CTR:
+		case CKM_SM4_ECB:
+			TEST_OUT("Allowed mechanism #%u: 0x%lx\n", i,
+				 mech_list[i]);
+			break;
+		default:
+			TEST_OUT("Unexpected mechanism: 0x%lx\n", mech_list[i]);
+			goto end;
+		}
+	}
+
+	status = TEST_PASS;
+
+end:
+	if (hkey != CK_INVALID_HANDLE) {
+		TEST_OUT("Key Destroy #%lu\n", hkey);
+		ret = pfunc->C_DestroyObject(sess, hkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			status = TEST_FAIL;
+	}
+
+	util_close_session(pfunc, &sess);
+
+	if (mech_list)
+		free(mech_list);
+
+	SUBTEST_END(status);
+	return status;
+}
+
 void tests_pkcs11_objects(void *lib_hdl, CK_VOID_PTR pfunc)
 {
 	(void)lib_hdl;
@@ -2372,6 +2510,9 @@ void tests_pkcs11_objects(void *lib_hdl, CK_VOID_PTR pfunc)
 		goto end;
 
 	if (pkcs11_tool_delete_keypair(pfunc) == TEST_FAIL)
+		goto end;
+
+	if (generate_cipher_key_check_mode(pfunc) == TEST_FAIL)
 		goto end;
 
 	/*

@@ -456,4 +456,27 @@ uint32_t handle_pcrreset(tcti_smw_context_t *ctx, uint16_t tag,
  */
 uint32_t handle_pcrallocate(tcti_smw_context_t *ctx, uint16_t tag,
 			    const uint8_t *cmd, size_t cmd_size);
+
+/**
+ * handle_certifycreation() - Process TPM2_CertifyCreation command.
+ * @ctx:      Pointer to the SMW TCTI context structure.
+ * @tag:      TPM structure tag from the command header.
+ * @cmd:      Pointer to the command buffer containing the full TPM command.
+ * @cmd_size: Size of the command buffer in bytes.
+ *
+ * This function handles the TPM2_CertifyCreation command which proves that an
+ * object was created by the TPM and associates it with a creation ticket. The
+ * handler validates the signing key and target object, verifies the creation
+ * ticket authenticity, builds a TPMS_ATTEST structure containing creation data
+ * (creation hash, qualifying data, object name), and signs it using the
+ * specified signing key. The signature scheme is determined by combining the
+ * key's default scheme with the requested scheme according to TPM 2.0 rules.
+ * This command is typically used in remote attestation scenarios to prove that
+ * a key or sealed data was freshly created by a genuine TPM.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful attestation generation, or the corresponding error code.
+ */
+uint32_t handle_certifycreation(tcti_smw_context_t *ctx, uint16_t tag,
+				const uint8_t *cmd, size_t cmd_size);
 #endif /* __COMMANDS_H__ */

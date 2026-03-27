@@ -118,6 +118,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Update interface to PKCS#11 3.2 specification.
 * Remove unsupported CKM_HKDF_KEY_GEN mechanism from secret key generation
   and from the PKCS#11 tool user guide key generation mechanisms table.
+* Fix all cipher and all AEAD mechanism list allocation.
 
 #### PKCS#11 Tests
 

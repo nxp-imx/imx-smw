@@ -480,4 +480,42 @@ uint32_t build_creation_ticket(TPMI_RH_HIERARCHY hierarchy,
 			       const TPM2B_NAME object_name,
 			       TPM2B_DIGEST *creation_hash,
 			       TPMT_TK_CREATION *ticket);
+
+/**
+ * get_effective_scheme() - Determine the effective signature scheme for a signing operation.
+ * @pub:              Pointer to TPMT_PUBLIC structure containing the key's public parameters.
+ * @key_scheme:       Pointer to the key's default signature scheme from its public area.
+ * @in_scheme:        Pointer to the caller-provided signature scheme (from command parameter).
+ * @effective_scheme: Pointer to TPMT_SIG_SCHEME to populate with the resolved effective scheme.
+ *
+ * This function implements TPM 2.0 signature scheme selection rules according to the
+ * specification Part 3, Section 18.1. The effective scheme is determined by combining
+ * the key's default scheme with the caller-provided scheme, following these rules:
+ *
+ * 1. If key has a defined scheme (not TPM2_ALG_NULL):
+ *    a. If in_scheme is NULL → use key's scheme
+ *    b. If in_scheme matches key's scheme → use in_scheme (allows hash override)
+ *    c. If in_scheme differs → ERROR (scheme conflict)
+ *    d. If key is RESTRICTED and in_scheme is not NULL/matching → ERROR
+ *
+ * 2. If key's scheme is NULL (unrestricted signing key):
+ *    a. If in_scheme is NULL → ERROR (no scheme specified)
+ *    b. Otherwise → use in_scheme
+ *
+ * For ECC keys, the function also extracts scheme-specific details (e.g., hash algorithm
+ * for ECDSA) from the key's public parameters.
+ *
+ * The RESTRICTED attribute prevents scheme override: restricted keys must use their
+ * predefined scheme to ensure they can only be used for their intended purpose.
+ *
+ * Currently supported key types:
+ * - TPM2_ALG_ECC: Elliptic Curve keys with ECDSA scheme
+ *
+ * Return:
+ * TSS2_RC_SUCCESS if effective scheme is successfully determined, error code otherwise.
+ */
+uint32_t get_effective_scheme(TPMT_PUBLIC *pub,
+			      const TPMT_SIG_SCHEME *key_scheme,
+			      const TPMT_SIG_SCHEME *in_scheme,
+			      TPMT_SIG_SCHEME *effective_scheme);
 #endif /* __CRYPTO_H__ */

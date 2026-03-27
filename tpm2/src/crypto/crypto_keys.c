@@ -426,3 +426,75 @@ end:
 	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
 	return rc;
 }
+
+uint32_t get_effective_scheme(TPMT_PUBLIC *pub,
+			      const TPMT_SIG_SCHEME *key_scheme,
+			      const TPMT_SIG_SCHEME *in_scheme,
+			      TPMT_SIG_SCHEME *effective_scheme)
+{
+	TSS2_RC rc = TSS2_TCTI_RC_BAD_REFERENCE;
+
+	if (!key_scheme || !in_scheme || !effective_scheme)
+		goto end;
+
+	switch (pub->type) {
+	case TPM2_ALG_ECC:
+		effective_scheme->details.ecdsa =
+			pub->parameters.eccDetail.scheme.details.ecdsa;
+
+		break;
+	default:
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	DBG_TRACE("Scheme selection:\n");
+	DBG_TRACE("  key_type: 0x%04x\n", pub->type);
+	DBG_TRACE("  key_scheme: 0x%04x\n", key_scheme->scheme);
+	DBG_TRACE("  in_scheme: 0x%04x\n", in_scheme->scheme);
+
+	/* Case 1: Key has a defined scheme */
+	if (key_scheme->scheme != TPM2_ALG_NULL) {
+		DBG_TRACE("Key has defined scheme\n");
+
+		if (in_scheme->scheme == TPM2_ALG_NULL) {
+			/* Use key's scheme */
+			DBG_TRACE("Using key's scheme: 0x%04x\n",
+				  key_scheme->scheme);
+			*effective_scheme = *key_scheme;
+		} else if (in_scheme->scheme == key_scheme->scheme) {
+			/* inScheme matches key's scheme */
+			DBG_TRACE("inScheme matches key's scheme: 0x%04x\n",
+				  key_scheme->scheme);
+			*effective_scheme = *in_scheme;
+		} else {
+			/* Conflict! */
+			DBG_TRACE("ERROR: Scheme conflict!\n");
+			DBG_TRACE("  key_scheme: 0x%04x\n", key_scheme->scheme);
+			DBG_TRACE("  in_scheme: 0x%04x\n", in_scheme->scheme);
+			rc = TSS2_TCTI_RC_BAD_VALUE;
+			goto end;
+		}
+	} else {
+		/* Case 2: Key's scheme is NULL */
+		DBG_TRACE("Key's scheme is NULL\n");
+
+		if (in_scheme->scheme == TPM2_ALG_NULL) {
+			DBG_TRACE("ERROR: No scheme specified!\n");
+			rc = TSS2_TCTI_RC_BAD_VALUE;
+			goto end;
+		}
+
+		DBG_TRACE("Using inScheme: 0x%04x\n", in_scheme->scheme);
+		*effective_scheme = *in_scheme;
+	}
+
+	rc = TSS2_RC_SUCCESS;
+
+	DBG_TRACE("Effective scheme selected: 0x%04x\n",
+		  effective_scheme->scheme);
+
+end:
+	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
+	return rc;
+}

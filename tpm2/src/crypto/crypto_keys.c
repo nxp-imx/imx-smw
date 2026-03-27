@@ -39,6 +39,7 @@ tcti_smw_object_t *find_object_by_handle(tcti_smw_context_t *ctx,
 					 uint32_t handle)
 {
 	uint8_t i = 0;
+	tcti_smw_object_t *object = NULL;
 
 	if (handle == 0)
 		goto end;
@@ -46,13 +47,16 @@ tcti_smw_object_t *find_object_by_handle(tcti_smw_context_t *ctx,
 	for (; i < SMW_MAX_OBJECTS; i++) {
 		if (ctx->objects[i].active &&
 		    ctx->objects[i].handle == handle) {
-			return &ctx->objects[i];
+			object = &ctx->objects[i];
+			DBG_TRACE("Object found: handle=0x%08x\n", handle);
+			break;
 		}
 	}
 
 end:
-	DBG_TRACE("Object handle 0x%08X not found!\n", handle);
-	return NULL;
+	DBG_TRACE_COND(!object, "Object handle 0x%08X not found!\n", handle);
+
+	return object;
 }
 
 uint32_t smw_object_alloc(tcti_smw_context_t *ctx, uint32_t *handle,

@@ -149,6 +149,7 @@ typedef struct {
 	uint32_t smw_key_id;
 	TPMA_OBJECT attributes;
 	TPM2B_PUBLIC public_area;
+	TPM2B_NAME object_name;
 	uint8_t metadata[SMW_OBJECT_METADATA_SIZE];
 	size_t metadata_size;
 } smw_object_blob_t;

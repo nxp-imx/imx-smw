@@ -43,6 +43,7 @@ static uint32_t context_save_transient(TPMS_CONTEXT *tpms_context,
 		blob.handle = handle;
 		blob.smw_key_id = object->smw_key_id;
 		blob.attributes = object->attributes;
+		blob.object_name = object->object_name;
 		blob.metadata_size = sizeof(blob.metadata);
 
 		memcpy(&blob.public_area, &object->public_area,
@@ -516,13 +517,16 @@ uint32_t handle_contextload(tcti_smw_context_t *ctx, uint16_t tag,
 			  obj_blob->handle, obj_blob->smw_key_id);
 		DBG_TRACE("hierarchy=0x%08x\n", tpms_context.hierarchy);
 
-		/* Verify the handle is not already in use */
-		if (find_object_by_handle(ctx, obj_blob->handle)) {
-			DBG_TRACE("Handle 0x%08x already in use\n",
-				  obj_blob->handle);
-			tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
-			goto end;
-		}
+		/*
+		 * Find a free handle for the restored object.
+		 * We don't need to preserve the original handle from the context blob.
+		 */
+		do {
+			obj_blob->handle =
+				TPM2_TRANSIENT_FIRST + ctx->next_transient_id++;
+		} while (find_object_by_handle(ctx, obj_blob->handle));
+
+		DBG_TRACE("Assigned new handle: 0x%08x\n", obj_blob->handle);
 
 		for (; i < SMW_MAX_OBJECTS; i++) {
 			if (!ctx->objects[i].active) {
@@ -543,6 +547,7 @@ uint32_t handle_contextload(tcti_smw_context_t *ctx, uint16_t tag,
 		object->smw_key_id = obj_blob->smw_key_id;
 		object->hierarchy = tpms_context.hierarchy;
 		object->attributes = obj_blob->attributes;
+		object->object_name = obj_blob->object_name;
 
 		memcpy(&object->public_area, &obj_blob->public_area,
 		       sizeof(TPM2B_PUBLIC));

@@ -105,6 +105,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add PSA tests to validate asymmetric encryption and decryption operations.
 * Update the U_ELE_Reprovision_001 test.
 * Check that the output tag is in the correct location and add few PSA tests with a larger output size.
+* Add Cipher test with all supported mode key.
+* Add AEAD test with all supported mode key.
 
 #### PKCS#11 Library
 
@@ -137,6 +139,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add Data OID 1.2.0 find and verify test.
 * Update test to the new PKCS#11 3.2 interface.
 * Fix PKCS#11 version check.
+* Add multiple permitted algo cipher key test.
 
 ---
 ### <a id ="rel_5_3"></a></br>**Release 5.3**

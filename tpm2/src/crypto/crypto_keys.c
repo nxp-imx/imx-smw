@@ -8,7 +8,7 @@
 
 #include <tss2/tss2_mu.h>
 
-#include "smw_crypto.h"
+#include "smw_keymgr.h"
 #include "common.h"
 #include "crypto.h"
 #include "builtin_macros.h"
@@ -264,6 +264,163 @@ uint32_t extract_key_sig_scheme(const TPM2B_PUBLIC *public_area,
 		rc = TSS2_TCTI_RC_BAD_VALUE;
 		break;
 	}
+
+end:
+	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
+	return rc;
+}
+
+uint32_t compute_creation_ticket_hmac(TPMI_RH_HIERARCHY hierarchy,
+				      const TPM2B_NAME *object_name,
+				      const TPM2B_DIGEST *creation_hash,
+				      uint8_t *hmac_output,
+				      size_t *hmac_output_size, bool is_verify)
+{
+	TSS2_RC rc = TSS2_TCTI_RC_BAD_REFERENCE;
+	enum smw_status_code smw_status = SMW_STATUS_OK;
+	struct smw_key_descriptor key_desc = { 0 };
+	struct smw_keypair_buffer key_buffer = { 0 };
+	struct smw_mac_args mac_args = { 0 };
+	size_t hmac_size = TPM2_SHA256_DIGEST_SIZE;
+	uint8_t *proof = NULL;
+	uint8_t *hmac_input = NULL;
+	size_t hmac_input_size = 0;
+	size_t offset = 0;
+
+	if (!object_name || !creation_hash || !hmac_output)
+		goto end;
+
+	/* Allocate proof buffer */
+	proof = calloc(1, hmac_size);
+	if (!proof) {
+		rc = TSS2_TCTI_RC_MEMORY;
+		goto end;
+	}
+
+	/*
+	 * Get hierarchy proof value
+	 * In a real TPM, this is a secret value stored in NV memory.
+	 * For this implementation, we use a simplified proof.
+	 */
+	rc = get_hierarchy_proof_key(hierarchy, proof);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* Build HMAC input: TPM_ST_CREATION ∥ objectName ∥ creationHash */
+	hmac_input_size =
+		sizeof(TPM2_ST) + object_name->size + creation_hash->size;
+	hmac_input = malloc(hmac_input_size);
+	if (!hmac_input) {
+		rc = TSS2_TCTI_RC_MEMORY;
+		goto end;
+	}
+
+	/* Marshal TPM_ST_CREATION */
+	rc = Tss2_MU_TPM2_ST_Marshal(TPM2_ST_CREATION, hmac_input,
+				     hmac_input_size, &offset);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* Append objectName */
+	memcpy(hmac_input + offset, object_name->name, object_name->size);
+	offset += object_name->size;
+
+	/* Append creationHash */
+	memcpy(hmac_input + offset, creation_hash->buffer, creation_hash->size);
+	offset += creation_hash->size;
+
+	/* Configure key descriptor */
+	key_buffer.gen.private_data = proof;
+	key_buffer.gen.private_length = hmac_size;
+	key_buffer.format_name = SMW_KEY_FORMAT_NAME_NONE;
+
+	key_desc.type_name = SMW_KEY_TYPE_NAME_HMAC;
+	key_desc.security_size = BYTES_TO_BITS(hmac_size);
+	key_desc.buffer = &key_buffer;
+
+	/* Configure MAC arguments */
+	mac_args.key_descriptor = &key_desc;
+	mac_args.algo_name = SMW_MAC_ALGO_NAME_HMAC;
+	mac_args.hash_name = SMW_HASH_ALGO_NAME_SHA256;
+	mac_args.input = hmac_input;
+	mac_args.input_length = hmac_input_size;
+	mac_args.mac = hmac_output;
+	if (SET_OVERFLOW(*hmac_output_size, mac_args.mac_length)) {
+		rc = TSS2_TCTI_RC_MEMORY;
+		goto end;
+	}
+
+	if (!is_verify) {
+		/* Compute HMAC */
+		smw_status = smw_mac(&mac_args);
+		if (smw_status != SMW_STATUS_OK) {
+			DBG_TRACE("Failed to compute HMAC: %d\n", smw_status);
+			rc = smw_rc_to_tcti_rc(smw_status);
+			goto end;
+		}
+	} else {
+		/* Compute and verify HMAC */
+		smw_status = smw_mac_verify(&mac_args);
+		if (smw_status != SMW_STATUS_OK) {
+			DBG_TRACE("HMAC mismatch - ticket is INVALID!\n"
+				  "This could mean:\n"
+				  "  - Ticket was not created by this TPM\n"
+				  "  - Creation hash has been modified\n"
+				  "  - Object name has been modified\n"
+				  "  - Ticket has been tampered with\n");
+			rc = smw_rc_to_tcti_rc(smw_status);
+			goto end;
+		}
+	}
+
+	*hmac_output_size = mac_args.mac_length;
+
+	rc = TSS2_RC_SUCCESS;
+
+end:
+	if (hmac_input)
+		free(hmac_input);
+	if (proof)
+		free(proof);
+
+	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
+	return rc;
+}
+
+uint32_t build_creation_ticket(TPMI_RH_HIERARCHY hierarchy,
+			       const TPM2B_NAME object_name,
+			       TPM2B_DIGEST *creation_hash,
+			       TPMT_TK_CREATION *ticket)
+{
+	TSS2_RC rc = TSS2_TCTI_RC_BAD_REFERENCE;
+	size_t digest_size = 0;
+
+	if (!creation_hash || !ticket)
+		goto end;
+
+	memset(ticket, 0, sizeof(*ticket));
+
+	ticket->tag = TPM2_ST_CREATION;
+	ticket->hierarchy = hierarchy;
+
+	/* -------------------- Mock -------------------- */
+
+	/* Compute HMAC of creation hash */
+	if (creation_hash->size > 0) {
+		digest_size = sizeof(ticket->digest.buffer);
+		DBG_TRACE("sizeof(ticket->digest.buffer): %ld\n", digest_size);
+		rc = compute_creation_ticket_hmac(hierarchy, &object_name,
+						  creation_hash,
+						  ticket->digest.buffer,
+						  &digest_size, false);
+		if (rc != TSS2_RC_SUCCESS)
+			goto end;
+	} else {
+		rc = TSS2_RC_SUCCESS;
+		DBG_TRACE("Creation ticket (empty - no creation hash)\n");
+	}
+
+	ticket->digest.size = digest_size;
 
 end:
 	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);

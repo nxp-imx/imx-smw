@@ -406,4 +406,78 @@ uint32_t extract_ecdsa_signature(unsigned char *signature_buffer,
  */
 uint32_t extract_key_sig_scheme(const TPM2B_PUBLIC *public_area,
 				TPMT_SIG_SCHEME *sig_scheme);
+
+/**
+ * compute_creation_ticket_hmac() - Compute HMAC for TPM creation ticket validation.
+ * @hierarchy:        TPM hierarchy (Owner, Platform, or Endorsement) for proof key selection.
+ * @object_name:      Pointer to TPM2B_NAME containing the cryptographic name of the created object.
+ * @creation_hash:    Pointer to TPM2B_DIGEST containing the hash of creation data.
+ * @hmac_output:      Pointer to buffer for HMAC operation. When @is_verify is false, the computed
+ *                    HMAC will be stored here. When @is_verify is true, this buffer contains the
+ *                    expected HMAC value to verify against.
+ * @hmac_output_size: Pointer to size of the output buffer in bytes
+ * (must be at least SHA-256 digest size).
+ * @is_verify:        Operation mode selector. When false, computes the HMAC and stores the result
+ *                    in @hmac_output (used during ticket creation). When true, computes the HMAC
+ *                    internally and verifies it against the value provided in @hmac_output (used
+ *                    during ticket verification in TPM2_CertifyCreation).
+ *
+ * This function computes the HMAC used in TPM creation tickets according to TPM 2.0
+ * specification Part 2, Section 10.7.3. The HMAC proves that an object was created by
+ * the TPM and binds the object's name to its creation data. The computation uses the
+ * hierarchy-specific proof key as the HMAC secret.
+ *
+ * HMAC input structure (concatenated):
+ *   TPM_ST_CREATION (2 bytes) || objectName || creationHash
+ *
+ * The HMAC is computed using:
+ * - Algorithm: HMAC-SHA256
+ * - Key: Hierarchy proof key (retrieved via get_hierarchy_proof_key())
+ * - Message: TPM_ST_CREATION || object name || creation hash
+ *
+ * This HMAC is stored in the TPMT_TK_CREATION ticket's digest field and later
+ * verified during TPM2_CertifyCreation to prove the object's authentic creation.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful HMAC computation, error code otherwise.
+ */
+uint32_t compute_creation_ticket_hmac(TPMI_RH_HIERARCHY hierarchy,
+				      const TPM2B_NAME *object_name,
+				      const TPM2B_DIGEST *creation_hash,
+				      uint8_t *hmac_output,
+				      size_t *hmac_output_size, bool is_verify);
+
+/**
+ * build_creation_ticket() - Build a TPM creation ticket structure.
+ * @hierarchy:      TPM hierarchy (Owner, Platform, or Endorsement) that authorizes the ticket.
+ * @object_name:    TPM2B_NAME containing the cryptographic name of the created object.
+ * @creation_hash:  Pointer to TPM2B_DIGEST containing the hash of creation data and parameters.
+ * @ticket:         Pointer to TPMT_TK_CREATION structure to populate with the ticket.
+ *
+ * This function constructs a TPM creation ticket that cryptographically binds an object
+ * to its creation data. The ticket is generated during object creation (TPM2_Create,
+ * TPM2_CreatePrimary) and later verified during attestation (TPM2_CertifyCreation) to
+ * prove that the object was genuinely created by the TPM with specific creation parameters.
+ *
+ * The ticket contains:
+ * - tag: TPM2_ST_CREATION (identifies this as a creation ticket)
+ * - hierarchy: The hierarchy that authorizes this ticket
+ * - digest: HMAC-SHA256 computed over (TPM_ST_CREATION || objectName || creationHash)
+ *           using the hierarchy's proof key as the HMAC secret
+ *
+ * If the creation hash is empty (size = 0), an empty ticket is generated with no digest,
+ * which is valid for objects created without specific creation data.
+ *
+ * The ticket's HMAC provides cryptographic proof that:
+ * 1. The object was created by this TPM (only TPM knows the proof key)
+ * 2. The object's name matches the creation parameters
+ * 3. The creation data has not been tampered with
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful ticket construction, error code otherwise.
+ */
+uint32_t build_creation_ticket(TPMI_RH_HIERARCHY hierarchy,
+			       const TPM2B_NAME object_name,
+			       TPM2B_DIGEST *creation_hash,
+			       TPMT_TK_CREATION *ticket);
 #endif /* __CRYPTO_H__ */

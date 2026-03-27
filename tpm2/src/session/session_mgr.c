@@ -13,6 +13,7 @@ tcti_smw_session_t *find_session_by_handle(tcti_smw_context_t *ctx,
 					   uint32_t handle)
 {
 	uint8_t i = 0;
+	tcti_smw_session_t *session = NULL;
 
 	if (!handle)
 		goto end;
@@ -20,13 +21,15 @@ tcti_smw_session_t *find_session_by_handle(tcti_smw_context_t *ctx,
 	for (; i < SMW_MAX_SESSIONS; i++) {
 		if (ctx->sessions[i].active &&
 		    ctx->sessions[i].handle == handle) {
-			return &ctx->sessions[i];
+			session = &ctx->sessions[i];
+			DBG_TRACE("Session found: handle=0x%08x\n", handle);
+			break;
 		}
 	}
 
 end:
-	DBG_TRACE("Session handle 0x%08X not found!\n", handle);
-	return NULL;
+	DBG_TRACE_COND(!session, "Session handle 0x%08X not found!\n", handle);
+	return session;
 }
 
 uint32_t smw_session_alloc(tcti_smw_context_t *ctx, uint32_t *handle,

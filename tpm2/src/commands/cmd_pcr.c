@@ -112,8 +112,7 @@ uint32_t handle_pcrread(tcti_smw_context_t *ctx, uint16_t tag,
 	TPM2B_DIGEST *digest = NULL;
 	pcr_bank_t *bank = NULL;
 	uint8_t *params_buffer = NULL;
-	uint8_t *params_marshal_scratch = NULL;
-	size_t marshaled_param_size = 0;
+	size_t resp_params_size = 0;
 
 	/* Input parameters */
 	TPML_PCR_SELECTION pcr_selection_in = { 0 };
@@ -227,58 +226,35 @@ uint32_t handle_pcrread(tcti_smw_context_t *ctx, uint16_t tag,
 
 pcr_read_done:
 	/* 4. Calculate params_size for all output parameters */
-	params_marshal_scratch = calloc(1, TPM2_MAX_CAP_BUFFER);
-	if (!params_marshal_scratch) {
-		tss2_rc = TSS2_TCTI_RC_MEMORY;
-		goto end;
-	}
-
-	tss2_rc = Tss2_MU_UINT32_Marshal(pcr_update_counter,
-					 params_marshal_scratch,
-					 TPM2_MAX_CAP_BUFFER,
-					 &marshaled_param_size);
-	if (tss2_rc != TSS2_RC_SUCCESS)
-		goto end;
-
-	tss2_rc = Tss2_MU_TPML_PCR_SELECTION_Marshal(&pcr_selection_out,
-						     params_marshal_scratch,
-						     TPM2_MAX_CAP_BUFFER,
-						     &marshaled_param_size);
-	if (tss2_rc != TSS2_RC_SUCCESS)
-		goto end;
-
-	tss2_rc =
-		Tss2_MU_TPML_DIGEST_Marshal(&pcr_values, params_marshal_scratch,
-					    TPM2_MAX_CAP_BUFFER,
-					    &marshaled_param_size);
-	if (tss2_rc != TSS2_RC_SUCCESS)
-		goto end;
-
-	params_buffer = malloc(marshaled_param_size);
+	params_buffer = calloc(1, TPM2_MAX_CAP_BUFFER);
 	if (!params_buffer) {
 		tss2_rc = TSS2_TCTI_RC_MEMORY;
 		goto end;
 	}
 
-	if (marshaled_param_size > 0 && params_marshal_scratch)
-		memcpy(params_buffer, params_marshal_scratch,
-		       marshaled_param_size);
+	tss2_rc =
+		Tss2_MU_UINT32_Marshal(pcr_update_counter, params_buffer,
+				       TPM2_MAX_CAP_BUFFER, &resp_params_size);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	tss2_rc = Tss2_MU_TPML_PCR_SELECTION_Marshal(&pcr_selection_out,
+						     params_buffer,
+						     TPM2_MAX_CAP_BUFFER,
+						     &resp_params_size);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	tss2_rc = Tss2_MU_TPML_DIGEST_Marshal(&pcr_values, params_buffer,
+					      TPM2_MAX_CAP_BUFFER,
+					      &resp_params_size);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
 
 	/* 9. Build response */
-	if (tag == TPM2_ST_SESSIONS) {
-		/* Use build_auth_response for session response */
-		tss2_rc =
-			build_auth_response(ctx, sess, TPM2_RC_SUCCESS,
-					    TPM2_CC_PCR_Read, tag,
-					    params_buffer, marshaled_param_size,
-					    &nonce_caller, NULL);
-	} else {
-		/* Build simple response without auth */
-		tss2_rc = build_auth_response(ctx, NULL, TPM2_RC_SUCCESS,
-					      TPM2_CC_PCR_Read, tag,
-					      params_buffer,
-					      marshaled_param_size, NULL, NULL);
-	}
+	tss2_rc = build_auth_response(ctx, sess, TPM2_RC_SUCCESS,
+				      TPM2_CC_PCR_Read, tag, params_buffer,
+				      resp_params_size, &nonce_caller, NULL);
 
 	DBG_TRACE("PCR_Read successful\n");
 
@@ -286,9 +262,6 @@ end:
 	/* Free allocated memory */
 	if (params_buffer)
 		free(params_buffer);
-
-	if (params_marshal_scratch)
-		free(params_marshal_scratch);
 
 	if (tss2_rc != TSS2_RC_SUCCESS) {
 		rc = tcti_rc_to_tpm2_rc(tss2_rc);
@@ -412,6 +385,7 @@ uint32_t handle_pcrevent(tcti_smw_context_t *ctx, uint16_t tag,
 	TSS2_RC tss2_rc = TSS2_TCTI_RC_GENERAL_FAILURE;
 	TPM2_RC rc = TPM2_RC_SUCCESS;
 	enum smw_status_code smw_status = SMW_STATUS_OK;
+	size_t resp_params_size = 0;
 
 	size_t offset = TPM_HEADER_SIZE;
 	uint8_t i = 0;
@@ -419,8 +393,6 @@ uint32_t handle_pcrevent(tcti_smw_context_t *ctx, uint16_t tag,
 	TPM2B_DIGEST hash_result = { 0 };
 	struct smw_hash_args hash_args = { 0 };
 	uint8_t *params_buffer = NULL;
-	uint8_t *params_marshal_scratch = NULL;
-	size_t marshaled_param_size = 0;
 
 	/* Input parameters */
 	TPMI_DH_PCR pcr_handle = 0;
@@ -528,32 +500,22 @@ uint32_t handle_pcrevent(tcti_smw_context_t *ctx, uint16_t tag,
 	ctx->pcr_update_counter++;
 
 	/* 8. Calculate params_size for all output parameters */
-	params_marshal_scratch = calloc(1, TPM2_MAX_CAP_BUFFER);
-	if (!params_marshal_scratch) {
-		tss2_rc = TSS2_TCTI_RC_MEMORY;
-		goto end;
-	}
-
-	tss2_rc = Tss2_MU_TPML_DIGEST_VALUES_Marshal(&digests,
-						     params_marshal_scratch,
-						     TPM2_MAX_CAP_BUFFER,
-						     &marshaled_param_size);
-
-	params_buffer = malloc(marshaled_param_size);
+	params_buffer = malloc(TPM2_MAX_CAP_BUFFER);
 	if (!params_buffer) {
 		tss2_rc = TSS2_TCTI_RC_MEMORY;
 		goto end;
 	}
 
-	if (marshaled_param_size > 0 && params_marshal_scratch)
-		memcpy(params_buffer, params_marshal_scratch,
-		       marshaled_param_size);
+	tss2_rc = Tss2_MU_TPML_DIGEST_VALUES_Marshal(&digests, params_buffer,
+						     TPM2_MAX_CAP_BUFFER,
+						     &resp_params_size);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
 
 	/* 9. Build response */
-	tss2_rc =
-		build_auth_response(ctx, sess, TPM2_RC_SUCCESS,
-				    TPM2_CC_PCR_Event, tag, params_buffer,
-				    marshaled_param_size, &nonce_caller, NULL);
+	tss2_rc = build_auth_response(ctx, sess, TPM2_RC_SUCCESS,
+				      TPM2_CC_PCR_Event, tag, params_buffer,
+				      resp_params_size, &nonce_caller, NULL);
 
 	DBG_TRACE("PCR_Event successful\n");
 
@@ -561,9 +523,6 @@ end:
 	/* Free allocated memory */
 	if (params_buffer)
 		free(params_buffer);
-
-	if (params_marshal_scratch)
-		free(params_marshal_scratch);
 
 	if (tss2_rc != TSS2_RC_SUCCESS) {
 		rc = tcti_rc_to_tpm2_rc(tss2_rc);
@@ -677,6 +636,7 @@ uint32_t handle_pcrallocate(tcti_smw_context_t *ctx, uint16_t tag,
 	size_t offset = TPM_HEADER_SIZE;
 	uint8_t i = 0;
 	uint32_t size_current = 0;
+	size_t resp_params_size = 0;
 
 	/* Input parameters */
 	TPMI_RH_PLATFORM auth_handle = 0;
@@ -695,7 +655,6 @@ uint32_t handle_pcrallocate(tcti_smw_context_t *ctx, uint16_t tag,
 
 	/* Parameters buffer */
 	uint8_t *params_buffer = NULL;
-	size_t params_offset = 0;
 
 	/* 1. Check initialization */
 	if (!ctx->initialized) {
@@ -747,29 +706,32 @@ uint32_t handle_pcrallocate(tcti_smw_context_t *ctx, uint16_t tag,
 	}
 
 	tss2_rc = Tss2_MU_UINT8_Marshal(allocation_success, params_buffer,
-					TPM2_MAX_CAP_BUFFER, &params_offset);
+					TPM2_MAX_CAP_BUFFER, &resp_params_size);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
-	tss2_rc = Tss2_MU_UINT32_Marshal(max_pcr, params_buffer,
-					 TPM2_MAX_CAP_BUFFER, &params_offset);
+	tss2_rc =
+		Tss2_MU_UINT32_Marshal(max_pcr, params_buffer,
+				       TPM2_MAX_CAP_BUFFER, &resp_params_size);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
-	tss2_rc = Tss2_MU_UINT32_Marshal(size_needed, params_buffer,
-					 TPM2_MAX_CAP_BUFFER, &params_offset);
+	tss2_rc =
+		Tss2_MU_UINT32_Marshal(size_needed, params_buffer,
+				       TPM2_MAX_CAP_BUFFER, &resp_params_size);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
-	tss2_rc = Tss2_MU_UINT32_Marshal(size_available, params_buffer,
-					 TPM2_MAX_CAP_BUFFER, &params_offset);
+	tss2_rc =
+		Tss2_MU_UINT32_Marshal(size_available, params_buffer,
+				       TPM2_MAX_CAP_BUFFER, &resp_params_size);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
 	/* 7. Build response */
 	tss2_rc = build_auth_response(ctx, sess, TPM2_RC_SUCCESS,
 				      TPM2_CC_PCR_Allocate, tag, params_buffer,
-				      params_offset, &nonce_caller, NULL);
+				      resp_params_size, &nonce_caller, NULL);
 
 	DBG_TRACE("PCR_Allocate: mock success (no actual change)\n");
 

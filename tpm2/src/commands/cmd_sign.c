@@ -49,9 +49,8 @@ uint32_t handle_sign(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 	TPMI_ECC_CURVE curveID = TPM2_ECC_NONE;
 
 	/* Response marshaling */
-	uint8_t *params_marshal_scratch = NULL;
-	size_t marshaled_param_size = 0;
 	uint8_t *params_buffer = NULL;
+	size_t resp_params_size = 0;
 
 	if (!ctx || !cmd) {
 		tss2_rc = TSS2_TCTI_RC_BAD_REFERENCE;
@@ -71,13 +70,13 @@ uint32_t handle_sign(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 		goto end;
 
 	/* 3. Find session */
-	sess = find_session_by_handle(ctx, session_handle);
-	if (!sess || !sess->active) {
-		tss2_rc = TSS2_TCTI_RC_IO_ERROR;
-		goto end;
+	if (session_handle != TPM2_RH_PW) {
+		sess = find_session_by_handle(ctx, session_handle);
+		if (!sess || !sess->active) {
+			tss2_rc = TSS2_TCTI_RC_IO_ERROR;
+			goto end;
+		}
 	}
-
-	DBG_TRACE("Session found: handle=0x%08x\n", session_handle);
 
 	/* 4. Find the key object */
 	obj = find_object_by_handle(ctx, input.key_handle);
@@ -164,31 +163,21 @@ uint32_t handle_sign(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 		goto end;
 
 	/* 15. Marshal signature for response */
-	params_marshal_scratch = calloc(1, TPM2_MAX_CAP_BUFFER);
-	if (!params_marshal_scratch) {
-		tss2_rc = TSS2_TCTI_RC_MEMORY;
-		goto end;
-	}
-
-	tss2_rc = Tss2_MU_TPMT_SIGNATURE_Marshal(&signature,
-						 params_marshal_scratch,
-						 TPM2_MAX_CAP_BUFFER,
-						 &marshaled_param_size);
-	if (tss2_rc != TSS2_RC_SUCCESS)
-		goto end;
-
-	/* 16. Prepare parameters buffer for HMAC calculation */
-	params_buffer = malloc(marshaled_param_size);
+	params_buffer = calloc(1, TPM2_MAX_CAP_BUFFER);
 	if (!params_buffer) {
 		tss2_rc = TSS2_TCTI_RC_MEMORY;
 		goto end;
 	}
 
-	memcpy(params_buffer, params_marshal_scratch, marshaled_param_size);
+	tss2_rc = Tss2_MU_TPMT_SIGNATURE_Marshal(&signature, params_buffer,
+						 TPM2_MAX_CAP_BUFFER,
+						 &resp_params_size);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
 
-	/* 17. Build auth response */
+	/* 16. Build auth response */
 	tss2_rc = build_auth_response(ctx, sess, TPM2_RC_SUCCESS, TPM2_CC_Sign,
-				      tag, params_buffer, marshaled_param_size,
+				      tag, params_buffer, resp_params_size,
 				      &nonce_caller, NULL);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
@@ -200,9 +189,6 @@ end:
 	/* Free allocated memory */
 	if (params_buffer)
 		free(params_buffer);
-
-	if (params_marshal_scratch)
-		free(params_marshal_scratch);
 
 	if (tss2_rc != TSS2_RC_SUCCESS) {
 		rc = tcti_rc_to_tpm2_rc(tss2_rc);

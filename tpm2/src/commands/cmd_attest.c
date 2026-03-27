@@ -301,7 +301,7 @@ uint32_t handle_certifycreation(tcti_smw_context_t *ctx, uint16_t tag,
 
 	/* Buffers */
 	uint8_t *params_buffer = NULL;
-	size_t marshaled_param_size = 0;
+	size_t resp_params_size = 0;
 
 	if (!ctx) {
 		tss2_rc = TSS2_TCTI_RC_BAD_REFERENCE;
@@ -445,14 +445,14 @@ uint32_t handle_certifycreation(tcti_smw_context_t *ctx, uint16_t tag,
 	/* Marshal certifyInfo */
 	tss2_rc = Tss2_MU_TPM2B_ATTEST_Marshal(&certify_info, params_buffer,
 					       TPM2_MAX_CAP_BUFFER,
-					       &marshaled_param_size);
+					       &resp_params_size);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
 	/* Marshal signature */
 	tss2_rc = Tss2_MU_TPMT_SIGNATURE_Marshal(&signature, params_buffer,
 						 TPM2_MAX_CAP_BUFFER,
-						 &marshaled_param_size);
+						 &resp_params_size);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
@@ -460,7 +460,7 @@ uint32_t handle_certifycreation(tcti_smw_context_t *ctx, uint16_t tag,
 	tss2_rc =
 		build_auth_response(ctx, sess, TPM2_RC_SUCCESS,
 				    TPM2_CC_CertifyCreation, tag, params_buffer,
-				    marshaled_param_size, &nonce_caller, NULL);
+				    resp_params_size, &nonce_caller, NULL);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 

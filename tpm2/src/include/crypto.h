@@ -14,6 +14,32 @@
 
 #define SMW_OBJECT_METADATA_SIZE 20
 
+/*
+ * ECC NIST curve security sizes (in bits)
+ * These match TPM2_ECC_NIST_P* curve identifiers
+ */
+#define ECC_P224_SECURITY_BITS 224
+#define ECC_P256_SECURITY_BITS 256
+#define ECC_P384_SECURITY_BITS 384
+#define ECC_P521_SECURITY_BITS 521
+
+/*
+ * ECC coordinate sizes (in bytes) for NIST curves
+ * Each coordinate (X, Y) or signature component (R, S) has this size
+ */
+#define ECC_P224_COORD_SIZE 28
+#define ECC_P256_COORD_SIZE 32
+#define ECC_P384_COORD_SIZE 48
+#define ECC_P521_COORD_SIZE 66
+
+/*
+ * ECC public key sizes (X || Y coordinates)
+ */
+#define ECC_P224_PUBLIC_SIZE (ECC_P224_COORD_SIZE * 2) /* 56 */
+#define ECC_P256_PUBLIC_SIZE (ECC_P256_COORD_SIZE * 2) /* 64 */
+#define ECC_P384_PUBLIC_SIZE (ECC_P384_COORD_SIZE * 2) /* 96 */
+#define ECC_P521_PUBLIC_SIZE (ECC_P521_COORD_SIZE * 2) /* 132 */
+
 /* Mocked proof - in production, load from secure storage */
 extern uint8_t proof_owner[TPM2_SHA384_DIGEST_SIZE];
 extern uint8_t proof_platform[TPM2_SHA384_DIGEST_SIZE];
@@ -326,4 +352,34 @@ uint32_t compute_hashcheck_hmac(TPMI_RH_HIERARCHY hierarchy,
  * error code otherwise.
  */
 uint32_t get_hierarchy_proof_key(TPMI_RH_HIERARCHY hierarchy, uint8_t *proof);
+
+/**
+ * extract_ecdsa_signature() - Extract ECDSA signature components from raw buffer.
+ * @signature_buffer: Pointer to the raw signature buffer containing concatenated R||S.
+ * @signature_length: Total length of the signature buffer in bytes (must be even).
+ * @tpm_signature:    Pointer to TPMT_SIGNATURE structure to populate with R and S values.
+ *
+ * This function parses a raw ECDSA signature buffer in the format R||S (concatenated
+ * R and S coordinates) and extracts the components into a TPM2 TPMT_SIGNATURE structure.
+ * The signature buffer is expected to contain two equal-length big integers representing
+ * the ECDSA signature coordinates, with R in the first half and S in the second half.
+ *
+ * The function validates:
+ * - Buffer pointers are non-NULL
+ * - Signature length is even and non-zero
+ * - Coordinate size does not exceed TPM2_MAX_ECC_KEY_BYTES
+ * - Coordinate size matches standard ECC curves (P-224, P-256, P-384, P-521)
+ *
+ * Supported signature sizes:
+ * - 56 bytes (P-224: 28 bytes R + 28 bytes S)
+ * - 64 bytes (P-256: 32 bytes R + 32 bytes S)
+ * - 96 bytes (P-384: 48 bytes R + 48 bytes S)
+ * - 132 bytes (P-521: 66 bytes R + 66 bytes S)
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful extraction, error code otherwise.
+ */
+uint32_t extract_ecdsa_signature(unsigned char *signature_buffer,
+				 unsigned int signature_length,
+				 TPMT_SIGNATURE *tpm_signature);
 #endif /* __CRYPTO_H__ */

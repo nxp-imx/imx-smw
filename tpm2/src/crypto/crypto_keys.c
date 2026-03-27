@@ -222,3 +222,50 @@ end:
 	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
 	return rc;
 }
+
+uint32_t extract_key_sig_scheme(const TPM2B_PUBLIC *public_area,
+				TPMT_SIG_SCHEME *sig_scheme)
+{
+	TSS2_RC rc = TSS2_RC_SUCCESS;
+
+	if (!public_area || !sig_scheme) {
+		rc = TSS2_TCTI_RC_BAD_REFERENCE;
+		goto end;
+	}
+
+	memset(sig_scheme, 0, sizeof(*sig_scheme));
+
+	switch (public_area->publicArea.type) {
+	case TPM2_ALG_ECC:
+		sig_scheme->scheme = public_area->publicArea.parameters
+					     .eccDetail.scheme.scheme;
+
+		/* Copy details based on scheme type */
+		switch (sig_scheme->scheme) {
+		case TPM2_ALG_ECDSA:
+			sig_scheme->details.ecdsa.hashAlg =
+				public_area->publicArea.parameters.eccDetail
+					.scheme.details.ecdsa.hashAlg;
+			break;
+		case TPM2_ALG_NULL:
+			/* No details for NULL scheme */
+			break;
+		default:
+			DBG_TRACE("Unsupported ECC scheme: 0x%04x\n",
+				  sig_scheme->scheme);
+			rc = TSS2_TCTI_RC_BAD_VALUE;
+			break;
+		}
+		break;
+
+	default:
+		DBG_TRACE("Unsupported key type: 0x%04x\n",
+			  public_area->publicArea.type);
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		break;
+	}
+
+end:
+	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
+	return rc;
+}

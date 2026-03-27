@@ -382,4 +382,28 @@ uint32_t get_hierarchy_proof_key(TPMI_RH_HIERARCHY hierarchy, uint8_t *proof);
 uint32_t extract_ecdsa_signature(unsigned char *signature_buffer,
 				 unsigned int signature_length,
 				 TPMT_SIGNATURE *tpm_signature);
+
+/**
+ * extract_key_sig_scheme() - Extract signature scheme from TPM public key area.
+ * @public_area: Pointer to TPM2B_PUBLIC structure containing the key's public parameters.
+ * @sig_scheme:  Pointer to TPMT_SIG_SCHEME structure to populate with extracted scheme.
+ *
+ * This function extracts the signature scheme configuration from a TPM key's public
+ * area and populates a TPMT_SIG_SCHEME structure with the scheme identifier and
+ * associated parameters (e.g., hash algorithm for ECDSA). The extracted scheme
+ * represents the key's default signing configuration as defined during key creation.
+ *
+ * For ECC keys, the function supports:
+ * - TPM2_ALG_ECDSA: Extracts the hash algorithm used for signature generation
+ * - TPM2_ALG_NULL: Indicates no default scheme (scheme must be specified at sign time)
+ *
+ * Currently supported key types:
+ * - TPM2_ALG_ECC: Elliptic Curve keys (ECDSA scheme)
+ * Future extensions may include RSA (RSASSA, RSAPSS) and other asymmetric algorithms.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful extraction, error code otherwise.
+ */
+uint32_t extract_key_sig_scheme(const TPM2B_PUBLIC *public_area,
+				TPMT_SIG_SCHEME *sig_scheme);
 #endif /* __CRYPTO_H__ */

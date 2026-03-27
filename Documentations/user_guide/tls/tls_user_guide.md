@@ -13,7 +13,9 @@
   - [Supported algorithms](#supported-algorithms)
     - [TLS 1.2 supported cipher suites](#tls-12-supported-cipher-suites)
     - [TLS 1.3 supported cipher suites](#tls-13-supported-cipher-suites)
-  - [Known issue](#known-issue)
+  - [Known issues](#known-issues)
+    - [pkcs11-tool URI encoding limitation](#pkcs11-tool-uri-encoding-limitation)
+    - [TLS groups for key exchange](#tls-groups-for-key-exchange)
 - [TLS using ECDSA Key](#tls-using-ecdsa-key)
   - [Create the ECDSA Certificate and Key](#create-the-ecdsa-certificate-and-key)
 - [TLS using EdDSA Key](#tls-using-eddsa-key)
@@ -101,7 +103,8 @@ export PKCS11_MODULE_PATH=/usr/lib/libsmw_pkcs11.so.5
 ```
 
 Finally, configure the OpenSSL environment to recognize the PKCS11 provider:
-To do so, add the following sections to your `openssl.cnf` file:
+To do so, copy `/etc/ssl/openssl.cnf` to `/etc/ssl/openssl-pkcs11.cnf` and
+add the following sections to the `openssl-pkcs11.cnf` file:
 
 ```ini
 [openssl_init]
@@ -139,7 +142,7 @@ It is recommended to create a specific OpenSSL configuration file to enable the 
 You will have to set the `OPENSSL_CONF` environment variable to point to this configuration file.
 
 ```sh
-OPENSSL_CONF=/path/to/custom/openssl.cnf openssl req -new \
+OPENSSL_CONF=/etc/ssl/openssl-pkcs11.cnf openssl req -new \
             -sha256 \
             -key "pkcs11:token=smw;id=%01;object=server-key;type=private" \
             -out server-cert.csr \
@@ -259,7 +262,7 @@ CN = <server.example.com>
 Create a CSR using the private key you created previously:
 
 ```sh
-OPENSSL_CONF=/path/to/custom/openssl.cnf openssl req -new \
+OPENSSL_CONF=/etc/ssl/openssl-pkcs11.cnf openssl req -new \
             -sha256 \
             -key "pkcs11:token=smw;id=%01;object=server-key;type=private" \
             -out server-cert.csr \
@@ -313,7 +316,7 @@ openssl x509 -req \
 
 ## Without verifying client certificates
 ```sh
-OPENSSL_CONF=/path/to/custom/openssl.cnf openssl s_server \
+OPENSSL_CONF=/etc/ssl/openssl-pkcs11.cnf openssl s_server \
   -accept 443 \
   -cert server-cert.crt \
   -key "pkcs11:token=smw;id=%01;object=server-key;type=private"
@@ -323,7 +326,7 @@ OPENSSL_CONF=/path/to/custom/openssl.cnf openssl s_server \
 For example with the -Verify 3 option below, the client must supply a certificate chain that is verified until depth 3 is reached.
 
 ```sh
-OPENSSL_CONF=/path/to/custom/openssl.cnf openssl s_server \
+OPENSSL_CONF=/etc/ssl/openssl-pkcs11.cnf openssl s_server \
   -accept 443 \
   -Verify 3 \
   -cert server-cert.crt \
@@ -350,7 +353,7 @@ pkcs11-tool --module $MODULE_PKCS11 \
 
 ## Step 2: Create client CSR for TLS authentication
 ```sh
-OPENSSL_CONF=/path/to/custom/openssl.cnf openssl req -new \
+OPENSSL_CONF=/etc/ssl/openssl-pkcs11.cnf openssl req -new \
             -sha256 \
             -key "pkcs11:token=smw;id=%01;object=client-key;type=private" \
             -out client-cert.csr \
@@ -372,7 +375,7 @@ openssl x509 -req \
 
 ```sh
 # Test TLS 1.2 Connection with client authentication and specific cipher suites
-OPENSSL_CONF=/path/to/custom/openssl.cnf openssl s_client \
+OPENSSL_CONF=/etc/ssl/openssl-pkcs11.cnf openssl s_client \
   -connect example.com:443 \
   -tls1_2 \
   -cipher "ECDHE-ECDSA-AES128-GCM-SHA256" \
@@ -383,7 +386,7 @@ OPENSSL_CONF=/path/to/custom/openssl.cnf openssl s_client \
 
 ```sh
 # Test TLS 1.2 Connection with specific cipher suites
-OPENSSL_CONF=/path/to/custom/openssl.cnf openssl s_client \
+OPENSSL_CONF=/etc/ssl/openssl-pkcs11.cnf openssl s_client \
   -connect example.com:443 \
   -tls1_2 \
   -cipher "ECDHE-ECDSA-AES128-GCM-SHA256" \
@@ -394,7 +397,7 @@ OPENSSL_CONF=/path/to/custom/openssl.cnf openssl s_client \
 
 ```sh
 # Test TLS 1.3 Connection with client authentication and specific cipher suites
-OPENSSL_CONF=/path/to/custom/openssl.cnf openssl s_client \
+OPENSSL_CONF=/etc/ssl/openssl-pkcs11.cnf openssl s_client \
   -connect example.com:443 \
   -tls1_3 \
   -ciphersuites "TLS_CHACHA20_POLY1305_SHA256" \
@@ -405,7 +408,7 @@ OPENSSL_CONF=/path/to/custom/openssl.cnf openssl s_client \
 
 ```sh
 # Test TLS 1.3 Connection with specific cipher suites
-OPENSSL_CONF=/path/to/custom/openssl.cnf openssl s_client \
+OPENSSL_CONF=/etc/ssl/openssl-pkcs11.cnf openssl s_client \
   -connect example.com:443 \
   -tls1_3 \
   -ciphersuites "TLS_CHACHA20_POLY1305_SHA256" \
@@ -419,7 +422,7 @@ Server TLS handshake and message exchange keys are offloaded in the i.MX Secure 
 
 On the i.MX, after doing the [TLS Server Certificate Signing](#tls-server-certificate-signing) steps, start the TLS server with the private key stored in the i.MX Secure Enclave:
 ```sh
-OPENSSL_CONF=/path/to/custom/openssl.cnf openssl s_server \
+OPENSSL_CONF=/etc/ssl/openssl-pkcs11.cnf openssl s_server \
   -accept 443 \
   -Verify 3 \
   -cert server-cert.crt \
@@ -431,7 +434,7 @@ Client TLS handshake and message exchange keys are offloaded in the i.MX Secure 
 
 On the i.MX, after doing the [TLS Client Certificate Signing](#tls-client-key-and-certificate-creation-option) steps, start the TLS client with this private key with the following command:
 ```sh
-OPENSSL_CONF=/path/to/custom/openssl.cnf openssl s_client \
+OPENSSL_CONF=/etc/ssl/openssl-pkcs11.cnf openssl s_client \
   -connect example.com:443 \
   -tls1_3 \
   -ciphersuites "TLS_CHACHA20_POLY1305_SHA256" \
@@ -457,7 +460,7 @@ pkcs11-tool --module $MODULE_PKCS11 \
 
 ### Step 2: Self-Sign the CA Certificate
 ```sh
-OPENSSL_CONF=/path/to/custom/openssl.cnf openssl req -new \
+OPENSSL_CONF=/etc/ssl/openssl-pkcs11.cnf openssl req -new \
             -x509 \
             -key "pkcs11:token=smw;id=%02;object=ca-key;type=private" \
             -days 365 \
@@ -469,7 +472,7 @@ OPENSSL_CONF=/path/to/custom/openssl.cnf openssl req -new \
 Use the client CSR created in [Step 2: Create client CSR for TLS authentication](#step-2-create-client-csr-for-tls-authentication):
 
 ```sh
-OPENSSL_CONF=/path/to/custom/openssl.cnf openssl x509 -req \
+OPENSSL_CONF=/etc/ssl/openssl-pkcs11.cnf openssl x509 -req \
              -in client-cert.csr \
              -CA ca.crt \
              -CAkey "pkcs11:token=smw;id=%02;object=ca-key;type=private" \
@@ -480,7 +483,7 @@ OPENSSL_CONF=/path/to/custom/openssl.cnf openssl x509 -req \
 
 Then start the TLS client with this private key and self signed certificate with the following command:
 ```sh
-OPENSSL_CONF=/path/to/custom/openssl.cnf openssl s_client \
+OPENSSL_CONF=/etc/ssl/openssl-pkcs11.cnf openssl s_client \
   -connect example.com:443 \
   -tls1_3 \
   -ciphersuites "TLS_CHACHA20_POLY1305_SHA256" \

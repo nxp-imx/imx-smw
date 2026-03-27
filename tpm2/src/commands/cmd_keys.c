@@ -951,6 +951,7 @@ uint32_t handle_load(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 
 	/* Input parameters */
 	load_input_t input = { 0 };
+	tcti_smw_object_t *parent = NULL;
 
 	/* Output parameters */
 	TPM2_HANDLE object_handle = 0;
@@ -992,6 +993,12 @@ uint32_t handle_load(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 	}
 
 	DBG_TRACE("Session found: handle=0x%08x\n", session_handle);
+	/* Find parent object */
+	parent = find_object_by_handle(ctx, input.parent_handle);
+	if (!parent) {
+		tss2_rc = TSS2_TCTI_RC_IO_ERROR;
+		goto end;
+	}
 
 	/* 3. Validate and extract SMW key ID from private blob */
 	if (input.in_private.size <
@@ -1028,7 +1035,7 @@ uint32_t handle_load(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 
 	/* 5. Allocate object handle and associate with SMW key ID */
 	tss2_rc = smw_object_alloc(ctx, &object_handle, pub->objectAttributes,
-				   smw_key_id, input.parent_handle,
+				   smw_key_id, parent->hierarchy,
 				   &input.in_public, &object_name);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;

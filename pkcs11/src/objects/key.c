@@ -1935,10 +1935,6 @@ CK_RV key_secret_key_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 		key_type = CKK_GENERIC_SECRET;
 		break;
 
-	case CKM_HKDF_KEY_GEN:
-		key_type = CKK_HKDF;
-		break;
-
 	default:
 		return CKR_MECHANISM_INVALID;
 	}

@@ -742,7 +742,6 @@ the [User API documentation](../../API/SecurityMiddleware_API.pdf), chapters
 | `CKM_DES_KEY_GEN`             | DES key generation.                 |
 | `CKM_DES3_KEY_GEN`            | Triple-DES key generation.          |
 | `CKM_GENERIC_SECRET_KEY_GEN`  | Generic secret key generation.      |
-| `CKM_HKDF_KEY_GEN`            | HDKF key generation.                |
 
 **Additional NXP Vendor mechanisms**
 

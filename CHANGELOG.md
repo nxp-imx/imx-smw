@@ -114,6 +114,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Delete the SMW key pair when the associated PKCS#11 private key is deleted
 * CKA_OBJECT_ID attribute do not discard 0x00 bytes.
 * Update interface to PKCS#11 3.2 specification.
+* Remove unsupported CKM_HKDF_KEY_GEN mechanism from secret key generation
+  and from the PKCS#11 tool user guide key generation mechanisms table.
 
 #### PKCS#11 Tests
 

@@ -1,0 +1,9 @@
+# Copyright 2026 NXP
+# SPDX-License-Identifier: BSD-3-Clause
+
+menu "ELE RTOS Subsystem"
+  config SMW_ELE_RTOS
+    bool "Enable SMW ELE Subsystem for RTOS"
+    depends on SMW
+    default y
+endmenu

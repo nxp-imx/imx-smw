@@ -16,6 +16,10 @@ menu "OSAL options"
     rsource "../osal/zephyr/OSALconfig"
 endmenu
 
+menu "Subsystem options"
+    rsource "../core/subsystems/ele_rtos/ELEconfig"
+endmenu
+
 # ----------------------
 # Core Key Manager
 # ----------------------

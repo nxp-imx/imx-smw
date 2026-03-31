@@ -127,6 +127,8 @@ if(NOT BUILD_ZEPHYR)
     add_subdirectory(subsystems/ele)
     add_subdirectory(subsystems/seco)
     add_subdirectory(subsystems/tee)
+else()
+    add_subdirectory(subsystems/ele_rtos)
 endif()
 
 add_subdirectory(keymgr)

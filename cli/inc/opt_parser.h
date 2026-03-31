@@ -12,7 +12,7 @@
 #include "logger.h"
 
 /* Operation types */
-enum operation { OP_NONE = 0, OP_RNG, OP_HASH };
+enum operation { OP_NONE = 0, OP_RNG, OP_HASH, OP_DEVICE_UUID };
 
 /* RNG-specific options */
 struct rng {

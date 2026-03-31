@@ -12,6 +12,7 @@
 #include "common.h"
 #include "helper.h"
 #include "logger.h"
+#include "parser_rng.h"
 #include "utils.h"
 
 /**

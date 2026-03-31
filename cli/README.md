@@ -61,9 +61,11 @@ cli/
 │   ├── handler.c             # Main entry point, operation dispatcher
 │   ├── logger.c              # Logging system implementation
 │   ├── opt_parser.c          # Command-line argument parsing
+│   ├── parser_device_uuid.c  # Device UUID option parsing
 │   ├── parser_hash.c         # Hash-specific option parsing
 │   ├── parser_rng.c          # RNG-specific option parsing
 │   ├── utils.c               # Utility functions (hex dump, program info)
+│   ├── weak_device_uuid.c    # Weak default dev-get-uuid implementation
 │   ├── weak_hash.c           # Weak default hash implementation
 │   └── weak_rng.c            # Weak default RNG implementation
 │
@@ -73,6 +75,7 @@ cli/
 │   ├── helper.h              # Safe I/O macros (FPRINTF, FCLOSE, etc.)
 │   ├── logger.h              # Logging API
 │   ├── opt_parser.h          # CLI parser API
+│   ├── parser_device_uuid.h  # Device UUID parser API
 │   ├── parser_hash.h         # Hash parser API
 │   ├── parser_rng.h          # RNG parser API
 │   └── utils.h               # Utility function declarations
@@ -96,6 +99,7 @@ cli/
 │   ├── CMakeLists.txt
 │   ├── common.c              # SMW common utilities (subsystem names, etc.)
 │   ├── common.h              # Common SMW definitions and macros
+│   ├── device_uuid.c         # SMW dev-get-uuid operation
 │   ├── hash.c                # SMW hash operation
 │   ├── init.c                # SMW library initialization
 │   └── rng.c                 # SMW RNG operation
@@ -202,6 +206,7 @@ To add a new operation (e.g., `cipher`):
 |-----------|-------------|-----|-----|
 | `rng` | Generate random numbers | ✅ | ✅ |
 | `hash` | Compute cryptographic hash | ✅ | ✅ |
+| `dev-get-uuid` | Get device UUID | ✅ | ❌ |
 *(More operations coming soon: cipher, sign, verify, etc.)*
 
 ### Dependencies

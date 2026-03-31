@@ -12,6 +12,7 @@
 #include "hash_table_generated.h"
 #include "helper.h"
 #include "logger.h"
+#include "parser_hash.h"
 #include "utils.h"
 
 /**

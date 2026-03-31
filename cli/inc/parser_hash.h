@@ -11,6 +11,7 @@
 int parse_hash_options(int argc, char **argv, struct parsed_options *opts,
 		       const char *prog_name);
 const char *cli_hash_inline_desc(void);
+void cli_hash_help(void);
 void cli_hash_help_common(void);
 
 #endif /* CLI_PARSER_HASH_H */

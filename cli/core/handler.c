@@ -10,6 +10,9 @@
 #include "helper.h"
 #include "logger.h"
 #include "opt_parser.h"
+#include "parser_device_uuid.h"
+#include "parser_hash.h"
+#include "parser_rng.h"
 #include "utils.h"
 
 /* Operation dispatch table entry */
@@ -40,6 +43,10 @@ static const struct operation_entry operation_table[] = {
 	  .opt_func = cli_hash_operation,
 	  .help_func = cli_hash_help,
 	  .inline_desc_func = cli_hash_inline_desc },
+	{ .operation_name = "dev-get-uuid",
+	  .opt_func = cli_device_uuid_operation,
+	  .help_func = cli_device_uuid_help,
+	  .inline_desc_func = cli_device_uuid_inline_desc },
 	/* Add more operations here as we implement them */
 	{ NULL, NULL, NULL, NULL } /* Sentinel */
 };

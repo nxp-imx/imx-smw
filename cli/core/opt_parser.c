@@ -12,8 +12,9 @@
 #include <strings.h>
 #include "helper.h"
 #include "opt_parser.h"
-#include "parser_rng.h"
+#include "parser_device_uuid.h"
 #include "parser_hash.h"
+#include "parser_rng.h"
 
 /**
  * Operation parser dispatch table entry
@@ -82,6 +83,10 @@ static const struct operation_parser operation_parsers[] = {
 	  .op = OP_NONE,
 	  .parse_func = NULL,
 	  .special_func = print_logging_help },
+	{ .name = "dev-get-uuid",
+	  .op = OP_DEVICE_UUID,
+	  .parse_func = parse_device_uuid_options,
+	  .special_func = NULL },
 	/* Add more operations here */
 	{ NULL, OP_NONE, NULL, NULL } /* Sentinel */
 };

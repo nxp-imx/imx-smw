@@ -181,3 +181,40 @@ void *cli_alloc_buffer(size_t size, const char *purpose)
 
 	return buffer;
 }
+
+/**
+ * @brief Get file size with full error checking
+ *
+ * @param fp: FILE pointer (must be opened for reading)
+ * @param size: Pointer to store the size
+ * @param filename: Filename string (for error messages)
+ */
+int get_file_size(FILE *fp, size_t *size, const char *filename)
+{
+	long file_size = 0;
+
+	if (fseek(fp, 0, SEEK_END)) {
+		LOG_ERROR("Failed to seek to end of file: %s", filename);
+		return -1;
+	}
+
+	file_size = ftell(fp);
+	if (file_size < 0) {
+		LOG_ERROR("Failed to get file size: %s", filename);
+		return -1;
+	}
+
+	if (!file_size) {
+		LOG_ERROR("Input file is empty: %s", filename);
+		return -1;
+	}
+
+	*size = (size_t)file_size;
+
+	if (fseek(fp, 0, SEEK_SET)) {
+		LOG_ERROR("Failed to seek to start of file: %s", filename);
+		return -1;
+	}
+
+	return 0;
+}

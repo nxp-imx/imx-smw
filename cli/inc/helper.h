@@ -29,7 +29,7 @@
 #define FCLOSE(fp)                                                             \
 	do {                                                                   \
 		FILE *_tmp_fp = (fp);                                          \
-		if (_tmp_fp && fclose(_tmp_fp) != 0) {                         \
+		if (_tmp_fp && fclose(_tmp_fp)) {                              \
 			(void)fprintf(stderr,                                  \
 				      "Error: fclose failed at %s:%d: %s\n",   \
 				      __FILE__, __LINE__, strerror(errno));    \
@@ -45,7 +45,7 @@
 #define FFLUSH(fp)                                                             \
 	do {                                                                   \
 		FILE *_tmp_fp = (fp);                                          \
-		if (_tmp_fp && fflush(_tmp_fp) != 0) {                         \
+		if (_tmp_fp && fflush(_tmp_fp)) {                              \
 			(void)fprintf(stderr,                                  \
 				      "Error: fflush failed at %s:%d: %s\n",   \
 				      __FILE__, __LINE__, strerror(errno));    \

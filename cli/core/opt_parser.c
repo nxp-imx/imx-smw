@@ -13,6 +13,7 @@
 #include "helper.h"
 #include "opt_parser.h"
 #include "parser_rng.h"
+#include "parser_hash.h"
 
 /**
  * Operation parser dispatch table entry
@@ -60,7 +61,8 @@ static void print_logging_help(const char *prog_name)
 
 	printf("Examples:\n");
 	printf("  %s rng -s 32 -o random.bin -L\n", prog_name);
-	printf("  %s rng -s 32 -L file.log\n", prog_name);
+	printf("  %s hash -a SHA256 -i data.bin -o hash.txt -L trace.log\n",
+	       prog_name);
 	printf("\n");
 }
 
@@ -71,6 +73,10 @@ static const struct operation_parser operation_parsers[] = {
 	{ .name = "rng",
 	  .op = OP_RNG,
 	  .parse_func = parse_rng_options,
+	  .special_func = NULL },
+	{ .name = "hash",
+	  .op = OP_HASH,
+	  .parse_func = parse_hash_options,
 	  .special_func = NULL },
 	{ .name = "log",
 	  .op = OP_NONE,
@@ -269,7 +275,7 @@ enum operation parse_cli_options(int argc, char **argv,
 
 	/* Parse operation-specific options */
 	if (parser->parse_func) {
-		if (parser->parse_func(argc, argv, opts, argv[0]) != 0)
+		if (parser->parse_func(argc, argv, opts, argv[0]))
 			return OP_NONE;
 	}
 

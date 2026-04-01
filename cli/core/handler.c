@@ -36,6 +36,10 @@ static const struct operation_entry operation_table[] = {
 	  .opt_func = cli_rng_operation,
 	  .help_func = cli_rng_help,
 	  .inline_desc_func = cli_rng_inline_desc },
+	{ .operation_name = "hash",
+	  .opt_func = cli_hash_operation,
+	  .help_func = cli_hash_help,
+	  .inline_desc_func = cli_hash_inline_desc },
 	/* Add more operations here as we implement them */
 	{ NULL, NULL, NULL, NULL } /* Sentinel */
 };
@@ -196,9 +200,14 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	/* Check for operation-specific help */
+	/* Check for operation-specific help or list */
 	if (parsed_opts.show_help) {
 		handler_show_help(parsed_opts.operation_name, prog_name);
+		opt_parser_cleanup(&parsed_opts);
+		return EXIT_SUCCESS;
+	}
+
+	if (parsed_opts.show_list) {
 		opt_parser_cleanup(&parsed_opts);
 		return EXIT_SUCCESS;
 	}
@@ -212,7 +221,7 @@ int main(int argc, char *argv[])
 
 	/* Initialize backend */
 	ret = cli_backend_init();
-	if (ret != 0) {
+	if (ret) {
 		logger_cleanup();
 		opt_parser_cleanup(&parsed_opts);
 		return EXIT_FAILURE;

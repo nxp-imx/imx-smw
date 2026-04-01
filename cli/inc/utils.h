@@ -28,10 +28,11 @@ int cli_write_output_data(const unsigned char *buffer, size_t size,
 			  const char *filename, bool text_format);
 
 /* =================================================================
- * Memory Allocation
+ * Memory Allocation Utilities
  * =================================================================
  */
 
 void *cli_alloc_buffer(size_t size, const char *purpose);
+int get_file_size(FILE *fp, size_t *size, const char *filename);
 
 #endif /* CLI_UTILS_H */

@@ -6,8 +6,8 @@
 #ifndef CLI_PSA_COMMON_H
 #define CLI_PSA_COMMON_H
 
-#include <stdbool.h>
 #include <psa/crypto.h>
+#include <stdbool.h>
 
 bool is_psa_api_success(const char *func, psa_status_t status);
 

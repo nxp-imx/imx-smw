@@ -8,16 +8,18 @@
 
 #include <stdbool.h>
 #include <getopt.h>
+#include "hash_algo_enum.h"
 #include "logger.h"
 
 /* Operation types */
-enum operation { OP_NONE = 0, OP_RNG };
+enum operation { OP_NONE = 0, OP_RNG, OP_HASH };
 
 /* Parsed options structure */
 struct parsed_options {
 	enum operation operation;
 	const char *operation_name;
 	bool show_help;
+	bool show_list;
 
 	/* Common options */
 	char *output_filename;
@@ -28,9 +30,20 @@ struct parsed_options {
 	enum log_dest log_dest;
 	char *log_filename;
 
-	/* RNG specific */
-	size_t size;
-	bool text_format;
+	/* Operation-specific options */
+	union {
+		/* RNG specific */
+		struct {
+			size_t size;
+			bool text_format;
+		};
+
+		/* Hash specific */
+		struct {
+			enum hash_algo hash_algo;
+			size_t hash_output_length;
+		};
+	};
 };
 
 /* Shared Functions between op_parsers */

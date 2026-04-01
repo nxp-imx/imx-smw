@@ -29,6 +29,12 @@ void cli_rng_help(void);
 const char *cli_rng_inline_desc(void);
 void cli_rng_help_common(void);
 
+/* Hash operation functions */
+enum cli_exit_code cli_hash_operation(struct parsed_options *args);
+void cli_hash_help(void);
+const char *cli_hash_inline_desc(void);
+void cli_hash_help_common(void);
+
 /* More operation declarations here as we implement them */
 
 #endif /* CLI_OPERATIONS_H */

@@ -36,6 +36,52 @@ add_custom_command(
     COMMENT "Generating SMW error table from smw_status.h"
 )
 
+# Generate SMW hash table at build time (in binary dir)
+set(SMW_HASH_TABLE_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/smw_hash_table_generated.c)
+set(SMW_NAMES_HEADER ${CMAKE_SOURCE_DIR}/public/smw/names.h)
+set(SMW_HASH_GENERATOR ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_smw_hash_table.py)
+
+add_custom_command(
+    OUTPUT ${SMW_HASH_TABLE_SOURCE}
+    COMMAND ${Python3_EXECUTABLE} ${SMW_HASH_GENERATOR} ${SMW_HASH_TABLE_SOURCE}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    DEPENDS ${SMW_NAMES_HEADER} ${SMW_HASH_GENERATOR}
+    COMMENT "Generating SMW hash table from smw/names.h"
+)
+
+# Generate PSA hash table at build time (in binary dir)
+set(PSA_HASH_TABLE_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/psa_hash_table_generated.c)
+set(PSA_CRYPTO_VALUES_HEADER ${CMAKE_SOURCE_DIR}/public/psa/crypto_values.h)
+set(PSA_HASH_GENERATOR ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_psa_hash_table.py)
+
+add_custom_command(
+    OUTPUT ${PSA_HASH_TABLE_SOURCE}
+    COMMAND ${Python3_EXECUTABLE} ${PSA_HASH_GENERATOR} ${PSA_HASH_TABLE_SOURCE}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    DEPENDS ${PSA_CRYPTO_VALUES_HEADER} ${PSA_HASH_GENERATOR}
+    COMMENT "Generating PSA hash table from psa/crypto_values.h"
+)
+
+# Generate hash algorithm enum and common table at build time
+set(HASH_ALGO_ENUM_HEADER ${CMAKE_CURRENT_BINARY_DIR}/hash_algo_enum.h)
+set(HASH_TABLE_HEADER ${CMAKE_CURRENT_BINARY_DIR}/hash_table_generated.h)
+set(HASH_TABLE_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/hash_table_generated.c)
+set(HASH_COMMON_GENERATOR ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_hash_common_table.py)
+
+add_custom_command(
+    OUTPUT
+        ${HASH_ALGO_ENUM_HEADER}
+        ${HASH_TABLE_HEADER}
+        ${HASH_TABLE_SOURCE}
+    COMMAND ${Python3_EXECUTABLE} ${HASH_COMMON_GENERATOR}
+        ${HASH_ALGO_ENUM_HEADER}
+        ${HASH_TABLE_HEADER}
+        ${HASH_TABLE_SOURCE}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    DEPENDS ${SMW_NAMES_HEADER} ${HASH_COMMON_GENERATOR}
+    COMMENT "Generating hash algorithm enum and common table from smw/names.h"
+)
+
 # Include subdirectories - each sets its own source variables
 add_subdirectory(core)
 add_subdirectory(psa)
@@ -47,7 +93,7 @@ set(CLI_INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/inc    # CLI public headers
 	${CMAKE_SOURCE_DIR}/inc            # SMW library headers
 	${CMAKE_SOURCE_DIR}/public         # SMW public API headers
-	${CMAKE_CURRENT_BINARY_DIR}        # For generated files
+	${CMAKE_CURRENT_BINARY_DIR}        # For ALL generated files (including headers!)
 )
 
 # Executable 1: nxp_smw (SMW API backend)
@@ -57,7 +103,9 @@ message(STATUS "Building nxp_smw (SMW API)")
 add_executable(nxp_smw
 	${CLI_CORE_SOURCES}
 	${CLI_SMW_SOURCES}		# SMW-specific implementation
-	${SMW_ERROR_HANDLER_SOURCE} 	# Generated file
+	${SMW_ERROR_HANDLER_SOURCE} 	# Error Table Generated file
+	${SMW_HASH_TABLE_SOURCE}	# Hash Table Generated file
+	${HASH_TABLE_SOURCE}		# Common Hash Table Generated file
 )
 
 target_include_directories(nxp_smw PRIVATE
@@ -75,7 +123,9 @@ message(STATUS "Building nxp_psa (PSA API)")
 add_executable(nxp_psa
 	${CLI_CORE_SOURCES}
 	${CLI_PSA_SOURCES}		# PSA-specific implementation
-	${PSA_ERROR_HANDLER_SOURCE} 	# Generated file
+	${PSA_ERROR_HANDLER_SOURCE} 	# Error Table Generated file
+	${PSA_HASH_TABLE_SOURCE}	# Hash Table Generated file
+	${HASH_TABLE_SOURCE}		# Common Hash Table Generated file
 )
 
 target_include_directories(nxp_psa PRIVATE

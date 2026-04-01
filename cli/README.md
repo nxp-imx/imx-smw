@@ -61,8 +61,10 @@ cli/
 │   ├── logger.c              # Logging system implementation
 │   ├── operations.c          # Operation-specific helpers
 │   ├── opt_parser.c          # Command-line argument parsing
+│   ├── parser_hash.c         # Hash-specific option parsing
 │   ├── parser_rng.c          # RNG-specific option parsing
 │   ├── utils.c               # Utility functions (hex dump, program info)
+│   ├── weak_hash.c           # Weak default hash implementation
 │   ├── weak_rng.c            # Weak default RNG implementation
 │   └── CMakeLists.txt
 │
@@ -72,23 +74,29 @@ cli/
 │   ├── logger.h              # Logging API
 │   ├── operations.h          # Operation function declarations
 │   ├── opt_parser.h          # CLI parser API
+│   ├── parser_hash.h         # Hash parser API
 │   ├── parser_rng.h          # RNG parser API
 │   └── utils.h               # Utility function declarations
 │
 ├── psa/                      # PSA backend implementation
 │   ├── common.c              # PSA common utilities (subsystem names, etc.)
 │   ├── common.h              # Common PSA definitions and macros
+│   ├── hash.c                # PSA hash operation
 │   ├── init.c                # PSA crypto initialization
 │   ├── rng.c                 # PSA RNG operation
 │   └── CMakeLists.txt
 |
 ├── scripts/                  # Build-time code generation scripts
-│   ├── generate_psa_error_table.py   # Generate PSA error handler from error.h
-│   └── generate_smw_error_table.py   # Generate SMW error handler from smw_status.h
+│   ├── generate_hash_common_table.py    # Generate common hash algorithm enum and table
+│   ├── generate_psa_error_table.py      # Generate PSA error handler
+│   ├── generate_psa_hash_table.py       # Generate PSA hash algorithm mapping table
+│   ├── generate_smw_error_table.py      # Generate SMW error handler
+│   └── generate_smw_hash_table.py       # Generate SMW hash algorithm mapping table
 |
 ├── smw/                      # SMW backend implementation
 │   ├── common.c              # SMW common utilities (subsystem names, etc.)
 │   ├── common.h              # Common SMW definitions and macros
+│   ├── hash.c                # SMW hash operation
 │   ├── init.c                # SMW library initialization
 │   ├── rng.c                 # SMW RNG operation
 │   └── CMakeLists.txt
@@ -194,6 +202,7 @@ To add a new operation (e.g., `cipher`):
 | Operation | Description | SMW | PSA |
 |-----------|-------------|-----|-----|
 | `rng` | Generate random numbers | ✅ | ✅ |
+| `hash` | Compute cryptographic hash | ✅ | ✅ |
 *(More operations coming soon: cipher, sign, verify, etc.)*
 
 ### Dependencies

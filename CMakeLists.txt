@@ -69,7 +69,6 @@ cmake_dependent_option(ENABLE_CIPHER "Enable Cipher" ON "ENABLE_KEYMGR_MODULE" O
 cmake_dependent_option(ENABLE_MAC "Enable MAC" ON "ENABLE_KEYMGR_MODULE" OFF)
 cmake_dependent_option(ENABLE_AEAD "Enable authenticated encryption" ON "ENABLE_KEYMGR_MODULE" OFF)
 option(ENABLE_RNG "Enable Random number generator" ON)
-cmake_dependent_option(ENABLE_TLS "Enable TLS features" OFF "ENABLE_KEYMGR_MODULE; ENABLE_SIGN_VERIFY; ENABLE_MAC" OFF)
 cmake_dependent_option(ENABLE_ASYMMETRIC_ENCRYPTION "Enable asymmetric encryption" ON "ENABLE_KEYMGR_MODULE; ENABLE_HASH" OFF)
 
 option(ENABLE_PSA_DEFAULT_ALT "Enable alternative subsystem selection for PSA API" OFF)
@@ -80,6 +79,10 @@ cmake_dependent_option(ENABLE_DEVICE_LIFECYCLE "Enable device lifecycle" ON "ENA
 cmake_dependent_option(ENABLE_DEVICE_REPROVISION "Enable device storage reprovisioning" ON "ENABLE_DEVMGR_MODULE" OFF)
 
 cmake_dependent_option(ENABLE_STORAGE_MODULE "Enable storage module" ON "ENABLE_KEYMGR_MODULE" OFF)
+
+include(enable_TLS)
+enable_tls_option()
+option(ENABLE_TLS "Enable TLS features" ${ENABLE_TLS})
 
 #
 # Define all targets compiler options

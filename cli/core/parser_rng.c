@@ -63,7 +63,7 @@ int parse_rng_options(int argc, char **argv, struct parsed_options *opts,
 			errno = 0;
 			tmp = strtoul(optarg, &endptr, 0);
 
-			if (errno != 0 || endptr == optarg || *endptr != '\0') {
+			if (errno || endptr == optarg || *endptr != '\0') {
 				FPRINTF(stderr,
 					"Error: Invalid size value '%s'\n",
 					optarg);
@@ -80,8 +80,8 @@ int parse_rng_options(int argc, char **argv, struct parsed_options *opts,
 				return -1;
 			}
 
-			opts->size = (size_t)tmp;
-			if ((unsigned long)opts->size != tmp) {
+			opts->op.rng.size = (size_t)tmp;
+			if ((unsigned long)opts->op.rng.size != tmp) {
 				FPRINTF(stderr,
 					"Error: Size value too large for this platform\n");
 				print_help_hint(prog_name, "rng");
@@ -104,7 +104,7 @@ int parse_rng_options(int argc, char **argv, struct parsed_options *opts,
 
 		case 'L':
 			if (parse_log_option(opts, argc, argv, prog_name,
-					     "rng") != 0)
+					     "rng"))
 				return -1;
 			break;
 
@@ -119,7 +119,7 @@ int parse_rng_options(int argc, char **argv, struct parsed_options *opts,
 	}
 
 	/* Validate required options */
-	if (!opts->show_help && !opts->size) {
+	if (!opts->show_help && !opts->op.rng.size) {
 		FPRINTF(stderr,
 			"Error: --size is required for RNG operation\n");
 		print_help_hint(prog_name, "rng");

@@ -19,7 +19,7 @@
  *
  * @param args: Pointer to SMW RNG arguments structure
  */
-static void cli_log_smw_rng_params(const struct smw_rng_args *args)
+static void log_smw_rng_params(const struct smw_rng_args *args)
 {
 	if (!args) {
 		LOG_ERROR("RNG args is NULL");
@@ -80,26 +80,26 @@ enum cli_exit_code cli_rng_operation(struct parsed_options *args)
 	LOG_INFO("RNG operation (SMW API)");
 
 	/* Validate size fits in unsigned int */
-	if (args->size > UINT32_MAX) {
+	if (args->op.rng.size > UINT32_MAX) {
 		LOG_ERROR("Size %zu exceeds maximum supported value %u",
-			  args->size, UINT32_MAX);
+			  args->op.rng.size, UINT32_MAX);
 		goto cleanup;
 	}
 
 	/* Allocate output buffer */
-	buffer = cli_alloc_buffer(args->size, "RNG output");
+	buffer = util_alloc_buffer(args->op.rng.size, "RNG output");
 	if (!buffer)
 		goto cleanup;
 
 	/* Setup SMW RNG arguments */
 	rng_args.version = 0;
 	rng_args.output = buffer;
-	rng_args.output_length = (unsigned int)args->size;
+	rng_args.output_length = (unsigned int)args->op.rng.size;
 
 	if (args->subsystem != SMW_SUBSYSTEM_NAME_NONE)
 		rng_args.subsystem_name = args->subsystem;
 
-	cli_log_smw_rng_params(&rng_args);
+	log_smw_rng_params(&rng_args);
 
 	/* Call SMW RNG API */
 	status = smw_rng(&rng_args);
@@ -107,8 +107,8 @@ enum cli_exit_code cli_rng_operation(struct parsed_options *args)
 		goto cleanup;
 
 	/* Write output using common helper */
-	if (cli_write_output_data(buffer, args->size, args->output_filename,
-				  args->text_format) != 0) {
+	if (util_write_output_data(buffer, args->op.rng.size,
+				   args->output_filename, args->text_format)) {
 		goto cleanup;
 	}
 

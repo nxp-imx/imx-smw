@@ -20,7 +20,7 @@
  * @param output: Pointer to output buffer
  * @param output_size: Size of output buffer in bytes
  */
-static void cli_log_psa_rng_params(uint8_t *output, size_t output_size)
+static void log_psa_rng_params(uint8_t *output, size_t output_size)
 {
 	LOG_INFO("=== psa_generate_random Parameters ===");
 	LOG_INFO("  output: %p", (void *)output);
@@ -73,28 +73,28 @@ enum cli_exit_code cli_rng_operation(struct parsed_options *args)
 	LOG_INFO("RNG operation (PSA API)");
 
 	/* Validate size fits in unsigned int */
-	if (args->size > UINT32_MAX) {
+	if (args->op.rng.size > UINT32_MAX) {
 		LOG_ERROR("Size %zu exceeds maximum supported value %u",
-			  args->size, UINT32_MAX);
+			  args->op.rng.size, UINT32_MAX);
 		goto cleanup;
 	}
 
 	/* Allocate output buffer */
-	buffer = cli_alloc_buffer(args->size, "RNG output");
+	buffer = util_alloc_buffer(args->op.rng.size, "RNG output");
 	if (!buffer)
 		goto cleanup;
 
 	/* Log PSA API parameters */
-	cli_log_psa_rng_params(buffer, args->size);
+	log_psa_rng_params(buffer, args->op.rng.size);
 
 	/* Call PSA RNG API */
-	status = psa_generate_random(buffer, args->size);
+	status = psa_generate_random(buffer, args->op.rng.size);
 	if (!is_psa_api_success("psa_generate_random", status))
 		goto cleanup;
 
 	/* Write output using common helper */
-	if (cli_write_output_data(buffer, args->size, args->output_filename,
-				  args->text_format) != 0) {
+	if (util_write_output_data(buffer, args->op.rng.size,
+				   args->output_filename, args->text_format)) {
 		goto cleanup;
 	}
 

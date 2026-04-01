@@ -77,6 +77,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * TEE: Data can be overwritten to be aligned with other subsystems behavior.
 * TEE: Fix build failure when `-DENABLE_SIGN_VERIFY=OFF` (and operation_context is enabled) by adding missing weak stub for tee_copy_sign_context().
 * ELE: For X25519/X448 key exchange, convert the public key to the format required by ELE.
+* ELE: TLS is now enabled by default for ELE subsystem when all required dependencies are satisfied.
 
 ##### 3. ARM PSA APIs
 

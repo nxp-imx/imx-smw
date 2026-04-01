@@ -532,7 +532,7 @@ The default option value is in **bold**.
   <td>-DENABLE_SIGN_VERIFY=[<b>ON</b>|OFF]</td>
   <td>Enable/disable the support of asymmetric signature and verification
 	operations. Default is ON (enable).</td>
-	<td>ENABLE_KEYMGR_MODULE</td>
+	<td>ENABLE_KEYMGR_MODULE<br>ENABLE_HASH</td>
 </tr>
 <tr>
   <td>-DENABLE_MAC=[<b>ON</b>|OFF]</td>
@@ -556,7 +556,7 @@ The default option value is in **bold**.
   <td>-DENABLE_ASYMMETRIC_ENCRYPTION=[<b>ON</b>|OFF]</td>
   <td>Enable/disable the support of asymmetric encryption and decryption
 	operations. Default is ON (enable).</td>
-	<td>ENABLE_KEYMGR_MODULE</td>
+	<td>ENABLE_KEYMGR_MODULE<br>ENABLE_HASH</td>
 </tr>
 <tr>
   <td>-DENABLE_STORAGE_MODULE=[<b>ON</b>|OFF]</td>
@@ -603,8 +603,10 @@ The default option value is in **bold**.
   <td>-DENABLE_TLS=[ON|<b>OFF</b>]</td>
   <td>Enable/disable the support of TLS key derivation features.
   This covers TLS 1.2 and TLS 1.3, depending on subsystem support.
-	Default is OFF (disable).</td>
-	<td></td>
+  For the ELE subsystem, defaults to ON (enabled) when all required dependencies
+  are satisfied, and OFF (disabled) when dependencies are not met.
+  For all other subsystems, always defaults to OFF.</td>
+	<td>ENABLE_KEYMGR_MODULE<br>ENABLE_SIGN_VERIFY<br>ENABLE_MAC<br>ENABLE_HASH<br>ENABLE_CIPHER<br>ENABLE_AEAD</td>
 </tr>
 <tr>
   <td>-DENABLE_PSA_DEFAULT_ALT=[ON|<b>OFF</b>]</td>

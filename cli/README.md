@@ -15,7 +15,6 @@ Two separate binaries are built:
 ## Operations Usage
 
 ```bash
-# Basic usage
 ./nxp_smw <operation> [OPTIONS]
 ./nxp_psa <operation> [OPTIONS]
 ```
@@ -24,18 +23,15 @@ Two separate binaries are built:
 ### Getting Help
 
 ```bash
-# SMW version
 ./nxp_smw --help
-
-# PSA version
 ./nxp_psa --help
 ```
 
 ### Show operation-specific help:
 
 ```bash
-# Get help for RNG operation
-./nxp_smw rng --help
+./nxp_smw <operation> --help
+./nxp_psa <operation> --help
 ```
 
 ### Get logging help:
@@ -119,7 +115,8 @@ The CLI provides **two independent logging systems** that can run simultaneously
 **Default behavior** (no environment variable set):
 ```bash
 # Automatically logs to smw_cli.log
-./nxp_smw rng -s 32 -o random.bin
+./nxp_smw <operation> [OPTIONS]
+./nxp_psa <operation> [OPTIONS]
 ```
 
 **Custom log file location:**
@@ -130,6 +127,13 @@ export SMW_LOG_FILE="/var/log/smw_operations.log"
 **Disable automatic logging:**
 ```bash
 export SMW_LOG_FILE=none
+export SMW_LOG_FILE=off
+export SMW_LOG_FILE=""      # empty string
+```
+
+**Re-enable automatic logging to default file:**
+```bash
+unset SMW_LOG_FILE
 ```
 
 ### 2. Manual Logging (CLI Option)
@@ -137,11 +141,13 @@ export SMW_LOG_FILE=none
 **Disabled by default**. User explicitly enables with `-L`:
 
 ```bash
-#Log to terminal output (no timestamps)
-./nxp_smw rng -s 32 -o random.bin -L
+# Log to terminal output (no timestamps)
+./nxp_smw <operation> [OPTIONS] -L
+./nxp_psa <operation> [OPTIONS] -L
 
-#Log to custom file (with timestamps)
-./nxp_smw rng -s 32 -o random.bin -L debug.log
+# Log to custom file (with timestamps)
+./nxp_smw <operation> [OPTIONS] -L debug.log
+./nxp_psa <operation> [OPTIONS] -L debug.log
 ```
 
 ### Log Levels
@@ -150,7 +156,7 @@ When enabled, **all levels** are logged:
 - **ERROR** - Operation failures, allocation errors
 - **INFO** - API calls, operation status, file I/O
 
-### Log Format
+### Log Format Example
 
 **Terminal output (no timestamps):**
 ```
@@ -185,10 +191,19 @@ To add a new operation (e.g., `cipher`):
         OP_CIPHER   // new
    };
     ```
-
-2. **Implement SMW version** in `cli/smw/cipher.c`
-3. **Implement PSA version** in `cli/psa/cipher.c`
-4. **Add to operation table** in `handler.c`:
+2. **Create parser header** in `cli/inc/parser_<operation>.h`
+3. **Implement parser** in `cli/core/parser_<operation>.c`
+4.  **Add to operation parser table** in `core/opt_parser.c`:
+    ```c
+    { .name = "cipher",
+      .op = OP_CIPHER,
+      .parse_func = parse_cipher_options,
+      .special_func = NULL },
+    ```
+5. **Create weak implementation** in `cli/core/weak_<operation>.c`
+6. **Implement SMW version** in `cli/smw/cipher.c`
+7. **Implement PSA version** in `cli/psa/cipher.c`
+8. **Add to operation table** in `handler.c`:
    ```c
    {
        .operation_name = "cipher",
@@ -197,8 +212,6 @@ To add a new operation (e.g., `cipher`):
        .inline_desc_func = cli_cipher_inline_desc
    },
    ```
-
-5. **Update Makefile** to compile new files
 
 ## Available Operations
 

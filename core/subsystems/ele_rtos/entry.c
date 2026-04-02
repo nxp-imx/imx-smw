@@ -137,10 +137,6 @@ static int load(void)
 
 	smw_utils_shared_memory_init();
 
-	err = ele_ping(hdl->mu_base);
-	if (err != kStatus_Success)
-		goto end;
-
 	err = ele_rng_init(hdl);
 	if (err != kStatus_Success)
 		goto end;
@@ -148,12 +144,6 @@ static int load(void)
 	err = ele_init_services(hdl->mu_base);
 	if (err != kStatus_Success)
 		goto end;
-
-	err = ele_get_fw_version(hdl->mu_base, &ele_version);
-	if (err != kStatus_Success)
-		goto end;
-
-	SMW_DBG_PRINTF(VERBOSE, "ELE version %d\n", ele_version);
 
 	status = open_session(hdl);
 	if (status != SMW_STATUS_OK)

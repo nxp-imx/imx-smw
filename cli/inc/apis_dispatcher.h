@@ -32,6 +32,9 @@ enum cli_exit_code cli_hash_operation(struct parsed_options *args);
 /* Device UUID operation functions */
 enum cli_exit_code cli_device_uuid_operation(struct parsed_options *args);
 
+/* Device lifecycle operation functions */
+enum cli_exit_code cli_dev_get_lifecycle_operation(struct parsed_options *args);
+
 /* More operation declarations here as we implement them */
 
 #endif /* CLI_APIS_DISPATCHER_H */

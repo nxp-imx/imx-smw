@@ -10,6 +10,7 @@
 #include "helper.h"
 #include "logger.h"
 #include "opt_parser.h"
+#include "parser_device_get_lifecycle.h"
 #include "parser_device_uuid.h"
 #include "parser_hash.h"
 #include "parser_rng.h"
@@ -47,6 +48,10 @@ static const struct operation_entry operation_table[] = {
 	  .opt_func = cli_device_uuid_operation,
 	  .help_func = cli_device_uuid_help,
 	  .inline_desc_func = cli_device_uuid_inline_desc },
+	{ .operation_name = "dev-get-lifecycle",
+	  .opt_func = cli_dev_get_lifecycle_operation,
+	  .help_func = cli_dev_get_lifecycle_help,
+	  .inline_desc_func = cli_dev_get_lifecycle_inline_desc },
 	/* Add more operations here as we implement them */
 	{ NULL, NULL, NULL, NULL } /* Sentinel */
 };
@@ -126,10 +131,10 @@ static void handler_show_help(const char *operation, const char *prog_name)
 		printf("Usage: %s <operation> [OPTIONS]\n\n", prog_name);
 		printf("Available operations:\n");
 		for (entry = operation_table; entry->operation_name; entry++) {
-			printf("  %-15s - %s\n", entry->operation_name,
+			printf("  %-20s - %s\n", entry->operation_name,
 			       entry->inline_desc_func());
 		}
-		printf("\nUse '%s <operation> --help' for information on a specific operation.\n",
+		printf("\nUse '%s <operation> --help' for information on a specific operation.\n\n",
 		       prog_name);
 		return;
 	}
@@ -178,6 +183,7 @@ int main(int argc, char *argv[])
 	set_program_name(prog_name);
 
 	if (argc < 2) {
+		printf("\n");
 		print_tool_banner();
 		FPRINTF(stderr, "Usage: %s <operation> [OPTIONS]\n", prog_name);
 		FPRINTF(stderr, "Try '%s --help' for more information.\n\n",

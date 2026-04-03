@@ -82,6 +82,23 @@ add_custom_command(
     COMMENT "Generating hash algorithm enum and common table from smw/names.h"
 )
 
+# Generate lifecycle table at build time (in binary dir)
+set(LIFECYCLE_TABLE_HEADER ${CMAKE_CURRENT_BINARY_DIR}/lifecycle_table.h)
+set(LIFECYCLE_TABLE_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/lifecycle_table.c)
+set(LIFECYCLE_GENERATOR ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_lifecycle_table.py)
+
+add_custom_command(
+    OUTPUT
+        ${LIFECYCLE_TABLE_HEADER}
+        ${LIFECYCLE_TABLE_SOURCE}
+    COMMAND ${Python3_EXECUTABLE} ${LIFECYCLE_GENERATOR}
+        ${LIFECYCLE_TABLE_HEADER}
+        ${LIFECYCLE_TABLE_SOURCE}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    DEPENDS ${SMW_NAMES_HEADER} ${LIFECYCLE_GENERATOR}
+    COMMENT "Generating lifecycle table from smw/names.h"
+)
+
 # Include subdirectories - each sets its own source variables
 add_subdirectory(core)
 add_subdirectory(psa)
@@ -106,6 +123,7 @@ add_executable(nxp_smw
 	${SMW_ERROR_HANDLER_SOURCE} 	# Error Table Generated file
 	${SMW_HASH_TABLE_SOURCE}	# Hash Table Generated file
 	${HASH_TABLE_SOURCE}		# Common Hash Table Generated file
+    ${LIFECYCLE_TABLE_SOURCE}	# Lifecycle Table Generated file
 )
 
 target_include_directories(nxp_smw PRIVATE
@@ -126,6 +144,7 @@ add_executable(nxp_psa
 	${PSA_ERROR_HANDLER_SOURCE} 	# Error Table Generated file
 	${PSA_HASH_TABLE_SOURCE}	# Hash Table Generated file
 	${HASH_TABLE_SOURCE}		# Common Hash Table Generated file
+	${LIFECYCLE_TABLE_SOURCE}	# Lifecycle Table Generated file
 )
 
 target_include_directories(nxp_psa PRIVATE

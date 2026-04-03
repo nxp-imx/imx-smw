@@ -12,6 +12,7 @@
 #include <strings.h>
 #include "helper.h"
 #include "opt_parser.h"
+#include "parser_device_get_lifecycle.h"
 #include "parser_device_uuid.h"
 #include "parser_hash.h"
 #include "parser_rng.h"
@@ -86,6 +87,10 @@ static const struct operation_parser operation_parsers[] = {
 	{ .name = "dev-get-uuid",
 	  .op = OP_DEVICE_UUID,
 	  .parse_func = parse_device_uuid_options,
+	  .special_func = NULL },
+	{ .name = "dev-get-lifecycle",
+	  .op = OP_DEVICE_LIFECYCLE,
+	  .parse_func = parse_dev_get_lifecycle_options,
 	  .special_func = NULL },
 	/* Add more operations here */
 	{ NULL, OP_NONE, NULL, NULL } /* Sentinel */

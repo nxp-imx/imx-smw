@@ -52,56 +52,61 @@ Two separate binaries are built:
 
 ```
 cli/
-├── core/                     # Shared core implementation
+├── core/                               # Shared core implementation
 │   ├── CMakeLists.txt
-│   ├── handler.c             # Main entry point, operation dispatcher
-│   ├── logger.c              # Logging system implementation
-│   ├── opt_parser.c          # Command-line argument parsing
-│   ├── parser_device_uuid.c  # Device UUID option parsing
-│   ├── parser_hash.c         # Hash-specific option parsing
-│   ├── parser_rng.c          # RNG-specific option parsing
-│   ├── utils.c               # Utility functions (hex dump, program info)
-│   ├── weak_device_uuid.c    # Weak default dev-get-uuid implementation
-│   ├── weak_hash.c           # Weak default hash implementation
-│   └── weak_rng.c            # Weak default RNG implementation
+│   ├── handler.c                       # Main entry point, operation dispatcher
+│   ├── logger.c                        # Logging system implementation
+│   ├── opt_parser.c                    # Command-line argument parsing
+│   ├── parser_device_get_lifecycle.c   # Get-lifecycle-specific option parsing
+│   ├── parser_device_uuid.c            # Device UUID option parsing
+│   ├── parser_hash.c                   # Hash-specific option parsing
+│   ├── parser_rng.c                    # RNG-specific option parsing
+│   ├── utils.c                         # Utility functions (hex dump, program info)
+│   ├── weak_device_get_lifecycle.c     # Weak default dev-get-lifecycle implementation
+│   ├── weak_device_uuid.c              # Weak default dev-get-uuid implementation
+│   ├── weak_hash.c                     # Weak default hash implementation
+│   └── weak_rng.c                      # Weak default RNG implementation
 │
-├── inc/                      # Public headers
-│   ├── apis_dispatcher.h     # Backend dispatcher declarations (PSA/SMW routing)
-│   ├── error_handler.h       # API status checking and error descriptions
-│   ├── helper.h              # Safe I/O macros (FPRINTF, FCLOSE, etc.)
-│   ├── logger.h              # Logging API
-│   ├── opt_parser.h          # CLI parser API
-│   ├── parser_device_uuid.h  # Device UUID parser API
-│   ├── parser_hash.h         # Hash parser API
-│   ├── parser_rng.h          # RNG parser API
-│   └── utils.h               # Utility function declarations
+├── inc/                                # Public headers
+│   ├── apis_dispatcher.h               # Backend dispatcher declarations (PSA/SMW routing)
+│   ├── error_handler.h                 # API status checking and error descriptions
+│   ├── helper.h                        # Safe I/O macros (FPRINTF, FCLOSE, etc.)
+│   ├── logger.h                        # Logging API
+│   ├── opt_parser.h                    # CLI parser API
+│   ├── parser_device_get_lifecycle.h   # Get-lifecycle parser API
+│   ├── parser_device_uuid.h            # Device UUID parser API
+│   ├── parser_hash.h                   # Hash parser API
+│   ├── parser_rng.h                    # RNG parser API
+│   └── utils.h                         # Utility function declarations
 │
-├── psa/                      # PSA backend implementation
+├── psa/                                # PSA backend implementation
 │   ├── CMakeLists.txt
-│   ├── common.c              # PSA common utilities (subsystem names, etc.)
-│   ├── common.h              # Common PSA definitions and macros
-│   ├── hash.c                # PSA hash operation
-│   ├── init.c                # PSA crypto initialization
-│   └── rng.c                 # PSA RNG operation
+│   ├── common.c                        # PSA common utilities (subsystem names, etc.)
+│   ├── common.h                        # Common PSA definitions and macros
+│   ├── hash.c                          # PSA hash operation
+│   ├── init.c                          # PSA crypto initialization
+│   └── rng.c                           # PSA RNG operation
 |
-├── scripts/                  # Build-time code generation scripts
-│   ├── generate_hash_common_table.py    # Generate common hash algorithm enum and table
-│   ├── generate_psa_error_table.py      # Generate PSA error handler
-│   ├── generate_psa_hash_table.py       # Generate PSA hash algorithm mapping table
-│   ├── generate_smw_error_table.py      # Generate SMW error handler
-│   └── generate_smw_hash_table.py       # Generate SMW hash algorithm mapping table
+├── scripts/                            # Build-time code generation scripts
+│   ├── generate_hash_common_table.py   # Generate common hash algorithm enum and table
+│   ├── generate_lifecycle_table.py     # Generate lifecycle enum and table
+│   ├── generate_psa_error_table.py     # Generate PSA error handler
+│   ├── generate_psa_hash_table.py      # Generate PSA hash algorithm mapping table
+│   ├── generate_smw_error_table.py     # Generate SMW error handler
+│   └── generate_smw_hash_table.py      # Generate SMW hash algorithm mapping table
 |
-├── smw/                      # SMW backend implementation
+├── smw/                                # SMW backend implementation
 │   ├── CMakeLists.txt
-│   ├── common.c              # SMW common utilities (subsystem names, etc.)
-│   ├── common.h              # Common SMW definitions and macros
-│   ├── device_uuid.c         # SMW dev-get-uuid operation
-│   ├── hash.c                # SMW hash operation
-│   ├── init.c                # SMW library initialization
-│   └── rng.c                 # SMW RNG operation
+│   ├── common.c                        # SMW common utilities (subsystem names, etc.)
+│   ├── common.h                        # Common SMW definitions and macros
+│   ├── device_lifecycle.c              # SMW dev-get-lifecycle operation
+│   ├── device_uuid.c                   # SMW dev-get-uuid operation
+│   ├── hash.c                          # SMW hash operation
+│   ├── init.c                          # SMW library initialization
+│   └── rng.c                           # SMW RNG operation
 │
-├── CMakeLists.txt            # Main build configuration
-└── README.md                 # Documentation
+├── CMakeLists.txt                      # Main build configuration
+└── README.md                           # Documentation
 ```
 
 ## 📝 Logging Mechanism
@@ -220,6 +225,7 @@ To add a new operation (e.g., `cipher`):
 | `rng` | Generate random numbers | ✅ | ✅ |
 | `hash` | Compute cryptographic hash | ✅ | ✅ |
 | `dev-get-uuid` | Get device UUID | ✅ | ❌ |
+| `dev-get-lifecycle` | Get device lifecycle | ✅ | ❌ |
 *(More operations coming soon: cipher, sign, verify, etc.)*
 
 ### Dependencies

@@ -196,6 +196,26 @@ tpm2_create -C primary_ecdsa.ctx -G hmac:sha384 \
 - `-u signing_key.pub`: Output file for the public key
 - `-r signing_key.priv`: Output file for the private key blob
 
+### Create Key object and save creation data
+Create a key to certify and save its creation data. Use the create command:
+```sh
+tpm2_create -C primary_ecdsa.ctx -G ecc256 -g sha256 \
+  -a "fixedtpm|fixedparent|sensitivedataorigin|userwithauth|sign" -u key.pub \
+  -r key.priv --creation-data creation.data --creation-ticket creation.ticket \
+  --creation-hash creation.hash \
+```
+
+> 📝 **Note:**
+> The creation ticket contains an HMAC computed over the object name and creation
+> hash using a hierarchy-specific proof value. This HMAC is verified by the TPM
+> before producing the attestation, ensuring the creation data has not been
+> tampered with since the object was created.
+
+> **WARNING:**
+> The signing key must have the `sign` attribute set. If the signing key has a
+> fixed scheme (e.g., ECDSA with SHA256), the `-g` parameter must match the key's
+> scheme or be omitted to use the key's default scheme.
+
 ## Load Key object
 Loads a previously created key object into TPM memory, making it available for
 cryptographic operations. Use the load command:
@@ -348,6 +368,31 @@ tpm2_pcrallocate sha256:0
 > response reports the current allocation state unchanged. This allows compatibility
 > with TPM tools while maintaining the existing PCR bank configuration.
 
+## Certify Creation
+Certifies the creation of a TPM object by providing a signed attestation that proves
+the object was created by this TPM. This command validates the creation ticket
+returned during object creation and produces a signed attestation structure
+containing the object's creation data.
+
+This is useful for proving to a remote party that a key was genuinely created
+by a specific TPM and has not been imported from elsewhere.
+Use the certifycreation command:
+```sh
+tpm2_certifycreation -C signing_key.ctx -c created_key.ctx \
+  -d creation.hash -t creation.ticket \
+  -g sha256 --attestation certifycreation.attest \
+  -o certifycreation.sig
+```
+
+**Parameters**:
+- `-C signing_key.ctx`: Context of the signing key used to sign the attestation
+- `-c created_key.ctx`: Context of the object whose creation is being certified
+- `-d creation.hash`: Creation hash returned by `tpm2_createprimary` or `tpm2_create`
+- `-t creation.ticket`: Creation ticket returned by `tpm2_createprimary` or `tpm2_create`
+- `-g sha256`: Hash algorithm for the signature scheme
+- `--attestation certify_creation.attest`: Output file for the attestation structure (TPMS_ATTEST)
+- `-o certify_creation.sig`: Output file for the signature
+
 # TPM2 Commands Supported
 
 Following table lists TPM2 Commands implemented in the SMW's TSS2 TCTI library.
@@ -374,3 +419,4 @@ Following table lists TPM2 Commands implemented in the SMW's TSS2 TCTI library.
 | `TPM2_PCR_Reset`        |
 | `TPM2_PCR_Extend`       |
 | `TPM2_PCR_Allocate`     |
+| `TPM2_CertifyCreation`  |

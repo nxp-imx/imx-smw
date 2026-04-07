@@ -49,4 +49,5 @@ The ELE Secure Enclave has the following limitations when used with TPM2:
     - TPM2_CC_Create (ECC NIST P-XXX only), TPM2_CC_Load
     - TPM2_CC_Sign, TPM2_CC_VerifySignature
     - TPM2_CC_PCR_Read, TPM2_CC_PCR_Extend, TPM2_CC_PCR_Event, TPM2_CC_PCR_Reset, TPM2_CC_PCR_Allocate
+    - TPM2_CC_CertifyCreation
 * Set the signature flag indicating input message is hashed for TPM2_Sign and TPM2_VerifySignature commands.

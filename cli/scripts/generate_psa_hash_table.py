@@ -9,6 +9,7 @@ This ensures the CLI stays in sync with PSA's supported algorithms.
 
 import re
 import sys
+from datetime import datetime
 from pathlib import Path
 
 def parse_psa_hash_algos(header_path):
@@ -50,10 +51,12 @@ def parse_psa_hash_algos(header_path):
 def generate_file(psa_algos):
     """Generate the complete PSA hash table file."""
 
-    header = """\
+    current_year = datetime.now().year
+
+    header = f"""\
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2026 NXP
+ * Copyright {current_year} NXP
  */
 
 /* AUTO-GENERATED FILE - DO NOT EDIT */
@@ -66,13 +69,13 @@ def generate_file(psa_algos):
 /**
  * PSA hash algorithm mapping
  */
-struct psa_hash_algo_mapping {
+struct psa_hash_algo_mapping {{
 \tenum hash_algo cli_algo;
 \tpsa_algorithm_t psa_algo;
 \tconst char *name;
-};
+}};
 
-static const struct psa_hash_algo_mapping psa_hash_algos[] = {
+static const struct psa_hash_algo_mapping psa_hash_algos[] = {{
 """
 
     mappings = []

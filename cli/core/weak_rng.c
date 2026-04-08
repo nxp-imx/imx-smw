@@ -4,10 +4,10 @@
  */
 
 #include <stdio.h>
+#include "apis_dispatcher.h"
 #include "compiler.h"
 #include "helper.h"
 #include "logger.h"
-#include "operations.h"
 
 /**
  * @brief Weak default implementation for RNG operation

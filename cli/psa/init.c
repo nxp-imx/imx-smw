@@ -3,11 +3,11 @@
  * Copyright 2026 NXP
  */
 
-#include <stdio.h>
 #include <psa/crypto.h>
+#include <stdio.h>
+#include "apis_dispatcher.h"
 #include "error_handler.h"
 #include "logger.h"
-#include "operations.h"
 
 /**
  * @brief Initialize PSA Crypto backend

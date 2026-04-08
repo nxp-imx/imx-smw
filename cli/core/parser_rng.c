@@ -12,6 +12,7 @@
 #include "helper.h"
 #include "opt_parser.h"
 #include "parser_rng.h"
+#include "utils.h"
 
 /* Short getopt options string for RNG */
 static const char *rng_short_opts = "hs:o:S:L::t";
@@ -26,6 +27,33 @@ static const struct option rng_options[] = {
 	{ "text", no_argument, 0, 't' },
 	{ 0, 0, 0, 0 }
 };
+
+/**
+ * @brief  Get inline description for RNG operation
+ */
+const char *cli_rng_inline_desc(void)
+{
+	return "Generate random numbers";
+}
+
+/**
+ * @brief Print common RNG help (backend-agnostic)
+ */
+void cli_rng_help_common(void)
+{
+	const char *prog_name = get_program_name();
+
+	printf("Usage: %s rng [OPTIONS]\n\n", prog_name);
+	printf("Generate random numbers using hardware RNG.\n\n");
+
+	printf("Options:\n");
+	printf("  -s, --size <bytes>      Bytes to generate (required)\n");
+	printf("  -o, --output <file>     Output file\n");
+	printf("  -t, --text              Write hex format\n");
+	printf("  -L, --log <dest>        Enable session logging");
+	printf(" (%s log --help for info)\n", prog_name);
+	printf("  -h, --help              Show help\n");
+}
 
 /**
  * @brief Parse command-line options for RNG operation

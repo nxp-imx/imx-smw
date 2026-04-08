@@ -3,14 +3,14 @@
  * Copyright 2026 NXP
  */
 
-#ifndef CLI_OPERATIONS_H
-#define CLI_OPERATIONS_H
+#ifndef CLI_APIS_DISPATCHER_H
+#define CLI_APIS_DISPATCHER_H
 
-#include <smw_crypto.h>
-#include <psa/crypto.h>
 #include <limits.h>
-#include "opt_parser.h"
+#include <psa/crypto.h>
+#include <smw_crypto.h>
 #include "logger.h"
+#include "opt_parser.h"
 
 /* CLI exit codes */
 enum cli_exit_code {
@@ -37,4 +37,4 @@ void cli_hash_help_common(void);
 
 /* More operation declarations here as we implement them */
 
-#endif /* CLI_OPERATIONS_H */
+#endif /* CLI_APIS_DISPATCHER_H */

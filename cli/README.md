@@ -57,34 +57,33 @@ Two separate binaries are built:
 ```
 cli/
 ├── core/                     # Shared core implementation
+│   ├── CMakeLists.txt
 │   ├── handler.c             # Main entry point, operation dispatcher
 │   ├── logger.c              # Logging system implementation
-│   ├── operations.c          # Operation-specific helpers
 │   ├── opt_parser.c          # Command-line argument parsing
 │   ├── parser_hash.c         # Hash-specific option parsing
 │   ├── parser_rng.c          # RNG-specific option parsing
 │   ├── utils.c               # Utility functions (hex dump, program info)
 │   ├── weak_hash.c           # Weak default hash implementation
-│   ├── weak_rng.c            # Weak default RNG implementation
-│   └── CMakeLists.txt
+│   └── weak_rng.c            # Weak default RNG implementation
 │
 ├── inc/                      # Public headers
+│   ├── apis_dispatcher.h     # Backend dispatcher declarations (PSA/SMW routing)
 │   ├── error_handler.h       # API status checking and error descriptions
 │   ├── helper.h              # Safe I/O macros (FPRINTF, FCLOSE, etc.)
 │   ├── logger.h              # Logging API
-│   ├── operations.h          # Operation function declarations
 │   ├── opt_parser.h          # CLI parser API
 │   ├── parser_hash.h         # Hash parser API
 │   ├── parser_rng.h          # RNG parser API
 │   └── utils.h               # Utility function declarations
 │
 ├── psa/                      # PSA backend implementation
+│   ├── CMakeLists.txt
 │   ├── common.c              # PSA common utilities (subsystem names, etc.)
 │   ├── common.h              # Common PSA definitions and macros
 │   ├── hash.c                # PSA hash operation
 │   ├── init.c                # PSA crypto initialization
-│   ├── rng.c                 # PSA RNG operation
-│   └── CMakeLists.txt
+│   └── rng.c                 # PSA RNG operation
 |
 ├── scripts/                  # Build-time code generation scripts
 │   ├── generate_hash_common_table.py    # Generate common hash algorithm enum and table
@@ -94,12 +93,12 @@ cli/
 │   └── generate_smw_hash_table.py       # Generate SMW hash algorithm mapping table
 |
 ├── smw/                      # SMW backend implementation
+│   ├── CMakeLists.txt
 │   ├── common.c              # SMW common utilities (subsystem names, etc.)
 │   ├── common.h              # Common SMW definitions and macros
 │   ├── hash.c                # SMW hash operation
 │   ├── init.c                # SMW library initialization
-│   ├── rng.c                 # SMW RNG operation
-│   └── CMakeLists.txt
+│   └── rng.c                 # SMW RNG operation
 │
 ├── CMakeLists.txt            # Main build configuration
 └── README.md                 # Documentation

@@ -4,8 +4,8 @@
  */
 
 #include "common.h"
-#include "helper.h"
 #include "error_handler.h"
+#include "helper.h"
 #include "logger.h"
 
 /* SMW subsystem name mapping (enum → API constant name) */

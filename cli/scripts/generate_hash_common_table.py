@@ -10,14 +10,17 @@ This ensures the CLI stays in sync with the actual library definitions.
 import re
 import sys
 from pathlib import Path
+from datetime import datetime
 
 def generate_enum_header(algo_info):
     """Generate hash_algo_enum.h with the CLI enum."""
 
-    header = """\
+    current_year = datetime.now().year
+
+    header = f"""\
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2026 NXP
+ * Copyright {current_year} NXP
  */
 
 /* AUTO-GENERATED FILE - DO NOT EDIT */
@@ -32,7 +35,7 @@ def generate_enum_header(algo_info):
  * This enum is auto-generated from SMW's hash algorithm definitions.
  * It serves as the common interface for both SMW and PSA backends.
  */
-enum hash_algo {
+enum hash_algo {{
 \tHASH_ALGO_NONE = 0,
 """
 
@@ -164,10 +167,12 @@ def parse_smw_hash_algos(header_path):
 def generate_header_file():
     """Generate hash_table_generated.h"""
 
-    return """\
+    current_year = datetime.now().year
+
+    return f"""\
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2026 NXP
+ * Copyright {current_year} NXP
  */
 
 /* AUTO-GENERATED FILE - DO NOT EDIT */
@@ -185,13 +190,13 @@ def generate_header_file():
 /**
  * Hash algorithm information table
  */
-struct hash_algo_info {
+struct hash_algo_info {{
 \tenum hash_algo algo;
 \tconst char *name;
 \tunsigned int digest_len;
 \tbool is_xof;
 \tconst char *description;
-};
+}};
 
 extern const struct hash_algo_info hash_algo_table[];
 extern const size_t hash_algo_table_size;
@@ -214,10 +219,12 @@ const char *cli_smw_get_hash_algo_name(smw_hash_algo_t algo);
 def generate_source_file(algo_info):
     """Generate hash_table_generated.c from parsed algorithm info."""
 
-    header = """\
+    current_year = datetime.now().year
+
+    header = f"""\
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2026 NXP
+ * Copyright {current_year} NXP
  */
 
 /* AUTO-GENERATED FILE - DO NOT EDIT */
@@ -225,7 +232,7 @@ def generate_source_file(algo_info):
 
 #include "hash_table_generated.h"
 
-const struct hash_algo_info hash_algo_table[] = {
+const struct hash_algo_info hash_algo_table[] = {{
 """
 
     table_entries = []
@@ -236,7 +243,7 @@ const struct hash_algo_info hash_algo_table[] = {
             f'{info["digest_len"]}, {xof_str}, "{info["description"]}" }},'
         )
 
-        footer = """\
+    footer = """\
 };
 
 const size_t hash_algo_table_size = sizeof(hash_algo_table) / sizeof(hash_algo_table[0]);

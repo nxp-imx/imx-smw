@@ -6,10 +6,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "apis_dispatcher.h"
 #include "helper.h"
 #include "logger.h"
 #include "opt_parser.h"
-#include "operations.h"
 #include "utils.h"
 
 /* Operation dispatch table entry */

@@ -6,8 +6,8 @@
 #ifndef CLI_ERROR_HANDLER_H
 #define CLI_ERROR_HANDLER_H
 
-#include <smw_status.h>
 #include <psa/crypto.h>
+#include <smw_status.h>
 
 /* ========================================================================
  * Error Table Definition Macro

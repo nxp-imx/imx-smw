@@ -9,6 +9,7 @@ This ensures the error descriptions stay in sync with the status codes.
 
 import re
 import sys
+from datetime import datetime
 from pathlib import Path
 
 
@@ -73,11 +74,13 @@ def parse_status_header(header_path):
 def generate_complete_file(status_list):
     """Generate the complete error_handler.c file from scratch."""
 
+    current_year = datetime.now().year
+
     # File header
-    header = """\
+    header = f"""\
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2026 NXP
+ * Copyright {current_year} NXP
  */
 
 /* AUTO-GENERATED FILE - DO NOT EDIT */

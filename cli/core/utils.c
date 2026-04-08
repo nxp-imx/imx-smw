@@ -104,8 +104,8 @@ static void fprint_hex_dump(FILE *fp, const unsigned char *buf, size_t len)
  * @param filename Output filename (NULL or empty for stdout)
  * @param text_format true for hex dump, false for raw binary
  */
-int cli_write_output_data(const unsigned char *buffer, size_t size,
-			  const char *filename, bool text_format)
+int util_write_output_data(const unsigned char *buffer, size_t size,
+			   const char *filename, bool text_format)
 {
 	FILE *fp = NULL;
 	int ret = -1;
@@ -163,7 +163,7 @@ cleanup:
  * @param size in bytes to allocate
  * @param purpose Description of what the buffer is for (optional, can be NULL)
  */
-void *cli_alloc_buffer(size_t size, const char *purpose)
+void *util_alloc_buffer(size_t size, const char *purpose)
 {
 	void *buffer = NULL;
 
@@ -189,7 +189,7 @@ void *cli_alloc_buffer(size_t size, const char *purpose)
  * @param size: Pointer to store the size
  * @param filename: Filename string (for error messages)
  */
-int get_file_size(FILE *fp, size_t *size, const char *filename)
+int util_get_file_size(FILE *fp, size_t *size, const char *filename)
 {
 	long file_size = 0;
 

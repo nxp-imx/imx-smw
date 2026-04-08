@@ -14,6 +14,7 @@
 #include "helper.h"
 #include "opt_parser.h"
 #include "parser_hash.h"
+#include "utils.h"
 
 #define MAX_HASH_LENGTH 1024
 
@@ -33,6 +34,36 @@ static const struct option hash_options[] = {
 	{ "list", no_argument, 0, 0 },
 	{ 0, 0, 0, 0 }
 };
+
+/**
+ * @brief  Get inline description for hash operation
+ */
+const char *cli_hash_inline_desc(void)
+{
+	return "Compute cryptographic hash";
+}
+
+/**
+ * @brief Print common hash help (backend-agnostic)
+ */
+void cli_hash_help_common(void)
+{
+	const char *prog_name = get_program_name();
+
+	printf("Usage: %s hash [OPTIONS]\n\n", prog_name);
+	printf("Compute cryptographic hash/digest of input data.\n\n");
+
+	printf("Options:\n");
+	printf("\n      --list		    List all available hash algorithms\n\n");
+	printf("  -a, --algo <algorithm>    Hash algorithm (required)\n");
+	printf("  -i, --input <file>        Input file (required)\n");
+	printf("  -o, --output <file>       Output file\n");
+	printf("  -l, --length <bytes>      Output length for XOF algorithms (e.g. SHAKE256)\n");
+	printf("  -t, --text                Write hex format\n");
+	printf("  -L, --log <dest>          Enable session logging");
+	printf(" (%s log --help for info)\n", prog_name);
+	printf("  -h, --help                Show help\n");
+}
 
 /**
  * @brief Print list of available hash algorithms

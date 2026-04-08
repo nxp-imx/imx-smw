@@ -6,13 +6,24 @@
 #ifndef CLI_OPT_PARSER_H
 #define CLI_OPT_PARSER_H
 
-#include <stdbool.h>
 #include <getopt.h>
+#include <stdbool.h>
 #include "hash_algo_enum.h"
 #include "logger.h"
 
 /* Operation types */
 enum operation { OP_NONE = 0, OP_RNG, OP_HASH };
+
+/* RNG-specific options */
+struct rng {
+	size_t size;
+};
+
+/* Hash-specific options */
+struct hash {
+	enum hash_algo algo;
+	size_t output_length;
+};
 
 /* Parsed options structure */
 struct parsed_options {
@@ -25,6 +36,7 @@ struct parsed_options {
 	char *output_filename;
 	char *input_filename;
 	smw_subsystem_t subsystem;
+	bool text_format;
 
 	/* Logging options */
 	enum log_dest log_dest;
@@ -32,18 +44,9 @@ struct parsed_options {
 
 	/* Operation-specific options */
 	union {
-		/* RNG specific */
-		struct {
-			size_t size;
-			bool text_format;
-		};
-
-		/* Hash specific */
-		struct {
-			enum hash_algo hash_algo;
-			size_t hash_output_length;
-		};
-	};
+		struct rng rng;
+		struct hash hash;
+	} op;
 };
 
 /* Shared Functions between op_parsers */

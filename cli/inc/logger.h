@@ -6,11 +6,11 @@
 #ifndef CLI_LOGGER_H
 #define CLI_LOGGER_H
 
-#include <smw_crypto.h>
 #include <psa/crypto.h>
-#include <stdio.h>
-#include <stdbool.h>
+#include <smw_crypto.h>
 #include <stdarg.h>
+#include <stdbool.h>
+#include <stdio.h>
 
 /* Environment variable name for log file override */
 #define SMW_LOG_ENV_VAR "SMW_LOG_FILE"

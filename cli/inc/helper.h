@@ -6,8 +6,8 @@
 #ifndef CLI_HELPER_H
 #define CLI_HELPER_H
 
-#include <stdio.h>
 #include <errno.h>
+#include <stdio.h>
 #include <string.h>
 
 /**

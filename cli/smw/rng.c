@@ -8,10 +8,10 @@
 #include <stdint.h>
 #include <smw_crypto.h>
 #include <smw_status.h>
+#include "apis_dispatcher.h"
 #include "common.h"
 #include "helper.h"
 #include "logger.h"
-#include "operations.h"
 #include "utils.h"
 
 /**

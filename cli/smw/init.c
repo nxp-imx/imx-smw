@@ -6,9 +6,9 @@
 #include <smw_osal.h>
 #include <smw_status.h>
 #include <stdio.h>
+#include "apis_dispatcher.h"
 #include "error_handler.h"
 #include "logger.h"
-#include "operations.h"
 
 /**
  * @brief Initialize SMW (Security Middleware) backend

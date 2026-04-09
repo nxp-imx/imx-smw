@@ -36,7 +36,9 @@
     - [6.2.2. Install result](#622-install-result)
   - [6.3. Execution](#63-execution)
 - [7. Tips](#7-tips)
-  - [7.1. Reference platforms configuration script](#71-reference-platforms-configuration-script)
+  - [7.1. Reference configuration script](#71-reference-configuration-script)
+    - [7.1.1. Prerequisites](#711-prerequisites)
+    - [7.1.2. Script Syntax](#712-script-syntax)
   - [7.2. Multi-function build script](#72-multi-function-build-script)
   - [7.3. Including SMW in other cmake project](#73-including-smw-in-other-cmake-project)
 
@@ -349,7 +351,7 @@ This chapter explains how to configure and compile the Secure Middleware project
 - SMW shared library and test suites (SMW and PSA standard test suite)
 - PKCS#11 shared library and test suite
 
-The project requires the cmake minimal version 3.13.
+The project requires the cmake minimal version 3.28.
 
 Before building the project, it must be configured to select at least the
 cross-compiler toolchain and the subsystem(s) to support in the SMW Library.
@@ -962,132 +964,133 @@ run. It describes subtest status (PASSED or FAILED) and failure status.
 
 Configuring and building the project can be simplified by using provided
 scripts.
-
-## 7.1. Reference platforms configuration script
+## 7.1. Reference configuration script
 The `./scripts/smw_configure.sh` shell script can be used to prepare and configure
-the project for reference platforms as details below assuming that external
-dependencies sources are installed in predefined path.
+the project by automatically building external dependencies and configuring the
+SMW project with the specified subsystems and features.
 
-For all platforms, TEE subsystem is enabled all tests are enabled.
+The script handles:
+- Toolchain installation
+- External dependencies build (SECO/ELE libraries, OPTEE client/TA dev kit, JSON-C, SQLite, PSA arch tests)
+- Project configuration with selected subsystems and features
 
-The script is invoked with 3 mandatory parameters and accept 1 optional parameter
-setting the path where the toolchain is installed (see [Toolchains](#2-toolchains)).
-If optional `toolpath=` parameter is not set, the toolchain is expected to be
-installed in `/toolchains` system path.
+### 7.1.1. Prerequisites
 
-```sh
-$ ./scripts/smw_configure.sh [build directory] [architecture] [platform] toolpath=[path/to/toolchain]
-```
-
-<table>
-<caption id="platforms_smw_configure">Supported Platforms</caption>
-<thead>
-<tr>
-  <td>Platforms</td>
-	<td>Architecture</td>
-</tr>
-</thead>
-<tbody>
-<tr>
-  <td>imx7dsabresd</td>
-  <td>aarch32</td>
-</tr>
-<tr>
-  <td>imx8mmevk</td>
-  <td>aarch64</td>
-</tr>
-<tr>
-  <td>imx8qxpc0mek</td>
-  <td>aarch64</td>
-</tr>
-<tr>
-  <td>imx8ulpevk</td>
-  <td>aarch64</td>
-</tr>
-<tr>
-  <td>imx91evk</td>
-  <td>aarch64</td>
-</tr>
-<tr>
-  <td>imx93evk</td>
-  <td>aarch64</td>
-</tr>
-<tr>
-  <td>imx943evk</td>
-  <td>aarch64</td>
-</tr>
-<tr>
-  <td>imx95evk</td>
-  <td>aarch64</td>
-</tr>
-<tr>
-  <td>imx952evk</td>
-  <td>aarch64</td>
-</tr>
-</tbody>
-</table>
+The script expects external dependency sources to be present in the following paths (relative to SMW sources):
 
 <table>
 <caption id="prerequisite_smw_configure">Prerequisites</caption>
 <thead>
 <tr>
-  <th>Platforms</th>
-  <th>Sources</th>
+  <th>Dependency</th>
+  <th>Source Repository</th>
   <th>Path<br>(relative to smw sources path)</th>
 	<th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td>All</td>
-  <td>https://github.com/nxp-imx/imx-optee-client</td>
+  <td>OPTEE Client</td>
+   <td><a href="https://github.com/nxp-imx/imx-optee-client">https://github.com/nxp-imx/imx-optee-client</a></td>
   <td>../optee-client</td>
   <td>NXP i.MX OPTEE OS Client library sources</td>
 </tr>
 <tr>
-  <td>All</td>
-  <td>https://github.com/nxp-imx/imx-optee-os</td>
+  <td>OPTEE OS</td>
+  <td><a href="https://github.com/nxp-imx/imx-optee-os">https://github.com/nxp-imx/imx-optee-os</a></td>
   <td>../optee-os</td>
   <td>NXP i.MX OPTEE OS sources</td>
 </tr>
 <tr>
-  <td rowspan="2">All</td>
-  <td>https://github.com/json-c/json-c</td>
+  <td rowspan="2">JSON-C</td>
+  <td><a href="https://github.com/json-c/json-c">https://github.com/json-c/json-c</a></td>
 	<td rowspan="2">../jsonc</td>
   <td rowspan="2">JSON-C library sources</td>
 </tr>
 <tr>
-	<td>https://s3.amazonaws.com/json-c_releases/releases/json-c-0.15.tar.gz</td>
-	<td></td>
+	<td><a href="https://s3.amazonaws.com/json-c_releases/releases/json-c-0.15.tar.gz">https://s3.amazonaws.com/json-c_releases/releases/json-c-0.15.tar.gz</a></td>
 </tr>
 <tr>
-  <td>All</td>
-  <td>https://github.com/ARM-software/psa-arch-tests.git</td>
-	<td>master</td>
+  <td>PSA Arch Tests</td>
+  <td><a href="https://github.com/ARM-software/psa-arch-tests.git">https://github.com/ARM-software/psa-arch-tests.git</a></td>
 	<td>../psa-arch-tests</td>
-  <td>JSON-C library sources</td>
+  <td>PSA Arch Test suite</td>
 </tr>
 <tr>
-  <td><ul>
-  <li>imx952evk</li>
-  <li>imx95evk</li>
-  <li>imx943evk</li>
-  <li>imx93evk</li>
-  <li>imx91evk</li>
-  <li>imx8ulpevk</li>
-</ul></td>
-  <td>https://github.com/nxp-imx/imx-secure-enclave.git</td>
+  <td>Secure Enclave (ELE/SECO)</td>
+  <td><a href="https://github.com/nxp-imx/imx-secure-enclave.git">https://github.com/nxp-imx/imx-secure-enclave.git</a></td>
 	<td>../secure_enclave</td>
-  <td>ELE library sources</td>
-</tr>
-<tr>
-  <td>imx8qxpc0mek</td>
-  <td>https://github.com/nxp-imx/imx-secure-enclave.git</td>
-	<td>../secure_enclave</td>
-  <td>SECO library sources</td>
+  <td>ELE/SECO library sources</td>
 </tr>
 </tbody>
 </table>
+
+**Note:** The script will automatically build these dependencies if the sources are present in the expected locations.
+
+### 7.1.2. Script Syntax
+```sh
+$ ./scripts/smw_configure.sh <dir> <arch> <subsystem> [OPTIONS]
+```
+
+**Mandatory Parameters:**
+
+<table>
+<thead>
+<tr>
+  <th>Parameter</th>
+  <th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>dir</code></td>
+  <td>Output build directory</td>
+</tr>
+<tr>
+  <td><code>arch</code></td>
+  <td>Architecture: <code>aarch32</code> or <code>aarch64</code></td>
+</tr>
+<tr>
+  <td><code>subsystem</code></td>
+  <td>Subsystem combination (comma-separated list without spaces)<br>Options:<br>- <code>tee</code> : TEE Only<br>- <code>seco</code> : SECO Only<br>- <code>ele</code> : ELE Only<br>- <code>tee,seco</code> : SECO + TEE<br>- <code>tee,ele</code> : ELE + TEE<br>- <code>coverity</code> : Coverity analysis</td>
+</tr>
+</tbody>
+</table>
+
+**Optional Parameters:**
+
+<table>
+<thead>
+<tr>
+  <th>Parameter</th>
+  <th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>toolpath=[path/to/toolchain]</code></td>
+  <td>Toolchain installation path<br>Default: <code>/toolchains</code></td>
+</tr>
+<tr>
+  <td><code>debug</code></td>
+  <td>Build in Debug mode instead of Release</td>
+</tr>
+<tr>
+  <td><code>config=[name]</code></td>
+  <td>Configuration preset<br>Options: <code>crypto-basic</code>, <code>all</code>, etc.</td>
+</tr>
+<tr>
+  <td><code>enable_[feature]=on/off</code></td>
+  <td>Feature options to enable/disable specific features<br>(Can override config settings).<br>Options: <code>enable_hash=on</code>, <code>enable_cipher=off</code>, etc</td>
+</tr>
+</tbody>
+</table>
+
+For detailed usage information and examples, run:
+
+```sh
+$ ./scripts/smw_configure.sh -h
+```
 
 ## 7.2. Multi-function build script
 The `./scripts/smw_build.sh` is a multi-function script that can be used to:

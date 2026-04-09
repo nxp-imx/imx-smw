@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2025 NXP
+ * Copyright 2025-2026 NXP
  */
 
 #include <stdlib.h>
@@ -912,8 +912,10 @@ void tests_pkcs11_derive_key_tls1_2(void *lib_hdl, CK_VOID_PTR pfunc)
 	TEST_START();
 
 	ret = ((CK_FUNCTION_LIST_PTR)pfunc)->C_Initialize(&init);
-	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
+	if (CHECK_CK_RV(CKR_OK, "C_Initialize")) {
+		TEST_RESULT(status);
 		goto end;
+	}
 
 	if (object_derive_key_tls12_bad_param(pfunc) == TEST_FAIL)
 		goto end;

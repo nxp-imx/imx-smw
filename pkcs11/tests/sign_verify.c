@@ -1762,8 +1762,10 @@ void tests_pkcs11_sign_verify(void *lib_hdl, CK_VOID_PTR pfunc)
 	TEST_START();
 
 	ret = ((CK_FUNCTION_LIST_PTR)pfunc)->C_Initialize(&init);
-	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
+	if (CHECK_CK_RV(CKR_OK, "C_Initialize")) {
+		TEST_RESULT(status);
 		goto end;
+	}
 
 	if (sign_init_bad_params(pfunc) == TEST_FAIL)
 		goto end;

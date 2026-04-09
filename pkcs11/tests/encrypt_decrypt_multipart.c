@@ -1451,8 +1451,10 @@ void tests_pkcs11_encrypt_decrypt_multipart(void *lib_hdl, CK_VOID_PTR pfunc)
 	TEST_START();
 
 	ret = ((CK_FUNCTION_LIST_PTR)pfunc)->C_Initialize(&init);
-	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
+	if (CHECK_CK_RV(CKR_OK, "C_Initialize")) {
+		TEST_RESULT(status);
 		goto end;
+	}
 
 	if (encrypt_decrypt_multipart_no_init(pfunc) == TEST_FAIL)
 		goto end;

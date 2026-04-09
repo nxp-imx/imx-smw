@@ -1804,7 +1804,7 @@ void tests_pkcs11_sign_verify_multipart_message(void *lib_hdl,
 {
 	(void)lib_hdl;
 	int status = TEST_FAIL;
-	CK_VERSION_PTR version = &((CK_FUNCTION_LIST_3_0_PTR)pfunc)->version;
+	CK_VERSION minimal_ver = { .major = 3, .minor = 0 };
 
 	CK_RV ret = CKR_OK;
 	CK_C_INITIALIZE_ARGS init = { 0 };
@@ -1816,14 +1816,17 @@ void tests_pkcs11_sign_verify_multipart_message(void *lib_hdl,
 
 	TEST_START();
 
-	if (CHECK_EXPECTED(version->major == 3 && version->minor == 1,
-			   "Bad version expected %01d.%01d", version->major,
-			   version->minor))
+	if (!util_lib_check_version((CK_FUNCTION_LIST_PTR)pfunc,
+				    &minimal_ver)) {
+		TEST_RESULT(status);
 		goto end;
+	}
 
 	ret = ((CK_FUNCTION_LIST_3_0_PTR)pfunc)->C_Initialize(&init);
-	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
+	if (CHECK_CK_RV(CKR_OK, "C_Initialize")) {
+		TEST_RESULT(status);
 		goto end;
+	}
 
 	if (sign_verify_multipart_no_init(pfunc) == TEST_FAIL)
 		goto end;

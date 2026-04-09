@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024-2025 NXP
+ * Copyright 2024-2026 NXP
  */
 
 #include <stdlib.h>
@@ -1923,8 +1923,10 @@ void tests_pkcs11_operation_state(void *lib_hdl, CK_VOID_PTR pfunc)
 	TEST_START();
 
 	ret = ((CK_FUNCTION_LIST_PTR)pfunc)->C_Initialize(&init);
-	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
+	if (CHECK_CK_RV(CKR_OK, "C_Initialize")) {
+		TEST_RESULT(status);
 		goto end;
+	}
 
 	if (operation_state_cipher_no_context(pfunc) == TEST_FAIL)
 		goto end;

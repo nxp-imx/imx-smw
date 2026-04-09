@@ -1676,7 +1676,7 @@ void tests_pkcs11_encrypt_decrypt_message(void *lib_hdl, CK_VOID_PTR pfunc)
 
 	CK_RV ret = CKR_OK;
 	CK_C_INITIALIZE_ARGS init = { 0 };
-	CK_VERSION_PTR version = &((CK_FUNCTION_LIST_3_0_PTR)pfunc)->version;
+	CK_VERSION minimal_ver = { .major = 3, .minor = 0 };
 
 	init.CreateMutex = mutex_create;
 	init.DestroyMutex = mutex_destroy;
@@ -1685,14 +1685,17 @@ void tests_pkcs11_encrypt_decrypt_message(void *lib_hdl, CK_VOID_PTR pfunc)
 
 	TEST_START();
 
-	if (CHECK_EXPECTED(version->major == 3 && version->minor == 1,
-			   "Bad version expected %01d.%01d", version->major,
-			   version->minor))
+	if (!util_lib_check_version((CK_FUNCTION_LIST_PTR)pfunc,
+				    &minimal_ver)) {
+		TEST_RESULT(status);
 		goto end;
+	}
 
 	ret = ((CK_FUNCTION_LIST_3_0_PTR)pfunc)->C_Initialize(&init);
-	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
+	if (CHECK_CK_RV(CKR_OK, "C_Initialize")) {
+		TEST_RESULT(status);
 		goto end;
+	}
 
 	if (encrypt_init_bad_params(pfunc) == TEST_FAIL)
 		goto end;

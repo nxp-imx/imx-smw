@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021, 2023-2025 NXP
+ * Copyright 2021, 2023-2026 NXP
  */
 #ifndef __TEST_CHECK_H__
 #define __TEST_CHECK_H__
@@ -77,6 +77,21 @@ void test_dump_hex(char *msg, void *buf, size_t len);
 		if (INC_OVERFLOW(tests_data.result.count, 1))                  \
 			tests_data.result.count = -1;                          \
 	})
+
+#define TEST_RESULT(_status)                                                   \
+	do {                                                                   \
+		__typeof__(_status) __status = (_status);                      \
+		if (__status == TEST_SKIP) {                                   \
+			if (INC_OVERFLOW(tests_data.result.count_skip, 1))     \
+				tests_data.result.count_skip = 0;              \
+		} else if (__status == TEST_PASS) {                            \
+			if (INC_OVERFLOW(tests_data.result.count_pass, 1))     \
+				tests_data.result.count_pass = 0;              \
+		} else {                                                       \
+			if (INC_OVERFLOW(tests_data.result.count_fail, 1))     \
+				tests_data.result.count_fail = -1;             \
+		}                                                              \
+	} while (0)
 
 #define SUBTEST_END(_status)                                                   \
 	do {                                                                   \

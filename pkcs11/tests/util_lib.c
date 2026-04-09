@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2024-2025 NXP
+ * Copyright 2021, 2024-2026 NXP
  */
 
 #include <dlfcn.h>
@@ -48,7 +48,8 @@ CK_FUNCTION_LIST_PTR util_lib_get_func_list(void *handle)
 	CK_RV ret = CKR_GENERAL_ERROR;
 
 	CK_VERSION version_2_40 = { .major = 2, .minor = 40 };
-	CK_VERSION version_3_1 = { .major = 3, .minor = 1 };
+	CK_VERSION version_3_x = { .major = CRYPTOKI_VERSION_MAJOR,
+				   .minor = CRYPTOKI_VERSION_MINOR };
 	CK_VERSION version = version_2_40;
 
 	CK_FUNCTION_PTR(C_GetInterface)
@@ -61,7 +62,7 @@ CK_FUNCTION_LIST_PTR util_lib_get_func_list(void *handle)
 
 	C_GetInterface = dlsym(handle, "C_GetInterface");
 	if (C_GetInterface) {
-		version = version_3_1;
+		version = version_3_x;
 		ret = C_GetInterface(NULL_PTR, &version, &ifs, 0);
 		if (ret != CKR_OK) {
 			version = version_2_40;
@@ -96,13 +97,28 @@ CK_BBOOL util_lib_is_mech_supported(CK_VOID_PTR pfunc, CK_SLOT_ID slot,
 	CK_RV ret = CKR_OK;
 	CK_MECHANISM_INFO info = { 0 };
 	CK_BBOOL supported = CK_FALSE;
-	CK_FUNCTION_LIST_3_0_PTR pfunc_3_0 = pfunc;
 
-	ret = pfunc_3_0->C_GetMechanismInfo(slot, mech, &info);
+	ret = ((CK_FUNCTION_LIST_PTR)pfunc)
+		      ->C_GetMechanismInfo(slot, mech, &info);
 	if (ret == CKR_MECHANISM_INVALID)
 		TEST_OUT("Mechanism 0x%lx not supported", mech);
 	else if (ret == CKR_OK)
 		supported = CK_TRUE;
 
 	return supported;
+}
+
+CK_BBOOL util_lib_check_version(CK_VOID_PTR pfunc, CK_VERSION_PTR minimal)
+{
+	CK_VERSION_PTR version = &((CK_FUNCTION_LIST_PTR)pfunc)->version;
+
+	if (version->major > minimal->major)
+		return CK_TRUE;
+	else if (version->major == minimal->major &&
+		 version->minor >= minimal->minor)
+		return CK_TRUE;
+
+	TEST_OUT("Bad version expected %01d.%01d", version->major,
+		 version->minor);
+	return CK_FALSE;
 }

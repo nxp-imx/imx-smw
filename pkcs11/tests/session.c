@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023-2024 NXP
+ * Copyright 2021, 2023-2024, 2026 NXP
  */
 
 #include <stdlib.h>
@@ -1125,8 +1125,10 @@ void tests_pkcs11_session(void *lib_hdl, CK_VOID_PTR pfunc)
 	TEST_START();
 
 	ret = ((CK_FUNCTION_LIST_PTR)pfunc)->C_Initialize(&init);
-	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
+	if (CHECK_CK_RV(CKR_OK, "C_Initialize")) {
+		TEST_RESULT(status);
 		goto end;
+	}
 
 	if (open_session_bad_param(pfunc) == TEST_FAIL)
 		goto end;

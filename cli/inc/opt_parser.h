@@ -17,7 +17,8 @@ enum operation {
 	OP_RNG,
 	OP_HASH,
 	OP_DEVICE_UUID,
-	OP_DEVICE_LIFECYCLE
+	OP_DEVICE_LIFECYCLE,
+	OP_DEVICE_ATTESTATION
 };
 
 /* RNG-specific options */
@@ -29,6 +30,11 @@ struct rng {
 struct hash {
 	enum hash_algo algo;
 	size_t output_length;
+};
+
+/* Device attestation-specific options */
+struct dev_att {
+	char *challenge_filename;
 };
 
 /* Parsed options structure */
@@ -52,6 +58,7 @@ struct parsed_options {
 	union {
 		struct rng rng;
 		struct hash hash;
+		struct dev_att dev_att;
 	} op;
 };
 

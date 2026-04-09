@@ -10,6 +10,7 @@
 #include "helper.h"
 #include "logger.h"
 #include "opt_parser.h"
+#include "parser_device_attestation.h"
 #include "parser_device_get_lifecycle.h"
 #include "parser_device_uuid.h"
 #include "parser_hash.h"
@@ -52,6 +53,10 @@ static const struct operation_entry operation_table[] = {
 	  .opt_func = cli_dev_get_lifecycle_operation,
 	  .help_func = cli_dev_get_lifecycle_help,
 	  .inline_desc_func = cli_dev_get_lifecycle_inline_desc },
+	{ .operation_name = "dev-get-attestation",
+	  .opt_func = cli_device_attestation_operation,
+	  .help_func = cli_device_attestation_help,
+	  .inline_desc_func = cli_device_attestation_inline_desc },
 	/* Add more operations here as we implement them */
 	{ NULL, NULL, NULL, NULL } /* Sentinel */
 };

@@ -161,6 +161,19 @@ install(TARGETS nxp_smw nxp_psa
 		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 		COMPONENT cli-tools)
 
+# Install bash completion script
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/scripts/nxp_smw_completion.bash
+        DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/bash_completion.d
+        RENAME nxp_smw
+        COMPONENT cli-tools
+        OPTIONAL)
+
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/scripts/nxp_psa_completion.bash
+        DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/bash_completion.d
+        RENAME nxp_psa
+        COMPONENT cli-tools
+        OPTIONAL)
+
 # Custom targets
 
 add_custom_target(install_cli-tools

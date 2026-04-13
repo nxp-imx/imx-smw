@@ -68,7 +68,10 @@ function check_cmake_version()
     match=${#aexp_ver[@]}
     if [[ ${#acmake_ver[@]} -eq ${#aexp_ver[@]} ]]; then
         for (( i=0; i<${#aexp_ver[@]}; i++ )); do
-            if [[ ${acmake_ver[$i]} -lt ${aexp_ver[$i]} ]]; then
+            if [[ ${acmake_ver[$i]} -gt ${aexp_ver[$i]} ]]; then
+                match=0
+                break
+            elif [[ ${acmake_ver[$i]} -lt ${aexp_ver[$i]} ]]; then
                 break;
             fi
             match=$((match-1))

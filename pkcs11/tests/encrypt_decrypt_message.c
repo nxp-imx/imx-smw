@@ -1687,13 +1687,13 @@ void tests_pkcs11_encrypt_decrypt_message(void *lib_hdl, CK_VOID_PTR pfunc)
 
 	if (!util_lib_check_version((CK_FUNCTION_LIST_PTR)pfunc,
 				    &minimal_ver)) {
-		TEST_RESULT(status);
+		SETUP_FAIL();
 		goto end;
 	}
 
 	ret = ((CK_FUNCTION_LIST_3_0_PTR)pfunc)->C_Initialize(&init);
 	if (CHECK_CK_RV(CKR_OK, "C_Initialize")) {
-		TEST_RESULT(status);
+		SETUP_FAIL();
 		goto end;
 	}
 

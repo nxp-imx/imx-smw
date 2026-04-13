@@ -43,7 +43,7 @@ void tests_pkcs11_parallel(void *lib_hdl, CK_VOID_PTR pfunc)
 
 	ret = ((CK_FUNCTION_LIST_PTR)pfunc)->C_Initialize(NULL_PTR);
 	if (CHECK_CK_RV(CKR_OK, "C_Initialize")) {
-		TEST_RESULT(status);
+		SETUP_FAIL();
 		goto end;
 	}
 

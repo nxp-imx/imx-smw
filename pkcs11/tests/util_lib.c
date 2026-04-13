@@ -118,7 +118,9 @@ CK_BBOOL util_lib_check_version(CK_VOID_PTR pfunc, CK_VERSION_PTR minimal)
 		 version->minor >= minimal->minor)
 		return CK_TRUE;
 
-	TEST_OUT("Bad version expected %01d.%01d", version->major,
-		 version->minor);
+	TEST_OUT("Version check failed.\n");
+	TEST_OUT("Found: %01d.%01d, minimum required: %01d.%01d\n",
+		 version->major, version->minor, minimal->major,
+		 minimal->minor);
 	return CK_FALSE;
 }

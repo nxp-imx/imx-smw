@@ -1106,7 +1106,7 @@ void tests_pkcs11_find_ext(void *lib_hdl, CK_VOID_PTR pfunc)
 
 	ret = pfunc_list->C_Initialize(&init);
 	if (CHECK_CK_RV(CKR_OK, "C_Initialize")) {
-		TEST_RESULT(status);
+		SETUP_FAIL();
 		goto end;
 	}
 

@@ -235,12 +235,16 @@ int tests_pkcs11(char *test_name)
 			 tests_data.result.count_skip,
 			 tests_data.result.count_fail);
 
+	if (tests_data.setup_fail)
+		TEST_OUT("| Setup test failed\n");
+
 	TEST_OUT("|_______________________________\n");
 	TEST_OUT("\n");
 
 	util_lib_close(lib_hdl);
 
-	if (count != tests_data.result.count || tests_data.result.count_fail)
+	if (count != tests_data.result.count || tests_data.result.count_fail ||
+	    tests_data.setup_fail)
 		return 2;
 	else if (tests_data.result.count_skip)
 		return 1;

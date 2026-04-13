@@ -20,6 +20,7 @@ struct tests_result {
 struct tests_data {
 	struct tests_result result;
 	int trace_pid;
+	bool setup_fail;
 };
 
 extern struct tests_data tests_data;
@@ -78,20 +79,14 @@ void test_dump_hex(char *msg, void *buf, size_t len);
 			tests_data.result.count = -1;                          \
 	})
 
-#define TEST_RESULT(_status)                                                   \
-	do {                                                                   \
-		__typeof__(_status) __status = (_status);                      \
-		if (__status == TEST_SKIP) {                                   \
-			if (INC_OVERFLOW(tests_data.result.count_skip, 1))     \
-				tests_data.result.count_skip = 0;              \
-		} else if (__status == TEST_PASS) {                            \
-			if (INC_OVERFLOW(tests_data.result.count_pass, 1))     \
-				tests_data.result.count_pass = 0;              \
-		} else {                                                       \
-			if (INC_OVERFLOW(tests_data.result.count_fail, 1))     \
-				tests_data.result.count_fail = -1;             \
-		}                                                              \
-	} while (0)
+#define SETUP_FAIL()                                                           \
+	({                                                                     \
+		TEST_OUT("\n");                                                \
+		TEST_OUT("************\n");                                    \
+		TEST_OUT("* Setup %s failed\n", __func__);                     \
+		TEST_OUT("\n");                                                \
+		tests_data.setup_fail = true;                                  \
+	})
 
 #define SUBTEST_END(_status)                                                   \
 	do {                                                                   \

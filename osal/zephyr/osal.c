@@ -280,6 +280,10 @@ enum smw_status_code smw_osal_lib_init(void)
 
 	status = smw_init(&zephyr_ops);
 	if (status != SMW_STATUS_OK)
+		goto end;
+
+	status = smw_config_load(NULL, 0, NULL);
+	if (status == SMW_STATUS_OK)
 		osal_ctx->lib_initialized = 1;
 
 end:

@@ -1,0 +1,25 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright 2020-2021, 2024, 2026 NXP
+ */
+
+#include "debug.h"
+
+#include "common.h"
+
+void sign_verify_print_params(void *params)
+{
+	struct sign_verify_params *p = params;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!p)
+		return;
+
+	SMW_DBG_PRINTF(DEBUG,
+		       "Params:\n"
+		       "\talgo_bitmap: 0x%.8lX\n"
+		       "\ttype_bitmap: 0x%.8lX\n"
+		       "\thash_bitmap: 0x%.8lX\n",
+		       p->algo_bitmap, p->type_bitmap, p->hash_bitmap);
+}

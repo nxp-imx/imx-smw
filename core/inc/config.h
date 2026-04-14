@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #ifndef __CONFIG_H__
@@ -146,6 +146,17 @@ smw_operation_t smw_config_get_operation_name(enum operation_id id);
  * The Secure Subsystem name.
  */
 smw_subsystem_t smw_config_get_subsystem_name(enum subsystem_id id);
+
+/**
+ * smw_config_get_subsystem_string() - Get the Secure Subsystem string.
+ * @subsystem_id: Secure Subsystem ID.
+ *
+ * This function gets the string name of a Secure Subsystem.
+ *
+ * Return:
+ * The Secure Subsystem string name.
+ */
+const char *smw_config_get_subsystem_string(enum subsystem_id id);
 
 /**
  * smw_config_get_subsystem_id() - Get the ID associated to a name.

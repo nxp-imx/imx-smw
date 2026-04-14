@@ -9,6 +9,7 @@ project("${ZEPHYR_CURRENT_LIBRARY}" VERSION 1.0 LANGUAGES C)
 
 set(OS zephyr)
 set(BUILD_ZEPHYR 1)
+set(BUILD_STATIC_CONFIG 1)
 
 message(STATUS "Building SMW module for OS=${OS}")
 

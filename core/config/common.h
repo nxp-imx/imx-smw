@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #ifndef __COMMON_H__
@@ -373,6 +373,20 @@ enum subsystem_state get_subsystem_state(enum subsystem_id id);
  */
 int set_subsystem_load_method(enum subsystem_id id,
 			      enum load_method_id load_method_id);
+
+/**
+ * store_operation() - Store the Security Operation configuration.
+ * @operation_id: Security Operation ID.
+ * @subsystem_id: Secure Subsystem ID.
+ *
+ * This function enables the Security Operation for a given
+ * Secure Subsystem.
+ *
+ * Return:
+ * error code.
+ */
+int store_operation(enum operation_id operation_id,
+		    enum subsystem_id subsystem_id);
 
 /**
  * store_operation_params() - Store the Security Operation configuration.

@@ -42,25 +42,8 @@ set(BUILD_DOC_DEFINITIONS
     -DBUILD_DOC_OUTPUT_DIR=${DOC_API_OUTPUT_DIR}
     -DBUILD_DOC_PRJ_DIR=${CMAKE_SOURCE_DIR})
 
-if(${FORMAT} STREQUAL "html" OR
-   ${FORMAT} STREQUAL "all")
+if(${FORMAT} STREQUAL "html" OR ${FORMAT} STREQUAL "all")
     list(APPEND BUILD_DOC_BUILDER html)
-endif()
-
-if(${FORMAT} STREQUAL "pdf" OR ${FORMAT} STREQUAL "all")
-    find_package(Latexmk)
-    if(NOT LATEXMK_FOUND)
-        message(WARNING
-                "latexmk is required to build pdf documentation\n"
-                "Please run commands:\n"
-                "    sudo apt install texlive-latex-extra\n"
-                "    sudo apt install latexmk\n")
-        if(${FORMAT} STREQUAL "pdf")
-            return()
-        endif()
-    else()
-        list(APPEND BUILD_DOC_BUILDER latexpdf)
-    endif()
 endif()
 
 if(${FORMAT} STREQUAL "xml" OR ${FORMAT} STREQUAL "all")

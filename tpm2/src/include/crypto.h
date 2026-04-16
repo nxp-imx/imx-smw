@@ -40,6 +40,27 @@
 #define ECC_P384_PUBLIC_SIZE (ECC_P384_COORD_SIZE * 2) /* 96 */
 #define ECC_P521_PUBLIC_SIZE (ECC_P521_COORD_SIZE * 2) /* 132 */
 
+#define SMW_SEALED_BLOB_MAGIC	  "SMWSEAL!"
+#define SMW_SEALED_BLOB_MAGIC_LEN 8
+#define SEAL_NONCE_SIZE		  12
+#define SEAL_TAG_SIZE		  16
+/*
+ * SEAL_AAD_SIZE: Size of Additional Authenticated Data (AAD) for sealed blobs
+ *
+ * AAD structure:
+ *   - Magic (8 bytes): SMW_SEALED_BLOB_MAGIC identifier
+ *   - Plaintext size (2 bytes): uint16_t size of original data
+ *   - Hierarchy (4 bytes): TPMI_RH_HIERARCHY value
+ *
+ * Total: 14 bytes
+ */
+#define SEAL_AAD_SIZE                                                          \
+	(SMW_SEALED_BLOB_MAGIC_LEN + sizeof(uint16_t) +                        \
+	 sizeof(TPMI_RH_HIERARCHY))
+#define SMW_MAX_SEALED_DATA TPM2_MAX_SYM_DATA
+#define SMW_MAX_SEALED_BLOB_SIZE                                               \
+	(SEAL_AAD_SIZE + SMW_MAX_SEALED_DATA + SEAL_NONCE_SIZE + SEAL_TAG_SIZE)
+
 /* Mocked proof - in production, load from secure storage */
 extern uint8_t proof_owner[TPM2_SHA384_DIGEST_SIZE];
 extern uint8_t proof_platform[TPM2_SHA384_DIGEST_SIZE];

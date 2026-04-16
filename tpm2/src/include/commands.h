@@ -273,12 +273,21 @@ uint32_t handle_readpublic(tcti_smw_context_t *ctx, uint16_t tag,
  * @cmd_size: Size of the command buffer in bytes.
  *
  * This function handles the TPM2_Create command which creates a new object
- * under a parent key. It unmarshals command parameters, generates the key
- * using SMW/ELE, and returns the public portion and a private blob. Since ELE
- * does not export private keys or support parent-child hierarchy, the private
- * blob contains a magic string "SMWKEYID" followed by the SMW key identifier
- * which references the key stored in ELE's NVM Secure Storage for later use
- * with TPM2_Load.
+ * under a parent key. It supports two types of objects:
+ *
+ * 1. Key objects (ECC, HMAC):
+ *    The function generates the key using SMW/ELE and returns a private blob
+ *    containing the magic string "SMWKEYID" followed by the SMW key identifier
+ *    which references the key stored in ELE's NVM Secure Storage.
+ *
+ * 2. Sealed data objects (KEYEDHASH with NULL scheme):
+ *    The function encrypts the sensitive data using AES-GCM with the hierarchy
+ *    proof key. The private blob contains the magic string "SMWSEAL!" followed
+ *    by AAD (plaintext size, hierarchy), IV, ciphertext, and authentication tag.
+ *
+ * The function unmarshals command parameters, determines the object type,
+ * processes accordingly, builds creation data/hash/ticket, and returns the
+ * public and private portions for later use with TPM2_Load.
  *
  * Return:
  * TSS2_RC_SUCCESS on successful object creation, or the corresponding error code.

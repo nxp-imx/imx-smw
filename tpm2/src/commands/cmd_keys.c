@@ -899,6 +899,7 @@ uint32_t handle_create(tcti_smw_context_t *ctx, uint16_t tag,
 
 	uint8_t *params_buffer = NULL;
 	tcti_smw_object_t *object = NULL;
+	bool is_sealed = false;
 
 	if (!ctx || !cmd) {
 		tss2_rc = TSS2_TCTI_RC_BAD_REFERENCE;
@@ -935,44 +936,66 @@ uint32_t handle_create(tcti_smw_context_t *ctx, uint16_t tag,
 		goto end;
 	}
 
-	/* 3. Validate key type and prepare SMW structures */
+	/* 3. Check if this is a sealed data object */
 	pub = &input.in_public.publicArea;
+	is_sealed = is_sealed_data_object(pub);
 
-	if (pub->type == TPM2_ALG_ECC)
-		key_buffer.gen.public_data = public_data_buf;
+	if (is_sealed) {
+		/* Handle sealed data object */
+		DBG_TRACE("Creating sealed data object\n");
 
-	tss2_rc = configure_smw_key_descriptor(pub, &key_desc, &key_buffer);
-	if (tss2_rc != TSS2_RC_SUCCESS)
-		goto end;
-
-	/* 4. Call SMW to generate key */
-	gen_args.subsystem_name = SMW_SUBSYSTEM_NAME_ELE;
-	gen_args.key_descriptor = &key_desc;
-
-	smw_status = smw_generate_key(&gen_args);
-	if (smw_status != SMW_STATUS_OK &&
-	    smw_status != SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
-		DBG_TRACE("SMW key generation failed: %d\n", smw_status);
-		tss2_rc = smw_rc_to_tcti_rc(smw_status);
-		goto end;
-	}
-
-	DBG_TRACE("Key generated successfully, SMW ID: %d\n", key_desc.id);
-
-	/* 5. Prepare output structures */
-	output.out_private.size = SMW_PRIVATE_BLOB_MAGIC_LEN + sizeof(uint32_t);
-	memcpy(output.out_private.buffer, SMW_PRIVATE_BLOB_MAGIC,
-	       SMW_PRIVATE_BLOB_MAGIC_LEN);
-	memcpy(&output.out_private.buffer[SMW_PRIVATE_BLOB_MAGIC_LEN],
-	       &key_desc.id, sizeof(uint32_t));
-
-	output.out_public = input.in_public;
-
-	if (pub->type == TPM2_ALG_ECC) {
-		tss2_rc = extract_ecc_coordinates(&key_buffer,
-						  &output.out_public);
+		tss2_rc = create_sealed_data_object(ctx, &input.in_sensitive,
+						    &input.in_public,
+						    object->hierarchy, &output);
 		if (tss2_rc != TSS2_RC_SUCCESS)
 			goto end;
+
+	} else {
+		/* Handle regular key object (existing code) */
+		DBG_TRACE("Creating key object\n");
+
+		/* 4. Validate key type and prepare SMW structures */
+
+		if (pub->type == TPM2_ALG_ECC)
+			key_buffer.gen.public_data = public_data_buf;
+
+		tss2_rc = configure_smw_key_descriptor(pub, &key_desc,
+						       &key_buffer);
+		if (tss2_rc != TSS2_RC_SUCCESS)
+			goto end;
+
+		/* 4. Call SMW to generate key */
+		gen_args.subsystem_name = SMW_SUBSYSTEM_NAME_ELE;
+		gen_args.key_descriptor = &key_desc;
+
+		smw_status = smw_generate_key(&gen_args);
+		if (smw_status != SMW_STATUS_OK &&
+		    smw_status != SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
+			DBG_TRACE("SMW key generation failed: %d\n",
+				  smw_status);
+			tss2_rc = smw_rc_to_tcti_rc(smw_status);
+			goto end;
+		}
+
+		DBG_TRACE("Key generated successfully, SMW ID: %d\n",
+			  key_desc.id);
+
+		/* 5. Prepare output structures */
+		output.out_private.size =
+			SMW_PRIVATE_BLOB_MAGIC_LEN + sizeof(uint32_t);
+		memcpy(output.out_private.buffer, SMW_PRIVATE_BLOB_MAGIC,
+		       SMW_PRIVATE_BLOB_MAGIC_LEN);
+		memcpy(&output.out_private.buffer[SMW_PRIVATE_BLOB_MAGIC_LEN],
+		       &key_desc.id, sizeof(uint32_t));
+
+		output.out_public = input.in_public;
+
+		if (pub->type == TPM2_ALG_ECC) {
+			tss2_rc = extract_ecc_coordinates(&key_buffer,
+							  &output.out_public);
+			if (tss2_rc != TSS2_RC_SUCCESS)
+				goto end;
+		}
 	}
 
 	/* Set creation structures to empty (minimal implementation) */
@@ -1061,7 +1084,10 @@ uint32_t handle_create(tcti_smw_context_t *ctx, uint16_t tag,
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
-	DBG_TRACE("Create success: SMW ID=%d\n", key_desc.id);
+	DBG_TRACE("Create success: %s%s%u\n",
+		  is_sealed ? "sealed data, size=" : "key object, SMW ID=", "",
+		  is_sealed ? input.in_sensitive.sensitive.data.size :
+			      key_desc.id);
 
 end:
 	/* Free allocated memory */
@@ -1086,12 +1112,14 @@ uint32_t handle_load(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 	/* Input parameters */
 	load_input_t input = { 0 };
 	tcti_smw_object_t *parent = NULL;
+	tcti_smw_object_t *object = NULL;
 
 	/* Output parameters */
 	TPM2_HANDLE object_handle = 0;
 	TPM2B_NAME object_name = { 0 };
 	TPMT_PUBLIC *pub = NULL;
 	uint32_t smw_key_id = 0;
+	bool is_sealed = false;
 
 	/* Session handling */
 	uint32_t session_handle = 0;
@@ -1133,34 +1161,57 @@ uint32_t handle_load(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 		goto end;
 	}
 
-	/* 3. Validate and extract SMW key ID from private blob */
-	if (input.in_private.size <
-	    (SMW_PRIVATE_BLOB_MAGIC_LEN + sizeof(uint32_t))) {
-		DBG_TRACE("Invalid private blob size: %u bytes\n",
+	/* 3. Check blob type: sealed data or key */
+	if (input.in_private.size >= SMW_SEALED_BLOB_MAGIC_LEN &&
+	    memcmp(input.in_private.buffer, SMW_SEALED_BLOB_MAGIC,
+		   SMW_SEALED_BLOB_MAGIC_LEN) == 0) {
+		/* Sealed data blob */
+		is_sealed = true;
+
+		/* Verify minimum size: AAD + Tag */
+		if (input.in_private.size <
+		    SEAL_AAD_SIZE + SEAL_NONCE_SIZE + SEAL_TAG_SIZE) {
+			DBG_TRACE("Sealed blob too small: %u < %lu\n",
+				  input.in_private.size,
+				  SEAL_AAD_SIZE + SEAL_TAG_SIZE);
+			tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
+			goto end;
+		}
+
+		DBG_TRACE("Loading sealed data blob, size: %u bytes\n",
 			  input.in_private.size);
+
+	} else if (input.in_private.size >= SMW_PRIVATE_BLOB_MAGIC_LEN &&
+		   memcmp(input.in_private.buffer, SMW_PRIVATE_BLOB_MAGIC,
+			  SMW_PRIVATE_BLOB_MAGIC_LEN) == 0) {
+		/* Key blob */
+		is_sealed = false;
+
+		if (input.in_private.size <
+		    (SMW_PRIVATE_BLOB_MAGIC_LEN + sizeof(uint32_t))) {
+			DBG_TRACE("Invalid private blob size: %u bytes\n",
+				  input.in_private.size);
+			tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
+			goto end;
+		}
+
+		memcpy(&smw_key_id,
+		       &input.in_private.buffer[SMW_PRIVATE_BLOB_MAGIC_LEN],
+		       sizeof(uint32_t));
+
+		DBG_TRACE("Loading key with SMW ID: %u\n", smw_key_id);
+
+	} else {
+		DBG_TRACE("Invalid private blob magic\n");
 		tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
 		goto end;
 	}
-
-	/* Verify magic string */
-	if (memcmp(input.in_private.buffer, SMW_PRIVATE_BLOB_MAGIC,
-		   SMW_PRIVATE_BLOB_MAGIC_LEN) != 0) {
-		DBG_TRACE("Invalid private blob magic string\n");
-		tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
-		goto end;
-	}
-
-	/* Extract SMW key ID */
-	memcpy(&smw_key_id,
-	       &input.in_private.buffer[SMW_PRIVATE_BLOB_MAGIC_LEN],
-	       sizeof(uint32_t));
-
-	DBG_TRACE("Loading key with SMW ID: %u\n", smw_key_id);
 
 	/* 4. Validate key type from public area */
 	pub = &input.in_public.publicArea;
 
-	if (pub->type != TPM2_ALG_ECC && pub->type != TPM2_ALG_KEYEDHASH) {
+	if (!is_sealed && pub->type != TPM2_ALG_ECC &&
+	    pub->type != TPM2_ALG_KEYEDHASH) {
 		DBG_TRACE("Unsupported key type: 0x%04x\n", pub->type);
 		tss2_rc = TSS2_TCTI_RC_IO_ERROR;
 		goto end;
@@ -1173,7 +1224,29 @@ uint32_t handle_load(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
-	/* 6. Prepare parameters buffer for HMAC calculation */
+	/* 6. If sealed data, store it in the object */
+	if (is_sealed) {
+		object = find_object_by_handle(ctx, object_handle);
+		if (!object) {
+			tss2_rc = TSS2_TCTI_RC_IO_ERROR;
+			goto end;
+		}
+
+		object->sealed_blob.size = input.in_private.size;
+
+		memcpy(object->sealed_blob.buffer, input.in_private.buffer,
+		       input.in_private.size);
+
+		if (input.in_private.size > sizeof(object->sealed_blob)) {
+			DBG_TRACE("Sealed blob too large: %u > %zu\n",
+				  input.in_private.size,
+				  sizeof(object->sealed_blob));
+			tss2_rc = TSS2_TCTI_RC_INSUFFICIENT_BUFFER;
+			goto end;
+		}
+	}
+
+	/* 7. Prepare parameters buffer for HMAC calculation */
 	params_buffer = calloc(1, TPM2_MAX_CAP_BUFFER);
 	if (!params_buffer) {
 		tss2_rc = TSS2_TCTI_RC_MEMORY;
@@ -1186,15 +1259,15 @@ uint32_t handle_load(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
-	/* 7. Build auth response */
+	/* 8. Build auth response */
 	tss2_rc = build_auth_response(ctx, sess, TPM2_RC_SUCCESS, TPM2_CC_Load,
 				      tag, params_buffer, resp_params_size,
 				      &nonce_caller, &object_handle);
 	if (tss2_rc != TSS2_RC_SUCCESS)
 		goto end;
 
-	DBG_TRACE("Load success: handle=0x%08x, SMW ID=%u\n", object_handle,
-		  smw_key_id);
+	DBG_TRACE("Load success: handle=0x%08x, SMW ID=%u, %s\n", object_handle,
+		  smw_key_id, is_sealed ? "sealed data" : "key");
 
 end:
 	/* Free allocated memory */

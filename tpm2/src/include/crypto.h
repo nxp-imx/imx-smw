@@ -164,6 +164,7 @@ typedef struct {
  * @public_area:   Complete public area of the object.
  * @metadata:      Additional object-specific metadata or context information.
  * @metadata_size: Size of valid data in the metadata buffer.
+ * @sealed_blob:   Encrypted sealed data blob for KEYEDHASH sealed objects.
  *
  * This structure represents the object information that can be stored and
  * retrieved from SMW's secure storage. It contains the essential object
@@ -178,6 +179,7 @@ typedef struct {
 	TPM2B_NAME object_name;
 	uint8_t metadata[SMW_OBJECT_METADATA_SIZE];
 	size_t metadata_size;
+	TPM2B_SENSITIVE_DATA sealed_blob;
 } smw_object_blob_t;
 
 /**

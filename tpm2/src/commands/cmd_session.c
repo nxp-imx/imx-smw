@@ -45,6 +45,7 @@ static uint32_t context_save_transient(TPMS_CONTEXT *tpms_context,
 		blob.attributes = object->attributes;
 		blob.object_name = object->object_name;
 		blob.metadata_size = sizeof(blob.metadata);
+		blob.sealed_blob = object->sealed_blob;
 
 		memcpy(&blob.public_area, &object->public_area,
 		       sizeof(TPM2B_PUBLIC));
@@ -548,6 +549,7 @@ uint32_t handle_contextload(tcti_smw_context_t *ctx, uint16_t tag,
 		object->hierarchy = tpms_context.hierarchy;
 		object->attributes = obj_blob->attributes;
 		object->object_name = obj_blob->object_name;
+		object->sealed_blob = obj_blob->sealed_blob;
 
 		memcpy(&object->public_area, &obj_blob->public_area,
 		       sizeof(TPM2B_PUBLIC));

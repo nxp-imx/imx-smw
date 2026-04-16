@@ -59,6 +59,8 @@ typedef struct {
  * @attributes: TPM2 object attributes (TPMA_OBJECT)
  * @hierarchy: TPM2 hierarchy where object was created
  * @public_area: Public area of the object containing key parameters and metadata.
+ * @object_name: Cryptographic name of the object (nameAlg || Hash(public)).
+ * @sealed_blob: Encrypted sealed data blob for KEYEDHASH sealed objects.
  * @active: Slot in use
  * @is_persistent: Eligible for TPM2_EvictControl
  *
@@ -71,6 +73,7 @@ typedef struct {
 	TPMI_RH_HIERARCHY hierarchy;
 	TPM2B_PUBLIC public_area;
 	TPM2B_NAME object_name;
+	TPM2B_SENSITIVE_DATA sealed_blob;
 	bool active;
 	bool is_persistent;
 } tcti_smw_object_t;

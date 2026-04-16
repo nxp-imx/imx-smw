@@ -488,4 +488,37 @@ uint32_t handle_pcrallocate(tcti_smw_context_t *ctx, uint16_t tag,
  */
 uint32_t handle_certifycreation(tcti_smw_context_t *ctx, uint16_t tag,
 				const uint8_t *cmd, size_t cmd_size);
+
+/**
+ * handle_unseal() - Process TPM2_Unseal command.
+ * @ctx:      Pointer to the SMW TCTI context structure.
+ * @tag:      TPM structure tag from the command header.
+ * @cmd:      Pointer to the command buffer containing the full TPM command.
+ * @cmd_size: Size of the command buffer in bytes.
+ *
+ * This function handles the TPM2_Unseal command which decrypts and returns
+ * the sensitive data from a sealed data object. The sealed object must have
+ * been previously created with TPM2_Create and loaded with TPM2_Load.
+ *
+ * The function performs the following validations:
+ *   - Object type must be TPM2_ALG_KEYEDHASH
+ *   - Object scheme must be TPM2_ALG_NULL (sealed data, not HMAC key)
+ *   - Object must not have SIGN_ENCRYPT or DECRYPT attributes
+ *   - Object must contain a valid sealed blob
+ *
+ * The decryption uses AES-GCM with the hierarchy proof key. The sealed blob
+ * structure contains:
+ *   - AAD: Magic ("SMWSEAL!"), plaintext size, hierarchy
+ *   - IV: 12 bytes nonce
+ *   - Ciphertext: Encrypted sensitive data
+ *   - Tag: 16 bytes authentication tag
+ *
+ * The function verifies the hierarchy matches, authenticates the AAD and
+ * ciphertext using the GCM tag, and returns the decrypted plaintext.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful unseal, or the corresponding error code.
+ */
+uint32_t handle_unseal(tcti_smw_context_t *ctx, uint16_t tag,
+		       const uint8_t *cmd, size_t cmd_size);
 #endif /* __COMMANDS_H__ */

@@ -14,6 +14,157 @@
 #include "smw_keymgr.h"
 #include "crypto.h"
 
+static uint32_t decrypt_sealed_data(TPMI_RH_HIERARCHY hierarchy,
+				    const uint8_t *blob, uint16_t blob_size,
+				    uint8_t *plaintext_out,
+				    uint16_t *plaintext_size)
+{
+	TSS2_RC rc = TSS2_RC_SUCCESS;
+	enum smw_status_code smw_status = SMW_STATUS_OK;
+
+	/* AEAD structures */
+	struct smw_aead_args aead_args = { 0 };
+	struct smw_aead_init_args init_args = { 0 };
+	struct smw_aead_aad_args aad_args = { 0 };
+	struct smw_aead_final_args final_args = { 0 };
+	struct smw_aead_data_args data_args = { 0 };
+	struct smw_key_descriptor key_desc = { 0 };
+	struct smw_keypair_buffer key_buffer = { 0 };
+
+	const uint8_t *ptr = blob;
+	size_t offset = 0;
+	uint8_t *proof = NULL;
+	uint16_t stored_plaintext_size = 0;
+	uint32_t stored_hierarchy = 0;
+	uint16_t ciphertext_size = 0;
+
+	/* Pointers to blob sections */
+	const uint8_t *iv = blob + SEAL_AAD_SIZE;
+	const uint8_t *ciphertext = blob + SEAL_AAD_SIZE + SEAL_NONCE_SIZE;
+	const uint8_t *tag = blob + blob_size - SEAL_TAG_SIZE;
+
+	if (!blob || !plaintext_out || !plaintext_size) {
+		rc = TSS2_TCTI_RC_BAD_REFERENCE;
+		goto end;
+	}
+
+	/* 1. Verify minimum size */
+	if (blob_size < SEAL_AAD_SIZE + SEAL_NONCE_SIZE + SEAL_TAG_SIZE) {
+		DBG_TRACE("Blob too small: %u < %lu\n", blob_size,
+			  SEAL_AAD_SIZE + SEAL_NONCE_SIZE + SEAL_TAG_SIZE);
+		rc = TSS2_TCTI_RC_INSUFFICIENT_BUFFER;
+		goto end;
+	}
+
+	/* 2. Verify magic */
+	if (memcmp(ptr, SMW_SEALED_BLOB_MAGIC, SMW_SEALED_BLOB_MAGIC_LEN) !=
+	    0) {
+		DBG_TRACE("Invalid blob magic\n");
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+	offset += SMW_SEALED_BLOB_MAGIC_LEN;
+
+	/* 3. Extract plaintext size */
+	memcpy(&stored_plaintext_size, ptr + offset, sizeof(uint16_t));
+	offset += sizeof(uint16_t);
+	ciphertext_size =
+		blob_size - SEAL_AAD_SIZE - SEAL_NONCE_SIZE - SEAL_TAG_SIZE;
+
+	if (ciphertext_size != stored_plaintext_size) {
+		DBG_TRACE("Size mismatch: stored=%u, calculated=%u\n",
+			  stored_plaintext_size, ciphertext_size);
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	/* 4. Extract hierarchy */
+	memcpy(&stored_hierarchy, ptr + offset, sizeof(TPMI_RH_HIERARCHY));
+
+	if (stored_hierarchy != hierarchy) {
+		DBG_TRACE("Hierarchy mismatch: stored=0x%08x, expected=0x%08x\n",
+			  stored_hierarchy, hierarchy);
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	/* 5. Validate sizes */
+	if (*plaintext_size < stored_plaintext_size) {
+		DBG_TRACE("Output buffer too small: %u < %u\n", *plaintext_size,
+			  stored_plaintext_size);
+		rc = TSS2_TCTI_RC_INSUFFICIENT_BUFFER;
+		goto end;
+	}
+
+	/* 6. Get hierarchy proof key */
+	proof = calloc(1, TPM2_SHA256_DIGEST_SIZE);
+	if (!proof) {
+		rc = TSS2_TCTI_RC_MEMORY;
+		goto end;
+	}
+
+	rc = get_hierarchy_proof_key(hierarchy, proof);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* 7. Setup AEAD key descriptor */
+	key_buffer.gen.private_data = proof;
+	key_buffer.gen.private_length = TPM2_SHA256_DIGEST_SIZE;
+
+	key_desc.type_name = SMW_KEY_TYPE_NAME_AES;
+	key_desc.buffer = &key_buffer;
+	key_desc.security_size = BYTES_TO_BITS(TPM2_SHA256_DIGEST_SIZE);
+
+	/* 8. Setup AEAD init args */
+	init_args.subsystem_name = SMW_SUBSYSTEM_NAME_ELE;
+	init_args.mode_name = SMW_AEAD_MODE_NAME_GCM;
+	init_args.op_type_name = SMW_AEAD_OP_TYPE_NAME_DECRYPT;
+	init_args.user_iv = (unsigned char *)iv;
+	init_args.user_iv_length = SEAL_NONCE_SIZE;
+	init_args.iv_length = SEAL_NONCE_SIZE;
+	init_args.plaintext_length = stored_plaintext_size;
+	init_args.key_desc = &key_desc;
+
+	/* AAD = entire header */
+	aad_args.data = (unsigned char *)ptr;
+	aad_args.data_length = SEAL_AAD_SIZE;
+
+	/* Data args */
+	data_args.input = (unsigned char *)ciphertext;
+	data_args.input_length = ciphertext_size;
+	data_args.output = plaintext_out;
+	data_args.output_length = *plaintext_size;
+
+	/* Final args */
+	final_args.data = &data_args;
+	final_args.tag = (unsigned char *)tag;
+	final_args.tag_length = SEAL_TAG_SIZE;
+
+	/* Assemble AEAD args */
+	aead_args.init = &init_args;
+	aead_args.aad = &aad_args;
+	aead_args.final = &final_args;
+
+	/* Execute AEAD decryption */
+	smw_status = smw_aead(&aead_args);
+	if (smw_status != SMW_STATUS_OK) {
+		DBG_TRACE("AEAD decrypt failed: %d\n", smw_status);
+		rc = smw_rc_to_tcti_rc(smw_status);
+		goto end;
+	}
+
+	*plaintext_size = stored_plaintext_size;
+
+	DBG_TRACE("AEAD unseal success\n");
+
+end:
+	if (proof)
+		free(proof);
+
+	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
+	return rc;
+}
+
 static uint32_t verify_creation_ticket(TPMI_RH_HIERARCHY hierarchy,
 				       const tcti_smw_object_t *object,
 				       const TPM2B_DIGEST creation_hash,
@@ -469,6 +620,151 @@ uint32_t handle_certifycreation(tcti_smw_context_t *ctx, uint16_t tag,
 		  "  objectHandle: 0x%08x\n"
 		  "  certifyInfo size: %u bytes\n",
 		  sign_handle, object_handle, certify_info.size);
+
+end:
+	if (params_buffer)
+		free(params_buffer);
+
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		rc = tcti_rc_to_tpm2_rc(tss2_rc);
+		tss2_rc = build_rc_response(ctx, TPM_HEADER_SIZE, tag, rc);
+	}
+
+	return tss2_rc;
+}
+
+uint32_t handle_unseal(tcti_smw_context_t *ctx, uint16_t tag,
+		       const uint8_t *cmd, size_t cmd_size)
+{
+	TPM2_RC rc = TPM2_RC_SUCCESS;
+	TSS2_RC tss2_rc = TSS2_TCTI_RC_GENERAL_FAILURE;
+	size_t offset = TPM_HEADER_SIZE;
+
+	/* Input parameters */
+	TPMI_DH_OBJECT item_handle = 0;
+
+	/* Output parameters */
+	TPM2B_SENSITIVE_DATA out_data = { 0 };
+	uint16_t plaintext_size = sizeof(out_data.buffer);
+
+	/* Session handling */
+	uint32_t session_handle = 0;
+	TPM2B_NONCE nonce_caller = { 0 };
+	tcti_smw_session_t *sess = NULL;
+
+	/* Object */
+	tcti_smw_object_t *obj = NULL;
+
+	/* Response buffer */
+	uint8_t *params_buffer = NULL;
+	size_t resp_params_size = 0;
+
+	/* 1. Check initialization */
+	if (!ctx || !ctx->initialized) {
+		tss2_rc = TSS2_TCTI_RC_BAD_SEQUENCE;
+		goto end;
+	}
+
+	/* 2. Unmarshal item handle */
+	tss2_rc =
+		Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset, &item_handle);
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to unmarshal item handle\n");
+		goto end;
+	}
+
+	/* 3. Unmarshal authorization area */
+	tss2_rc = unmarshal_auth_area(cmd, cmd_size, &offset, &nonce_caller,
+				      &session_handle);
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to unmarshal auth area\n");
+		goto end;
+	}
+
+	/* Find session */
+	if (session_handle != TPM2_RH_PW) {
+		sess = find_session_by_handle(ctx, session_handle);
+		if (!sess || !sess->active) {
+			tss2_rc = TSS2_TCTI_RC_IO_ERROR;
+			goto end;
+		}
+	}
+
+	/* 4. Find the sealed object */
+	obj = find_object_by_handle(ctx, item_handle);
+	if (!obj) {
+		tss2_rc = TSS2_TCTI_RC_IO_ERROR;
+		goto end;
+	}
+
+	/* 5. Validate object type */
+	if (obj->public_area.publicArea.type != TPM2_ALG_KEYEDHASH) {
+		DBG_TRACE("Object is not KEYEDHASH type: 0x%04x\n",
+			  obj->public_area.publicArea.type);
+		tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	/* 6. Validate it's a sealed data object (not HMAC key) */
+	if (!is_sealed_data_object(&obj->public_area.publicArea)) {
+		DBG_TRACE("Object is not a sealed data object\n");
+		tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	/* 7. Check scheme is NULL (sealed data, not HMAC) */
+	if (obj->public_area.publicArea.parameters.keyedHashDetail.scheme
+		    .scheme != TPM2_ALG_NULL) {
+		DBG_TRACE("Object scheme is not NULL: 0x%04x\n",
+			  obj->public_area.publicArea.parameters.keyedHashDetail
+				  .scheme.scheme);
+		tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	/* 8. Retrieve the sealed data */
+	if (obj->sealed_blob.size == 0) {
+		DBG_TRACE("No sealed data in object\n");
+		tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	tss2_rc = decrypt_sealed_data(obj->hierarchy, obj->sealed_blob.buffer,
+				      obj->sealed_blob.size, out_data.buffer,
+				      &plaintext_size);
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to decrypt sealed data\n");
+		goto end;
+	}
+
+	out_data.size = plaintext_size;
+
+	/* 9. Marshal output parameters */
+	params_buffer = calloc(1, TPM2_MAX_CAP_BUFFER);
+	if (!params_buffer) {
+		tss2_rc = TSS2_TCTI_RC_MEMORY;
+		goto end;
+	}
+
+	tss2_rc = Tss2_MU_TPM2B_SENSITIVE_DATA_Marshal(&out_data, params_buffer,
+						       TPM2_MAX_CAP_BUFFER,
+						       &resp_params_size);
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to marshal outData\n");
+		goto end;
+	}
+
+	/* 10. Build auth response */
+	tss2_rc = build_auth_response(ctx, sess, TPM2_RC_SUCCESS,
+				      TPM2_CC_Unseal, tag, params_buffer,
+				      resp_params_size, &nonce_caller, NULL);
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to build auth response\n");
+		goto end;
+	}
+
+	DBG_TRACE("Unseal successful: handle=0x%08x, data_size=%u\n",
+		  item_handle, out_data.size);
 
 end:
 	if (params_buffer)

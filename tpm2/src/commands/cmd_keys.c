@@ -15,6 +15,194 @@
 #define SMW_PRIVATE_BLOB_MAGIC	   "SMWKEYID"
 #define SMW_PRIVATE_BLOB_MAGIC_LEN 8
 
+static uint32_t encrypt_sealed_data(TPMI_RH_HIERARCHY hierarchy,
+				    const uint8_t *plaintext,
+				    uint16_t plaintext_size, uint8_t *blob_out,
+				    uint16_t *blob_size)
+{
+	TSS2_RC rc = TSS2_RC_SUCCESS;
+	enum smw_status_code smw_status = SMW_STATUS_OK;
+
+	/* AEAD structures */
+	struct smw_aead_args aead_args = { 0 };
+	struct smw_aead_init_args init_args = { 0 };
+	struct smw_aead_aad_args aad_args = { 0 };
+	struct smw_aead_final_args final_args = { 0 };
+	struct smw_aead_data_args data_args = { 0 };
+	struct smw_key_descriptor key_desc = { 0 };
+	struct smw_keypair_buffer key_buffer = { 0 };
+
+	uint8_t *ptr = blob_out;
+	uint8_t *proof = NULL;
+	uint8_t output_iv[SEAL_NONCE_SIZE] = { 0 };
+	size_t offset = 0;
+	size_t iv_offset = SMW_SEALED_BLOB_MAGIC_LEN + sizeof(uint16_t) +
+			   sizeof(TPMI_RH_HIERARCHY);
+
+	if (!plaintext || !blob_out || !blob_size) {
+		rc = TSS2_TCTI_RC_BAD_REFERENCE;
+		goto end;
+	}
+
+	if (plaintext_size == 0 || plaintext_size > SMW_MAX_SEALED_DATA) {
+		DBG_TRACE("Invalid data size: %u (max: %u)\n", plaintext_size,
+			  SMW_MAX_SEALED_DATA);
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	/* Allocate proof buffer */
+	proof = calloc(1, TPM2_SHA256_DIGEST_SIZE);
+	if (!proof) {
+		rc = TSS2_TCTI_RC_MEMORY;
+		goto end;
+	}
+
+	rc = get_hierarchy_proof_key(hierarchy, proof);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* 3. Build AAD header in blob */
+	/* Magic */
+	memcpy(ptr + offset, SMW_SEALED_BLOB_MAGIC, SMW_SEALED_BLOB_MAGIC_LEN);
+	offset += SMW_SEALED_BLOB_MAGIC_LEN;
+
+	/* Plaintext size */
+	memcpy(ptr + offset, &plaintext_size, sizeof(uint16_t));
+	offset += sizeof(uint16_t);
+
+	/* Hierarchy */
+	memcpy(ptr + offset, &hierarchy, sizeof(TPMI_RH_HIERARCHY));
+	offset += sizeof(TPMI_RH_HIERARCHY);
+
+	/* IV will be generated during encryption process */
+	offset += SEAL_NONCE_SIZE;
+
+	/* 4. Setup AEAD structures */
+	key_buffer.gen.private_data = proof;
+	key_buffer.gen.private_length = TPM2_SHA256_DIGEST_SIZE;
+	key_desc.type_name = SMW_KEY_TYPE_NAME_AES;
+	key_desc.buffer = &key_buffer;
+	key_desc.security_size = BYTES_TO_BITS(TPM2_SHA256_DIGEST_SIZE);
+
+	init_args.subsystem_name = SMW_SUBSYSTEM_NAME_ELE;
+	init_args.mode_name = SMW_AEAD_MODE_NAME_GCM;
+	init_args.op_type_name = SMW_AEAD_OP_TYPE_NAME_ENCRYPT;
+	init_args.user_iv = NULL;
+	init_args.user_iv_length = 0;
+	init_args.iv_length = SEAL_NONCE_SIZE;
+	init_args.plaintext_length = plaintext_size;
+	init_args.key_desc = &key_desc;
+
+	aad_args.data = ptr;
+	aad_args.data_length = SEAL_AAD_SIZE;
+
+	data_args.input = (unsigned char *)plaintext;
+	data_args.input_length = plaintext_size;
+	data_args.output = ptr + offset;
+	data_args.output_length = plaintext_size;
+
+	final_args.data = &data_args;
+	final_args.tag = ptr + offset + plaintext_size;
+	final_args.tag_length = SEAL_TAG_SIZE;
+	final_args.output_iv = output_iv;
+	final_args.output_iv_length = SEAL_NONCE_SIZE;
+
+	aead_args.init = &init_args;
+	aead_args.aad = &aad_args;
+	aead_args.final = &final_args;
+
+	/* 5. Execute AEAD encryption */
+	smw_status = smw_aead(&aead_args);
+	if (smw_status != SMW_STATUS_OK) {
+		DBG_TRACE("AEAD encrypt failed: %d\n", smw_status);
+		rc = smw_rc_to_tcti_rc(smw_status);
+		goto end;
+	}
+
+	/* Store the generated IV in the blob */
+	memcpy(ptr + iv_offset, output_iv, SEAL_NONCE_SIZE);
+
+	*blob_size = offset + plaintext_size + SEAL_TAG_SIZE;
+
+	DBG_TRACE("AEAD sealed blob created:\n"
+		  "  AAD (%lu bytes):\n"
+		  "    - Magic: %s (%u bytes)\n"
+		  "    - Plaintext size: %u\n"
+		  "    - Hierarchy: 0x%08x\n"
+		  "  IV: %u bytes\n"
+		  "  Ciphertext: %u bytes\n"
+		  "  Tag: %u bytes\n"
+		  "  Total: %u bytes\n",
+		  SEAL_AAD_SIZE, SMW_SEALED_BLOB_MAGIC,
+		  SMW_SEALED_BLOB_MAGIC_LEN, plaintext_size, hierarchy,
+		  SEAL_NONCE_SIZE, plaintext_size, SEAL_TAG_SIZE, *blob_size);
+
+end:
+	if (proof)
+		free(proof);
+
+	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
+	return rc;
+}
+
+static uint32_t
+create_sealed_data_object(tcti_smw_context_t *ctx,
+			  const TPM2B_SENSITIVE_CREATE *in_sensitive,
+			  const TPM2B_PUBLIC *in_public,
+			  TPMI_RH_HIERARCHY hierarchy, create_output_t *output)
+{
+	TSS2_RC rc = TSS2_RC_SUCCESS;
+	uint16_t blob_size = SMW_MAX_SEALED_BLOB_SIZE;
+
+	if (!ctx || !in_sensitive || !in_public) {
+		rc = TSS2_TCTI_RC_BAD_REFERENCE;
+		goto end;
+	}
+
+	/* Validate sensitive data size */
+	if (in_sensitive->sensitive.data.size == 0) {
+		DBG_TRACE("No data to seal\n");
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	if (in_sensitive->sensitive.data.size > SMW_MAX_SEALED_DATA) {
+		DBG_TRACE("Sealed data too large: %u > %u\n",
+			  in_sensitive->sensitive.data.size,
+			  SMW_MAX_SEALED_DATA);
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	/* Encrypt with AEAD */
+	rc = encrypt_sealed_data(hierarchy, in_sensitive->sensitive.data.buffer,
+				 in_sensitive->sensitive.data.size,
+				 output->out_private.buffer, &blob_size);
+	if (rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to encrypt sealed data\n");
+		goto end;
+	}
+
+	output->out_private.size = blob_size;
+
+	/* Copy public area */
+	output->out_public = *in_public;
+
+	if (output->out_private.size > sizeof(output->out_private.buffer)) {
+		DBG_TRACE("Private blob too large\n");
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	DBG_TRACE("Sealed data object created, private blob size: %u\n",
+		  output->out_private.size);
+
+end:
+	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
+	return rc;
+}
+
 static uint32_t build_creation_hash(const TPM2B_CREATION_DATA *creation_data,
 				    TPM2B_DIGEST *creation_hash,
 				    TPMI_ALG_HASH hash_alg)

@@ -216,6 +216,27 @@ tpm2_create -C primary_ecdsa.ctx -G ecc256 -g sha256 \
 > fixed scheme (e.g., ECDSA with SHA256), the `-g` parameter must match the key's
 > scheme or be omitted to use the key's default scheme.
 
+### Create Sealed data object
+Creates a sealed data object that encrypts sensitive data under a parent key.
+The sealed data can only be retrieved using TPM2_Unseal.
+Use the create command with the `-i` option to specify the input file containing
+the data to seal:
+```sh
+tpm2_create -C primary.ctx -i secret.txt \
+  -u sealed.pub -r sealed.priv
+```
+
+**Parameters**:
+- `-C primary.ctx`: Parent key context
+- `-i secret.txt`: Input file containing the sensitive data to seal (max 256 bytes)
+- `-u sealed.pub`: Output file for the public portion
+- `-r sealed.priv`: Output file for the private portion (encrypted blob)
+
+> 📝 **Note:**
+> The sealed data is encrypted using AES-GCM with a hierarchy-specific proof key.
+> The encrypted blob contains authenticated metadata (magic, size, hierarchy),
+> IV, ciphertext, and authentication tag. Maximum sealed data size is 256 bytes.
+
 ## Load Key object
 Loads a previously created key object into TPM memory, making it available for
 cryptographic operations. Use the load command:
@@ -393,6 +414,17 @@ tpm2_certifycreation -C signing_key.ctx -c created_key.ctx \
 - `--attestation certify_creation.attest`: Output file for the attestation structure (TPMS_ATTEST)
 - `-o certify_creation.sig`: Output file for the signature
 
+## Unseal Data
+Decrypts and retrieves the sensitive data from a loaded sealed data object.
+The unsealed data is written to the specified output file. Use the unseal command:
+```sh
+tpm2_unseal -c sealed.ctx -o unsealed_secret.txt
+```
+
+**Parameters**:
+- `-c sealed.ctx`: Context of the loaded sealed object
+- `-o unsealed_secret.txt`: Output file for the decrypted sensitive data
+
 # TPM2 Commands Supported
 
 Following table lists TPM2 Commands implemented in the SMW's TSS2 TCTI library.
@@ -420,3 +452,4 @@ Following table lists TPM2 Commands implemented in the SMW's TSS2 TCTI library.
 | `TPM2_PCR_Extend`       |
 | `TPM2_PCR_Allocate`     |
 | `TPM2_CertifyCreation`  |
+| `TPM2_Unseal`           |

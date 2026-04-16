@@ -498,3 +498,27 @@ end:
 	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
 	return rc;
 }
+
+bool is_sealed_data_object(const TPMT_PUBLIC *pub)
+{
+	bool is_sealed = false;
+
+	if (!pub)
+		goto end;
+
+	if (pub->type != TPM2_ALG_KEYEDHASH)
+		goto end;
+
+	if (pub->parameters.keyedHashDetail.scheme.scheme != TPM2_ALG_NULL)
+		goto end;
+
+	/* Sealed data should not have sign or decrypt */
+	if (pub->objectAttributes &
+	    (TPMA_OBJECT_SIGN_ENCRYPT | TPMA_OBJECT_DECRYPT))
+		goto end;
+
+	is_sealed = true;
+
+end:
+	return is_sealed;
+}

@@ -518,4 +518,16 @@ uint32_t get_effective_scheme(TPMT_PUBLIC *pub,
 			      const TPMT_SIG_SCHEME *key_scheme,
 			      const TPMT_SIG_SCHEME *in_scheme,
 			      TPMT_SIG_SCHEME *effective_scheme);
+
+/**
+ * is_sealed_data_object() - Check if a public area describes a sealed data object
+ * @pub: Pointer to the public area to check
+ *
+ * A sealed data object is a KEYEDHASH object with:
+ *   - Scheme set to NULL (not HMAC or XOR)
+ *   - No sign or decrypt attributes
+ *
+ * Return: true if sealed data object, false otherwise
+ */
+bool is_sealed_data_object(const TPMT_PUBLIC *pub);
 #endif /* __CRYPTO_H__ */

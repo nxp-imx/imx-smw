@@ -25,7 +25,7 @@ static CK_BYTE msg[] = {
 	0x6a, 0x80, 0x70, 0x83, 0xe5, 0x87, 0xbc, 0x56,
 };
 
-static CK_ULONG msg_len = 128;
+static const CK_ULONG msg_len = sizeof(msg);
 
 static CK_BYTE msg_sha512[] = {
 	0xe6, 0x7e, 0xf4, 0x68, 0x5e, 0x8e, 0x06, 0x28, 0x20, 0x86, 0x9e,
@@ -36,7 +36,7 @@ static CK_BYTE msg_sha512[] = {
 	0xbf, 0x68, 0x72, 0x69, 0x8d, 0x00, 0x48, 0x42, 0x55
 };
 
-static CK_ULONG msg_sha512_len = 64;
+static const CK_ULONG msg_sha512_len = sizeof(msg_sha512);
 
 static int sign_verify_multipart_no_init(CK_FUNCTION_LIST_3_0_PTR pfunc)
 {

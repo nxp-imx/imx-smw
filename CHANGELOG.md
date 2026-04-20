@@ -143,6 +143,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix PKCS#11 version check.
 * Add multiple permitted algo cipher key test.
 * Check if the test suite setup is successful.
+* Fix converity minor findings.
 
 ---
 ### <a id ="rel_5_3"></a></br>**Release 5.3**

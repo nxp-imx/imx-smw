@@ -1064,13 +1064,13 @@ end:
 	return status;
 }
 
-static int multipart_cipher_block(CK_FUNCTION_LIST_3_0_PTR pfunc,
-				  CK_SESSION_HANDLE sess,
-				  CK_VOID_PTR pParameter,
-				  CK_ULONG ulParameterLen, CK_BYTE_PTR input,
-				  CK_BYTE_PTR output, CK_ULONG input_len,
-				  CK_ULONG_PTR output_len, bool encrypt,
-				  bool final)
+static CK_RV multipart_cipher_block(CK_FUNCTION_LIST_3_0_PTR pfunc,
+				    CK_SESSION_HANDLE sess,
+				    CK_VOID_PTR pParameter,
+				    CK_ULONG ulParameterLen, CK_BYTE_PTR input,
+				    CK_BYTE_PTR output, CK_ULONG input_len,
+				    CK_ULONG_PTR output_len, bool encrypt,
+				    bool final)
 {
 	CK_RV ret = CKR_OK;
 
@@ -1117,7 +1117,7 @@ static int multipart_cipher_block(CK_FUNCTION_LIST_3_0_PTR pfunc,
 	return ret;
 }
 
-static int
+static CK_RV
 multipart_cipher_update(CK_FUNCTION_LIST_3_0_PTR pfunc, CK_SESSION_HANDLE sess,
 			CK_VOID_PTR pParameter, CK_ULONG ulParameterLen,
 			CK_BYTE_PTR input, CK_BYTE_PTR output,
@@ -1138,7 +1138,12 @@ multipart_cipher_update(CK_FUNCTION_LIST_3_0_PTR pfunc, CK_SESSION_HANDLE sess,
 
 	for (; i < update_loop_count - 1; i++) {
 		output_len = 0;
-		in_index = i * input_len;
+
+		if (MUL_OVERFLOW(i, input_len, &in_index)) {
+			ret = CKR_ARGUMENTS_BAD;
+			return ret;
+		}
+
 		out_index = *total_output_len;
 
 		ret = multipart_cipher_block(pfunc, sess, pParameter,
@@ -1152,7 +1157,11 @@ multipart_cipher_update(CK_FUNCTION_LIST_3_0_PTR pfunc, CK_SESSION_HANDLE sess,
 		*total_output_len += output_len;
 	}
 
-	in_index = i * input_len;
+	if (MUL_OVERFLOW(i, input_len, &in_index)) {
+		ret = CKR_ARGUMENTS_BAD;
+		return ret;
+	}
+
 	out_index = *total_output_len;
 
 	output_len = 0;

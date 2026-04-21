@@ -94,9 +94,9 @@ static const struct psa_hash_algo_mapping psa_hash_algos[] = {{
  */
 psa_algorithm_t cli_hash_algo_to_psa(enum hash_algo algo)
 {
-\tsize_t i;
+\tsize_t i = 0;
 
-\tfor (i = 0; i < ARRAY_SIZE(psa_hash_algos); i++) {
+\tfor (; i < ARRAY_SIZE(psa_hash_algos); i++) {
 \t\tif (psa_hash_algos[i].cli_algo == algo)
 \t\t\treturn psa_hash_algos[i].psa_algo;
 \t}
@@ -111,9 +111,9 @@ psa_algorithm_t cli_hash_algo_to_psa(enum hash_algo algo)
  */
 const char *psa_hash_algo_to_string(psa_algorithm_t alg)
 {
-\tsize_t i;
+\tsize_t i = 0;
 
-\tfor (i = 0; i < ARRAY_SIZE(psa_hash_algos); i++) {
+\tfor (; i < ARRAY_SIZE(psa_hash_algos); i++) {
 \t\tif (psa_hash_algos[i].psa_algo == alg)
 \t\t\treturn psa_hash_algos[i].name;
 \t}

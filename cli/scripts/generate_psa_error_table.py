@@ -96,9 +96,9 @@ def generate_complete_file(error_list):
     helper_functions = """\
 static const struct cli_error_info *get_psa_error_info(psa_status_t status)
 {
-\tsize_t i;
+\tsize_t i = 0;
 
-\tfor (i = 0; i < ARRAY_SIZE(psa_error_table); i++) {
+\tfor (; i < ARRAY_SIZE(psa_error_table); i++) {
 \t\tif (psa_error_table[i].code == (int)status)
 \t\t\treturn &psa_error_table[i];
 \t}

@@ -255,9 +255,9 @@ const size_t hash_algo_table_size = sizeof(hash_algo_table) / sizeof(hash_algo_t
  */
 size_t get_hash_output_length(enum hash_algo algo)
 {
-\tsize_t i;
+\tsize_t i = 0;
 
-\tfor (i = 0; i < hash_algo_table_size; i++) {
+\tfor (; i < hash_algo_table_size; i++) {
 \t\tif (hash_algo_table[i].algo == algo)
 \t\t\treturn hash_algo_table[i].digest_len;
 \t}
@@ -272,9 +272,9 @@ size_t get_hash_output_length(enum hash_algo algo)
  */
 bool is_hash_algo_xof(enum hash_algo algo)
 {
-\tsize_t i;
+\tsize_t i = 0;
 
-\tfor (i = 0; i < hash_algo_table_size; i++) {
+\tfor (; i < hash_algo_table_size; i++) {
 \t\tif (hash_algo_table[i].algo == algo)
 \t\t\treturn hash_algo_table[i].is_xof;
 \t}

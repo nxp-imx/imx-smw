@@ -107,9 +107,9 @@ def generate_complete_file(status_list):
     helper_functions = """\
 static const struct cli_error_info *get_smw_error_info(enum smw_status_code status)
 {
-\tsize_t i;
+\tsize_t i = 0;
 
-\tfor (i = 0; i < ARRAY_SIZE(smw_error_table); i++) {
+\tfor (; i < ARRAY_SIZE(smw_error_table); i++) {
 \t\tif (smw_error_table[i].code == (int)status)
 \t\t\treturn &smw_error_table[i];
 \t}

@@ -105,9 +105,6 @@ enum cli_exit_code cli_hash_operation(struct parsed_options *args)
 
 	if (config_status != SMW_STATUS_OK) {
 		LOG_ERROR("Algorithm not supported by configured subsystem");
-		FPRINTF(stderr,
-			"Error: Hash algorithm not supported by subsystem.\n");
-		FPRINTF(stderr, "       Check SMW configuration file.\n");
 		goto cleanup;
 	}
 

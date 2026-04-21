@@ -117,9 +117,9 @@ static const struct smw_hash_algo_mapping smw_hash_algos[] = {{
  */
 smw_hash_algo_t cli_hash_algo_to_smw(enum hash_algo algo)
 {
-\tsize_t i;
+\tsize_t i = 0;
 
-\tfor (i = 0; i < ARRAY_SIZE(smw_hash_algos); i++) {
+\tfor (; i < ARRAY_SIZE(smw_hash_algos); i++) {
 \t\tif (smw_hash_algos[i].cli_algo == algo)
 \t\t\treturn smw_hash_algos[i].smw_algo;
 \t}
@@ -134,9 +134,9 @@ smw_hash_algo_t cli_hash_algo_to_smw(enum hash_algo algo)
  */
 const char *cli_smw_get_hash_algo_name(smw_hash_algo_t algo)
 {
-\tsize_t i;
+\tsize_t i = 0;
 
-\tfor (i = 0; i < ARRAY_SIZE(smw_hash_algos); i++) {
+\tfor (; i < ARRAY_SIZE(smw_hash_algos); i++) {
 \t\tif (smw_hash_algos[i].smw_algo == algo)
 \t\t\treturn smw_hash_algos[i].name;
 \t}

@@ -170,7 +170,7 @@ const size_t lifecycle_table_size = sizeof(lifecycle_table) / sizeof(lifecycle_t
  */
 const char *lifecycle_name_to_string(smw_lifecycle_t lifecycle)
 {
-\tsize_t i;
+\tsize_t i = 0;
 
 \tfor (i = 0; i < lifecycle_table_size; i++) {
 \t\tif (lifecycle_table[i].smw_value == lifecycle)
@@ -188,7 +188,7 @@ const char *lifecycle_name_to_string(smw_lifecycle_t lifecycle)
  */
 smw_lifecycle_t string_to_lifecycle_name(const char *name)
 {
-\tsize_t i;
+\tsize_t i = 0;
 
 \tif (!name)
 \t\treturn SMW_LIFECYCLE_NAME_NONE;

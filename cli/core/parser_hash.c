@@ -70,7 +70,8 @@ void cli_hash_help_common(void)
  */
 static void print_hash_algo_list(void)
 {
-	size_t i;
+	size_t i = 0;
+	const struct hash_algo_info *info = NULL;
 
 	printf("\n");
 	printf("Available Hash Algorithms\n");
@@ -78,8 +79,8 @@ static void print_hash_algo_list(void)
 	printf("%-15s %-12s %s\n", "Algorithm", "Digest Size", "Description");
 	printf("%-15s %-12s %s\n", "---------", "-----------", "-----------");
 
-	for (i = 0; i < hash_algo_table_size; i++) {
-		const struct hash_algo_info *info = &hash_algo_table[i];
+	for (; i < hash_algo_table_size; i++) {
+		info = &hash_algo_table[i];
 
 		if (info->is_xof) {
 			printf("%-15s %-12s %s\n", info->name, "variable",
@@ -100,7 +101,7 @@ static void print_hash_algo_list(void)
  */
 static enum hash_algo parse_hash_algo(const char *algo_str)
 {
-	size_t i;
+	size_t i = 0;
 
 	/* Validate input */
 	if (!algo_str || algo_str[0] == '\0') {
@@ -118,7 +119,7 @@ static enum hash_algo parse_hash_algo(const char *algo_str)
 	}
 
 	/* Search in the hash algorithm table */
-	for (i = 0; i < hash_algo_table_size; i++) {
+	for (; i < hash_algo_table_size; i++) {
 		if (!strcasecmp(algo_str, hash_algo_table[i].name))
 			return hash_algo_table[i].algo;
 	}

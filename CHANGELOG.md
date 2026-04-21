@@ -109,6 +109,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Check that the output tag is in the correct location and add few PSA tests with a larger output size.
 * Add Cipher test with all supported mode key.
 * Add AEAD test with all supported mode key.
+* Split ELE OEM Master key derivation.
 
 #### PKCS#11 Library
 

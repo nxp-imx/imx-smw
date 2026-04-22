@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024-2025 NXP
+ * Copyright 2024-2026 NXP
  */
 
 #include "utils.h"
@@ -9,8 +9,26 @@
 
 static int ele_cancel_operation(struct smw_op_context *ctx)
 {
-	(void)ctx;
-	return SMW_STATUS_OK;
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!ctx)
+		goto end;
+
+	switch (ctx->op_id) {
+	case SMW_CRYPTO_OP_ID_AEAD_MULTI_PART:
+		status = ele_cancel_aead_op(ctx);
+		break;
+
+	default:
+		status = SMW_STATUS_OK;
+		break;
+	}
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
 }
 
 static void ele_free_context(struct smw_op_context *ctx)
@@ -27,6 +45,10 @@ static void ele_free_context(struct smw_op_context *ctx)
 
 	case SMW_CRYPTO_OP_ID_SIGN_MULTI_PART:
 		ele_free_sign_context(ctx);
+		break;
+
+	case SMW_CRYPTO_OP_ID_AEAD_MULTI_PART:
+		ele_free_aead_context(ctx);
 		break;
 
 	default:
@@ -49,6 +71,10 @@ static int ele_copy_context(struct smw_op_context *src_ctx,
 
 	case SMW_CRYPTO_OP_ID_SIGN_MULTI_PART:
 		status = ele_copy_sign_context(src_ctx, dst_ctx);
+		break;
+
+	case SMW_CRYPTO_OP_ID_AEAD_MULTI_PART:
+		status = ele_copy_aead_context(src_ctx, dst_ctx);
 		break;
 
 	default:

@@ -47,6 +47,7 @@ struct hdl {
  * @srkh_fused: True if OEM SRKH is fused
  * @sign_verif_opaque_key: True if the signature verification support opaque key
  * @edwards_be: True if the Edwards key and signature are big endian in ELE
+ * @aead_multipart: True if the firmware supports AEAD multi-part operations
  *
  * This structure stores some useful ELE information.
  */
@@ -62,6 +63,7 @@ struct ele_info {
 	bool srkh_fused;
 	bool sign_verif_opaque_key;
 	bool edwards_be;
+	bool aead_multipart;
 };
 
 /**
@@ -301,8 +303,38 @@ bool ele_storage_handle(struct subsystem_context *ele_ctx,
 			int *status);
 
 /**
+ * ele_free_aead_context() - Free the AEAD context
+ * @ctx: AEAD context
+ */
+void ele_free_aead_context(struct smw_op_context *ctx);
+
+/**
+ * ele_copy_aead_context() - Copy the AEAD context
+ * @src_ctx: Source operation context arguments structure
+ * @dst_ctx: Destination operation context arguments structure
+ *
+ * Allocates and copies the AEAD source context to destination source context.
+ *
+ * Return:
+ * SMW_STATUS_OK                      - Success
+ * SMW_STATUS_ALLOC_FAILURE           - Memory allocation failure
+ */
+int ele_copy_aead_context(struct smw_op_context *src_ctx,
+			  struct smw_op_context *dst_ctx);
+
+/**
+ * ele_cancel_aead_op() - Cancel/abort the multi-part AEAD operation.
+ * @ctx: Pointer to the operation context structure.
+ *
+ * Return:
+ * SMW_STATUS_OK                      - Success
+ * SMW_STATUS_INVALID_PARAM           - Parameter invalid
+ */
+int ele_cancel_aead_op(struct smw_op_context *ctx);
+
+/**
  * ele_aead_handle() - Handle the AEAD encryption/decryption operation.
- * @hdl: Pointer to the ELE handles structure.
+ * @ele_ctx: Pointer to the ELE subsystem context structure.
  * @operation_id: Security Operation ID.
  * @args: Pointer to a structure of arguments defined by the internal API.
  * @status: Error code set only if the Security Operation is handled.
@@ -314,8 +346,8 @@ bool ele_storage_handle(struct subsystem_context *ele_ctx,
  * * true:	- the Security Operation has been handled.
  * * false:	- the Security Operation has not been handled.
  */
-bool ele_aead_handle(struct hdl *hdl, enum operation_id operation_id,
-		     void *args, int *status);
+bool ele_aead_handle(struct subsystem_context *ele_ctx,
+		     enum operation_id operation_id, void *args, int *status);
 
 /**
  * ele_derive_key() - ELE key derivation operation.
@@ -709,6 +741,21 @@ int tls_mac_finish(struct hdl *hdl, void *args);
 int is_rsa_pub_expo_default(struct smw_keymgr_descriptor *key_desc);
 
 /**
+ * check_aead_multi_part_support() - Check if ELE FW supports multi-part op
+ * @ele_ctx: Pointer to the ELE subsystem context structure.
+ * @is_multi_part_supported: Pointer to store the multi-part support status.
+ *
+ * This function queries the ELE device information to determine if the current
+ * firmware version supports multi-part AEAD operations.
+ *
+ * Return:
+ * SMW_STATUS_OK                         - Success
+ * Other SMW status error from ele_get_device_info().
+ */
+int check_aead_multi_part_support(struct subsystem_context *ele_ctx,
+				  bool *is_multi_part_supported);
+
+/**
  * ele_calculate_expected_output_len() - Calculate expected output length
  * @params: Pointer to output calculation parameters
  * @expected_output_len: Pointer to store calculated output length
@@ -754,5 +801,30 @@ int ele_calculate_expected_output_len(struct crypto_output_params *params,
  */
 int ele_update_buffered_len(unsigned int *remaining_buffered_len,
 			    unsigned int input_len, unsigned int output_len);
+
+/**
+ * open_cipher_service() - Open a cipher service
+ * @hdl: Pointer to handle structure
+ * @cipher_hdl: Pointer to store cipher service handle
+ *
+ * Opens a cipher service and returns a handle for subsequent cipher operations.
+ *
+ * Return:
+ * SMW_STATUS_OK            - Success
+ * SMW_STATUS_INVALID_PARAM - Invalid parameters
+ */
+int open_cipher_service(struct hdl *hdl, hsm_hdl_t *cipher_hdl);
+
+/**
+ * close_cipher_service() - Close a cipher service
+ * @cipher_hdl: Cipher service handle to close
+ *
+ * Closes a cipher service and releases associated resources.
+ *
+ * Return:
+ * SMW_STATUS_OK            - Success
+ * SMW_STATUS_INVALID_PARAM - Invalid parameters
+ */
+int close_cipher_service(hsm_hdl_t cipher_hdl);
 
 #endif /* __COMMON_H__ */

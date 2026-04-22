@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2025 NXP
+ * Copyright 2023-2026 NXP
  */
 
 #include "compiler.h"
@@ -249,6 +249,25 @@ end:
 	return status;
 }
 
+int check_aead_multi_part_support(struct subsystem_context *ele_ctx,
+				  bool *is_multi_part_supported)
+{
+	int status = SMW_STATUS_OK;
+
+	struct ele_info *info = &ele_ctx->info;
+
+	*is_multi_part_supported = false;
+
+	status = ele_get_device_info(ele_ctx);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	*is_multi_part_supported = info->aead_multipart;
+
+end:
+	return status;
+}
+
 int ele_calculate_expected_output_len(struct crypto_output_params *params,
 				      unsigned int *expected_output_len)
 {
@@ -359,6 +378,39 @@ end:
 	return status;
 }
 
+int open_cipher_service(struct hdl *hdl, hsm_hdl_t *cipher_hdl)
+{
+	hsm_err_t err = HSM_NO_ERROR;
+	open_svc_cipher_args_t open_cipher_args = { 0 };
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	err = hsm_open_cipher_service(hdl->key_store, &open_cipher_args,
+				      cipher_hdl);
+
+	SMW_DBG_PRINTF(DEBUG, "cipher_hdl: %u\n", *cipher_hdl);
+
+	SMW_DBG_PRINTF(VERBOSE, "hsm_open_cipher_service returned %d\n", err);
+
+	return ele_convert_err(err);
+}
+
+int close_cipher_service(hsm_hdl_t cipher_hdl)
+{
+	hsm_err_t err = HSM_NO_ERROR;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	SMW_DBG_PRINTF(DEBUG, "cipher_hdl: %u\n", cipher_hdl);
+
+	if (cipher_hdl)
+		err = hsm_close_cipher_service(cipher_hdl);
+
+	SMW_DBG_PRINTF(VERBOSE, "hsm_close_cipher_service returned %d\n", err);
+
+	return ele_convert_err(err);
+}
+
 __weak void ele_free_hash_context(struct smw_op_context *ctx)
 {
 	(void)ctx;
@@ -391,6 +443,27 @@ __weak int tls_mac_finish(struct hdl *hdl, void *args)
 {
 	(void)hdl;
 	(void)args;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__weak void ele_free_aead_context(struct smw_op_context *ctx)
+{
+	(void)ctx;
+}
+
+__weak int ele_copy_aead_context(struct smw_op_context *src_ctx,
+				 struct smw_op_context *dst_ctx)
+{
+	(void)src_ctx;
+	(void)dst_ctx;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__weak int ele_cancel_aead_op(struct smw_op_context *ctx)
+{
+	(void)ctx;
 
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }

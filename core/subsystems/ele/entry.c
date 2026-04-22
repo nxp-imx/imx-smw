@@ -388,10 +388,11 @@ __weak bool ele_storage_handle(struct subsystem_context *ele_ctx,
 	return false;
 }
 
-__weak bool ele_aead_handle(struct hdl *hdl, enum operation_id operation_id,
-			    void *args, int *status)
+__weak bool ele_aead_handle(struct subsystem_context *ele_ctx,
+			    enum operation_id operation_id, void *args,
+			    int *status)
 {
-	(void)hdl;
+	(void)ele_ctx;
 	(void)operation_id;
 	(void)args;
 	(void)status;
@@ -441,7 +442,7 @@ static int execute(enum operation_id operation_id, void *args)
 		goto end;
 	else if (ele_storage_handle(&ele_ctx, operation_id, args, &status))
 		goto end;
-	else if (ele_aead_handle(hdl, operation_id, args, &status))
+	else if (ele_aead_handle(&ele_ctx, operation_id, args, &status))
 		goto end;
 
 	ele_asymmetric_encryption_handle(&ele_ctx, operation_id, args, &status);

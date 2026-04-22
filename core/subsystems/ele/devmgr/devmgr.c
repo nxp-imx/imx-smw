@@ -31,14 +31,21 @@ static void features_per_soc(struct ele_info *info)
 	case SOC_IMX8ULP:
 		break;
 
+	case SOC_IMX943:
+		info->aead_multipart = true;
+		info->sign_verif_opaque_key = true;
+
+		break;
+
 	case SOC_IMX91:
 	case SOC_IMX93:
 		info->edwards_be = true;
 		break;
 
 	default:
-		/* All others SOC (95, 943, 952, ...)*/
+		/* All others SOC (95, 952, ...)*/
 		info->sign_verif_opaque_key = true;
+		info->aead_multipart = true;
 		break;
 	}
 }

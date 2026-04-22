@@ -14,7 +14,8 @@
 #include "config.h"
 
 #include "common.h"
-
+#include "ele_nvm_manager.h"
+#include "ele_nvm_service.h"
 #include "ele_crypto.h"
 
 static struct subsystem_context ele_ctx = { 0 };
@@ -22,16 +23,51 @@ static struct subsystem_context ele_ctx = { 0 };
 static int open_session(struct hdl *hdl)
 {
 	int status = SMW_STATUS_OK;
-	status_t err = kStatus_Success;
+	status_t err = STATUS_SUCCESS;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	if (IS_ENABLED(CONFIG_SMW_NVM_MANAGER)) {
+		ele_nvm_manager_t manager = { 0 };
+
+		manager.nvm_read = smw_utils_file_read;
+		manager.nvm_write = smw_utils_file_write;
+
+		err = smw_utils_file_initialise();
+		SMW_DBG_PRINTF(DEBUG, "%s returned %d\n",
+			       "smw_utils_file_initialise", err);
+		if (err != 0)
+			goto end;
+
+		err = ele_register_nvm_manager(&manager);
+		SMW_DBG_PRINTF(DEBUG, "%s returned %d\n",
+			       "ele_register_nvm_manager", err);
+		if (err != STATUS_SUCCESS)
+			goto end;
+	}
 
 	err = ele_open_session(hdl->mu_base, &hdl->session);
-	SMW_DBG_PRINTF(DEBUG, "ele_open_session returned %d\n", err);
-	if (err != kStatus_Success)
+	SMW_DBG_PRINTF(DEBUG, "%s returned %d\n", "ele_open_session", err);
+	if (err != STATUS_SUCCESS)
 		goto end;
 
 	SMW_DBG_PRINTF(DEBUG, "session: %u\n", hdl->session);
+
+	if (IS_ENABLED(CONFIG_SMW_NVM_MANAGER)) {
+		err = ele_open_nvm_storage_service(hdl->mu_base, hdl->session,
+						   &hdl->storage_id);
+		SMW_DBG_PRINTF(DEBUG, "%s returned %d\n",
+			       "ele_open_nvm_storage_service", err);
+		if (err != STATUS_SUCCESS)
+			goto end;
+
+		SMW_DBG_PRINTF(DEBUG, "storage_id: %u\n", hdl->storage_id);
+
+		err = ele_storage_master_import_from_nvm(hdl->mu_base,
+							 hdl->storage_id);
+		SMW_DBG_PRINTF(DEBUG, "%s returned %d\n",
+			       "ele_storage_master_import_from_nvm", err);
+		if (err == STATUS_NO_DATA)
+			err = STATUS_SUCCESS;
+	}
 
 end:
 	status = ele_convert_err(err);
@@ -45,10 +81,24 @@ static void close_session(struct hdl *hdl)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
+	if (IS_ENABLED(CONFIG_SMW_NVM_MANAGER)) {
+		if (hdl->storage_id) {
+			SMW_DBG_PRINTF(DEBUG, "storage_id: %u\n",
+				       hdl->storage_id);
+			err = ele_close_nvm_storage_service(hdl->mu_base,
+							    hdl->storage_id);
+			SMW_DBG_PRINTF(DEBUG, "%s returned %d\n",
+				       "ele_close_nvm_storage_service", err);
+
+			hdl->storage_id = 0;
+		}
+	}
+
 	if (hdl->session) {
 		SMW_DBG_PRINTF(DEBUG, "session_hdl: %u\n", hdl->session);
 		err = ele_close_session(hdl->mu_base, hdl->session);
-		SMW_DBG_PRINTF(DEBUG, "ele_close_session returned %d\n", err);
+		SMW_DBG_PRINTF(DEBUG, "%s returned %d\n", "ele_close_session",
+			       err);
 
 		hdl->session = 0;
 	}
@@ -60,6 +110,7 @@ static void reset_handles(void)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
+	ele_close_key_store_service(hdl);
 	close_session(hdl);
 
 	// coverity[missing_unlock]
@@ -133,6 +184,8 @@ static int load(void)
 	}
 
 	hdl->mu_base = smw_utils_get_mu_base();
+	if (!hdl->mu_base)
+		goto end;
 
 	smw_utils_shared_memory_init();
 

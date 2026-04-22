@@ -6,6 +6,7 @@
 #include "ele_crypto_keystore.h"
 #include "ele_crypto_data_storage.h"
 #include "ele_crypto_internal.h"
+#include "ele_nvm_storage.h"
 
 #include "common.h"
 #include "utils_ex.h"

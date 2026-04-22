@@ -1194,24 +1194,21 @@ enum smw_status_code smw_aead_final(struct smw_aead_final_args *args)
 					 &aead_args, subsystem_id);
 
 	/*
-	 * Release the operation context if the final operation has returned any
-	 * status code except SMW_STATUS_OUTPUT_TOO_SHORT and
-	 * SMW_STATUS_INVALID_PARAM.
-	 */
-	if (status != SMW_STATUS_OUTPUT_TOO_SHORT &&
-	    status != SMW_STATUS_INVALID_PARAM) {
-		tmp_status = smw_utils_free_context(&args->data->context);
-		if (status == SMW_STATUS_OK)
-			status = tmp_status;
-	}
-
-	/*
-	 * SMW_STATUS_OUTPUT_TOO_SHORT is the expected internal status if the
-	 * 'get output buffer length' feature succeed and must be convert to
-	 * SMW_STATUS_OK
+	 * Get output buffer length feature - If the output buffer is NULL and
+	 * subsystem returns SMW_STATUS_OUTPUT_TOO_SHORT, update the status to
+	 * SMW_STATUS_OK.
 	 */
 	if (status == SMW_STATUS_OUTPUT_TOO_SHORT && !args->data->output)
 		status = SMW_STATUS_OK;
+
+	if (status == SMW_STATUS_OUTPUT_TOO_SHORT ||
+	    status == SMW_STATUS_INVALID_PARAM ||
+	    (status == SMW_STATUS_OK && !args->data->output))
+		goto end;
+
+	tmp_status = smw_utils_free_context(&args->data->context);
+	if (status == SMW_STATUS_OK)
+		status = tmp_status;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

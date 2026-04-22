@@ -461,12 +461,12 @@ their operations (with modes, keys, ...).
 The supported operations by a subsystem are listed in the
 <a href="#table-secure-subsystem-vs-operations">Secure Subsystems vs
 Operation table</a>. More details on the subsystem (devices) capabilities are
-available in the [User API documentation](../API/SecurityMiddleware_API.pdf)
+available in the [User Manual documentation](../user_manual/SMW_UserManual_UM12513.pdf)
 in the chapter **Subsystem Capabilities**.
 
 The writing rules and content of the library configuration are available in the
-[User API documentation](../API/SecurityMiddleware_API.pdf) in the chapter
-**How to write a configuration file**.
+[User Manual documentation](../user_manual/SMW_UserManual_UM12513.pdf)
+in the chapter **Subsystems Configuration**.
 
 A configuration file example is available [here](../../osal/linux/config/smw_config.txt).
 
@@ -569,7 +569,7 @@ $ /etc/opt/smw/smw_system_conf.sh --help
 
 
 ### 4.2.2. Use of OSAL APIs and system environment
-The [User API documentation - OSAL chapter](../API/SecurityMiddleware_API.pdf)
+The [User Manual documentation - OSAL chapter](../user_manual/SMW_UserManual_UM12513.pdf)
 lists the OSAL APIs exposed to configure the database and the subsystem(s) used.
 
 The system environment variable `SMW_CONFIG_FILE` is used to load the library
@@ -648,7 +648,7 @@ Below is the organization of the project sources.
 |-- CHANGELOG.md                    List of changes per version
 |-- CMakeLists.txt                  Main CMake configuration
 |-- <span style="color:orange">Documentations</span>                  Documents
-|   |-- <span style="color:orange">API</span>                         User APIs documentation sources
+|   |-- <span style="color:orange">user_manual</span>                 User manual documentation sources
 |   |   |-- ...
 |   `-- <span style="color:orange">user_guide</span>                  User guide and build instructions
 |       `-- ...
@@ -708,8 +708,8 @@ Below is the organization of the project sources.
 |   |   |   `-- ...
 |   |   `-- ...
 |   `-- <span style="color:orange">tests</span>                       PKCS#11 Test suite
-|-- <span style="color:orange">public</span>                          SMW's interface headers (refer to APIs documentation)
-|   |-- <span style="color:orange">psa</span>                         ARM PSA APIs interface headers (refer to APIs documentation)
+|-- <span style="color:orange">public</span>                          SMW's interface headers (refer to user manual documentation)
+|   |-- <span style="color:orange">psa</span>                         ARM PSA APIs interface headers (refer to user manual documentation)
 |   |   |-- crypto.h
 |   |   |-- crypto_sizes.h
 |   |   |-- crypto_struct.h
@@ -720,17 +720,22 @@ Below is the organization of the project sources.
 |   |   |-- internal_trusted_storage.h
 |   |   |-- protected_storage.h
 |   |   `-- storage_common.h
-|   |-- <span style="color:orange">smw</span>                        SMW's API headers (refer to APIs documentations)
+|   |-- <span style="color:orange">smw</span>                        SMW's API headers (refer to user manual documentations)
 |   |   |-- attr.h
 |   |   |-- <span style="color:orange">crypto</span>
-|   |   |    |-- aead.h
-|   |   |    |-- asymmetric_encryption.h
-|   |   |    `-- op_context.h
+|   |   |   |-- aead.h
+|   |   |   |-- asymmetric_encryption.h
+|   |   |   |-- cipher.h
+|   |   |   |-- hash.h
+|   |   |   |-- mac.h
+|   |   |   |-- op_context.h
+|   |   |   |-- rng.h
+|   |   |   `-- sign.h
 |   |   |-- <span style="color:orange">kdf</span>
-|   |   |   `-- oem_master_key.h
+|   |   |   |-- oem_master_key.h
+|   |   |   `-- tls.h
 |   |   |-- names.h
-|   |   |-- object.h
-|   |   `-- tls.h
+|   |   `-- object.h
 |   |-- smw_config.h
 |   |-- smw_crypto.h
 |   |-- smw_device.h

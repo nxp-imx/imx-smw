@@ -4,7 +4,7 @@ function(find_python_modules all_found inst_mod)
   set(${all_found} 0 PARENT_SCOPE)
   find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
-  file(STRINGS ${DOC_API_SOURCE_DIR}/requirements.txt py_modules)
+  file(STRINGS ${DOC_USER_MANUAL_SOURCE_DIR}/requirements.txt py_modules)
 
   foreach(mod ${py_modules})
     message(STATUS "Check if python3 module ${mod} installed")
@@ -34,12 +34,12 @@ endif()
 
 message(STATUS "Documentations")
 
-set(DOC_API_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/API/source)
-set(DOC_API_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/API)
+set(DOC_USER_MANUAL_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/user_manual/source)
+set(DOC_USER_MANUAL_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/user_manual)
 
 set(BUILD_DOC_DEFINITIONS
-    -DBUILD_DOC_SOURCE_DIR=${DOC_API_SOURCE_DIR}
-    -DBUILD_DOC_OUTPUT_DIR=${DOC_API_OUTPUT_DIR}
+    -DBUILD_DOC_SOURCE_DIR=${DOC_USER_MANUAL_SOURCE_DIR}
+    -DBUILD_DOC_OUTPUT_DIR=${DOC_USER_MANUAL_OUTPUT_DIR}
     -DBUILD_DOC_PRJ_DIR=${CMAKE_SOURCE_DIR})
 
 if(${FORMAT} STREQUAL "html" OR ${FORMAT} STREQUAL "all")
@@ -52,9 +52,10 @@ endif()
 
 string(REPLACE ";" " " BUILD_DOC_BUILDER "${BUILD_DOC_BUILDER}")
 
-set(PROJECT_COPYRIGHT "2021-2026 - NXP - Non-Confidential")
-configure_file(${DOC_API_SOURCE_DIR}/conf.py.in
-               ${DOC_API_SOURCE_DIR}/conf.py)
+string(TIMESTAMP CURRENT_YEAR "%Y")
+set(PROJECT_COPYRIGHT "2021-${CURRENT_YEAR} - NXP - Non-Confidential")
+configure_file(${DOC_USER_MANUAL_SOURCE_DIR}/conf.py.in
+               ${DOC_USER_MANUAL_SOURCE_DIR}/conf.py)
 
 find_python_modules(ALL_PY_MOD_FOUND FALSE)
 if(${ALL_PY_MOD_FOUND} EQUAL 0)

@@ -27,8 +27,8 @@ Project Installation instructions can be found in the [Installation instructions
 ## Tests
 Project tests build, installation and execution instructions can be found in the [tests](./Documentations/user_guide/build_instructions.md#7-tests)
 
-## User APIs documentation
-User API documentation is available [here](./Documentations/API/SecurityMiddleware_API.pdf)
+## User Manual documentation
+User Manual documentation is available [here](./Documentations/user_manual/SMW_UserManual_UM12513.pdf)
 
 ## List of changes
 The list of changes can be found in the [ChangeLog](./CHANGELOG.md) file.

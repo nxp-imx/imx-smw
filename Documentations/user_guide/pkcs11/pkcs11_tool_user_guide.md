@@ -492,7 +492,7 @@ pkcs11-tool --module $MODULE_PKCS11 \
 ```
 
 > 📝 **Note 1:**
-> For asymmetric key, deleting the public key is not going to delete the token key pair 
+> For asymmetric key, deleting the public key is not going to delete the token key pair
 > and public key will be regenerated from the private key.
 > To delete the key pair, delete the private key object.
 > This will automatically delete the associated public key as well.
@@ -728,8 +728,8 @@ SMW's PKCS11 secure subsystem token target fully depends on the library
 subsystem versus operation configuration and the subsystem capabilities.
 
 Please refer to the [User Guide](../user_guide.md) and
-the [User API documentation](../../API/SecurityMiddleware_API.pdf), chapters
-`Subsystems Capabilities` and `How to write a configuration file`
+the [User Manual documentation](../../user_manual/SMW_UserManual_UM12513.pdf),
+chapters `Secure Subsystems Capabilities` and `Subsystems Configuration`
 
 ## Key Generation
 

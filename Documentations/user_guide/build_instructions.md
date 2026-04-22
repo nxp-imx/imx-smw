@@ -413,8 +413,8 @@ cmake [<options>] [-S <path-to-source>]
 
 ## 4.2. Build environment options
 The <a href="#table-build-environment-options">build environment options</a>
-setup the overall project by defining the compiler, the debug level and the API
-documentation generation.
+setup the overall project by defining the compiler, the debug level and the
+user manual documentation generation.
 
 <table>
 <caption id="table-build-environment-options">Build environment options</caption>
@@ -478,12 +478,12 @@ documentation generation.
 </tr>
 <tr>
   <td>FORMAT</td>
-  <td>-DFORMAT=[all|html|pdf]</td>
-  <td>Configure the APIs documentation format to generate:
+  <td>-DFORMAT=[all|html|xml]</td>
+  <td>Configure the user manual documentation format to generate:
 	<ul>
-	<li>all  &rarr; Build PDF and HTML</li>
+	<li>all  &rarr; Build XML and HTML</li>
 	<li>html &rarr; Build only HTML</li>
-	<li>pdf  &rarr; Build only PDF</li>
+	<li>pdf  &rarr; Build only XML</li>
 	</ul>
 	By default, documentation is not generated.</td>
 </tr>

@@ -1,0 +1,344 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright 2026 NXP
+ */
+
+#include <inttypes.h>
+
+#include "smw/attr.h"
+#include "debug.h"
+
+#include "common.h"
+
+#define KEY_USAGE(_smw, _ele)                                                  \
+	{                                                                      \
+		.smw = SMW_ATTR_USAGE_##_smw, .ele = KEYUSAGE_##_ele,          \
+	}
+
+static const struct {
+	smw_attr_usage_t smw;
+	key_usage_t ele;
+} key_usage[] = { KEY_USAGE(CACHE, CACHE),
+		  KEY_USAGE(ENCRYPT, ENCRYPT),
+		  KEY_USAGE(DECRYPT, DECRYPT),
+		  KEY_USAGE(SIGN_MESSAGE, SIGNMESSAGE),
+		  KEY_USAGE(VERIFY_MESSAGE, VERIFYMESSAGE),
+		  KEY_USAGE(SIGN_HASH, SIGNHASH),
+		  KEY_USAGE(VERIFY_HASH, VERIFYHASH),
+		  KEY_USAGE(DERIVE, DERIVE) };
+
+#define PERMITTED_ALGO(_ele_permitted_algo, _smw_algo, _smw_mode, _smw_hash,   \
+		       _smw_class)                                             \
+	{                                                                      \
+		.ele_permitted_algo = PERMITTED_##_ele_permitted_algo,         \
+		.smw_algo = SMW_ATTR_ALGO_##_smw_algo, .is_curve = false,      \
+		.is_kdf = false, .smw_mode = SMW_ATTR_MODE_##_smw_mode,        \
+		.smw_hash = SMW_ATTR_HASH_##_smw_hash,                         \
+		.smw_class = SMW_ATTR_CLASS_##_smw_class,                      \
+	}
+
+#define PERMITTED_ALGO_CURVE(_ele_permitted_algo, _smw_algo, _smw_curve,       \
+			     _smw_hash, _smw_class)                            \
+	{                                                                      \
+		.ele_permitted_algo = PERMITTED_##_ele_permitted_algo,         \
+		.smw_algo = SMW_ATTR_ALGO_##_smw_algo, .is_curve = true,       \
+		.is_kdf = false, .smw_curve = SMW_ATTR_CURVE_##_smw_curve,     \
+		.smw_hash = SMW_ATTR_HASH_##_smw_hash,                         \
+		.smw_class = SMW_ATTR_CLASS_##_smw_class,                      \
+	}
+
+#define PERMITTED_ALGO_KEY_AGREEMENT(_smw_algo, _smw_kdf, _smw_hash)           \
+	{                                                                      \
+		.ele_permitted_algo =                                          \
+			PERMITTED_##_smw_algo##_##_smw_kdf##_##_smw_hash,      \
+		.is_curve = false, .is_kdf = true,                             \
+		.smw_algo = SMW_ATTR_ALGO_##_smw_algo,                         \
+		.smw_kdf = SMW_ATTR_ALGO_##_smw_kdf,                           \
+		.smw_hash = SMW_ATTR_HASH_##_smw_hash,                         \
+		.smw_class = SMW_ATTR_CLASS_KEY_AGREEMENT,                     \
+	}
+
+#define ELE_MIN_LENGTH_BIT ((key_permitted_alg_t)BIT(15))
+#define ELE_LENGTH_OFFSET  16u
+#define ELE_LENGTH_MASK	   ((key_permitted_alg_t)0x3F)
+#define ELE_LENGTH_MASK_OFFSET                                                 \
+	((key_permitted_alg_t)ELE_LENGTH_MASK << ELE_LENGTH_OFFSET)
+
+static const struct {
+	key_permitted_alg_t ele_permitted_algo;
+	smw_attr_algo_t smw_algo;
+	bool is_curve;
+	bool is_kdf;
+	union {
+		smw_attr_algo_t smw_mode;
+		smw_attr_algo_t smw_curve;
+		smw_attr_algo_t smw_kdf;
+	};
+	smw_attr_algo_t smw_hash;
+	smw_attr_algo_t smw_class;
+} permitted_algos[] = {
+	PERMITTED_ALGO(HMAC_SHA256, HMAC, NONE, SHA256, MAC),
+	PERMITTED_ALGO(HMAC_SHA384, HMAC, NONE, SHA384, MAC),
+	PERMITTED_ALGO(CMAC, AES, CMAC, NONE, MAC),
+	PERMITTED_ALGO(CTR, AES, CTR, NONE, SYMMETRIC_ENCRYPTION),
+	PERMITTED_ALGO(CFB, AES, CFB, NONE, SYMMETRIC_ENCRYPTION),
+	PERMITTED_ALGO(OFB, AES, OFB, NONE, SYMMETRIC_ENCRYPTION),
+	PERMITTED_ALGO(ECB, AES, ECB_NO_PAD, NONE, SYMMETRIC_ENCRYPTION),
+	PERMITTED_ALGO(CBC, AES, CBC_NO_PAD, NONE, SYMMETRIC_ENCRYPTION),
+	PERMITTED_ALGO(CCM, AES, CCM, NONE, AEAD),
+	PERMITTED_ALGO(GCM, AES, GCM, NONE, AEAD),
+	PERMITTED_ALGO(CHACHA20_POLY1305, CHACHA20, POLY1305, NONE, AEAD),
+	PERMITTED_ALGO(RSA_PKCS1_V1_5_SHA224, RSA, PKCS1_1_5, SHA224,
+		       ASYMMETRIC_SIGNATURE),
+	PERMITTED_ALGO(RSA_PKCS1_V1_5_SHA256, RSA, PKCS1_1_5, SHA256,
+		       ASYMMETRIC_SIGNATURE),
+	PERMITTED_ALGO(RSA_PKCS1_V1_5_SHA384, RSA, PKCS1_1_5, SHA384,
+		       ASYMMETRIC_SIGNATURE),
+	PERMITTED_ALGO(RSA_PKCS1_V1_5_SHA512, RSA, PKCS1_1_5, SHA512,
+		       ASYMMETRIC_SIGNATURE),
+	PERMITTED_ALGO(RSA_PKCS1_V1_5_ANY_HASH, RSA, PKCS1_1_5, ANY,
+		       ASYMMETRIC_SIGNATURE),
+	PERMITTED_ALGO(RSA_PKCS1_PSS_MGF1_SHA224, RSA, PSS, SHA224,
+		       ASYMMETRIC_SIGNATURE),
+	PERMITTED_ALGO(RSA_PKCS1_PSS_MGF1_SHA256, RSA, PSS, SHA256,
+		       ASYMMETRIC_SIGNATURE),
+	PERMITTED_ALGO(RSA_PKCS1_PSS_MGF1_SHA384, RSA, PSS, SHA384,
+		       ASYMMETRIC_SIGNATURE),
+	PERMITTED_ALGO(RSA_PKCS1_PSS_MGF1_SHA512, RSA, PSS, SHA512,
+		       ASYMMETRIC_SIGNATURE),
+	PERMITTED_ALGO(RSA_PKCS1_PSS_MGF1_ANY_HASH, RSA, PSS, ANY,
+		       ASYMMETRIC_SIGNATURE),
+	PERMITTED_ALGO_CURVE(ECDSA_SHA224, ECDSA, ANY, SHA224,
+			     ASYMMETRIC_SIGNATURE),
+	PERMITTED_ALGO_CURVE(ECDSA_SHA256, ECDSA, ANY, SHA256,
+			     ASYMMETRIC_SIGNATURE),
+	PERMITTED_ALGO_CURVE(ECDSA_SHA384, ECDSA, ANY, SHA384,
+			     ASYMMETRIC_SIGNATURE),
+	PERMITTED_ALGO_CURVE(ECDSA_SHA512, ECDSA, ANY, SHA512,
+			     ASYMMETRIC_SIGNATURE),
+	PERMITTED_ALGO_CURVE(ED25519PH, EDDSA, ED25519, NONE,
+			     ASYMMETRIC_SIGNATURE),
+	PERMITTED_ALGO_CURVE(ED448PH, EDDSA, ED448, NONE, ASYMMETRIC_SIGNATURE),
+	PERMITTED_ALGO_CURVE(PURE_EDDSA, EDDSA, ANY, NONE,
+			     ASYMMETRIC_SIGNATURE),
+	PERMITTED_ALGO_CURVE(EDDSA_ALL, EDDSA, ANY, ANY, ASYMMETRIC_SIGNATURE),
+	PERMITTED_ALGO(ALL_CIPHER, AES, ANY, NONE, SYMMETRIC_ENCRYPTION),
+	PERMITTED_ALGO(ALL_AEAD, AES, ANY, NONE, AEAD),
+	PERMITTED_ALGO(ATTEST_CMAC, AES, CMAC, NONE, KEY_ATTESTATION),
+	PERMITTED_ALGO_CURVE(ATTEST_ECDSA_SHA224, ECDSA, ANY, SHA224,
+			     KEY_ATTESTATION),
+	PERMITTED_ALGO_CURVE(ATTEST_ECDSA_SHA256, ECDSA, ANY, SHA256,
+			     KEY_ATTESTATION),
+	PERMITTED_ALGO_CURVE(ATTEST_ECDSA_SHA384, ECDSA, ANY, SHA384,
+			     KEY_ATTESTATION),
+	PERMITTED_ALGO_CURVE(ATTEST_ECDSA_SHA512, ECDSA, ANY, SHA512,
+			     KEY_ATTESTATION),
+	PERMITTED_ALGO(TLS1_2_MASTER_SECRET_SHA256, TLS_1_2, NONE, SHA256,
+		       KEY_DERIVATION),
+	PERMITTED_ALGO(TLS1_2_MASTER_SECRET_SHA384, TLS_1_2, NONE, SHA384,
+		       KEY_DERIVATION),
+	PERMITTED_ALGO(TLS1_2_MASTER_SECRET_SHA_ANY, TLS_1_2, NONE, ANY,
+		       KEY_DERIVATION),
+	PERMITTED_ALGO_CURVE(TLS1_3_MASTER_SECRET_SHA256, TLS_1_3, ANY, SHA256,
+			     KEY_DERIVATION),
+	PERMITTED_ALGO_CURVE(TLS1_3_MASTER_SECRET_SHA384, TLS_1_3, ANY, SHA384,
+			     KEY_DERIVATION),
+	PERMITTED_ALGO_CURVE(TLS1_3_MASTER_SECRET_SHA_ANY, TLS_1_3, ANY, ANY,
+			     KEY_DERIVATION),
+	PERMITTED_ALGO_CURVE(TLS1_3_MASTER_SECRET_SHA_ANY, HKDF, NONE, ANY,
+			     KEY_DERIVATION),
+	PERMITTED_ALGO_KEY_AGREEMENT(ECDH, HKDF, SHA256),
+	PERMITTED_ALGO(RSA_PKCS1_V15_CRYPT, RSA, PKCS1_1_5, NONE,
+		       ASYMMETRIC_ENCRYPTION),
+	PERMITTED_ALGO(RSA_PKCS1_OAEP_SHA1, RSA, OAEP, SHA1,
+		       ASYMMETRIC_ENCRYPTION),
+	PERMITTED_ALGO(RSA_PKCS1_OAEP_SHA224, RSA, OAEP, SHA224,
+		       ASYMMETRIC_ENCRYPTION),
+	PERMITTED_ALGO(RSA_PKCS1_OAEP_SHA256, RSA, OAEP, SHA256,
+		       ASYMMETRIC_ENCRYPTION),
+	PERMITTED_ALGO(RSA_PKCS1_OAEP_SHA384, RSA, OAEP, SHA384,
+		       ASYMMETRIC_ENCRYPTION),
+	PERMITTED_ALGO(RSA_PKCS1_OAEP_SHA512, RSA, OAEP, SHA512,
+		       ASYMMETRIC_ENCRYPTION),
+	PERMITTED_ALGO(RSA_PKCS1_OAEP_SHA_ANY, RSA, OAEP, ANY,
+		       ASYMMETRIC_ENCRYPTION),
+	PERMITTED_ALGO(RSA_PKCS1_CRYPT_ALL, RSA, ANY, ANY,
+		       ASYMMETRIC_ENCRYPTION),
+};
+
+static void convert_usage_to_ele(smw_attr_usage_t smw, key_usage_t *ele)
+{
+	unsigned int i = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (; i < ARRAY_SIZE(key_usage); i++) {
+		if (key_usage[i].smw & smw)
+			*ele |= key_usage[i].ele;
+	}
+
+	SMW_DBG_PRINTF(DEBUG,
+		       "Usage flags - SMW: 0x%" PRIx32 "-> ELE: 0x%" PRIx32
+		       "\n",
+		       smw, *ele);
+}
+
+static void convert_usage_to_smw(key_usage_t ele, smw_attr_usage_t *smw)
+{
+	unsigned int i = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	*smw = 0;
+
+	for (; i < ARRAY_SIZE(key_usage); i++) {
+		if (key_usage[i].ele & ele)
+			*smw |= key_usage[i].smw;
+	}
+
+	SMW_DBG_PRINTF(DEBUG,
+		       "Usage flags - ELE: 0x%" PRIx32 "-> SMW: 0x%" PRIx32
+		       "\n",
+		       ele, *smw);
+}
+
+static void convert_algo_to_ele(smw_attr_algo_t smw, key_permitted_alg_t *ele)
+{
+	unsigned int i = 0;
+	smw_attr_algo_t algo = SMW_ATTR_GET_ALGO(smw);
+	smw_attr_algo_t mode = SMW_ATTR_GET_MODE(smw);
+	smw_attr_algo_t curve = SMW_ATTR_GET_CURVE(smw);
+	smw_attr_algo_t kdf = SMW_ATTR_GET_KDF(smw);
+	smw_attr_algo_t hash = SMW_ATTR_GET_HASH(smw);
+	smw_attr_algo_t class = SMW_ATTR_GET_CLASS(smw);
+	smw_attr_algo_t length = SMW_ATTR_GET_LENGTH(smw);
+	uint64_t ele_algo = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (; i < ARRAY_SIZE(permitted_algos); i++) {
+		if (permitted_algos[i].smw_class != class)
+			continue;
+
+		if (permitted_algos[i].smw_algo != algo)
+			continue;
+
+		if (permitted_algos[i].is_curve) {
+			if (permitted_algos[i].smw_curve !=
+				    SMW_ATTR_CURVE_ANY &&
+			    permitted_algos[i].smw_curve != curve)
+				continue;
+		} else if (permitted_algos[i].is_kdf) {
+			if (permitted_algos[i].smw_kdf != SMW_ATTR_CURVE_ANY &&
+			    permitted_algos[i].smw_kdf != kdf)
+				continue;
+		} else {
+			if (permitted_algos[i].smw_mode != SMW_ATTR_MODE_ANY &&
+			    permitted_algos[i].smw_mode != mode)
+				continue;
+		}
+
+		if (permitted_algos[i].smw_hash != SMW_ATTR_HASH_ANY &&
+		    permitted_algos[i].smw_hash != hash)
+			continue;
+
+		ele_algo = permitted_algos[i].ele_permitted_algo;
+
+		if (class == SMW_ATTR_CLASS_MAC) {
+			length <<= ELE_LENGTH_OFFSET;
+			ele_algo = SET_CLEAR_MASK(ele_algo, length,
+						  ELE_LENGTH_MASK_OFFSET);
+
+			if (SMW_ATTR_IS_MIN_LENGTH(smw))
+				ele_algo |= ELE_MIN_LENGTH_BIT;
+		}
+
+		(void)SET_OVERFLOW(ele_algo, *ele);
+
+		break;
+	}
+
+	SMW_DBG_PRINTF(DEBUG,
+		       "Permitted algo - SMW: %#" PRIx64 "->ELE : %#" PRIx32
+		       "\n ",
+		       smw, *ele);
+}
+
+static void convert_algo_to_smw(key_permitted_alg_t ele, smw_attr_algo_t *smw)
+{
+	unsigned int i = 0;
+	smw_attr_algo_t length = (ele >> ELE_LENGTH_OFFSET) & ELE_LENGTH_MASK;
+	bool min_length = (ele & ELE_MIN_LENGTH_BIT) ? true : false;
+	unsigned long ele_algo = ele;
+	smw_attr_algo_t mode = SMW_ATTR_MODE_NONE;
+	smw_attr_algo_t hash = SMW_ATTR_HASH_NONE;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	*smw = 0;
+
+	for (; i < ARRAY_SIZE(permitted_algos); i++) {
+		ele_algo = ele;
+
+		if (permitted_algos[i].smw_class == SMW_ATTR_CLASS_MAC) {
+			ele_algo = SET_CLEAR_MASK(ele_algo, 0,
+						  ELE_LENGTH_MASK_OFFSET);
+			ele_algo &= ~ELE_MIN_LENGTH_BIT;
+		}
+
+		if (permitted_algos[i].ele_permitted_algo == ele_algo) {
+			mode = permitted_algos[i].smw_mode;
+			hash = permitted_algos[i].smw_hash;
+
+			*smw = (((permitted_algos[i].smw_class &
+				  SMW_ATTR_CLASS_MASK)
+				 << SMW_ATTR_CLASS_OFFSET) |
+				((permitted_algos[i].smw_algo &
+				  SMW_ATTR_ALGO_MASK)
+				 << SMW_ATTR_ALGO_OFFSET) |
+				((mode & (SMW_ATTR_MODE_MASK))
+				 << SMW_ATTR_MODE_OFFSET) |
+				((hash & (SMW_ATTR_HASH_MASK))
+				 << SMW_ATTR_HASH_OFFSET));
+
+			if (permitted_algos[i].smw_class ==
+			    SMW_ATTR_CLASS_MAC) {
+				if (min_length)
+					*smw = SMW_ATTR_SET_MIN_LENGTH(*smw,
+								       length);
+				else
+					*smw = SMW_ATTR_SET_LENGTH(*smw,
+								   length);
+			}
+
+			break;
+		}
+	}
+
+	SMW_DBG_PRINTF(DEBUG,
+		       "Permitted algo - ELE: 0x%" PRIx32 "-> SMW: 0x%" PRIx64
+		       "\n",
+		       ele, *smw);
+}
+
+void ele_set_key_policy(key_permitted_alg_t *ele_permitted_algo,
+			key_usage_t *ele_usage_flags,
+			smw_attr_algo_t smw_permitted_algo,
+			smw_attr_usage_t smw_usage_flags)
+{
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	convert_usage_to_ele(smw_usage_flags, ele_usage_flags);
+	convert_algo_to_ele(smw_permitted_algo, ele_permitted_algo);
+}
+
+void ele_get_key_policy(smw_attr_algo_t *smw_permitted_algo,
+			smw_attr_usage_t *smw_usage_flags,
+			key_permitted_alg_t ele_permitted_algo,
+			key_usage_t ele_usage_flags)
+{
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	convert_usage_to_smw(ele_usage_flags, smw_usage_flags);
+	convert_algo_to_smw(ele_permitted_algo, smw_permitted_algo);
+}

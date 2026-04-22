@@ -9,6 +9,10 @@ add_private_sources(ele_crypto
 )
 
 add_private_sources_ifdef(ele_crypto CONFIG_ENABLE_RNG ele_rng.c)
+add_private_sources_ifdef(ele_crypto CONFIG_ENABLE_KEYMGR_MODULE
+        ele_crypto_key_mgr.c
+        ele_crypto_keystore.c
+        ele_crypto_key_group_mng.c)
 
 get_filename_component(CMAKE_PARENT_LIST_DIR ${CMAKE_PARENT_LIST_FILE} DIRECTORY)
 get_filename_component(CMAKE_PARENT_LIST_DIR ${CMAKE_PARENT_LIST_DIR} DIRECTORY)

@@ -14,6 +14,11 @@ if(CONFIG_SMW_ELE_RTOS)
         )
 
         add_private_sources_ifdef(ele_rtos CONFIG_ENABLE_RNG rng.c)
+        add_private_sources_ifdef(ele_rtos CONFIG_ENABLE_KEYMGR_MODULE key_group.c
+                key_store.c
+                key_policy.c
+                lifecycle.c
+                keymgr.c)
 
         add_private_directories(ele_rtos ${INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 endif()

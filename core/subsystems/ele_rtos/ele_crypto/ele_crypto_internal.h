@@ -10,6 +10,7 @@
 
 #define RESPONSE_SUCCESS		    (0xd6u)
 #define RESPONSE_ERROR_SIZE		    (0x1d29u)
+#define RESPONSE_ERROR_GROUP_FULL	    (0x1929u)
 #define SHIFT_16			    (16u)
 #define SHIFT_8				    (8u)
 #define MSG_TAG_CMD			    (0x17u)
@@ -144,6 +145,11 @@
 #define PUB_KEY_GEN_SIZE	  (0x7u)
 #define PUB_KEY_GEN_RESPONSE_HDR  (0xe1320307u)
 #define PUB_KEY_GEN_KEY_SIZE_MASK (0xffffu)
+
+#define GET_ATTRIBUTE		   (0x174c0407u)
+#define GET_ATTRIBUTE_SIZE	   (0x4u)
+#define GET_ATTRIBUTE_RESPONSE_HDR (0xe14c0907u)
+#define GET_ATTRIBUTE_RSP_SIZE	   (0x9u)
 
 #define KEY_DEL		     (0x174e0407u)
 #define KEY_DEL_SIZE	     (0x4u)

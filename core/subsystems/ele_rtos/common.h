@@ -7,6 +7,7 @@
 #define __COMMON_H__
 
 #define PSA_COMPLIANT
+#include "ele_crypto_key_mgr.h"
 
 #include "constants.h"
 #include "list.h"
@@ -261,6 +262,120 @@ bool ele_asymmetric_encryption_handle(struct subsystem_context *ele_ctx,
 				      void *args, int *status);
 
 /**
+ * ele_set_pubkey_type() - Set the ELE public key type
+ * @key_type_id: SMW Key type ID.
+ * @ele_type: ELE key type corresponding.
+ *
+ * Return:
+ * SMW_STATUS_OK                       - Success
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED  - Key type not supported
+ */
+int ele_set_pubkey_type(enum smw_config_key_type_id key_type_id,
+			key_type_t *ele_type);
+
+/**
+ * ele_set_key_policy() - Convert the user key policy to ELE key policy
+ * @ele_permitted_algo: Pointer to ELE permitted algorithm.
+ * @ele_usage_flags: Pointer to ELE usage flags.
+ * @smw_permitted_algo: SMW permitted algorithm.
+ * @smw_usage_flags: SMW usage flags.
+ *
+ * Return:
+ * SMW_STATUS_OK                         - Success
+ * SMW_STATUS_KEY_POLICY_WARNING_IGNORED - One of the user key policy is ignored
+ * Other SMW status error.
+ */
+void ele_set_key_policy(key_permitted_alg_t *ele_permitted_algo,
+			key_usage_t *ele_usage_flags,
+			smw_attr_algo_t smw_permitted_algo,
+			smw_attr_usage_t smw_usage_flags);
+
+/**
+ * ele_get_key_policy() - Convert the ELE key policy to user key policy
+ * @smw_permitted_algo: Pointer to SMW permitted algorithm.
+ * @smw_usage_flags: Pointer to SMW usage flags.
+ * @ele_permitted_algo: ELE permitted algorithm.
+ * @ele_usage_flags: ELE usage flags.
+ *
+ * Return:
+ * SMW_STATUS_OK                         - Success
+ * SMW_STATUS_INVALID_PARAM              - Invalid parameters
+ * SMW_STATUS_ALLOC_FAILURE              - Memory allocation failure
+ * SMW_STATUS_OPERATION_FAILURE          - Unexpected operation failure
+ */
+void ele_get_key_policy(smw_attr_algo_t *smw_permitted_algo,
+			smw_attr_usage_t *smw_usage_flags,
+			key_permitted_alg_t ele_permitted_algo,
+			key_usage_t ele_usage_flags);
+
+/**
+ * ele_export_public_key() - Export the ELE public key
+ * @ele_ctx: Pointer to the ELE subsystem context structure.
+ * @key_desc: Key descriptor.
+ *
+ * The function exports the public key of the given @key_desc->identifier.id.
+ * The following fields of @key_desc parameters are output:
+ *  - identifier.type_id
+ *  - identifier.security_size
+ *  - format_id
+ *  - pub (if operation success)
+ *  - ops (if operation success)
+ *
+ * Return:
+ * SMW_STATUS_OK                       - Success
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED  - Key type not supported
+ * Other SMW status error.
+ */
+int ele_export_public_key(struct subsystem_context *ele_ctx,
+			  struct smw_keymgr_descriptor *key_desc);
+
+/**
+ * ele_get_current_lifecycle_id() - Get the device lifecycle SMW id
+ * @ele_ctx: Pointer to the ELE subsystem context structure.
+ * @lifecycle: SMW Device lifecycle.
+ *
+ * Return:
+ * SMW_STATUS_OK                         - Success
+ * SMW_STATUS_ALLOC_FAILURE              - Memory allocation failure
+ * SMW_STATUS_SUBSYSTEM_FAILURE          - Subsystem failure
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED    - Operation not supported
+ * SMW_STATUS_MUTEX_LOCK_FAILURE         - Mutex lock failure
+ * SMW_STATUS_MUTEX_UNLOCK_FAILURE       - Mutex unlock failure
+ * Other SMW status error.
+ */
+int ele_get_device_lifecycle_id(struct subsystem_context *ele_ctx,
+				unsigned int *lifecycle);
+
+/**
+ * ele_get_key_lifecycles() - Convert the ELE lifecycles to SMW lifecycles
+ * @key_lifecycle: ELE lifecycle(s) bit mask.
+ * @attributes: SMW key attributes.
+ *
+ * Return:
+ * None.
+ */
+void ele_get_key_lifecycles(key_lifecycle_t ele_lifecycles,
+			    smw_attr_attributes_t *attributes);
+
+/**
+ * ele_set_lifecycle_flags() - Convert the SMW lifecycle flags to ELE flags
+ * @ele_ctx: Pointer to the ELE subsystem context structure.
+ * @attributes: SMW key attributes.
+ * @ele_flags: ELE lifecycle flags.
+ *
+ * Return:
+ * SMW_STATUS_OK                         - Success
+ * SMW_STATUS_MUTEX_LOCK_FAILURE         - Mutex lock failure
+ * SMW_STATUS_MUTEX_UNLOCK_FAILURE       - Mutex unlock failure
+ * SMW_STATUS_INVALID_PARAM              - Invalid parameters
+ * SMW_STATUS_ALLOC_FAILURE              - Memory allocation failure
+ * SMW_STATUS_OPERATION_FAILURE          - Unexpected operation failure
+ */
+int ele_set_lifecycle_flags(struct subsystem_context *ele_ctx,
+			    smw_attr_attributes_t attributes,
+			    uint16_t *ele_flags);
+
+/**
  * ele_convert_err() - Convert ELE error into SMW status.
  * @err: ELE error code.
  *
@@ -270,11 +385,121 @@ bool ele_asymmetric_encryption_handle(struct subsystem_context *ele_ctx,
 int ele_convert_err(uint32_t err);
 
 /**
+ * ele_get_device_info() - Get the device information
+ * @ele_ctx: Pointer to the ELE subsystem context structure.
+ *
+ * This function writes ELE information only once.
+ * Thus only the writing of ELE information must be mutex protected.
+ * The reading of ELE information does not need to be mutex protected
+ * as long as this function is called first.
+ *
+ * Return:
+ * SMW_STATUS_OK                         - Success
+ * SMW_STATUS_ALLOC_FAILURE              - Memory allocation failure
+ * SMW_STATUS_SUBSYSTEM_FAILURE          - Subsystem failure
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED    - Operation not supported
+ * SMW_STATUS_MUTEX_LOCK_FAILURE         - Mutex lock failure
+ * SMW_STATUS_MUTEX_UNLOCK_FAILURE       - Mutex unlock failure
+ * Other SMW status error.
+ */
+int ele_get_device_info(struct subsystem_context *ele_ctx);
+
+/**
  * ele_get_ctx_ops() - Return ELE context operations structure
  *
  * Return:
  * Pointer to ELE context operations structure
  */
 void *ele_get_ctx_ops(void);
+
+/**
+ * open_key_mgmt_service() - Open a key management service flow
+ * @hdl: Pointer to subsystem context handlers
+ * @key_management_hdl: Return the key manager service handler
+ *
+ * Return:
+ * SMW_STATUS_OK                   - Success
+ * SMW_STATUS_SUBSYSTEM_FAILURE    - Subsystem failure
+ */
+int open_key_mgmt_service(struct hdl *hdl, uint32_t *key_management_hdl);
+
+/**
+ * close_key_mgt_service() - Close the key management service flow
+ * @hdl: Pointer to subsystem context handlers
+ * @key_management_hdl: Key manager service handler to close
+ *
+ * Return:
+ * SMW_STATUS_OK                   - Success
+ * SMW_STATUS_SUBSYSTEM_FAILURE    - Subsystem failure
+ */
+int close_key_mgt_service(struct hdl *hdl, uint32_t key_management_hdl);
+
+/**
+ * ele_get_key_type() - Get the ELE key type
+ * @key_type_id: SMW Key type ID.
+ * @ele_key_type: ELE Key type ID.
+ *
+ * Return:
+ * SMW_STATUS_OK                       - Success
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED  - Key type not supported
+ */
+int ele_get_key_type(enum smw_config_key_type_id key_type_id,
+		     key_type_t *ele_key_type);
+
+/**
+ * ele_get_key_attribures() - Get the key attributes
+ * @hdl: Pointer to subsystem context handlers
+ * @key_args: Pointer to the key attributes argument.
+ *
+ * Return:
+ * SMW_STATUS_OK                      - Success
+ * SMW_STATUS_KEY_INVALID             - Key invalid
+ * SMW_STATUS_UNKNOWN_ID              - Key identifier unknown
+ * Other operation error.
+ */
+int ele_get_key_attributes(struct hdl *hdl,
+			   struct smw_keymgr_get_key_attributes_args *key_args);
+
+/**
+ * ele_open_key_store_service() - Open key store if not already done
+ * @hdl: Pointer to subsystem context handlers
+ *
+ */
+int ele_open_key_store_service(struct hdl *hdl);
+
+/**
+ * ele_close_key_store_service() - Close key store if open
+ * @hdl: Pointer to subsystem context handlers
+ *
+ */
+void ele_close_key_store_service(struct hdl *hdl);
+
+/**
+ * check_and_convert_endian() - Converts the endianness of a buffer
+ * @ele_ctx: Pointer to the ELE subsystem context structure.
+ * @src: Input buffer.
+ * @dst: Pointer to output buffer for the converted data.
+ * @size: Length of the @src buffer.
+ * @type_id: Key type ID.
+ *
+ * This function converts the endianness of input buffer @src, but only if
+ * the platform requests key type in big endian.
+ *
+ * @dst is an optional. If it is NULL, conversion is done
+ * in-place on @src, otherwise the buffer is allocated and must be freed by
+ * the caller.
+ *
+ * Return:
+ * SMW_STATUS_OK                       - Success
+ * SMW_STATUS_INVALID_PARAM            - One of the parameter is invalid.
+ * SMW_STATUS_MUTEX_LOCK_FAILURE       - Mutex lock failure
+ * SMW_STATUS_MUTEX_UNLOCK_FAILURE     - Mutex unlock failure
+ * SMW_STATUS_ALLOC_FAILURE            - Memory allocation failure
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED  - Operation not supported
+ */
+int check_and_convert_endian(struct subsystem_context *ele_ctx,
+			     unsigned char *src, unsigned char **dst,
+			     unsigned int size,
+			     enum smw_config_key_type_id type_id);
 
 #endif /* __COMMON_H__ */

@@ -1,0 +1,300 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT"
+			],
+			"permitted_algo": [
+				"GCM"
+			]
+		},
+		"key 2": {
+			"type": "AES",
+			"security_size": 256,
+			"priv_key": [
+				"d6ff67379a2ead2ca87aa4f29536258f",
+				"9fb9fc2e91b0ed18e7b9f5df332dd1dc"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 2": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 3": {
+		"command": "AEAD_INIT",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"tag": 16,
+		"iv": "313233343536373831323334",
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 4": {
+		"description": "AEAD encryption init on same operation context",
+		"command": "AEAD_INIT",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"tag": 16,
+		"iv": "313233343536373831323334",
+		"context_id": 0,
+		"depends": 2,
+		"result": "SMW_STATUS_OPERATION_ALREADY_INIT"
+	},
+	"subtest 5": {
+		"command": "AEAD_UPDATE_AAD",
+		"aad": "353637383132333435363738",
+		"context_id": 0,
+		"depends": 3
+	},
+	"subtest 6": {
+		"description": "GCM encryption UPDATE #1 - 16 bytes plaintext",
+		"command": "AEAD_UPDATE",
+		"input": "32333435363738394142434445463031",
+		"context_id": 0,
+		"depends": 3
+	},
+	"subtest 7": {
+		"description": [
+			"GCM encryption UPDATE  with insufficient output buffer",
+			"Expected output length = 16 bytes"
+		],
+		"command": "AEAD_UPDATE",
+		"input": "32333435363738394142434445463031",
+		"output": 5,
+		"context_id": 0,
+		"depends": 3,
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 8": {
+		"description": "GCM encryption UPDATE #2 - 16 bytes plaintext",
+		"command": "AEAD_UPDATE",
+		"input": "32333435363738394142434445463031",
+		"context_id": 0,
+		"depends": 3
+	},
+	"subtest 9": {
+		"description": [
+			"GCM encryption FINAL - Get the output length",
+			"Tag is part of output",
+			"Expected output length = 16 + 16 (tag) = 32 bytes"
+		],
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"input": "32333435363738394142434445463031",
+		"tag": 16,
+		"iv": 12,
+		"output": 0,
+		"context_id": 0,
+		"depends": 3
+	},
+	"subtest 10": {
+		"description": [
+			"GCM encryption FINAL - Get the output length",
+			"Dedicated tag field set",
+			"Expected output length = 16 bytes"
+		],
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"input": "32333435363738394142434445463031",
+		"tag_field_set": true,
+		"tag": 16,
+		"iv": 12,
+		"output": 0,
+		"context_id": 0,
+		"depends": 3
+	},
+	"subtest 11": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 12": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 1,
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 13": {
+		"description": [
+			"AEAD decryption init using CCM mode"
+		],
+		"command": "AEAD_INIT",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"mode": "CCM",
+		"op_type": "DECRYPT",
+		"plaintext_len": 24,
+		"tag": 16,
+		"aad": 32,
+		"iv": "2f1d0717a822e20c7cd28f0a",
+		"context_id": 1,
+		"depends": 12
+	},
+	"subtest 14": {
+		"command": "AEAD_UPDATE_AAD",
+		"aad": [
+			"d50741d34c8564d92f396b97be782923",
+			"ff3c855ea9757bde419f632c83997630"
+		],
+		"context_id": 1,
+		"depends": 13
+	},
+	"subtest 15": {
+		"description": [
+			"CCM decryption UPDATE with insufficient output buffer",
+			"Expected output length = 16 bytes"
+		],
+		"command": "AEAD_UPDATE",
+		"input": [
+			"50e22db70ac2bab6d6af7059c90d00fb",
+			"f0fb52eee5eb650e"
+		],
+		"output": 6,
+		"context_id": 1,
+		"depends": 13,
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 16": {
+		"description": [
+			"CCM decryption UPDATE - Get output length",
+			"Expected output length = 24 bytes"
+		],
+		"command": "AEAD_UPDATE",
+		"input": [
+			"50e22db70ac2bab6d6af7059c90d00fb",
+			"f0fb52eee5eb650e"
+		],
+		"output": 0,
+		"context_id": 1,
+		"depends": 13
+	},
+	"subtest 17": {
+		"description": "CCM decryption UPDATE - process 24 bytes ciphertext",
+		"command": "AEAD_UPDATE",
+		"input": [
+			"50e22db70ac2bab6d6af7059c90d00fb",
+			"f0fb52eee5eb650e"
+		],
+		"context_id": 1,
+		"depends": 13
+	},
+	"subtest 18": {
+		"description": [
+			"CCM decryption FINAL with insufficient output buffer",
+			"Tag is part of input",
+			"Expected output length = 8 (remaining chunk from last update) bytes"
+		],
+		"command": "AEAD_FINAL",
+		"op_type": "DECRYPT",
+		"tag": 16,
+		"iv": 16,
+		"input": [
+			"08aca7dec636170f481dcb9fefb85c05"
+		],
+		"output": 5,
+		"context_id": 1,
+		"depends": 13,
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 19": {
+		"description": [
+			"CCM decryption FINAL - Get output length",
+			"Tag tag is part of input",
+			"Expected output length = 8 (remaining chunk from last update) = 8 bytes"
+		],
+		"command": "AEAD_FINAL",
+		"op_type": "DECRYPT",
+		"tag": 16,
+		"iv": 16,
+		"input": [
+			"08aca7dec636170f481dcb9fefb85c05"
+		],
+		"output": 0,
+		"context_id": 1,
+		"depends": 13
+	},
+	"subtest 20": {
+		"description": [
+			"CCM decryption FINAL with insufficient output buffer",
+			"Tag is set in the dedicated tag field",
+			"Expected output length = 8 (remaining chunk from last update) + ",
+			"                         16 (input given during final) = 24 bytes"
+		],
+		"command": "AEAD_FINAL",
+		"op_type": "DECRYPT",
+		"tag_field_set": true,
+		"tag": "964e7fcb7d16e988990d6d063d012d33",
+		"iv": 16,
+		"input": [
+			"08aca7dec636170f481dcb9fefb85c05"
+		],
+		"output": 5,
+		"context_id": 1,
+		"depends": 13,
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 21": {
+		"description": [
+			"CCM decryption FINAL - Get output length",
+			"Tag is set in the dedicated tag field",
+			"Expected output length = 8 (remaining chunk from last update)  + ",
+			"                         8 (input given during final) = 16 bytes"
+		],
+		"command": "AEAD_FINAL",
+		"op_type": "DECRYPT",
+		"iv": 16,
+		"tag": "964e7fcb7d16e988990d6d063d012d33",
+		"tag_field_set": true,
+		"input": [
+			"08aca7dec636170f"
+		],
+		"output": 0,
+		"context_id": 1,
+		"depends": 13
+	},
+	"subtest 22": {
+		"description": [
+			"CCM decryption FINAL - with incorrect tag",
+			"Valid tag is 08aca7dec636170f481dcb9fefb85c05"
+		],
+		"command": "AEAD_FINAL",
+		"op_type": "DECRYPT",
+		"iv": 16,
+		"tag": "08aca7dec636170f481dcb9fefb85c06",
+		"tag_field_set": true,
+		"context_id": 1,
+		"output": 24,
+		"result": "SMW_STATUS_SIGNATURE_INVALID",
+		"depends": 13
+	},
+	"subtest 23": {
+		"description": "Free context 0",
+		"command": "OP_CONTEXT_CANCEL",
+		"context_id": 0,
+		"depends": 2
+	}
+}

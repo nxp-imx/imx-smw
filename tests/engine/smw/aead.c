@@ -729,6 +729,60 @@ static int set_final_output_iv_params(struct subtest_data *subtest,
 }
 
 /**
+ * save_multipart_encryption_output() - Save multipart encryption output to list
+ * @subtest: Subtest data
+ * @args: Pointer to SMW AEAD final API arguments
+ * @ctx_id: Local context ID
+ * @aead_id: AEAD output ID for storing the data
+ *
+ * Aggregates and saves the complete multi-part encryption output (total
+ * ciphertext, tag, and output IV) to the "aead_output" list for later
+ * verification in decryption operations.
+ *
+ * This function:
+ * - Retrieves accumulated ciphertext from list_aeads (saved during UPDATE
+ *   operations when "save_output" parameter is set to true)
+ * - Combines it with tag and output IV from the FINAL operation
+ * - Stores the complete output in list_aead_output under the specified aead_id
+ *
+ * The saved data can be used in subsequent one-shot decryption operations to
+ * verify the multi-part encryption results by referencing the same aead_id.
+ *
+ * Note: Ciphertext accumulation requires "save_output" to be set to true in
+ * UPDATE operation test definitions.
+ *
+ * Return:
+ * PASSED                - Success
+ * ERR_CODE(INTERNAL)    - Context node data not found in list_aeads
+ * Error code from util_list_find_node
+ * Error code from util_aead_add_output_data
+ */
+static int save_multipart_encryption_output(struct subtest_data *subtest,
+					    struct smw_aead_final_args *args,
+					    unsigned int ctx_id,
+					    unsigned int aead_id)
+{
+	int res = ERR_CODE(PASSED);
+	struct aead_output_data *node_data = NULL;
+
+	res = util_list_find_node(list_aeads(subtest), ctx_id,
+				  (void **)&node_data);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	if (!node_data)
+		return ERR_CODE(INTERNAL);
+
+	res = util_aead_add_output_data(list_aead_output(subtest), aead_id,
+					node_data->output,
+					node_data->output_len, args->tag,
+					args->tag_length, args->output_iv,
+					args->output_iv_length);
+
+	return res;
+}
+
+/**
  * aead_encrypt() - Perform one-shot AEAD encryption operation
  * @subtest: Subtest data
  *
@@ -1379,6 +1433,7 @@ int aead_final(struct subtest_data *subtest)
 	unsigned char *expected_tag = NULL;
 	bool encrypt_op = false;
 	bool tag_field_set = false;
+	unsigned int aead_id = UINT_MAX;
 
 	args.data = &data_args;
 
@@ -1413,6 +1468,21 @@ int aead_final(struct subtest_data *subtest)
 						 &args.output_iv_length);
 		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 			goto end;
+	}
+
+	/* Get 'aead_id' parameter, if any */
+	res = util_read_json_type(&aead_id, AEAD_ID_OBJ, t_uint,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto end;
+
+	if (!encrypt_op && aead_id != UINT_MAX) {
+		/* 'aead_id' must not be set AEAD final decryption operation */
+		if (res == ERR_CODE(PASSED)) {
+			DBG_PRINT_BAD_PARAM(AEAD_ID_OBJ);
+			res = ERR_CODE(BAD_PARAM_TYPE);
+			goto end;
+		}
 	}
 
 	/* Read input if any */
@@ -1496,9 +1566,26 @@ int aead_final(struct subtest_data *subtest)
 	 * For encryption operation, compare computed tag with expected tag,
 	 * if expected tag is set.
 	 */
-	if (encrypt_op)
+	if (encrypt_op) {
 		res = compare_tag(&args, expected_tag, expected_tag_len,
 				  tag_field_set);
+		if (res != ERR_CODE(PASSED))
+			goto end;
+
+		if (aead_id != UINT_MAX) {
+			/* Save final output only if expected_output is not set */
+			if (!expected_output) {
+				res = aead_save_final_output_data(subtest,
+								  args.data,
+								  ctx_id);
+				if (res != ERR_CODE(PASSED))
+					goto end;
+			}
+
+			res = save_multipart_encryption_output(subtest, &args,
+							       ctx_id, aead_id);
+		}
+	}
 
 end:
 	if (args.data->input)

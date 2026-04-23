@@ -1,0 +1,251 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CCM"
+			]
+		},
+		"key 2": {
+			"type": "AES",
+			"security_size": 256,
+			"priv_key": [
+				"d6ff67379a2ead2ca87aa4f29536258f",
+				"9fb9fc2e91b0ed18e7b9f5df332dd1dc"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 2": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 3": {
+		"description": "AEAD encryption init using CCM mode and opaque key",
+		"command": "AEAD_INIT",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"mode": "CCM",
+		"op_type": "ENCRYPT",
+		"iv": "9dbfc7aed2484e2577246c14",
+		"tag": 16,
+		"aad": 12,
+		"plaintext_len": 64,
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 4": {
+		"command": "AEAD_UPDATE_AAD",
+		"aad": "353637383132333435363738",
+		"context_id": 0,
+		"depends": 3
+	},
+	"subtest 5": {
+		"description": "CCM encryption UPDATE #1 - first 16 bytes of plaintext",
+		"command": "AEAD_UPDATE",
+		"input": "32333435363738394142434445463031",
+		"save_output": true,
+		"context_id": 0,
+		"depends": 3
+	},
+	"subtest 6": {
+		"description": "CCM encryption UPDATE #2 - next 32 bytes of plaintext",
+		"command": "AEAD_UPDATE",
+		"input": [
+			"32333435363738394142434445463031",
+			"32333435363738394142434445463031"
+		],
+		"save_output": true,
+		"context_id": 0,
+		"depends": 3
+	},
+	"subtest 7": {
+		"description": [
+			"CCM encryption FINAL - last 16 bytes of plaintext",
+			"Tag appended to output buffer (not in dedicated field)",
+			"Output saved (aead_id=0) for verification in subtest 8"
+		],
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"tag": 16,
+		"iv": 16,
+		"context_id": 0,
+		"input": "32333435363738394142434445463031",
+		"aead_id": 0,
+		"depends": 3
+	},
+	"subtest 8": {
+		"description": [
+			"Cross-validation: Multi-part encrypt -> One-shot decrypt",
+			"Verifies multi-part AEAD encryption (subtests 3-7) by decrypting",
+			"with one-shot operation using saved ciphertext, IV, and tag (aead_id=0)"
+		],
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"op_type": "DECRYPT",
+		"mode": "CCM",
+		"aad": "353637383132333435363738",
+		"plaintext_len": 64,
+		"output": [
+			"32333435363738394142434445463031",
+			"32333435363738394142434445463031",
+			"32333435363738394142434445463031",
+			"32333435363738394142434445463031"
+		],
+		"tag": 16,
+		"aead_id": 0,
+		"depends": 7
+	},
+	"subtest 9": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 10": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 1,
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 11": {
+		"description": [
+			"AEAD encryption init using CCM mode and plaintext key buffer",
+			"Test vector from https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/mac/ccmtestvectors.zip (Count = 50)"
+		],
+		"command": "AEAD_INIT",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"mode": "CCM",
+		"op_type": "ENCRYPT",
+		"plaintext_len": 24,
+		"tag": 16,
+		"aad": 32,
+		"iv": "2f1d0717a822e20c7cd28f0a",
+		"context_id": 1,
+		"depends": 10
+	},
+	"subtest 12": {
+		"command": "AEAD_UPDATE_AAD",
+		"aad": [
+			"d50741d34c8564d92f396b97be782923",
+			"ff3c855ea9757bde419f632c83997630"
+		],
+		"context_id": 1,
+		"depends": 11
+	},
+	"subtest 13": {
+		"description": "CCM encryption UPDATE - all 24 bytes of plaintext",
+		"command": "AEAD_UPDATE",
+		"input": [
+			"98626ffc6c44f13c964e7fcb7d16e988",
+			"990d6d063d012d33"
+		],
+		"context_id": 1,
+		"save_output": true,
+		"depends": 11
+	},
+	"subtest 14": {
+		"description": [
+			"CCM encryption FINAL - no remaining plaintext, generate tag",
+			"Output field contains complete ciphertext (24 bytes) + tag (16 bytes)"
+		],
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"tag": 16,
+		"iv": 16,
+		"context_id": 1,
+		"output": [
+			"50e22db70ac2bab6d6af7059c90d00fb",
+			"f0fb52eee5eb650e08aca7dec636170f",
+			"481dcb9fefb85c05"
+		],
+		"depends": 11
+	},
+	"subtest 15": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 2,
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 16": {
+		"description": [
+			"AEAD decryption init using CCM mode and plaintext key buffer",
+			"Test vector from https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/mac/ccmtestvectors.zip (Count = 50)"
+		],
+		"command": "AEAD_INIT",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"mode": "CCM",
+		"op_type": "DECRYPT",
+		"plaintext_len": 24,
+		"tag": 16,
+		"aad": 32,
+		"iv": "2f1d0717a822e20c7cd28f0a",
+		"context_id": 2,
+		"depends": 15
+	},
+	"subtest 17": {
+		"command": "AEAD_UPDATE_AAD",
+		"aad": [
+			"d50741d34c8564d92f396b97be782923",
+			"ff3c855ea9757bde419f632c83997630"
+		],
+		"context_id": 2,
+		"depends": 16
+	},
+	"subtest 18": {
+		"description": "CCM decryption UPDATE - all 24 bytes of ciphertext",
+		"command": "AEAD_UPDATE",
+		"input": [
+			"50e22db70ac2bab6d6af7059c90d00fb",
+			"f0fb52eee5eb650e"
+		],
+		"save_output": true,
+		"context_id": 2,
+		"depends": 16
+	},
+	"subtest 19": {
+		"description": [
+			"CCM decryption FINAL - verify tag from input buffer",
+			"Tag provided in input field"
+		],
+		"command": "AEAD_FINAL",
+		"op_type": "DECRYPT",
+		"tag": 16,
+		"iv": 16,
+		"input": [
+			"08aca7dec636170f481dcb9fefb85c05"
+		],
+		"output": [
+			"98626ffc6c44f13c964e7fcb7d16e988",
+			"990d6d063d012d33"
+		],
+		"context_id": 2,
+		"depends": 16
+	}
+}

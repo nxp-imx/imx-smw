@@ -1,0 +1,257 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 256,
+			"priv_key": [
+				"1fded32d5999de4a76e0f8082108823a",
+				"ef60417e1896cf4218a2fa90f632ec8a"
+			]
+		},
+		"key 2": {
+			"type": "AES",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CCM"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 0,
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 2": {
+		"description": [
+			"GCM encryption init",
+			"AAD length is 0",
+			"Test vector from https://csrc.nist.gov/CSRC/media//Projects/Cryptographic-Algorithm-Validation-Program/documents/mac/gcmvs.pdf"
+		],
+		"command": "AEAD_INIT",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"plaintext_len": 51,
+		"iv": "1f3afa4711e9474f32e70462",
+		"tag": 16,
+		"aad": 0,
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 3": {
+		"description": [
+			"First UPDATE: Process 32 bytes of plaintext",
+			"Save output for later verification"
+		],
+		"command": "AEAD_UPDATE",
+		"input": [
+			"06b2c75853df9aeb17befd33cea81c63",
+			"0b0fc53667ff45199c629c8e15dce41e"
+		],
+		"save_output": true,
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 4": {
+		"description": "Allocate operation context 1 for context copy operation",
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 1,
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 5": {
+		"description": "Copy AEAD multi-part context from context 0 to context 1",
+		"command": "OP_CONTEXT_COPY",
+		"type": "AEAD_MULTI_PART",
+		"copy_output": true,
+		"context_id": [
+			0,
+			1
+		],
+		"depends": 4
+	},
+	"subtest 6": {
+		"description": [
+			"Finish the multi-part operation using the copied context 1",
+			"Process remaining 19 bytes and finalize with tag generation"
+		],
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"tag_field_set": true,
+		"input": [
+			"530aa792f796b8138eeab2e86c7b7bee",
+			"1d40b0"
+		],
+		"output": [
+			"91fbd061ddc5a7fcc9513fcdfdc9c3a7",
+			"c5d4d64cedf6a9c24ab8a77c36eefbf1",
+			"c5dc00bc50121b96456c8cd8b6ff1f8b",
+			"3e480f"
+		],
+		"tag": "30096d340f3d5c42d82a6f475def23eb",
+		"context_id": 1,
+		"iv": 16,
+		"aead_id": 0,
+		"depends": 5
+	},
+	"subtest 7": {
+		"description": [
+			"Verify multi-part encryption result using one-shot decryption",
+			"Decrypt ciphertext from aead_id=0 (generated in subtest 6)"
+		],
+		"command": "AEAD",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"tag_field_set": true,
+		"plaintext_len": 51,
+		"output": [
+			"06b2c75853df9aeb17befd33cea81c63",
+			"0b0fc53667ff45199c629c8e15dce41e",
+			"530aa792f796b8138eeab2e86c7b7bee",
+			"1d40b0"
+		],
+		"context_id": 1,
+		"iv": 16,
+		"aead_id": 0,
+		"depends": 6
+	},
+	"subtest 8": {
+		"description": [
+			"Continue using original context 0 (not the copy)",
+			"Second UPDATE: Process another 32 bytes of plaintext",
+			"This demonstrates context 0 is still valid after copy operation",
+			"Save output for final verification"
+		],
+		"command": "AEAD_UPDATE",
+		"input": [
+			"06b2c75853df9aeb17befd33cea81c63",
+			"0b0fc53667ff45199c629c8e15dce41e"
+		],
+		"save_output": true,
+		"context_id": 0,
+		"depends": 3
+	},
+	"subtest 9": {
+		"description": "Cancel context 0",
+		"command": "OP_CONTEXT_CANCEL",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 10": {
+		"description": "Negative test: Attempt FINAL on cancelled context 0",
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"tag_field_set": true,
+		"input": [
+			"530aa792f796b8138eeab2e86c7b7bee",
+			"1d40b0"
+		],
+		"output": [
+			"91fbd061ddc5a7fcc9513fcdfdc9c3a7",
+			"c5d4d64cedf6a9c24ab8a77c36eefbf1",
+			"c5dc00bc50121b96456c8cd8b6ff1f8b",
+			"3e480f"
+		],
+		"tag": "30096d340f3d5c42d82a6f475def23eb",
+		"iv": 16,
+		"context_id": 0,
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 8
+	},
+	"subtest 11": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 12": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 2,
+		"depends": 11
+	},
+	"subtest 13": {
+		"description": "AEAD encryption init using CCM mode and opaque key",
+		"command": "AEAD_INIT",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"mode": "CCM",
+		"op_type": "ENCRYPT",
+		"iv": "9dbfc7aed2484e2577246c14",
+		"tag": 16,
+		"aad": 12,
+		"plaintext_len": 64,
+		"context_id": 2,
+		"depends": 12
+	},
+	"subtest 14": {
+		"command": "AEAD_UPDATE_AAD",
+		"aad": "353637383132333435363738",
+		"context_id": 2,
+		"depends": 13
+	},
+	"subtest 15": {
+		"description": "CCM encryption UPDATE #1 - first 16 bytes of plaintext",
+		"command": "AEAD_UPDATE",
+		"input": "32333435363738394142434445463031",
+		"save_output": true,
+		"context_id": 2,
+		"depends": 13
+	},
+	"subtest 16": {
+		"description": "Allocate operation context 3 for context copy operation",
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 3,
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 17": {
+		"description": [
+			"Copy AEAD multi-part context from context 2 to context 3",
+			"Copy context isn't supported for AEAD multi-part op using opaque key"
+		],
+		"command": "OP_CONTEXT_COPY",
+		"type": "AEAD_MULTI_PART",
+		"copy_output": true,
+		"context_id": [
+			2,
+			3
+		],
+		"depends": 16,
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+	},
+	"subtest 18": {
+		"description": "Cancel context 2",
+		"command": "OP_CONTEXT_CANCEL",
+		"context_id": 2,
+		"depends": 12
+	},
+	"subtest 19": {
+		"description": "Cancel context 3",
+		"command": "OP_CONTEXT_CANCEL",
+		"context_id": 3,
+		"depends": 16
+	}
+}

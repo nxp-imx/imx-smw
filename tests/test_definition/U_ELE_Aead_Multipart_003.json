@@ -1,0 +1,350 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 256,
+			"priv_key": [
+				"1fded32d5999de4a76e0f8082108823a",
+				"ef60417e1896cf4218a2fa90f632ec8a"
+			]
+		},
+		"key 2": {
+			"type": "AES",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"GCM"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 0,
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 2": {
+		"description": [
+			"AEAD encryption init using GCM mode and plaintext key buffer",
+			"AAD length is 0",
+			"Test vector from https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/mac/gcmtestvectors.zip"
+		],
+		"command": "AEAD_INIT",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"iv": "1f3afa4711e9474f32e70462",
+		"tag": 16,
+		"aad": 0,
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 3": {
+		"description": "GCM encryption UPDATE - process first 32 bytes of plaintext",
+		"command": "AEAD_UPDATE",
+		"input": [
+			"06b2c75853df9aeb17befd33cea81c63",
+			"0b0fc53667ff45199c629c8e15dce41e"
+		],
+		"save_output": true,
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 4": {
+		"description": [
+			"GCM encryption FINAL - process last 19 bytes",
+			"Expected tag and output are defined",
+			"Tag is set in the dedicated tag field"
+		],
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"tag_field_set": true,
+		"input": [
+			"530aa792f796b8138eeab2e86c7b7bee",
+			"1d40b0"
+		],
+		"output": [
+			"91fbd061ddc5a7fcc9513fcdfdc9c3a7",
+			"c5d4d64cedf6a9c24ab8a77c36eefbf1",
+			"c5dc00bc50121b96456c8cd8b6ff1f8b",
+			"3e480f"
+		],
+		"tag": "30096d340f3d5c42d82a6f475def23eb",
+		"context_id": 0,
+		"iv": 16,
+		"depends": 2
+	},
+	"subtest 5": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 1,
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 6": {
+		"description": [
+			"AEAD decryption init using GCM mode and plaintext key buffer",
+			"AAD length = 0",
+			"Test vector from https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/mac/gcmtestvectors.zip"
+		],
+		"command": "AEAD_INIT",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"iv": "1f3afa4711e9474f32e70462",
+		"tag": 16,
+		"aad": 0,
+		"context_id": 1,
+		"depends": 5
+	},
+	"subtest 7": {
+		"description": "GCM decryption UPDATE - process first 32 bytes of ciphertext",
+		"command": "AEAD_UPDATE",
+		"input": [
+			"91fbd061ddc5a7fcc9513fcdfdc9c3a7",
+			"c5d4d64cedf6a9c24ab8a77c36eefbf1"
+		],
+		"save_output": true,
+		"context_id": 1,
+		"depends": 6
+	},
+	"subtest 8": {
+		"description": [
+			"GCM decryption FINAL - process last 19 bytes and verify tag",
+			"Expected tag and output are defined",
+			"Tag is set in the dedicated tag field"
+		],
+		"command": "AEAD_FINAL",
+		"op_type": "DECRYPT",
+		"tag_field_set": true,
+		"input": [
+			"c5dc00bc50121b96456c8cd8b6ff1f8b",
+			"3e480f"
+		],
+		"output": [
+			"06b2c75853df9aeb17befd33cea81c63",
+			"0b0fc53667ff45199c629c8e15dce41e",
+			"530aa792f796b8138eeab2e86c7b7bee",
+			"1d40b0"
+		],
+		"tag": "30096d340f3d5c42d82a6f475def23eb",
+		"context_id": 1,
+		"depends": 6
+	},
+	"subtest 9": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 10": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 2,
+		"depends": 9
+	},
+	"subtest 11": {
+		"description": [
+			"AEAD encryption init using GCM mode and opaque key",
+			"Partial IV generation (User IV length = 4 bytes)",
+		],
+		"command": "AEAD_INIT",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"iv": "60cc50e0",
+		"tag": 16,
+		"aad": 12,
+		"context_id": 2,
+		"depends": 10
+	},
+	"subtest 12": {
+		"command": "AEAD_UPDATE_AAD",
+		"aad": "353637383132333435363738",
+		"context_id": 2,
+		"depends": 11
+	},
+	"subtest 13": {
+		"description": "GCM encryption UPDATE #1 - first 32 bytes",
+		"command": "AEAD_UPDATE",
+		"input": [
+			"4c616469657320616e642047656e746c",
+			"656d656e206f662074686520636c6173"
+		],
+		"save_output": true,
+		"context_id": 2,
+		"depends": 11
+	},
+	"subtest 14": {
+		"description": "GCM encryption UPDATE #2 - second 32 bytes",
+		"command": "AEAD_UPDATE",
+		"input": [
+			"73206f66202739393a20496620492063",
+			"6f756c64206f6666657220796f75206f"
+		],
+		"save_output": true,
+		"context_id": 2,
+		"depends": 11
+	},
+	"subtest 15": {
+		"description": [
+			"GCM encryption FINAL - last 50 bytes",
+			"Tag appended to output buffer"
+		],
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"input": [
+			"6e6c79206f6e652074697020666f7220",
+			"746865206675747572652c2073756e73",
+			"637265656e20776f756c642062652069",
+			"742e"
+		],
+		"context_id": 2,
+		"aead_id": 1,
+		"iv": 12,
+		"tag": 16,
+		"depends": 11
+	},
+	"subtest 16": {
+		"description": [
+			"Cross-validation: Multi-part encrypt -> One-shot decrypt",
+			"Verifies multi-part AEAD encryption (subtests 11-15) by decrypting",
+			"with one-shot operation using saved ciphertext, IV, and tag (aead_id=1)"
+		],
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"aad": "353637383132333435363738",
+		"output": [
+			"4c616469657320616e642047656e746c",
+			"656d656e206f662074686520636c6173",
+			"73206f66202739393a20496620492063",
+			"6f756c64206f6666657220796f75206f",
+			"6e6c79206f6e652074697020666f7220",
+			"746865206675747572652c2073756e73",
+			"637265656e20776f756c642062652069",
+			"742e"
+		],
+		"aead_id": 1,
+		"depends": 15
+	},
+	"subtest 17": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 3,
+		"depends": 9
+	},
+	"subtest 18": {
+		"description": [
+			"AEAD encryption init using GCM mode and opaque key",
+			"Full IV generation (User IV length = 0 bytes)"
+		],
+		"command": "AEAD_INIT",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"iv": 0,
+		"tag": 16,
+		"aad": 12,
+		"context_id": 3,
+		"depends": 17
+	},
+	"subtest 19": {
+		"command": "AEAD_UPDATE_AAD",
+		"aad": "353637383132333435363738",
+		"context_id": 3,
+		"depends": 18
+	},
+	"subtest 20": {
+		"description": "GCM encryption UPDATE #1 - first 32 bytes",
+		"command": "AEAD_UPDATE",
+		"input": [
+			"4c616469657320616e642047656e746c",
+			"656d656e206f662074686520636c6173"
+		],
+		"save_output": true,
+		"context_id": 3,
+		"depends": 18
+	},
+	"subtest 21": {
+		"description": "GCM encryption UPDATE #2 - second 32 bytes",
+		"command": "AEAD_UPDATE",
+		"input": [
+			"73206f66202739393a20496620492063",
+			"6f756c64206f6666657220796f75206f"
+		],
+		"save_output": true,
+		"context_id": 3,
+		"depends": 18
+	},
+	"subtest 22": {
+		"description": [
+			"GCM encryption FINAL - last 50 bytes (full IV generation)",
+			"Tag appended to output buffer",
+			"output length is bigger than needed"
+		],
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"input": [
+			"6e6c79206f6e652074697020666f7220",
+			"746865206675747572652c2073756e73",
+			"637265656e20776f756c642062652069",
+			"742e"
+		],
+		"aead_id": 2,
+		"iv": 16,
+		"tag": 16,
+		"output": 100,
+		"context_id": 3,
+		"depends": 18
+	},
+	"subtest 23": {
+		"description": [
+			"Cross-validation: Multi-part encrypt -> One-shot decrypt",
+			"Verifies multi-part AEAD encryption (subtests 18-22) by decrypting",
+			"with one-shot operation using saved ciphertext, IV, and tag (aead_id=2)"
+		],
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"aad": "353637383132333435363738",
+		"output": [
+			"4c616469657320616e642047656e746c",
+			"656d656e206f662074686520636c6173",
+			"73206f66202739393a20496620492063",
+			"6f756c64206f6666657220796f75206f",
+			"6e6c79206f6e652074697020666f7220",
+			"746865206675747572652c2073756e73",
+			"637265656e20776f756c642062652069",
+			"742e"
+		],
+		"aead_id": 2,
+		"depends": 22
+	},
+	"subtest 24": {
+		"command": "DELETE",
+		"key_name": "key 2",
+		"depends": 9
+	}
+}

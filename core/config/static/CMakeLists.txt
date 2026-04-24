@@ -12,6 +12,14 @@ if(ENABLE_RNG)
         add_supported_operation(OPERATION_ID_RNG)
 endif()
 
+if(ENABLE_KEYMGR_MODULE)
+        add_supported_operation(OPERATION_ID_GENERATE_KEY)
+        add_supported_operation(OPERATION_ID_DELETE_KEY)
+        add_supported_operation(OPERATION_ID_GET_KEY_ATTRIBUTES)
+        add_supported_operation(OPERATION_ID_EXPORT_KEY)
+        add_supported_operation(OPERATION_ID_GET_KEY_LENGTHS)
+endif()
+
 get_filename_component(CMAKE_PARENT_LIST_DIR ${CMAKE_PARENT_LIST_FILE} DIRECTORY)
 get_filename_component(CMAKE_PARENT_LIST_DIR ${CMAKE_PARENT_LIST_DIR} DIRECTORY)
 

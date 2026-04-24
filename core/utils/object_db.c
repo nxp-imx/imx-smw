@@ -117,7 +117,7 @@ int smw_object_db_create(unsigned int s_id,
 
 	smw_object_db_prepare(s_id, descriptor, &obj);
 
-	if (!ops->add_obj_info(&obj) && descriptor->id != INVALID_OBJ_ID)
+	if (!ops->add_obj_info(&obj))
 		ret = SMW_STATUS_OK;
 
 	return ret;

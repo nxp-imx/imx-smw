@@ -1413,7 +1413,7 @@ int smw_keymgr_update_modulus_buffer(struct smw_keymgr_descriptor *descriptor,
 	return status;
 }
 
-static int set_key_identifier(unsigned int id,
+static int set_key_identifier(unsigned int u_id,
 			      struct smw_keymgr_descriptor *descriptor)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
@@ -1424,12 +1424,17 @@ static int set_key_identifier(unsigned int id,
 		return status;
 
 	if (descriptor->identifier.s_id != INVALID_KEY_ID) {
-		status = smw_keymgr_db_update(id, &descriptor->identifier);
+		status = smw_keymgr_db_update(u_id, &descriptor->identifier);
 
-		if (status == SMW_STATUS_OK)
-			descriptor->pub->id = id;
+		if (status == SMW_STATUS_OK) {
+			if (u_id != INVALID_KEY_ID)
+				descriptor->pub->id = u_id;
+			else
+				descriptor->pub->id =
+					descriptor->identifier.s_id;
+		}
 	} else {
-		status = smw_keymgr_db_delete(id, &descriptor->identifier);
+		status = smw_keymgr_db_delete(u_id, &descriptor->identifier);
 	}
 
 	return status;

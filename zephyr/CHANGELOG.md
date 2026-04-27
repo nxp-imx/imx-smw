@@ -20,6 +20,7 @@ This release is based on SMW Release 5.5
 
 #### SMW Library
 ##### 1. Subsystems
+* Add ELE Subsystem.
 
 ##### 2. OSAL
 * Add Zephyr abstraction layer for SMW core library.

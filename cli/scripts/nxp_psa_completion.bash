@@ -3,7 +3,8 @@
 # Cache completion data to avoid repeated calls
 _nxp_psa_cache_operations=""
 _nxp_psa_cache_hash_algos=""
-_nxp_psa_cache_key_types=""
+_nxp_psa_cache_key_types_sym=""
+_nxp_psa_cache_key_types_asym=""
 
 # Associative arrays for caching key algorithms by type
 declare -A _nxp_psa_cache_key_algos_by_type
@@ -20,7 +21,7 @@ _nxp_psa_get_operations() {
 
         # Fallback to static list if command fails
         if [ -z "$_nxp_psa_cache_operations" ]; then
-            _nxp_psa_cache_operations="rng hash keygen-sym"
+            _nxp_psa_cache_operations="rng hash keygen-sym keygen-asym"
         fi
     fi
     echo "$_nxp_psa_cache_operations"
@@ -41,11 +42,11 @@ _nxp_psa_get_hash_algos() {
     echo "$_nxp_psa_cache_hash_algos"
 }
 
-_nxp_psa_get_key_types() {
-    if [ -z "$_nxp_psa_cache_key_types" ]; then
+_nxp_psa_get_key_types_sym() {
+    if [ -z "$_nxp_psa_cache_key_types_sym" ]; then
         # Parse from keygen-sym --list output
         # Look for the "Key Types:" line and extract the comma-separated values
-        _nxp_psa_cache_key_types=$(nxp_psa keygen-sym --list 2>/dev/null | \
+        _nxp_psa_cache_key_types_sym=$(nxp_psa keygen-sym --list 2>/dev/null | \
             grep "^Key Types:" | \
             sed 's/^Key Types:[[:space:]]*//' | \
             tr ',' '\n' | \
@@ -54,11 +55,76 @@ _nxp_psa_get_key_types() {
             tr '\n' ' ')
 
         # Fallback to static list
-        if [ -z "$_nxp_psa_cache_key_types" ]; then
-            _nxp_psa_cache_key_types="AES ARIA CAMELLIA CHACHA20 XCHACHA20 DES HMAC"
+        if [ -z "$_nxp_psa_cache_key_types_sym" ]; then
+            _nxp_psa_cache_key_types_sym="AES ARIA CAMELLIA CHACHA20 XCHACHA20 DES HMAC"
         fi
     fi
-    echo "$_nxp_psa_cache_key_types"
+    echo "$_nxp_psa_cache_key_types_sym"
+}
+
+_nxp_psa_get_key_types_asym() {
+    if [ -z "$_nxp_psa_cache_key_types_asym" ]; then
+        # Parse from keygen-asym --list output
+        _nxp_psa_cache_key_types_asym=$(nxp_psa keygen-asym --list 2>/dev/null | \
+            grep "^Key Types:" | \
+            sed 's/^Key Types:[[:space:]]*//' | \
+            tr ',' '\n' | \
+            sed 's/^[[:space:]]*//' | \
+            sed 's/[[:space:]]*$//' | \
+            tr '\n' ' ')
+
+        # Fallback to static list
+        if [ -z "$_nxp_psa_cache_key_types_asym" ]; then
+            _nxp_psa_cache_key_types_asym="RSA SECP_R1 SECP_K1 BRAINPOOL_P_R1 MONTGOMERY TWISTED_EDWARDS ED25519 ED448 X25519 X448"
+        fi
+    fi
+    echo "$_nxp_psa_cache_key_types_asym"
+}
+
+_nxp_psa_get_asym_algos_for_type() {
+    local key_type="$1"
+
+    if [ -z "$key_type" ]; then
+        return 1
+    fi
+
+    # Convert to uppercase for consistency
+    key_type=$(echo "$key_type" | tr '[:lower:]' '[:upper:]')
+
+    # Return algorithms based on key type
+    case "$key_type" in
+        RSA)
+            # Check usage flags to determine if sign or encrypt
+            local usage=""
+            local i
+            for ((i = 2; i < ${#COMP_WORDS[@]}; i++)); do
+                if [[ "${COMP_WORDS[i]}" == "-u" || "${COMP_WORDS[i]}" == "--usage" ]]; then
+                    if [ $((i + 1)) -lt ${#COMP_WORDS[@]} ]; then
+                        usage="${COMP_WORDS[i+1]}"
+                        break
+                    fi
+                fi
+            done
+
+            if [[ "$usage" == *"encrypt"* || "$usage" == *"decrypt"* ]]; then
+                echo "OAEP-SHA256 OAEP-SHA384 OAEP-SHA512 PKCS1V15-CRYPT"
+            else
+                echo "PSS-SHA256 PSS-SHA384 PSS-SHA512 PKCS1V15-SHA256 PKCS1V15-SHA384 PKCS1V15-SHA512"
+            fi
+            ;;
+        SECP_R1|SECP_K1|BRAINPOOL_P_R1)
+            echo "ECDSA-SHA256 ECDSA-SHA384 ECDSA-SHA512 ECDH"
+            ;;
+        ED25519|ED448|TWISTED_EDWARDS)
+            echo "EDDSA-PURE EDDSA-PREHASHED"
+            ;;
+        X25519|X448|MONTGOMERY)
+            echo "ECDH"
+            ;;
+        *)
+            echo ""
+            ;;
+    esac
 }
 
 _nxp_psa_get_key_algos_for_type() {
@@ -204,7 +270,9 @@ _nxp_psa_completion() {
     # Get dynamic values
     local operations=$(_nxp_psa_get_operations)
     local hash_algos=$(_nxp_psa_get_hash_algos)
-    local key_types=$(_nxp_psa_get_key_types)
+
+    # Determine which operation we're working with
+    local operation="${COMP_WORDS[1]}"
 
     # If previous word was an option that expects a value,
     # provide context-specific completion
@@ -227,16 +295,47 @@ _nxp_psa_completion() {
             ;;
         --size|-s)
             # Context-aware size completion
-            local operation="${COMP_WORDS[1]}"
             if [ "$operation" = "keygen-sym" ]; then
                 COMPREPLY=( $(compgen -W "56 112 128 168 192 256 384 512" -- ${cur}) )
+            elif [ "$operation" = "keygen-asym" ]; then
+                # Find the key type to suggest appropriate sizes
+                local key_type=""
+                local i
+                for ((i = 2; i < ${#COMP_WORDS[@]}; i++)); do
+                    if [[ "${COMP_WORDS[i]}" == "-t" || "${COMP_WORDS[i]}" == "--type" ]]; then
+                        if [ $((i + 1)) -lt ${#COMP_WORDS[@]} ]; then
+                            key_type=$(echo "${COMP_WORDS[i+1]}" | tr '[:lower:]' '[:upper:]')
+                            break
+                        fi
+                    fi
+                done
+
+                case "$key_type" in
+                    RSA)
+                        COMPREPLY=( $(compgen -W "1024 2048 3072 4096" -- ${cur}) )
+                        ;;
+                    SECP_R1|SECP_K1|BRAINPOOL_P_R1)
+                        COMPREPLY=( $(compgen -W "192 224 256 384 521" -- ${cur}) )
+                        ;;
+                    MONTGOMERY|TWISTED_EDWARDS)
+                        COMPREPLY=( $(compgen -W "255 448" -- ${cur}) )
+                        ;;
+                    ED25519|X25519)
+                        COMPREPLY=( $(compgen -W "255" -- ${cur}) )
+                        ;;
+                    ED448|X448)
+                        COMPREPLY=( $(compgen -W "448" -- ${cur}) )
+                        ;;
+                    *)
+                        COMPREPLY=( $(compgen -W "256 384 521 2048 4096" -- ${cur}) )
+                        ;;
+                esac
             else
                 COMPREPLY=( $(compgen -W "16 32 64 128 256 512 1024" -- ${cur}) )
             fi
             return 0
             ;;
         --algo|-a)
-            local operation="${COMP_WORDS[1]}"
             if [ "$operation" = "hash" ]; then
                 COMPREPLY=( $(compgen -W "${hash_algos}" -- ${cur}) )
             elif [ "$operation" = "keygen-sym" ]; then
@@ -260,15 +359,46 @@ _nxp_psa_completion() {
                     # No key type specified yet, offer all possible algorithms
                     COMPREPLY=( $(compgen -W "CBC CTR ECB GCM CCM POLY1305 MD5 SHA1 SHA256 SHA384 SHA512" -- ${cur}) )
                 fi
+            elif [ "$operation" = "keygen-asym" ]; then
+                # Find the key type from the command line
+                local key_type=""
+                local i
+                for ((i = 2; i < ${#COMP_WORDS[@]}; i++)); do
+                    if [[ "${COMP_WORDS[i]}" == "-t" || "${COMP_WORDS[i]}" == "--type" ]]; then
+                        if [ $((i + 1)) -lt ${#COMP_WORDS[@]} ]; then
+                            key_type="${COMP_WORDS[i+1]}"
+                            break
+                        fi
+                    fi
+                done
+
+                # Get algorithms for asymmetric key type
+                if [ -n "$key_type" ]; then
+                    local asym_algos=$(_nxp_psa_get_asym_algos_for_type "$key_type")
+                    COMPREPLY=( $(compgen -W "${asym_algos}" -- ${cur}) )
+                else
+                    # No key type specified yet, show common asymmetric algorithms
+                    COMPREPLY=( $(compgen -W "ECDSA-SHA256 PSS-SHA256 EDDSA-PURE ECDH OAEP-SHA256" -- ${cur}) )
+                fi
             fi
             return 0
             ;;
         --type|-t)
-            COMPREPLY=( $(compgen -W "${key_types}" -- ${cur}) )
+            if [ "$operation" = "keygen-sym" ]; then
+                local key_types=$(_nxp_psa_get_key_types_sym)
+                COMPREPLY=( $(compgen -W "${key_types}" -- ${cur}) )
+            elif [ "$operation" = "keygen-asym" ]; then
+                local key_types=$(_nxp_psa_get_key_types_asym)
+                COMPREPLY=( $(compgen -W "${key_types}" -- ${cur}) )
+            fi
             return 0
             ;;
         --usage|-u)
-            COMPREPLY=( $(compgen -W "encrypt decrypt sign verify" -- ${cur}) )
+            if [ "$operation" = "keygen-asym" ]; then
+                COMPREPLY=( $(compgen -W "sign verify encrypt decrypt derive export" -- ${cur}) )
+            else
+                COMPREPLY=( $(compgen -W "encrypt decrypt sign verify" -- ${cur}) )
+            fi
             return 0
             ;;
         --id)
@@ -286,9 +416,6 @@ _nxp_psa_completion() {
         COMPREPLY=( $(compgen -W "${operations} --help --version" -- ${cur}) )
         return 0
     fi
-
-    # Get the operation (first argument)
-    local operation="${COMP_WORDS[1]}"
 
     # Special handling for flags that don't take arguments
     case "${cur}" in

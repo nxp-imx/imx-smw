@@ -15,6 +15,7 @@
 #include "parser_device_set_lifecycle.h"
 #include "parser_device_uuid.h"
 #include "parser_hash.h"
+#include "parser_keygen_asym.h"
 #include "parser_keygen_sym.h"
 #include "parser_rng.h"
 #include "utils.h"
@@ -67,6 +68,10 @@ static const struct operation_entry operation_table[] = {
 	  .opt_func = cli_keygen_sym_operation,
 	  .help_func = cli_keygen_sym_help,
 	  .inline_desc_func = cli_keygen_sym_inline_desc },
+	{ .operation_name = "keygen-asym",
+	  .opt_func = cli_keygen_asym_operation,
+	  .help_func = cli_keygen_asym_help,
+	  .inline_desc_func = cli_keygen_asym_inline_desc },
 	/* Add more operations here as we implement them */
 	{ NULL, NULL, NULL, NULL } /* Sentinel */
 };

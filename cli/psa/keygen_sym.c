@@ -12,54 +12,12 @@
 #include "common.h"
 #include "helper.h"
 #include "key_sym_mappings.h"
+#include "keygen_common.h"
 #include "logger.h"
 #include "parser_keygen_sym.h"
 #include "utils.h"
 
 #define USAGE_STR_MAX_LEN 256
-
-/**
- * @brief Parse usage flags from comma-separated string
- *
- * @param usage_str Comma-separated usage flags (e.g., "encrypt,decrypt")
- */
-static psa_key_usage_t parse_psa_usage_flags(const char *usage_str)
-{
-	psa_key_usage_t flags = 0;
-	char *usage_copy = NULL;
-	char *token = NULL;
-	char *saveptr = NULL;
-
-	if (!usage_str)
-		return 0;
-
-	usage_copy = strdup(usage_str);
-	if (!usage_copy)
-		return 0;
-
-	token = strtok_r(usage_copy, ",", &saveptr);
-	while (token) {
-		if (!strcasecmp(token, "encrypt"))
-			flags |= PSA_KEY_USAGE_ENCRYPT;
-		else if (!strcasecmp(token, "decrypt"))
-			flags |= PSA_KEY_USAGE_DECRYPT;
-		else if (!strcasecmp(token, "sign"))
-			flags |= PSA_KEY_USAGE_SIGN_MESSAGE;
-		else if (!strcasecmp(token, "verify"))
-			flags |= PSA_KEY_USAGE_VERIFY_MESSAGE;
-		else if (!strcasecmp(token, "sign_hash"))
-			flags |= PSA_KEY_USAGE_SIGN_HASH;
-		else if (!strcasecmp(token, "verify_hash"))
-			flags |= PSA_KEY_USAGE_VERIFY_HASH;
-		else
-			LOG_ERROR("Unknown usage flag: %s", token);
-
-		token = strtok_r(NULL, ",", &saveptr);
-	}
-
-	free(usage_copy);
-	return flags;
-}
 
 /**
  * @brief Parse a single algorithm string based on key type
@@ -153,92 +111,6 @@ static psa_algorithm_t parse_psa_permitted_algo(const char *algo_str,
 
 	free(algo_copy);
 	return algorithm;
-}
-
-/**
- * @brief Log PSA key generation parameters
- *
- * @param attributes Pointer to PSA key attributes
- * @param key_id Key identifier
- */
-static void log_psa_keygen_params(const psa_key_attributes_t *attributes,
-				  psa_key_id_t key_id)
-{
-	LOG_INFO("=== psa_generate_key Parameters ===");
-	LOG_INFO("  key_id: 0x%08x (%u)", key_id, key_id);
-	LOG_INFO("  key_type: %u (%s)", psa_get_key_type(attributes),
-		 key_type_to_string(psa_get_key_type(attributes)));
-	LOG_INFO("  key_bits: %zu", psa_get_key_bits(attributes));
-	LOG_INFO("  algorithm: 0x%08x", psa_get_key_algorithm(attributes));
-	LOG_INFO("  usage_flags: 0x%08x", psa_get_key_usage_flags(attributes));
-	LOG_INFO("  lifetime: 0x%08x", psa_get_key_lifetime(attributes));
-	LOG_INFO("====================================");
-}
-
-/**
- * @brief Append a usage string to a buffer
- *
- * @param buffer Output buffer
- * @param buffer_size Size of output buffer
- * @param written Pointer to number of bytes already written
- * @param usage string to append
- */
-static void append_usage_str(char *buffer, size_t buffer_size, size_t *written,
-			     const char *usage)
-{
-	int ret = 0;
-
-	if (*written > 0 && *written < buffer_size) {
-		ret = snprintf(buffer + *written, buffer_size - *written, ", ");
-		if (ret > 0 && (size_t)ret < buffer_size - *written)
-			*written += ret;
-	}
-
-	if (*written < buffer_size) {
-		ret = snprintf(buffer + *written, buffer_size - *written, "%s",
-			       usage);
-		if (ret > 0 && (size_t)ret < buffer_size - *written)
-			*written += ret;
-	}
-}
-
-/**
- * @brief Convert usage flags to string
- *
- * @param usage_flags PSA key usage flags
- * @param buffer Output buffer for usage string
- * @param buffer_size Size of output buffer
- */
-static void usage_flags_to_string(psa_key_usage_t usage_flags, char *buffer,
-				  size_t buffer_size)
-{
-	size_t written = 0;
-
-	if (!buffer || !buffer_size)
-		return;
-
-	buffer[0] = '\0';
-
-	if (usage_flags & PSA_KEY_USAGE_ENCRYPT)
-		append_usage_str(buffer, buffer_size, &written, "encrypt");
-
-	if (usage_flags & PSA_KEY_USAGE_DECRYPT)
-		append_usage_str(buffer, buffer_size, &written, "decrypt");
-
-	if (usage_flags & PSA_KEY_USAGE_SIGN_MESSAGE)
-		append_usage_str(buffer, buffer_size, &written, "sign");
-
-	if (usage_flags & PSA_KEY_USAGE_VERIFY_MESSAGE)
-		append_usage_str(buffer, buffer_size, &written, "verify");
-
-	if (usage_flags & PSA_KEY_USAGE_SIGN_HASH)
-		append_usage_str(buffer, buffer_size, &written, "sign_hash");
-
-	if (usage_flags & PSA_KEY_USAGE_VERIFY_HASH)
-		append_usage_str(buffer, buffer_size, &written, "verify_hash");
-
-	if (!written && buffer_size > 0)
-		SNPRINTF(buffer, buffer_size, "none");
 }
 
 /**

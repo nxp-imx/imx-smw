@@ -16,6 +16,7 @@
 #include "error_handler.h"
 #include "helper.h"
 #include "key_sym_mappings.h"
+#include "keygen_common.h"
 #include "logger.h"
 #include "parser_keygen_sym.h"
 #include "smw_sym_key_mappings_generated.h"
@@ -27,54 +28,6 @@
 #define SMW_SYM_ENCR(key, mode)	     SMW_ATTR_ALGO_SYMMETRIC_ENCRYPTION(key, mode)
 #define SMW_SYM_HMAC(hash, mac) SMW_ATTR_ALGO_MAC_HMAC(hash, mac)
 #define SMW_SYM_MAC(algo, mode, mac) SMW_ATTR_ALGO_MAC(algo, mode, mac)
-
-/**
- * @brief Parse usage flags from comma-separated string
- *
- * @param usage_str Comma-separated usage flags (e.g., "encrypt,decrypt")
- */
-static smw_attr_usage_t parse_smw_usage_flags(const char *usage_str)
-{
-	smw_attr_usage_t flags = SMW_ATTR_USAGE_NONE;
-	char *usage_copy = NULL;
-	char *token = NULL;
-	char *saveptr = NULL;
-
-	if (!usage_str)
-		return 0;
-
-	usage_copy = strdup(usage_str);
-	if (!usage_copy)
-		return 0;
-
-	token = strtok_r(usage_copy, ",", &saveptr);
-	while (token) {
-		if (!strcasecmp(token, "encrypt")) {
-			SMW_ATTR_USAGE_SET_ENCRYPT(flags);
-		} else if (!strcasecmp(token, "decrypt")) {
-			SMW_ATTR_USAGE_SET_DECRYPT(flags);
-		} else if (!strcasecmp(token, "sign")) {
-			SMW_ATTR_USAGE_SET_SIGN_MESSAGE(flags);
-		} else if (!strcasecmp(token, "verify")) {
-			SMW_ATTR_USAGE_SET_VERIFY_MESSAGE(flags);
-		} else if (!strcasecmp(token, "sign_hash")) {
-			SMW_ATTR_USAGE_SET_SIGN_HASH(flags);
-		} else if (!strcasecmp(token, "verify_hash")) {
-			SMW_ATTR_USAGE_SET_VERIFY_HASH(flags);
-		} else if (!strcasecmp(token, "derive")) {
-			SMW_ATTR_USAGE_SET_DERIVE(flags);
-		} else {
-			LOG_ERROR("Unknown usage flag: %s", token);
-			free(usage_copy);
-			return 0;
-		}
-
-		token = strtok_r(NULL, ",", &saveptr);
-	}
-
-	free(usage_copy);
-	return flags;
-}
 
 /**
  * @brief Parse a single mode/hash and combine with key algorithm
@@ -149,7 +102,7 @@ static smw_attr_algo_t parse_single_mode(const char *mode_str,
  * @brief Parse multiple permitted algorithms from comma-separated string
  *
  * @param algo_str Comma-separated algorithm list (e.g., "CBC,GCM,CTR")
- * @param key_algo Key algorithm enum value
+ * @param key_type Key type string (e.g., "AES", "HMAC")
  * @param permitted_algo Output combined permitted algorithm value
  */
 static int parse_smw_permitted_algos_multi(const char *algo_str,
@@ -197,42 +150,6 @@ static int parse_smw_permitted_algos_multi(const char *algo_str,
 cleanup:
 	free(algo_copy);
 	return ret;
-}
-
-/**
- * @brief Log SMW key generation parameters
- *
- * @param args Pointer to SMW generate key arguments structure
- */
-static void log_smw_keygen_params(const struct smw_generate_key_args *args)
-{
-	if (!args || !args->key_descriptor)
-		return;
-
-	LOG_INFO("=== smw_generate_key Parameters ===");
-	LOG_INFO("  version: %u", args->version);
-	LOG_INFO("  subsystem_name: %s",
-		 cli_smw_get_subsystem_name(args->subsystem_name));
-	LOG_INFO("  key_descriptor:");
-	LOG_INFO("    type_name: %s (%u)",
-		 key_type_to_string(args->key_descriptor->type_name),
-		 (unsigned int)args->key_descriptor->type_name);
-	LOG_INFO("    security_size: %u bits",
-		 args->key_descriptor->security_size);
-	LOG_INFO("    id: 0x%08x (%u)", args->key_descriptor->id,
-		 args->key_descriptor->id);
-	LOG_INFO("    buffer: %p", (void *)args->key_descriptor->buffer);
-	LOG_INFO("  attributes:");
-	LOG_INFO("    permitted_algo: 0x%llx",
-		 (unsigned long long)
-			 args->key_descriptor->attributes.permitted_algo);
-	LOG_INFO("    usage_flags: 0x%08x",
-		 args->key_descriptor->attributes.usage_flags);
-	LOG_INFO("    storage_id: %u",
-		 args->key_descriptor->attributes.storage_id);
-	LOG_INFO("    attributes: 0x%08x",
-		 args->key_descriptor->attributes.attributes);
-	LOG_INFO("====================================");
 }
 
 /**
@@ -343,72 +260,6 @@ static void permitted_algo_to_string(smw_attr_algo_t permitted_algo,
 }
 
 /**
- * @brief Append a usage string to a buffer
- *
- * @param buffer Output buffer
- * @param buffer_size Size of output buffer
- * @param written Pointer to number of bytes already written
- * @param usage string to append
- */
-static void append_usage_str(char *buffer, size_t buffer_size, size_t *written,
-			     const char *usage)
-{
-	int ret = 0;
-
-	if (*written > 0 && *written < buffer_size) {
-		ret = snprintf(buffer + *written, buffer_size - *written, ", ");
-		if (ret > 0 && (size_t)ret < buffer_size - *written)
-			*written += ret;
-	}
-
-	if (*written < buffer_size) {
-		ret = snprintf(buffer + *written, buffer_size - *written, "%s",
-			       usage);
-		if (ret > 0 && (size_t)ret < buffer_size - *written)
-			*written += ret;
-	}
-}
-
-/**
- * @brief Convert usage flags to string representation
- *
- * @param usage_flags Usage flags from key attributes
- * @param buffer Output buffer for usage string
- * @param buffer_size Size of output buffer
- */
-static void usage_flags_to_string(smw_attr_usage_t usage_flags, char *buffer,
-				  size_t buffer_size)
-{
-	size_t written = 0;
-
-	if (!buffer || !buffer_size)
-		return;
-
-	buffer[0] = '\0';
-
-	if (SMW_ATTR_USAGE_IS_ENCRYPT(usage_flags))
-		append_usage_str(buffer, buffer_size, &written, "encrypt");
-
-	if (SMW_ATTR_USAGE_IS_DECRYPT(usage_flags))
-		append_usage_str(buffer, buffer_size, &written, "decrypt");
-
-	if (SMW_ATTR_USAGE_IS_SIGN_MESSAGE(usage_flags))
-		append_usage_str(buffer, buffer_size, &written, "sign");
-
-	if (SMW_ATTR_USAGE_IS_VERIFY_MESSAGE(usage_flags))
-		append_usage_str(buffer, buffer_size, &written, "verify");
-
-	if (SMW_ATTR_USAGE_IS_SIGN_HASH(usage_flags))
-		append_usage_str(buffer, buffer_size, &written, "sign_hash");
-
-	if (SMW_ATTR_USAGE_IS_VERIFY_HASH(usage_flags))
-		append_usage_str(buffer, buffer_size, &written, "verify_hash");
-
-	if (!written && buffer_size > 0)
-		SNPRINTF(buffer, buffer_size, "none");
-}
-
-/**
  * @brief Print key generation result
  *
  * @param key_desc Pointer to key descriptor with generated key info
@@ -421,11 +272,9 @@ static void print_key_result(const struct smw_key_descriptor *key_desc,
 	char usage_str[USAGE_STR_MAX_LEN] = { 0 };
 	char algo_str[ALGO_STR_MAX_LEN] = { 0 };
 
-	/* Convert usage flags to string using IS macros */
 	usage_flags_to_string(key_desc->attributes.usage_flags, usage_str,
 			      sizeof(usage_str));
 
-	/* Convert permitted algorithms to string using mapping table */
 	permitted_algo_to_string(key_desc->attributes.permitted_algo,
 				 key_type_to_algo(key_desc->type_name),
 				 algo_str, sizeof(algo_str));

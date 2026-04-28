@@ -45,6 +45,9 @@ cli_device_attestation_operation(struct parsed_options *args);
 /* Symmetric key generation operation functions */
 enum cli_exit_code cli_keygen_sym_operation(struct parsed_options *args);
 
+/* Asymmetric key generation operation functions */
+enum cli_exit_code cli_keygen_asym_operation(struct parsed_options *args);
+
 /* More operation declarations here as we implement them */
 
 #endif /* CLI_APIS_DISPATCHER_H */

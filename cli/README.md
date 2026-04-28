@@ -62,6 +62,7 @@ cli/
 │   ├── parser_device_set_lifecycle.c   # Set-lifecycle-specific option parsing
 │   ├── parser_device_uuid.c            # Device UUID option parsing
 │   ├── parser_hash.c                   # Hash-specific option parsing
+│   ├── parser_keygen_asym.c            # Asymmetric key generation option parsing
 │   ├── parser_keygen_sym.c             # Symmetric key generation option parsing
 │   ├── parser_rng.c                    # RNG-specific option parsing
 │   ├── utils.c                         # Utility functions (hex dump, program info)
@@ -70,13 +71,15 @@ cli/
 │   ├── weak_device_set_lifecycle.c     # Weak default dev-set-lifecycle implementation
 │   ├── weak_device_uuid.c              # Weak default dev-get-uuid implementation
 │   ├── weak_hash.c                     # Weak default hash implementation
-│   ├── weak_keygen_sym.c               # Weak default keygen implementation
+│   ├── weak_keygen_asym.c              # Weak default asymmetric keygen implementation
+│   ├── weak_keygen_sym.c               # Weak default symmetric keygen implementation
 │   └── weak_rng.c                      # Weak default RNG implementation
 │
 ├── inc/                                # Public headers
 │   ├── apis_dispatcher.h               # Backend dispatcher declarations (PSA/SMW routing)
 │   ├── error_handler.h                 # API status checking and error descriptions
 │   ├── helper.h                        # Safe I/O macros (FPRINTF, FCLOSE, etc.)
+│   ├── key_asym_mappings.h             # Backend-agnostic asymmetric key mappings
 │   ├── key_sym_mappings.h              # Backend-agnostic key type/algo mappings
 │   ├── logger.h                        # Logging API
 │   ├── opt_parser.h                    # CLI parser API
@@ -85,6 +88,7 @@ cli/
 │   ├── parser_device_get_lifecycle.h   # Set-lifecycle parser API
 │   ├── parser_device_uuid.h            # Device UUID parser API
 │   ├── parser_hash.h                   # Hash parser API
+│   ├── parser_keygen_asym.h            # Asymmetric key generation parser API
 │   ├── parser_keygen_sym.h             # Symmetric key generation parser API
 │   ├── parser_rng.h                    # RNG parser API
 │   └── utils.h                         # Utility function declarations
@@ -95,6 +99,9 @@ cli/
 │   ├── common.h                        # Common PSA definitions and macros
 │   ├── hash.c                          # PSA hash operation
 │   ├── init.c                          # PSA crypto initialization
+│   ├── keygen_asym.c                   # PSA asymmetric key generation operation
+│   ├── keygen_common.c                 # PSA common key generation utilities
+│   ├── keygen_common.h                 # PSA common key generation header
 │   ├── keygen_sym.c                    # PSA symmetric key generation operation
 │   └── rng.c                           # PSA RNG operation
 │
@@ -103,10 +110,12 @@ cli/
 │   ├── generate_lifecycle_table.py     # Generate lifecycle enum and table
 │   ├── generate_psa_error_table.py     # Generate PSA error handler
 │   ├── generate_psa_hash_table.py      # Generate PSA hash algorithm mapping table
-│   ├── generate_psa_key_sym_table.py   # Generate PSA key type/algorithm mapping table
+│   ├── generate_psa_key_asym_table.py  # Generate PSA asymmetric key mapping table
+│   ├── generate_psa_key_sym_table.py   # Generate PSA symmetric key mapping table
 │   ├── generate_smw_error_table.py     # Generate SMW error handler
 │   ├── generate_smw_hash_table.py      # Generate SMW hash algorithm mapping table
-│   ├── generate_smw_key_sym_table.py   # Generate SMW key type/algorithm mapping table
+│   ├── generate_smw_key_asym_table.py  # Generate SMW asymmetric key type mapping table
+│   ├── generate_smw_key_sym_table.py   # Generate SMW symmetric key mapping table
 │   ├── nxp_psa_completion.bash         # Bash completion for nxp_psa CLI
 │   └── nxp_smw_completion.bash         # Bash completion for nxp_smw CLI
 │
@@ -120,6 +129,9 @@ cli/
 │   ├── device_uuid.c                   # SMW dev-get-uuid operation
 │   ├── hash.c                          # SMW hash operation
 │   ├── init.c                          # SMW library initialization
+│   ├── keygen_asym.c                   # SMW asymmetric key generation operation
+│   ├── keygen_common.c                 # SMW common key generation utilities
+│   ├── keygen_common.h                 # SMW common key generation header
 │   ├── keygen_sym.c                    # SMW symmetric key generation operation
 │   └── rng.c                           # SMW RNG operation
 │
@@ -245,7 +257,8 @@ To add a new operation (e.g., `cipher`):
 | `dev-get-uuid` | Get device UUID | ✅ | ❌ |
 | `dev-set-lifecycle` | Set device lifecycle | ✅ | ❌ |
 | `hash` | Compute cryptographic hash | ✅ | ✅ |
-| `keygen-sym` | Generate symmeric key | ✅ | ✅ |
+| `keygen-asym` | Generate asymmetric key | ✅ | ✅ |
+| `keygen-sym` | Generate symmetric key | ✅ | ✅ |
 | `rng` | Generate random numbers | ✅ | ✅ |
 *(More operations coming soon: cipher, sign, verify, etc.)*
 

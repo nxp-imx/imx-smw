@@ -146,6 +146,38 @@ add_custom_command(
     COMMENT "Generating PSA key type and algorithm mappings"
 )
 
+# Generate asymmetric key type table and mappings at build time (in binary dir)
+set(SMW_ASYM_KEY_MAPPINGS_HEADER ${CMAKE_CURRENT_BINARY_DIR}/smw_asym_key_mappings_generated.h)
+set(SMW_ASYM_KEY_MAPPINGS_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/smw_asym_key_mappings_generated.c)
+set(ASYM_KEY_TYPE_GENERATOR ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_smw_key_asym_table.py)
+
+add_custom_command(
+    OUTPUT
+        ${SMW_ASYM_KEY_MAPPINGS_HEADER}
+        ${SMW_ASYM_KEY_MAPPINGS_SOURCE}
+    COMMAND ${Python3_EXECUTABLE} ${ASYM_KEY_TYPE_GENERATOR} ${CMAKE_CURRENT_BINARY_DIR}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    DEPENDS ${SMW_NAMES_HEADER} ${SMW_ATTR_HEADER} ${ASYM_KEY_TYPE_GENERATOR}
+    COMMENT "Generating SMW asymmetric key type information table and mappings"
+)
+
+# Generate PSA asymmetric key type mappings at build time (in binary dir)
+set(PSA_ASYM_KEY_MAPPINGS_HEADER ${CMAKE_CURRENT_BINARY_DIR}/psa_asym_key_mappings_generated.h)
+set(PSA_ASYM_KEY_MAPPINGS_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/psa_asym_key_mappings_generated.c)
+set(PSA_CRYPTO_TYPES_HEADER ${CMAKE_SOURCE_DIR}/public/psa/crypto_types.h)
+set(PSA_CRYPTO_VALUES_HEADER ${CMAKE_SOURCE_DIR}/public/psa/crypto_values.h)
+set(PSA_ASYM_KEY_MAPPINGS_GENERATOR ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_psa_key_asym_table.py)
+
+add_custom_command(
+    OUTPUT
+        ${PSA_ASYM_KEY_MAPPINGS_HEADER}
+        ${PSA_ASYM_KEY_MAPPINGS_SOURCE}
+    COMMAND ${Python3_EXECUTABLE} ${PSA_ASYM_KEY_MAPPINGS_GENERATOR} ${CMAKE_CURRENT_BINARY_DIR}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    DEPENDS ${PSA_CRYPTO_TYPES_HEADER} ${PSA_CRYPTO_VALUES_HEADER} ${PSA_ASYM_KEY_MAPPINGS_GENERATOR}
+    COMMENT "Generating PSA asymmetric key type information table and mappings"
+)
+
 # Include subdirectories - each sets its own source variables
 add_subdirectory(core)
 add_subdirectory(psa)
@@ -165,13 +197,14 @@ set(CLI_INCLUDE_DIRS
 message(STATUS "Building nxp_smw (SMW API)")
 
 add_executable(nxp_smw
-    ${CLI_CORE_SOURCES}
-    ${CLI_SMW_SOURCES}        # SMW-specific implementation
-    ${SMW_ERROR_HANDLER_SOURCE}     # Error Table Generated file
-    ${SMW_HASH_TABLE_SOURCE}    # Hash Table Generated file
-    ${HASH_TABLE_SOURCE}        # Common Hash Table Generated file
-    ${LIFECYCLE_TABLE_SOURCE}    # Lifecycle Table Generated file
-    ${SMW_SYM_KEY_MAPPINGS_SOURCE}    # SMW Key Mappings Generated file
+	${CLI_CORE_SOURCES}
+	${CLI_SMW_SOURCES}		# SMW-specific implementation
+	${SMW_ERROR_HANDLER_SOURCE} 	# Error Table Generated file
+	${SMW_HASH_TABLE_SOURCE}	# Hash Table Generated file
+	${HASH_TABLE_SOURCE}		# Common Hash Table Generated file
+	${LIFECYCLE_TABLE_SOURCE}	# Lifecycle Table Generated file
+	${SMW_SYM_KEY_MAPPINGS_SOURCE}	# SMW Key Mappings Generated file
+    ${SMW_ASYM_KEY_MAPPINGS_SOURCE}	# SMW Asymmetric Key Mappings Generated file
 )
 
 target_include_directories(nxp_smw PRIVATE
@@ -190,13 +223,14 @@ target_link_libraries(nxp_smw PRIVATE smw)
 message(STATUS "Building nxp_psa (PSA API)")
 
 add_executable(nxp_psa
-    ${CLI_CORE_SOURCES}
-    ${CLI_PSA_SOURCES}        # PSA-specific implementation
-    ${PSA_ERROR_HANDLER_SOURCE}     # Error Table Generated file
-    ${PSA_HASH_TABLE_SOURCE}    # Hash Table Generated file
-    ${HASH_TABLE_SOURCE}        # Common Hash Table Generated file
-    ${LIFECYCLE_TABLE_SOURCE}    # Lifecycle Table Generated file
-    ${PSA_SYM_KEY_MAPPINGS_SOURCE}    # PSA Key Mappings Generated file
+	${CLI_CORE_SOURCES}
+	${CLI_PSA_SOURCES}		# PSA-specific implementation
+	${PSA_ERROR_HANDLER_SOURCE} 	# Error Table Generated file
+	${PSA_HASH_TABLE_SOURCE}	# Hash Table Generated file
+	${HASH_TABLE_SOURCE}		# Common Hash Table Generated file
+	${LIFECYCLE_TABLE_SOURCE}	# Lifecycle Table Generated file
+    ${PSA_SYM_KEY_MAPPINGS_SOURCE}	# PSA Key Mappings Generated file
+    ${PSA_ASYM_KEY_MAPPINGS_SOURCE}
 )
 
 target_include_directories(nxp_psa PRIVATE
@@ -205,7 +239,6 @@ target_include_directories(nxp_psa PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/core
     ${CMAKE_CURRENT_SOURCE_DIR}/psa
 )
-
 target_compile_definitions(nxp_psa PRIVATE USE_PSA_BACKEND)
 
 target_link_libraries(nxp_psa PRIVATE smw)

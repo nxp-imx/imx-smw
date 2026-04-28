@@ -20,7 +20,8 @@ enum operation {
 	OP_DEV_GET_LIFECYCLE,
 	OP_DEV_SET_LIFECYCLE,
 	OP_DEV_GET_ATTESTATION,
-	OP_KEYGEN_SYM
+	OP_KEYGEN_SYM,
+	OP_KEYGEN_ASYM
 };
 
 /* RNG-specific options */

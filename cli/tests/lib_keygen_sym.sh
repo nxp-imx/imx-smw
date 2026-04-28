@@ -319,7 +319,7 @@ print_failure_report() {
 print_summary() {
     echo ""
     echo "╔══════════════════════════════════════════════════════════════════════════╗"
-    printf "║  Results:            %4d PASS  │  %4d FAIL     %23s║\n" \
+    printf "║  Results:            %4d PASS  │  %4d FAIL     %24s║\n" \
         "$PASS" "$FAIL" " "
     echo "╚══════════════════════════════════════════════════════════════════════════╝"
 }

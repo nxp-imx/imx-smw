@@ -1298,8 +1298,22 @@ static int encrypt_decrypt_generate_iv(CK_FUNCTION_LIST_3_0_PTR pfunc)
 					      encrypted_data, update_loop_count,
 					      input_data_block_size,
 					      &total_encrypted_len, true);
-		if (CHECK_CK_RV(CKR_OK, "C_EncryptMessageNext"))
+		if ((is_95() || is_943()) && is_ele_subsystem() &&
+		    (gcm_params.ulIvFixedBits != 0 &&
+		     gcm_params.ulIvFixedBits != 32)) {
+			if (gcm_params.ulIvFixedBits == 128) {
+				if (CHECK_CK_RV(CKR_MECHANISM_PARAM_INVALID,
+						"C_EncryptMessageNext"))
+					goto end;
+			} else if (CHECK_CK_RV(CKR_ARGUMENTS_BAD,
+					       "C_EncryptMessageNext")) {
+				goto end;
+			}
+
+			continue;
+		} else if (CHECK_CK_RV(CKR_OK, "C_EncryptMessageNext")) {
 			goto end;
+		}
 
 		TEST_OUT("Finish multi-part encryption process\n");
 		ret = pfunc->C_MessageEncryptFinal(sess);

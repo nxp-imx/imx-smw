@@ -249,6 +249,116 @@ end:
 	return status;
 }
 
+int ele_calculate_expected_output_len(struct crypto_output_params *params,
+				      unsigned int *expected_output_len)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+	unsigned int output_len = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!params || !expected_output_len)
+		goto end;
+
+	*expected_output_len = 0;
+
+	switch (params->op_step) {
+	case SMW_OP_STEP_ONESHOT:
+		output_len = params->input_len;
+		break;
+
+	case SMW_OP_STEP_UPDATE:
+		/*
+		 * For UPDATE: output may be less than input due to buffering
+		 * Return input_len as maximum estimate
+		 */
+		output_len = params->input_len;
+		break;
+
+	case SMW_OP_STEP_FINAL:
+		/*
+		 * For FINAL: output = remaining_buffered + input
+		 */
+		output_len = params->remaining_buffered_len;
+
+		if (INC_OVERFLOW(output_len, params->input_len)) {
+			status = SMW_STATUS_INVALID_PARAM;
+			goto end;
+		}
+
+		break;
+
+	default:
+		SMW_DBG_PRINTF(ERROR, "Invalid operation step: %d\n",
+			       params->op_step);
+		goto end;
+	}
+
+	/*
+	 * Add tag length if set
+	 * tag_len is non-zero ONLY when tag should be added to output:
+	 * - AEAD encryption with tag part of output buffer: tag_len = ELE_TAG_LEN
+	 * - AEAD encryption with dedicated tag field: tag_len = 0 (not added)
+	 * - Decryption: tag_len = 0 (no tag in output)
+	 * - Cipher: tag_len = 0 (no tag)
+	 */
+	if ((params->op_step == SMW_OP_STEP_ONESHOT ||
+	     params->op_step == SMW_OP_STEP_FINAL) &&
+	    params->tag_len > 0) {
+		if (INC_OVERFLOW(output_len, params->tag_len)) {
+			status = SMW_STATUS_INVALID_PARAM;
+			goto end;
+		}
+	}
+
+	*expected_output_len = output_len;
+	SMW_DBG_PRINTF(VERBOSE, "expected output length = %u\n",
+		       *expected_output_len);
+	status = SMW_STATUS_OK;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+int ele_update_buffered_len(unsigned int *remaining_buffered_len,
+			    unsigned int input_len, unsigned int output_len)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+	unsigned int buffered_bytes = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!remaining_buffered_len)
+		goto end;
+
+	/*
+	 * Calculate newly buffered bytes for this UPDATE operation
+	 * buffered_bytes = input_len - output_len
+	 *
+	 * The subsystem may buffer incomplete blocks, so output can be
+	 * less than input. The difference is buffered internally.
+	 */
+	if (SUB_OVERFLOW(input_len, output_len, &buffered_bytes)) {
+		status = SMW_STATUS_OPERATION_FAILURE;
+		goto end;
+	}
+
+	if (INC_OVERFLOW(*remaining_buffered_len, buffered_bytes)) {
+		status = SMW_STATUS_OPERATION_FAILURE;
+		goto end;
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "remaining buffered len = %u\n",
+		       *remaining_buffered_len);
+
+	status = SMW_STATUS_OK;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 __weak void ele_free_hash_context(struct smw_op_context *ctx)
 {
 	(void)ctx;

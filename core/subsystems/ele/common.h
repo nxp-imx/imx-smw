@@ -12,6 +12,7 @@
 #include "constants.h"
 #include "list.h"
 
+#include "operation_step.h"
 #include "keymgr_derive.h"
 
 #define ELE_NB_UID_WORD 4
@@ -81,6 +82,28 @@ struct ele_hash_algo {
 	enum smw_config_hash_algo_id algo_id;
 	hsm_hash_algo_t ele_algo;
 	uint32_t length;
+};
+
+/**
+ * struct crypto_output_params - Parameters for output length calculation
+ * @input_len: Input data length
+ * @remaining_buffered_len: Remaining buffered bytes from previous UPDATE
+ * @tag_len: Tag length
+ * @op_step: Operation step (ONESHOT, INIT, UPDATE, FINAL)
+ *
+ * This structure is used ONLY for calculating expected output lengths in AEAD
+ * and cipher operations.
+ *
+ * @tag_len: Tag length to add to output length
+ *           - For AEAD encryption with tag in output: ELE_TAG_LEN (16)
+ *           - For AEAD encryption with dedicated tag field: 0
+ *           - For decryption or cipher: 0
+ */
+struct crypto_output_params {
+	unsigned int input_len;
+	unsigned int remaining_buffered_len;
+	unsigned int tag_len;
+	enum smw_op_step op_step;
 };
 
 /**
@@ -684,5 +707,52 @@ int tls_mac_finish(struct hdl *hdl, void *args);
  * SMW_STATUS_ALLOC_FAILURE	                - Memory allocation failed.
  */
 int is_rsa_pub_expo_default(struct smw_keymgr_descriptor *key_desc);
+
+/**
+ * ele_calculate_expected_output_len() - Calculate expected output length
+ * @params: Pointer to output calculation parameters
+ * @expected_output_len: Pointer to store calculated output length
+ *
+ * Common function to calculate expected output length for both AEAD and Cipher.
+ *
+ * ONESHOT operation:
+ * - expected_output_length = input_length + tag_length (if applicable)
+ *
+ * UPDATE Operation:
+ * - The subsystem may buffer incomplete blocks internally,
+ *   so output length may be less than input length.
+ * - expected_output_length = input_length (as maximum estimate)
+ *
+ * FINAL Operation:
+ * - expected_output_length = remaining_buffered_len +
+ *                            input_length +
+ *                            tag_length (if applicable)
+ *
+ * Return:
+ * SMW_STATUS_OK            - Success
+ * SMW_STATUS_INVALID_PARAM - Invalid parameters or overflow
+ */
+int ele_calculate_expected_output_len(struct crypto_output_params *params,
+				      unsigned int *expected_output_len);
+
+/**
+ * ele_update_buffered_len() - Update remaining buffered length
+ * @remaining_buffered_len: Pointer to remaining buffered length
+ * @input_len: Input length for current operation
+ * @output_len: Output length from current operation
+ *
+ * Calculates and updates the remaining buffered bytes:
+ *
+ * This function is used during UPDATE operations to track how many bytes
+ * are buffered by the subsystem (incomplete blocks that haven't been
+ * processed yet).
+ *
+ * Return:
+ * SMW_STATUS_OK                - Success
+ * SMW_STATUS_INVALID_PARAM     - Invalid parameters
+ * SMW_STATUS_OPERATION_FAILURE - Overflow detected
+ */
+int ele_update_buffered_len(unsigned int *remaining_buffered_len,
+			    unsigned int input_len, unsigned int output_len);
 
 #endif /* __COMMON_H__ */

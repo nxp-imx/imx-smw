@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #ifndef __SIGN_VERIFY_H__
@@ -10,7 +10,7 @@
 
 #include "keymgr.h"
 #include "config.h"
-#include "exec.h"
+#include "operation_step.h"
 #include "operation_context.h"
 
 #define DEFAULT_STR "DEFAULT"

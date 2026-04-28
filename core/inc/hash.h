@@ -1,13 +1,13 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021, 2023-2025 NXP
+ * Copyright 2020-2021, 2023-2026 NXP
  */
 
 #ifndef __HASH_H__
 #define __HASH_H__
 
 #include "config.h"
-#include "exec.h"
+#include "operation_step.h"
 #include "operation_context.h"
 
 #define SMW_HASH_BLOCK_SIZE_SHA1   64

@@ -1,19 +1,13 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2024, 2026 NXP
  */
 
 #ifndef __EXEC_H___
 #define __EXEC_H___
 
 #include "subsystems.h"
-
-enum smw_op_step {
-	SMW_OP_STEP_ONESHOT = 0,
-	SMW_OP_STEP_INIT,
-	SMW_OP_STEP_UPDATE,
-	SMW_OP_STEP_FINAL
-};
+#include "operation_step.h"
 
 /**
  * smw_utils_execute_operation() - Execute a Security Operation.

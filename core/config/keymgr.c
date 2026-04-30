@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #include "smw_config.h"
@@ -33,6 +33,12 @@
 	(SMW_KEY_TYPE_NAME_SECP_R1 - SMW_CONFIG_KEY_TYPE_ID_SECP_R1)
 
 #define SMW_CONFIG_KDF_ID_OFFSET (SMW_KDF_NAME_HKDF - SMW_CONFIG_KDF_ID_HKDF)
+
+#define RANGE_NOT_CONFIGURABLE_KEY(_id, _size)                                 \
+	{                                                                      \
+		.key_type_id = SMW_CONFIG_KEY_TYPE_ID_##_id,                   \
+		.security_size = _size                                         \
+	}
 
 static const char *const key_type_strings[] = {
 	[SMW_CONFIG_KEY_TYPE_ID_SECP_R1] = "SECP_R1",
@@ -78,6 +84,86 @@ static unsigned int derive_algo_attrs[] = {
 	[SMW_CONFIG_KDF_ID_CKDF] = SMW_ATTR_ALGO_CKDF,
 	[SMW_CONFIG_KDF_ID_NB] = 0,
 };
+
+struct range_not_configurable_key {
+	enum smw_config_key_type_id key_type_id;
+	unsigned int security_size;
+};
+
+/**
+ * range_not_configurable_keys - Key types for which a size range is not
+ *                               configurable in the config file.
+ *
+ * For fixed size (security_size > 0): size range is automatically set to
+ * [security_size, security_size] in init_fixed_key_size_ranges().
+ * For variable size (security_size = 0): size range remains at
+ * the default [0, UINT_MAX] initialized by init_key_params().
+ */
+static const struct range_not_configurable_key range_not_configurable_keys[] = {
+	RANGE_NOT_CONFIGURABLE_KEY(ED25519, 255),
+	RANGE_NOT_CONFIGURABLE_KEY(ED448, 448),
+	RANGE_NOT_CONFIGURABLE_KEY(X25519, 255),
+	RANGE_NOT_CONFIGURABLE_KEY(X448, 448),
+	RANGE_NOT_CONFIGURABLE_KEY(SM4, 128),
+	RANGE_NOT_CONFIGURABLE_KEY(TLS_MASTER, 0),
+	RANGE_NOT_CONFIGURABLE_KEY(DERIVE, 0),
+	RANGE_NOT_CONFIGURABLE_KEY(RAW, 0),
+};
+
+/**
+ * is_range_not_configurable_key() - Check if a key type has a non-configurable
+ *                                   size range.
+ * @key_type_id: Key type ID to check
+ *
+ * Return:
+ * * true:  - Key type size range is not configurable.
+ * * false: - Key type size range is configurable.
+ */
+static bool
+is_range_not_configurable_key(enum smw_config_key_type_id key_type_id)
+{
+	unsigned int i = 0;
+
+	for (; i < ARRAY_SIZE(range_not_configurable_keys); i++) {
+		if (range_not_configurable_keys[i].key_type_id == key_type_id)
+			return true;
+	}
+
+	return false;
+}
+
+/**
+ * init_fixed_key_size_ranges() - Initialize size ranges for fixed size keys.
+ * @key: Pointer to the key operation parameters.
+ *
+ * For each key type in range_not_configurable_keys[] that is configured in the
+ * type bitmap and has a non-zero security size, automatically set its size
+ * range min and max to the fixed security size.
+ * Key types with security_size == 0 are skipped as their size is variable.
+ */
+static void init_fixed_key_size_ranges(struct op_key *key)
+{
+	unsigned int i = 0;
+	unsigned int security_size = 0;
+	const struct range_not_configurable_key *key_fixed_size = NULL;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (; i < ARRAY_SIZE(range_not_configurable_keys); i++) {
+		key_fixed_size = &range_not_configurable_keys[i];
+		security_size = key_fixed_size->security_size;
+
+		/* Only initialize if the key type is configured and has a fixed size */
+		if (!check_id(key_fixed_size->key_type_id, key->type_bitmap) ||
+		    !security_size)
+			continue;
+
+		key->size_range[key_fixed_size->key_type_id].min =
+			security_size;
+		key->size_range[key_fixed_size->key_type_id].max =
+			security_size;
+	}
+}
 
 static int read_key_type_strings(char **start, char *end, unsigned long *bitmap)
 {
@@ -125,6 +211,14 @@ static int read_key_size_range(char **start, char *end, const char *type_string,
 	status = get_key_type_id(type_string, &id);
 	if (status != SMW_STATUS_OK)
 		goto end;
+
+	if (is_range_not_configurable_key(id)) {
+		SMW_DBG_PRINTF(DEBUG,
+			       "Size range for key type %s shouldn't be set.\n",
+			       type_string);
+		status = SMW_STATUS_KEY_RANGE_NOT_CONFIGURABLE;
+		goto end;
+	}
 
 	/* Key size range cannot be defined twice */
 	if (check_id(id, *size_range_bitmap)) {
@@ -263,6 +357,9 @@ static int read_params(char **start, char *end, enum operation_id operation_id,
 
 	if (!p->key.type_bitmap)
 		p->key.type_bitmap = SMW_ALL_ONES;
+
+	/* Initialize size ranges for fixed security size keys */
+	init_fixed_key_size_ranges(&p->key);
 
 	*params = p;
 

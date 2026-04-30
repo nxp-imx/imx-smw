@@ -18,14 +18,71 @@ Each component handles its own version number specified in each component main C
 
 The releases are listed from the most recent to the first one.
 
-1. [Release 5.4](#rel_5_4)
-2. [Release 5.3](#rel_5_3)
-3. [Release 5.2](#rel_5_2)
-4. [Release 5.1](#rel_5_1)
-5. [Release 5.0.1](#rel_5_0)
-6. [Release 4.2](#rel_4_2)
-7. [Release 4.1](#rel_4_1)
-8. [Release 4.0](#rel_4_0)
+1. [Release 5.5](#rel_5_5)
+2. [Release 5.4](#rel_5_4)
+3. [Release 5.3](#rel_5_3)
+4. [Release 5.2](#rel_5_2)
+5. [Release 5.1](#rel_5_1)
+6. [Release 5.0.1](#rel_5_0)
+7. [Release 4.2](#rel_4_2)
+8. [Release 4.1](#rel_4_1)
+9. [Release 4.0](#rel_4_0)
+
+---
+### <a id ="rel_5_5"></a></br>**Release 5.5**
+---
+#### Known Issues
+##### 1. SECO Subsystem
+
+* When 2 or more applications load the SMW Library and configure the SECO subsystem, only one application is able to get the SECO configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the SECO subsystem. </br>
+The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
+
+##### 2. ELE Subsystem
+
+* ECC Signature verification with imported public key having x or y coordinate
+  MSB=0 is not supported.
+* AEAD multi-part encryption operations using GCM mode with opaque keys produce
+  incorrect authentication tags on i.MX95. However, using plaintext key
+  buffers works correctly.
+
+##### 3. TEE Subsystem
+
+* ECC Signature verification with imported public key having x or y coordinate
+  MSB=0 is not supported.
+
+##### 4. PKCS#11
+
+* As some subsystems are not handling key usage and permitted algorithm, the
+  find operation is not able to find all keys whose template defines key usage
+  and permitted algorithm.
+
+#### SMW Library
+##### 1. SMW APIs
+
+* Add a new status code `SMW_STATUS_KEY_RANGE_NOT_CONFIGURABLE` to indicate when
+  a size range is set in the config file for key types (e.g., ED25519, X25519,
+  ED448, X448, SM4) that do not support configurable size range.
+  If a size range is set for any of these key types in the config file,
+  the operation will fail with `SMW_STATUS_KEY_RANGE_NOT_CONFIGURABLE`.
+
+
+##### 2. Subsystems
+
+##### 3. ARM PSA APIs
+
+##### 4. OSAL
+
+* Remove size range definitions for ED25519, X25519, ED448 and X448 from ELE
+  config files.
+
+#### SMW Tests
+
+* Add a subtest to verify that setting a size range for fixed-size key types
+  (e.g., ED448) returns SMW_STATUS_KEY_RANGE_NOT_CONFIGURABLE.
+
+#### PKCS#11 Library
+
+#### PKCS#11 Tests
 
 ---
 ### <a id ="rel_5_4"></a></br>**Release 5.4**

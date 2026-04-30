@@ -454,13 +454,13 @@ The key range definition must respect the range format explained in the
    +---------------+--------------------------------------------------+-------------------------+
    | BRAINPOOL_T1  | Brainpool T1 Elliptic Curve key.                 | BRAINPOOL_T1_SIZE_RANGE |
    +---------------+--------------------------------------------------+-------------------------+
-   | ED25519       | Edwards Curve25519 key.                          | N/A                     |
+   | ED25519 (1)   | Edwards Curve25519 key.                          | N/A                     |
    +---------------+--------------------------------------------------+-------------------------+
-   | X25519        | ECDH key exchange based on Montgomery Curve25519.| N/A                     |
+   | X25519 (1)    | ECDH key exchange based on Montgomery Curve25519.| N/A                     |
    +---------------+--------------------------------------------------+-------------------------+
-   | ED448         | Edwards Curve448 key.                            | N/A                     |
+   | ED448 (1)     | Edwards Curve448 key.                            | N/A                     |
    +---------------+--------------------------------------------------+-------------------------+
-   | X448          | ECDH key exchange based on Montgomery Curve448.  | N/A                     |
+   | X448 (1)      | ECDH key exchange based on Montgomery Curve448.  | N/A                     |
    +---------------+--------------------------------------------------+-------------------------+
    | AES           | AES symmetric encryption                         | AES_SIZE_RANGE          |
    +---------------+--------------------------------------------------+-------------------------+
@@ -476,12 +476,16 @@ The key range definition must respect the range format explained in the
    +---------------+--------------------------------------------------+-------------------------+
    | DH            | Diffie-Hellman key exchange                      | DH_SIZE_RANGE           |
    +---------------+--------------------------------------------------+-------------------------+
-   | TLS_MASTER    | TLS Master secret derivation                     | N/A                     |
+   | TLS_MASTER (1)| TLS Master secret derivation                     | N/A                     |
    +---------------+--------------------------------------------------+-------------------------+
-   | RAW           | Raw public key format                            | N/A                     |
+   | RAW (1)       | Raw public key format                            | N/A                     |
    +---------------+--------------------------------------------------+-------------------------+
-   | DERIVE        | Derive key material                              | N/A                     |
+   | DERIVE (1)    | Derive key material                              | N/A                     |
    +---------------+--------------------------------------------------+-------------------------+
+
+(1) These key types do not support configurable key size ranges.
+    If a key size range is specified, the operation will fail with
+    ``SMW_STATUS_KEY_RANGE_NOT_CONFIGURABLE``.
 
 
 OP_TYPE_VALUES

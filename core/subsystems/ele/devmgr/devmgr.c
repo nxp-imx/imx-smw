@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2025 NXP
+ * Copyright 2023-2026 NXP
  */
 
 #include "compiler.h"
@@ -29,7 +29,6 @@ static void features_per_soc(struct ele_info *info)
 
 	switch (info->soc_id) {
 	case SOC_IMX8ULP:
-	case SOC_IMX943:
 		break;
 
 	case SOC_IMX91:

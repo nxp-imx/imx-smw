@@ -209,8 +209,7 @@
 		"subsystem": "ELE",
 		"key_name": "key 9",
 		"restriction_list": [
-			"imx8ulp",
-			"imx943"
+			"imx8ulp"
 		]
 	},
 	"subtest 15": {
@@ -234,8 +233,7 @@
 		"subsystem": "ELE",
 		"key_name": "key 12",
 		"restriction_list": [
-			"imx8ulp",
-			"imx943"
+			"imx8ulp"
 		]
 	},
 	"subtest 19": {
@@ -254,8 +252,7 @@
 		"subsystem": "ELE",
 		"key_name": "key 15",
 		"restriction_list": [
-			"imx8ulp",
-			"imx943"
+			"imx8ulp"
 		]
 	},
 	"subtest 22": {

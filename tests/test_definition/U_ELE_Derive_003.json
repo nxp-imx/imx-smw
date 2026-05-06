@@ -36,8 +36,7 @@
 		"subsystem": "ELE",
 		"key_name": "self 256-bit ecdh key",
 		"restriction_list": [
-			"imx8ulp",
-			"imx943"
+			"imx8ulp"
 		]
 	},
 	"subtest 2": {

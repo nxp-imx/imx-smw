@@ -46,8 +46,7 @@
 		"subsystem": "ELE",
 		"key_name": "key 1",
 		"restriction_list": [
-			"imx8ulp",
-			"imx943"
+			"imx8ulp"
 		]
 	},
 	"subtest 2": {
@@ -56,8 +55,7 @@
 		"subsystem": "ELE",
 		"key_name": "key 2",
 		"restriction_list": [
-			"imx8ulp",
-			"imx943"
+			"imx8ulp"
 		]
 	},
 	"subtest 3": {
@@ -66,8 +64,7 @@
 		"subsystem": "ELE",
 		"key_name": "key 3",
 		"restriction_list": [
-			"imx8ulp",
-			"imx943"
+			"imx8ulp"
 		]
 	},
 	"subtest 4": {

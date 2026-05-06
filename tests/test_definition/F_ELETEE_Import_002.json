@@ -123,8 +123,7 @@
 		"key_name": "key ECDSA TEE",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
-			"imx943"
+			"imx95"
 		]
 	},
 	"subtest 2": {
@@ -134,8 +133,7 @@
 		"key_name": "key ECDSA ELE",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
-			"imx943"
+			"imx95"
 		]
 	},
 	"subtest 3": {

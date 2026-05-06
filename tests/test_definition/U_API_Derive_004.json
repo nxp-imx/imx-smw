@@ -23,8 +23,7 @@
 		"command": "GENERATE",
 		"key_name": "self ecdh key",
 		"restriction_list": [
-			"imx8ulp",
-			"imx943"
+			"imx8ulp"
 		]
 	},
 	"subtest 2": {

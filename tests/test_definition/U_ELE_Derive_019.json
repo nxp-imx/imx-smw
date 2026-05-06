@@ -106,8 +106,7 @@
 		"op_output": "key OEM_MK",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
-			"imx943"
+			"imx95"
 		]
 	},
 	"subtest 2": {

@@ -60,8 +60,7 @@
 		"subsystem": "ELE",
 		"key_name": "key 2",
 		"restriction_list": [
-			"imx8ulp",
-			"imx943"
+			"imx8ulp"
 		]
 	},
 	"subtest 3": {
@@ -69,8 +68,7 @@
 		"subsystem": "ELE",
 		"key_name": "key 3",
 		"restriction_list": [
-			"imx8ulp",
-			"imx943"
+			"imx8ulp"
 		]
 	},
 	"subtest 4": {
@@ -175,7 +173,8 @@
 		"key_name": "key 3",
 		"depends": 3,
 		"restriction_list": [
-			"imx95"
+			"imx95",
+			"imx943"
 		]
 	},
 	"subtest 9": {
@@ -326,7 +325,8 @@
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED",
 		"depends": 2,
 		"restriction_list": [
-			"imx95"
+			"imx95",
+			"imx943"
 		]
 	},
 	"subtest 15": {

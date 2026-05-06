@@ -46,8 +46,7 @@
 		"api": "PSA",
 		"key_name": "key 2",
 		"restriction_list": [
-			"imx8ulp",
-			"imx943"
+			"imx8ulp"
 		]
 	},
 	"subtest 3": {
@@ -76,11 +75,7 @@
 		"output": 64,
 		"sign_id": 0,
 		"key_name": "key 1",
-		"depends": 1,
-		"restriction_list": [
-			"imx8ulp",
-			"imx943"
-		]
+		"depends": 1
 	},
 	"subtest 4": {
 		"command": "VERIFY",
@@ -107,11 +102,7 @@
 		],
 		"sign_id": 0,
 		"key_name": "key 1",
-		"depends": 3,
-		"restriction_list": [
-			"imx8ulp",
-			"imx943"
-		]
+		"depends": 3
 	},
 	"subtest 5": {
 		"command": "SIGN",
@@ -128,11 +119,7 @@
 		"output": 64,
 		"sign_id": 1,
 		"key_name": "key 1",
-		"depends": 1,
-		"restriction_list": [
-			"imx8ulp",
-			"imx943"
-		]
+		"depends": 1
 	},
 	"subtest 6": {
 		"command": "VERIFY",
@@ -148,11 +135,7 @@
 		],
 		"sign_id": 1,
 		"key_name": "key 1",
-		"depends": 5,
-		"restriction_list": [
-			"imx8ulp",
-			"imx943"
-		]
+		"depends": 5
 	},
 	"subtest 7": {
 		"command": "SIGN",
@@ -180,11 +163,7 @@
 		"sign_id": 2,
 		"output": 64,
 		"key_name": "key 2",
-		"depends": 2,
-		"restriction_list": [
-			"imx8ulp",
-			"imx943"
-		]
+		"depends": 2
 	},
 	"subtest 8": {
 		"command": "VERIFY",
@@ -211,30 +190,18 @@
 		],
 		"sign_id": 2,
 		"key_name": "key 2",
-		"depends": 7,
-		"restriction_list": [
-			"imx8ulp",
-			"imx943"
-		]
+		"depends": 7
 	},
 	"subtest 9": {
 		"command": "DELETE",
 		"api": "PSA",
 		"key_name": "key 1",
-		"depends": 1,
-		"restriction_list": [
-			"imx8ulp",
-			"imx943"
-		]
+		"depends": 1
 	},
 	"subtest 10": {
 		"command": "DELETE",
 		"api": "PSA",
 		"key_name": "key 2",
-		"depends": 2,
-		"restriction_list": [
-			"imx8ulp",
-			"imx943"
-		]
+		"depends": 2
 	}
 }

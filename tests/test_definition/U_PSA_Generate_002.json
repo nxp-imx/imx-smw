@@ -33,8 +33,7 @@
 		"api": "PSA",
 		"key_name": "key 1",
 		"restriction_list": [
-			"imx8ulp",
-			"imx943"
+			"imx8ulp"
 		]
 	},
 	"subtest 2": {
@@ -42,8 +41,7 @@
 		"api": "PSA",
 		"key_name": "key 2",
 		"restriction_list": [
-			"imx8ulp",
-			"imx943"
+			"imx8ulp"
 		]
 	},
 	"subtest 3": {
@@ -52,8 +50,7 @@
 		"key_name": "key 1",
 		"depends": 1,
 		"restriction_list": [
-			"imx8ulp",
-			"imx943"
+			"imx8ulp"
 		]
 	},
 	"subtest 4": {
@@ -62,8 +59,7 @@
 		"key_name": "key 2",
 		"depends": 2,
 		"restriction_list": [
-			"imx8ulp",
-			"imx943"
+			"imx8ulp"
 		]
 	}
 }

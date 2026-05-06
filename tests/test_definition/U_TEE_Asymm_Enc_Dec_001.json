@@ -218,11 +218,7 @@
 			"0a"
 		],
 		"key_name": "key 3",
-		"output": 256,
-		"restriction_list": [
-			"imx8ulp",
-			"imx943"
-		]
+		"output": 256
 	},
 	"subtest 12": {
 		"command": "DELETE",

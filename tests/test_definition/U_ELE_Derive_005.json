@@ -56,8 +56,7 @@
 		"subsystem": "ELE",
 		"key_name": "self 256-bit ecdh key",
 		"restriction_list": [
-			"imx8ulp",
-			"imx943"
+			"imx8ulp"
 		]
 	},
 	"subtest 2": {
@@ -65,24 +64,21 @@
 		"subsystem": "ELE",
 		"key_name": "self 384-bit ecdh key",
 		"restriction_list": [
-			"imx8ulp",
-			"imx943"
+			"imx8ulp"
 		]
 	},
 	"subtest 3": {
 		"command": "OP_CONTEXT_ALLOCATE",
 		"context_id": 0,
 		"restriction_list": [
-			"imx8ulp",
-			"imx943"
+			"imx8ulp"
 		]
 	},
 	"subtest 4": {
 		"command": "OP_CONTEXT_ALLOCATE",
 		"context_id": 1,
 		"restriction_list": [
-			"imx8ulp",
-			"imx943"
+			"imx8ulp"
 		]
 	},
 	"subtest 5": {

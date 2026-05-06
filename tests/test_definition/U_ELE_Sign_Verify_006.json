@@ -58,8 +58,7 @@
 		"sign_id": 0,
 		"key_name": "key test 2",
 		"restriction_list": [
-			"imx8ulp",
-			"imx943"
+			"imx8ulp"
 		]
 	},
 	"subtest 2": {
@@ -162,8 +161,7 @@
 		"sign_id": 1,
 		"key_name": "key test 1024",
 		"restriction_list": [
-			"imx8ulp",
-			"imx943"
+			"imx8ulp"
 		]
 	},
 	"subtest 4": {
@@ -357,8 +355,7 @@
 		"sign_id": 4,
 		"key_name": "key test 2",
 		"restriction_list": [
-			"imx8ulp",
-			"imx943"
+			"imx8ulp"
 		],
 		"result": "SMW_STATUS_INVALID_PARAM"
 	}

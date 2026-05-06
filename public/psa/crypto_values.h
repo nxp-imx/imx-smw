@@ -460,14 +460,14 @@
  * The inputs are mandatory and must be passed in the order above. Each input may only be passed
  * once.
  *
- * **Warning**
+ * **Warning**:
  *	HKDF-Extract is not meant to be used on its own. PSA_ALG_HKDF should be used instead if
  *	possible. PSA_ALG_HKDF_EXTRACT is provided as a separate algorithm for the sake of
  *	protocols that use it as a building block. It may also be a slight performance
  *	optimization in applications that use HKDF with the same salt and key but many different
  *	info strings.
  *
- * **Warning**
+ * **Warning**:
  *	HKDF processes the salt as follows: first hash it with hash_alg if the salt is longer than
  *	the block size of the hash algorithm; then pad with null bytes up to the block size. As a
  *	result, it is possible for distinct salt inputs to result in the same outputs. To ensure
@@ -504,7 +504,7 @@
  * The inputs are mandatory and must be passed in the order above. Each input may only be passed
  * once.
  *
- * **Warning**
+ * **Warning**:
  *	HKDF-Expand is not meant to be used on its own. PSA_ALG_HKDF should be used instead if
  *	possible. PSA_ALG_HKDF_EXPAND is provided as a separate algorithm for the sake of
  *	protocols that use it as a building block. It may also be a slight performance
@@ -549,7 +549,7 @@
  * - PSA_KEY_DERIVATION_INPUT_INFO: The byte array that corresponds to the expanded label, as
  *   defined in RFC 8446. Use this step together with the psa_key_derivation_input_bytes()
  *   function.
- * 
+ *
  * The expanded label contains the TLS1.3 label, which corresponds to either a TLS1.3 secret
  * (e.g. client handshake secret), a key (e.g. client application traffic key), or an IV (e.g.
  * server handshake traffic IV). When deriving a secret or key, use the
@@ -1132,10 +1132,10 @@
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
  *
  * **Warning: Not supported**
- * 
+ *
  * SPAKE2+ algorithms are constructed using PSA_ALG_SPAKE2P_HMAC(hash_alg),
  * PSA_ALG_SPAKE2P_CMAC(hash_alg), or PSA_ALG_SPAKE2P_MATTER.
- * 
+ *
  * Return:
  * 1 if @alg is a SPAKE2+ algorithm, 0 otherwise.
  * This macro can return either 0 or 1 if @alg is not a supported PAKE algorithm identifier.
@@ -1148,10 +1148,10 @@
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
  *
  * **Warning: Not supported**
- * 
+ *
  * SPAKE2+ algorithms, using HMAC-based key confirmation,
  * are constructed using PSA_ALG_SPAKE2P_HMAC(hash_alg).
- * 
+ *
  * Return:
  * 1 if @alg is a SPAKE2+ algorithm  that uses a HMAC-based key confirmation, 0 otherwise.
  * This macro can return either 0 or 1 if @alg is not a supported PAKE algorithm identifier.
@@ -1164,10 +1164,10 @@
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
  *
  * **Warning: Not supported**
- * 
+ *
  * SPAKE2+ algorithms, using CMAC-based key confirmation,
  * are constructed using PSA_ALG_SPAKE2P_CMAC(hash_alg).
- * 
+ *
  * Return:
  * 1 if @alg is a SPAKE2+ algorithm  that uses a CMAC-based key confirmation, 0 otherwise.
  * This macro can return either 0 or 1 if @alg is not a supported PAKE algorithm identifier.
@@ -1410,21 +1410,21 @@
  * - The primitive group can be either an elliptic curve or defined over a finite field.
  * - The Schnorr NIZKP, using the same group as the J-PAKE algorithm.
  * - The cryptographic hash function, @hash_alg.
- * 
+ *
  * J-PAKE does not confirm the shared secret key that results from the key exchange.
- * 
+ *
  * The shared secret that is produced by J-PAKE is not suitable for use as an encryption key.
  * It must be used as an input to a key-derivation operation to produce additional cryptographic keys.
- * 
+ *
  * See The J-PAKE protocol for the J-PAKE protocol flow and how to implement it with the Crypto API.
- * 
+ *
  * **Compatible key types**:
  * - PSA_KEY_TYPE_PASSWORD
  * - PSA_KEY_TYPE_PASSWORD_HASH
- * 
+ *
  * Return:
  * A J-PAKE algorithm, parameterized by a specific hash.
- * 
+ *
  * Unspecified if @hash_alg is not a supported hash algorithm.
  */
 #define PSA_ALG_JPAKE(hash_alg) /* specification-defined value */
@@ -1446,7 +1446,7 @@
  *
  * - PSA_KEY_TYPE_SPAKE2P_KEY_PAIR
  * - PSA_KEY_TYPE_SPAKE2P_PUBLIC_KEY (verification only)
- * 
+ *
  * Return:
  * A SPAKE2+ algorithm, using CMAC for key confirmation, parameterized by a specific hash.
  *
@@ -1471,7 +1471,7 @@
  *
  * - PSA_KEY_TYPE_SPAKE2P_KEY_PAIR
  * - PSA_KEY_TYPE_SPAKE2P_PUBLIC_KEY (verification only)
- * 
+ *
  * Return:
  * A SPAKE2+ algorithm, using HMAC for key confirmation, parameterized by a specific hash.
  *
@@ -1661,32 +1661,32 @@
 /**
  * PSA_PAKE_PRIMITIVE() - Construct a PAKE primitive from type, family and bit-size.
  * @pake_type: The type of the primitive: a value of type @psa_pake_primitive_type_t.
- * 
+ *
  * @pake_family: The family of the primitive. The type and interpretation of this parameter depends on @pake_type.
  *               For more information, see PSA_PAKE_PRIMITIVE_TYPE_ECC and PSA_PAKE_PRIMITIVE_TYPE_DH.
  *
  * @pake_bits: The bit-size of the primitive: a value of type size_t.
  *             The interpretation of this parameter depends on @pake_type and @pake_family.
  *             For more information, see PSA_PAKE_PRIMITIVE_TYPE_ECC and PSA_PAKE_PRIMITIVE_TYPE_DH.
- * 
+ *
  * A PAKE primitive value is used to specify a PAKE operation, as part of a PAKE cipher suite.
  *
  * Return:
  * The constructed primitive value. Return 0 if the requested primitive can’t be encoded as @psa_pake_primitive_t.
  *
  */
-#define PSA_PAKE_PRIMITIVE(pake_type, pake_family,                             \
-			   pake_bits) /* specification-defined value */
+#define PSA_PAKE_PRIMITIVE(pake_type, pake_family, pake_bits)                  \
+	/* specification-defined value */
 
 /**
  * PSA_PAKE_PRIMITIVE_GET_BITS() - Extract the bit-size from a PAKE primitive.
  * @pake_primitive: A PAKE primitive: a value of type @psa_pake_primitive_t.
- * 
+ *
  * For more information on the bit-size values, see PSA_PAKE_PRIMITIVE_TYPE_ECC and PSA_PAKE_PRIMITIVE_TYPE_DH.
  *
  * Return:
  * The PAKE primitive bit-size, if @pake_primitive is a supported PAKE primitive.
- * 
+ *
  * Unspecified if @pake_primitive is not a supported PAKE primitive.
  *
  */
@@ -1762,7 +1762,7 @@
  * This key confirmation value will result in the PAKE algorithm exchanging data to
  * verify that the shared key is identical for both parties.
  * This is the default key confirmation value in an initialized PAKE cipher suite object.
- * 
+ *
  * Some algorithms do not include confirmation of the shared key.
  */
 #define PSA_PAKE_CONFIRMED_KEY 0
@@ -1773,14 +1773,14 @@
  *
  * This key confirmation value will result in the PAKE algorithm terminating prior to
  * confirming that the resulting shared key is identical for both parties.
- * 
+ *
  * Some algorithms do not support returning an unconfirmed shared key.
- * 
+ *
  * **Warning**:
  *	When the shared key is not confirmed as part of the PAKE operation,
  *	the application is responsible for mitigating risks that arise from
  *	the possible mismatch in the output keys.
- * 
+ *
  */
 #define PSA_PAKE_UNCONFIRMED_KEY 1
 
@@ -1803,7 +1803,7 @@
  * If the algorithm does not need a specific ordering,
  * then either do not call psa_pake_set_role(),
  * or use PSA_PAKE_ROLE_NONE as the role parameter.
- * 
+ *
  */
 #define PSA_PAKE_ROLE_FIRST ((psa_pake_role_t)0x01)
 
@@ -1816,7 +1816,7 @@
  * If the algorithm does not need a specific ordering,
  * then either do not call psa_pake_set_role(),
  * or use PSA_PAKE_ROLE_NONE as the role parameter.
- * 
+ *
  */
 #define PSA_PAKE_ROLE_SECOND ((psa_pake_role_t)0x02)
 
@@ -1825,7 +1825,7 @@
  * The client in an augmented PAKE.
  *
  * Augmented PAKE algorithms need to differentiate between client and server.
- * 
+ *
  */
 #define PSA_PAKE_ROLE_CLIENT ((psa_pake_role_t)0x11)
 
@@ -1834,7 +1834,7 @@
  * The server in an augmented PAKE.
  *
  * Augmented PAKE algorithms need to differentiate between client and server.
- * 
+ *
  */
 #define PSA_PAKE_ROLE_SERVER ((psa_pake_role_t)0x11)
 
@@ -1844,11 +1844,11 @@
  *
  * The format for both input and output using this step is the same as the format
  * for public keys on the group specified by the PAKE operation’s primitive.
- * 
+ *
  * The public-key formats are defined in the documentation for psa_export_public_key().
- * 
+ *
  * For information regarding how the group is determined, consult the documentation PSA_PAKE_PRIMITIVE().
- * 
+ *
  */
 #define PSA_PAKE_STEP_KEY_SHARE ((psa_pake_step_t)0x01)
 
@@ -1858,14 +1858,14 @@
  *
  * This is the ephemeral public key in the Schnorr Non-Interactive Zero-Knowledge Proof,
  * this is the value denoted by V in [RFC8235].
- * 
+ *
  * The format for both input and output at this step is the same as that for public keys
  * on the group specified by the PAKE operation’s primitive.
- * 
+ *
  * For more information on the format, consult the documentation of psa_export_public_key().
- * 
+ *
  * For information regarding how the group is determined, consult the documentation PSA_PAKE_PRIMITIVE().
- * 
+ *
  */
 #define PSA_PAKE_STEP_ZK_PUBLIC ((psa_pake_step_t)0x02)
 
@@ -1875,20 +1875,20 @@
  *
  * This is the proof in the Schnorr Non-Interactive Zero-Knowledge Proof,
  * this is the value denoted by r in [RFC8235].
- * 
+ *
  * Both for input and output, the value at this step is an integer 
  * less than the order of the group specified by the PAKE operation’s primitive.
  * The format depends on the group as well:
- * 
+ *
  * - For Montgomery curves, the encoding is little endian.
  * - For other elliptic curves, and for Diffie-Hellman groups,
  *   the encoding is big endian. See [SEC1] §2.3.8.
- * 
+ *
  * In both cases leading zeroes are permitted as long as the length in bytes does
  * not exceed the byte length of the group order.
  *  
  * For information regarding how the group is determined, consult the documentation PSA_PAKE_PRIMITIVE().
- * 
+ *
  */
 #define PSA_PAKE_STEP_ZK_PROOF ((psa_pake_step_t)0x03)
 
@@ -1898,10 +1898,10 @@
  *
  * This value is used during the key confirmation phase of a PAKE protocol.
  * The format of the value depends on the algorithm and cipher suite:
- * 
+ *
  * - For PSA_ALG_SPAKE2P, the format for both input and output at this step is
  *   the same as the output of the MAC algorithm specified in the cipher suite.
- * 
+ *
  */
 #define PSA_PAKE_STEP_CONFIRM ((psa_pake_step_t)0x04)
 
@@ -1960,7 +1960,7 @@
  * They are defined in Elliptic Curve Cryptography (ECC) Brainpool Standard Curves and Curve
  * Generation [RFC5639].
  *
- * **Warning**
+ * **Warning**:
  *	The 160-bit curve brainpoolP160r1 is weak and deprecated and is only recommended for use in
  *	legacy protocols.
  */

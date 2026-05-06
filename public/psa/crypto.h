@@ -345,7 +345,7 @@ typedef struct psa_mac_operation_s psa_mac_operation_t;
 
 /**
  * typedef psa_custom_key_parameters_t - Custom production parameters for key generation or key derivation.
- * 
+ *
  * The interpretation of this structure depends on the type of the key.
  * Table below shows the custom production parameters for each type of key.
  * See the key type definitions for details of the valid parameter values.\:
@@ -361,7 +361,7 @@ typedef struct psa_mac_operation_s psa_mac_operation_t;
  *   +----------------+----------------------------------------------------------------------------+
  *   | Other key types| Reserved for future use.                                                   |
  *   +----------------+----------------------------------------------------------------------------+
- * 
+ *
  * **Note**:
  *      Future versions of the specification, and implementations, may add other fields in this structure.
  */
@@ -371,38 +371,38 @@ typedef struct psa_custom_key_parameters_s psa_custom_key_parameters_t;
  * typedef psa_pake_cipher_suite_t - The type of an object describing a PAKE cipher suite.
  *
  * Before calling any function on a PAKE cipher suite object,
- * the application must initialize it by any of the following means:
- * 
- * - Set the object to all-bits-zero, for example:
- * 
+ * the application must initialize it by any of the following means\:
+ *
+ * - Set the object to all-bits-zero, for example\:
+ *
  *   .. code-block:: c
- * 
- * psa_pake_cipher_suite_t cipher_suite;
- * memset(&cipher_suite, 0, sizeof(cipher_suite));
- * 
+ *
+ *      psa_pake_cipher_suite_t cipher_suite;
+ *      memset(&cipher_suite, 0, sizeof(cipher_suite));
+ *
  * - Initialize the object to logical zero values by declaring the object as static or global
- *   without an explicit initializer, for example:
- * 
- *  *   .. code-block:: c
- * 
- * static psa_pake_cipher_suite_t cipher_suite;
- * 
- * - Initialize the object to the initializer PSA_PAKE_CIPHER_SUITE_INIT, for example:
- * 
+ *   without an explicit initializer, for example\:
+ *
  *   .. code-block:: c
- * 
- * psa_pake_cipher_suite_t cipher_suite = PSA_PAKE_CIPHER_SUITE_INIT;
- * 
- * - Assign the result of the function psa_pake_cipher_suite_init() to the object, for example:
- * 
- *  *   .. code-block:: c
- * 
- * psa_pake_cipher_suite_t cipher_suite;
- * cipher_suite = psa_pake_cipher_suite_init();
- * 
- * Following initialization, the cipher-suite object contains the following values:
- * 
- *  *   .. tabularcolumns:: |\Y{0.4}|\Y{0.6}|
+ *
+ *      static psa_pake_cipher_suite_t cipher_suite;
+ *
+ * - Initialize the object to the initializer PSA_PAKE_CIPHER_SUITE_INIT, for example\:
+ *
+ *   .. code-block:: c
+ *
+ *      psa_pake_cipher_suite_t cipher_suite = PSA_PAKE_CIPHER_SUITE_INIT;
+ *
+ * - Assign the result of the function psa_pake_cipher_suite_init() to the object, for example\:
+ *
+ *   .. code-block:: c
+ *
+ *      psa_pake_cipher_suite_t cipher_suite;
+ *      cipher_suite = psa_pake_cipher_suite_init();
+ *
+ * Following initialization, the cipher-suite object contains the following values\:
+ *
+ *    .. tabularcolumns:: |\Y{0.4}|\Y{0.6}|
  *
  *   +----------------------------------+--------------------------------------------------------+
  *   | **Attribute**                    | **Value**                                              |
@@ -416,13 +416,13 @@ typedef struct psa_custom_key_parameters_s psa_custom_key_parameters_t;
  *   +----------------------------------+--------------------------------------------------------+
  *
  * Valid algorithm, primitive, and key confirmation values must be set when using a PAKE cipher suite.
- * 
+ *
  * **Implementation note**:
  *	Implementations are recommended to define the cipher-suite object as a simple data structure,
  *	with fields corresponding to the individual cipher suite attributes. In such an implementation,
  *	each function psa_pake_cs_set_xxx() sets a field and the corresponding function psa_pake_cs_get_xxx()
  *	retrieves the value of the field.
- * 
+ *
  *	An implementation can report attribute values that are equivalent to the original one,
  *	but have a different encoding. For example, an implementation can use a more compact representation
  *	for attributes where many bit-patterns are invalid or not supported,
@@ -432,45 +432,44 @@ typedef struct psa_custom_key_parameters_s psa_custom_key_parameters_t;
  *
  * This is an implementation-defined type. Applications that make assumptions about the content
  * of this object will result in implementation-specific behavior, and are non-portable.
- * 
  */
 typedef struct psa_pake_cipher_suite_s psa_pake_cipher_suite_t;
 
 /**
  * typedef psa_pake_operation_t - The type of the state object for PAKE operations.
- * 
+ *
  * Before calling any function on a PAKE operation object,
- * the application must initialize it by any of the following means:
- * 
- * - Set the object to all-bits-zero, for example:
- * 
- *  *   .. code-block:: c
- * psa_pake_operation_t operation;
- * memset(&operation, 0, sizeof(operation));
- * 
+ * the application must initialize it by any of the following means\:
+ *
+ * - Set the object to all-bits-zero, for example\:
+ *
+ *   .. code-block:: c
+ *
+ *      psa_pake_operation_t operation;
+ *      memset(&operation, 0, sizeof(operation));
+ *
  * - Initialize the object to logical zero values by declaring the object as 
- *   static or global without an explicit initializer, for example:
- * 
- *  *   .. code-block:: c
- * 
- * static psa_pake_operation_t operation;
- * 
- * - Initialize the object to the initializer PSA_PAKE_OPERATION_INIT, for example:
- * 
- *  *   .. code-block:: c
- * 
- * psa_pake_operation_t operation = PSA_PAKE_OPERATION_INIT;
- * 
- * - Assign the result of the function psa_pake_operation_init() to the object, for example:
- * 
- *  *   .. code-block:: c
- * 
- * psa_pake_operation_t operation;
- * operation = psa_pake_operation_init();
- * 
+ *   static or global without an explicit initializer, for example\:
+ *
+ *   .. code-block:: c
+ *
+ *      static psa_pake_operation_t operation;
+ *
+ * - Initialize the object to the initializer PSA_PAKE_OPERATION_INIT, for example\:
+ *
+ *   .. code-block:: c
+ *
+ *      psa_pake_operation_t operation = PSA_PAKE_OPERATION_INIT;
+ *
+ * - Assign the result of the function psa_pake_operation_init() to the object, for example\:
+ *
+ *   .. code-block:: c
+ *
+ *      psa_pake_operation_t operation;
+ *      operation = psa_pake_operation_init();
+ *
  * This is an implementation-defined type. Applications that make assumptions about the content 
  * of this object will result in implementation-specific behavior, and are non-portable.
- * 
  */
 typedef struct psa_pake_operation_s psa_pake_operation_t;
 
@@ -2267,7 +2266,7 @@ psa_status_t psa_export_key(psa_key_id_t key, uint8_t *data, size_t data_size,
  * * PSA_ERROR_NOT_SUPPORTED:
  *      The key’s storage location does not support export of the key.
  * * PSA_ERROR_NOT_SUPPORTED:
-        The implementation does not support export of keys with this key type.
+ *      The implementation does not support export of keys with this key type.
  * * PSA_ERROR_BUFFER_TOO_SMALL:
  *      The size of the @data buffer is too small. PSA_EXPORT_PUBLIC_KEY_OUTPUT_SIZE() or
  *      PSA_EXPORT_PUBLIC_KEY_MAX_SIZE can be used to determine the required buffer size.
@@ -2370,7 +2369,7 @@ psa_status_t psa_generate_key(const psa_key_attributes_t *attributes,
  * @key: On success, an identifier for the newly created key. PSA_KEY_ID_NULL on failure.
  *
  * **Warning: Not supported**
- * 
+ *
  * Use this function to provide explicit production parameters when generating a key.
  * See the description of psa_generate_key() for the operation of this function with the 
  * default production parameters.
@@ -3717,7 +3716,7 @@ psa_key_derivation_output_key(const psa_key_attributes_t *attributes,
  * @key: On success, an identifier for the newly created key. PSA_KEY_ID_NULL on failure.
  *
  * **Warning: Not supported**
- * 
+ *
  * This function calculates output bytes from a key derivation algorithm and uses those bytes to
  * generate a key deterministically. The key’s location, policy, type and size are taken from
  * @attributes.
@@ -3727,7 +3726,7 @@ psa_key_derivation_output_key(const psa_key_attributes_t *attributes,
  * For example, the production parameters can be used to select an alternative key-derivation process,
  * or configure additional key parameters.
  * See psa_key_derivation_output_key() for the operation of this function with the default production parameters.
- * 
+ *
  * This function uses the @attributes as follows\:
  *
  * - The key type is required. It cannot be an asymmetric public key.
@@ -3749,7 +3748,7 @@ psa_key_derivation_output_key(const psa_key_attributes_t *attributes,
  * @custom is a customized production parameters for the key derivation.
  * @custom_data is a buffer containing additional variable-sized production parameters.
  * @custom_data_length is the length of @custom_data in bytes.
- * 
+ *
  * Return:
  * * PSA_SUCCESS:
  *      Success. If the key is persistent, the key material and the key’s metadata have been saved
@@ -3836,7 +3835,6 @@ psa_status_t psa_key_derivation_output_key_custom(
  * * PSA_ERROR_BAD_STATE:
  *      The library has not been previously initialized by psa_crypto_init(). It is
  *      implementation-dependent whether a failure to initialize results in this error code.
- *
  */
 psa_status_t
 psa_key_derivation_set_capacity(psa_key_derivation_operation_t *operation,
@@ -4513,7 +4511,7 @@ psa_status_t psa_purge_key(psa_key_id_t key);
  * @peer_key. The result of this function is a shared secret, returned as a derivation key.
  * This key can be input to a key derivation operation using psa_key_derivation_input_key().
  *
- * **Warning**
+ * **Warning**:
  *      The shared secret resulting from a key agreement algorithm such as finite-field
  *      Diffie-Hellman or elliptic curve Diffie-Hellman has biases. This makes it unsuitable for
  *      use as key material, for example, as an AES key. Instead, it is recommended that a key
@@ -5109,13 +5107,13 @@ psa_status_t psa_verify_message(psa_key_id_t key, psa_algorithm_t alg,
  * @alg: The key-encapsulation algorithm to use: a value of type psa_algorithm_t
  *       such that PSA_ALG_IS_KEY_ENCAPSULATION(alg) is true.
  * @attributes: The attributes for the output key.
- * @ouput_key: On success, an identifier for the newly created shared secret key. PSA_KEY_ID_NULL on failure.
+ * @output_key: On success, an identifier for the newly created shared secret key. PSA_KEY_ID_NULL on failure.
  * @ciphertext: Buffer where the ciphertext output is to be written.
  * @ciphertext_size: Size of the @ciphertext buffer in bytes.
  * @ciphertext_length: On success, the number of bytes that make up the ciphertext value.
  *
  * **Warning: Not supported**
- * 
+ *
  * This function uses the @attributes as follows\:
  *
  * - The key type is required. All key-encapsulation algorithms can output a key of type PSA_KEY_TYPE_DERIVE or PSA_KEY_TYPE_HMAC.
@@ -5131,7 +5129,7 @@ psa_status_t psa_verify_message(psa_key_id_t key, psa_algorithm_t alg,
  * - The key usage flags define what operations are permitted with the key, see Key usage flags.
  *
  * - The key lifetime and identifier are required for a persistent key.
- * 
+ *
  * Return:
  * * PSA_SUCCESS:
  *      The bytes of ciphertext contain the data to be sent to the other participant,
@@ -5188,9 +5186,9 @@ psa_status_t psa_encapsulate(psa_key_id_t key, psa_algorithm_t alg,
  * @alg: The key-encapsulation algorithm to use: a value of type psa_algorithm_t
  *       such that PSA_ALG_IS_KEY_ENCAPSULATION(alg) is true.
  * @ciphertext: The ciphertext received from the other participant.
- * @ciphertext_size: Size of the @ciphertext buffer in bytes.
+ * @ciphertext_length: Size of the @ciphertext buffer in bytes.
  * @attributes: The attributes for the output key.
- * @ouput_key: On success, an identifier for the newly created shared secret key. PSA_KEY_ID_NULL on failure.
+ * @output_key: On success, an identifier for the newly created shared secret key. PSA_KEY_ID_NULL on failure.
  *
  * **Warning: Not supported**
  *
@@ -5209,7 +5207,7 @@ psa_status_t psa_encapsulate(psa_key_id_t key, psa_algorithm_t alg,
  * - The key usage flags define what operations are permitted with the key, see Key usage flags.
  *
  * - The key lifetime and identifier are required for a persistent key.
- * 
+ *
  * Return:
  * * PSA_SUCCESS:
  *      The bytes of ciphertext contain the data to be sent to the other participant,
@@ -5274,7 +5272,7 @@ static psa_pake_cipher_suite_t psa_pake_cipher_suite_init(void);
 /**
  * psa_pake_cs_get_algorithm() - Retrieve the PAKE algorithm from a PAKE cipher suite.
  * @cipher_suite: The cipher suite object to query.
- * 
+ *
  * **Warning: Not supported**
  *
  * **Implementation note**
@@ -5292,11 +5290,11 @@ psa_pake_cs_get_algorithm(const psa_pake_cipher_suite_t *cipher_suite);
  * @cipher_suite: The cipher suite object to write to.
  * @alg: The PAKE algorithm to write: a value of type psa_algorithm_t
  *       such that PSA_ALG_IS_PAKE(alg) is true.
- * 
+ *
  * **Warning: Not supported**
  *
  * This function overwrites any PAKE algorithm previously set in @cipher_suite.
- * 
+ *
  * **Implementation note**
  *      This is a simple accessor function that is not required to validate its inputs.
  *      It can be efficiently implemented as a static inline function or a function-like macro.
@@ -5310,7 +5308,7 @@ void psa_pake_cs_set_algorithm(psa_pake_cipher_suite_t *cipher_suite,
 /**
  * psa_pake_cs_get_primitive() - Retrieve the primitive from a PAKE cipher suite.
  * @cipher_suite: The cipher suite object to query.
- * 
+ *
  * **Warning: Not supported**
  *
  * **Implementation note**
@@ -5328,11 +5326,11 @@ psa_pake_cs_get_primitive(const psa_pake_cipher_suite_t *cipher_suite);
  * @cipher_suite: The cipher suite object to write to.
  * @primitive: The PAKE primitive to write: a value of type @psa_pake_primitive_t.
  *             If this is 0, the primitive type in cipher_suite becomes unspecified.
- * 
+ *
  * **Warning: Not supported**
  *
  * This function overwrites any primitive previously set in @cipher_suite.
- * 
+ *
  * **Implementation note**
  *      This is a simple accessor function that is not required to validate its inputs.
  *      It can be efficiently implemented as a static inline function or a function-like macro.
@@ -5346,7 +5344,7 @@ void psa_pake_cs_set_primitive(psa_pake_cipher_suite_t *cipher_suite,
 /**
  * psa_pake_cs_get_key_confirmation() - Retrieve the key confirmation from a PAKE cipher suite.
  * @cipher_suite: The cipher suite object to query.
- * 
+ *
  * **Warning: Not supported**
  *
  * **Implementation note**
@@ -5364,13 +5362,13 @@ psa_pake_cs_get_key_confirmation(const psa_pake_cipher_suite_t *cipher_suite);
  * @cipher_suite: The cipher suite object to write to.
  * @key_confirmation: The key confirmation value to write:
  *                    either PSA_PAKE_CONFIRMED_KEY or PSA_PAKE_UNCONFIRMED_KEY.
- * 
+ *
  * **Warning: Not supported**
  *
  * This function overwrites any key confirmation previously set in @cipher_suite.
- * 
+ *
  * The documentation of individual PAKE algorithms specifies which key confirmation values are valid for the algorithm.
- * 
+ *
  * **Implementation note**
  *      This is a simple accessor function that is not required to validate its inputs.
  *      It can be efficiently implemented as a static inline function or a function-like macro.
@@ -5387,51 +5385,48 @@ void psa_pake_cs_set_key_confirmation(psa_pake_cipher_suite_t *cipher_suite,
  *             It must have been initialized as per the documentation for @psa_pake_operation_t and not yet in use.
  * @password_key: Identifier of the key holding the password or a value derived from the password.
  *                It must remain valid until the operation terminates.
- * 
  *                The valid key types depend on the PAKE algorithm, and participant role.
  *                Refer to the documentation of individual PAKE algorithms for more information.
- * 
  *                The key must permit the usage PSA_KEY_USAGE_DERIVE.
  * @cipher_suite: The cipher suite to use. A PAKE cipher suite fully characterizes a PAKE algorithm,
  *                including the PAKE algorithm.
- * 
  *                The cipher suite must be compatible with the key type of @password_key.
- * 
+ *
  * **Warning: Not supported**
  *
  * The sequence of operations to set up a password-authenticated key exchange operation is as follows:
- * 
+ *
  * 1. Allocate a PAKE operation object which will be passed to all the functions listed here.
  * 2. Initialize the operation object with one of the methods described in the documentation for @psa_pake_operation_t.
  *    For example, using PSA_PAKE_OPERATION_INIT.
  * 3. Call psa_pake_setup() to specify the cipher suite.
  * 4. Call psa_pake_set_xxx() functions on the operation to complete the setup.
  *    The exact sequence of psa_pake_set_xxx() functions that needs to be called depends on the algorithm in use.
- * 
+ *
  * A typical sequence of calls to perform a password-authenticated key exchange:
- * 
+ *
  * 1. Call psa_pake_output(operation, PSA_PAKE_STEP_KEY_SHARE, ...) to get the key share that needs to be sent to the peer.
  * 2. Call psa_pake_input(operation, PSA_PAKE_STEP_KEY_SHARE, ...) to provide the key share that was received from the peer.
  * 3. Depending on the algorithm additional calls to psa_pake_output() and psa_pake_input() might be necessary.
  * 4. Call psa_pake_get_shared_key() to access the shared secret.
- * 
+ *
  * Refer to the documentation of individual PAKE algorithms for details on the required set up and operation for each algorithm,
  * and for constraints on the format and content of valid passwords.
- * 
+ *
  * After a successful call to psa_pake_setup(), the operation is active,
  * and the application must eventually terminate the operation.
  * The following events terminate an operation:
- * 
+ *
  * - A successful call to psa_pake_get_shared_key().
  * - A call to psa_pake_abort().
- * 
+ *
  * If psa_pake_setup() returns an error, the operation object is unchanged.
  * If a subsequent function call with an active operation returns an error,
  * the operation enters an error state.
- * 
+ *
  * To abandon an active operation, or reset an operation in an error state,
  * call psa_pake_abort().
- * 
+ *
  * Return:
  * * PSA_SUCCESS:
  *      Success. The operation is now active.
@@ -5479,7 +5474,7 @@ psa_status_t psa_pake_setup(psa_pake_operation_t *operation,
  * @operation: Active PAKE operation.
  * @role: A value of type @psa_pake_role_t indicating the application role in the PAKE algorithm.
  *        See PAKE roles.
- * 
+ *
  * **Warning: Not supported**
  *
  * Not all PAKE algorithms need to differentiate the communicating participants.
@@ -5487,9 +5482,9 @@ psa_status_t psa_pake_setup(psa_pake_operation_t *operation,
  * the application can do either of the following:
  * - Not call psa_pake_set_role() on the PAKE operation.
  * - Call psa_pake_set_role() with the PSA_PAKE_ROLE_NONE role.
- * 
+ *
  * Refer to the documentation of individual PAKE algorithms for more information.
- * 
+ *
  * Return:
  * * PSA_SUCCESS:
  *      Success.
@@ -5518,7 +5513,7 @@ psa_status_t psa_pake_set_role(psa_pake_operation_t *operation,
  * @operation: Active PAKE operation.
  * @user_id: The user ID to authenticate with.
  * @user_id_len: Size of the @user_id buffer in bytes.
- * 
+ *
  * **Warning: Not supported**
  *
  * Call this function to set the user ID.
@@ -5526,9 +5521,9 @@ psa_status_t psa_pake_set_role(psa_pake_operation_t *operation,
  * also call psa_pake_set_peer() with the peer ID.
  * For PAKE algorithms that associate a single user identifier with the session,
  * call psa_pake_set_user() only.
- * 
+ *
  * Refer to the documentation of individual PAKE algorithms for more information.
- * 
+ *
  * Return:
  * * PSA_SUCCESS:
  *      Success.
@@ -5554,16 +5549,16 @@ psa_status_t psa_pake_set_user(psa_pake_operation_t *operation,
  * @operation: Active PAKE operation.
  * @peer_id: The peer ID to authenticate with.
  * @peer_id_len: Size of the @peer_id buffer in bytes.
- * 
+ *
  * **Warning: Not supported**
  *
  * Call this function in addition to psa_pake_set_user() for PAKE algorithms 
  * that associate a user identifier with both participants in the session.
  * For PAKE algorithms that associate a single user identifier with the session,
  * call psa_pake_set_user() only.
- * 
+ *
  * Refer to the documentation of individual PAKE algorithms for more information.
- * 
+ *
  * Return:
  * * PSA_SUCCESS:
  *      Success.
@@ -5591,14 +5586,14 @@ psa_status_t psa_pake_set_peer(psa_pake_operation_t *operation,
  * @operation: Active PAKE operation.
  * @context: The context to authenticate with.
  * @context_len: Size of the @context buffer in bytes.
- * 
+ *
  * **Warning: Not supported**
  *
  * Call this function for PAKE algorithms that accept additional context data
  * as part of the protocol setup.
- * 
+ *
  * Refer to the documentation of individual PAKE algorithms for more information.
- * 
+ *
  * Return:
  * * PSA_SUCCESS:
  *      Success.
@@ -5635,21 +5630,21 @@ psa_status_t psa_pake_set_context(psa_pake_operation_t *operation,
  *               - PSA_PAKE_OUTPUT_MAX_SIZE evaluates to the maximum output size of any supported PAKE algorithm,
  *                 primitive and step.
  * @output_length: On success, the number of bytes of the returned output.
- * 
+ *
  * **Warning: Not supported**
  *
  * Depending on the algorithm being executed, you might need to call this function several times
  * or you might not need to call this at all.
- * 
+ *
  * The exact sequence of calls to perform a password-authenticated key exchange depends on the algorithm in use.
  * Refer to the documentation of individual PAKE algorithms for more information.
- * 
+ *
  * If this function returns an error status, the operation enters an error state and must be aborted 
  * by calling psa_pake_abort().
- * 
+ *
  * Return:
  * * PSA_SUCCESS:
- *      Success. The first (*@output_length) bytes of @output contain the output.
+ *      Success. The first (@output_length) bytes of @output contain the output.
  * * PSA_ERROR_BUFFER_TOO_SMALL:
  *      The size of the @output buffer is too small. PSA_PAKE_OUTPUT_SIZE() or PSA_PAKE_OUTPUT_MAX_SIZE
  *      can be used to determine a sufficient buffer size.
@@ -5681,21 +5676,21 @@ psa_status_t psa_pake_output(psa_pake_operation_t *operation,
  * @input: Buffer containing the input.
  *         The format of the input depends on the step, see PAKE step types.
  * @input_length: Size of the input buffer in bytes.
- * 
+ *
  * **Warning: Not supported**
  *
  * Depending on the algorithm being executed, you might need to call this function several times
  * or you might not need to call this at all.
- * 
+ *
  * The exact sequence of calls to perform a password-authenticated key exchange depends on the algorithm in use.
  * Refer to the documentation of individual PAKE algorithms for more information.
- * 
+ *
  * PSA_PAKE_INPUT_SIZE() or PSA_PAKE_INPUT_MAX_SIZE can be used to allocate buffers of sufficient size
  * to transfer inputs that are received from the peer into the operation.
  *  
  * If this function returns an error status, the operation enters an error state and must be aborted 
  * by calling psa_pake_abort().
- * 
+ *
  * Return:
  * * PSA_SUCCESS:
  *      Success.
@@ -5750,15 +5745,15 @@ psa_status_t psa_pake_input(psa_pake_operation_t *operation,
  * **Warning: Not supported**
  *
  * The shared secret is retrieved as a key. Its location, policy, and type are taken from @attributes.
- * 
+ *
  * The size of the returned key is always the bit-size of the PAKE shared secret,
  * rounded up to a whole number of bytes. The size of the shared secret is dependent on the PAKE algorithm and cipher suite.
- * 
+ *
  * This is the final call in a PAKE operation, which retrieves the shared secret as a key.
  * It is recommended that this key is used as an input to a key-derivation operation to produce additional cryptographic keys.
  * For some PAKE algorithms, the shared secret is also suitable for use as a key in cryptographic operations such as encryption.
  * Refer to the documentation of individual PAKE algorithms for more information.
- * 
+ *
  * Depending on the key confirmation requested in the cipher suite,
  * psa_pake_get_shared_key() must be called either before or after the key-confirmation output and input steps for the PAKE algorithm.
  * The key confirmation affects the guarantees that can be made about the shared key:
@@ -5768,29 +5763,29 @@ psa_status_t psa_pake_input(psa_pake_operation_t *operation,
  *     The PAKE algorithm provides a cryptographic guarantee that only a peer who used the same password,
  *     and identity inputs, is able to compute the same key. However,
  *     there is no guarantee that the peer is the participant it claims to be, and was able to compute the same key.
- * 
+ *
  *     Since the peer is not authenticated, no action should be taken that assumes that the peer is who it claims to be.
  *     For example, do not access restricted resources on the peer’s behalf until an explicit authentication has succeeded.
- * 
+ *
  *     **Note**:
  *     Some PAKE algorithms do not enable the output of the shared secret until it has been confirmed.
- * 
+ *
  * **Confirmed key**
  *     If the cipher suite used to set up the operation requested a confirmed key,
  *     the application must call psa_pake_get_shared_key() after the key-exchange and key-confirmation output and input steps are completed.
- * 
+ *
  *     Following key confirmation, the PAKE algorithm provides a cryptographic guarantee that the peer used the same password and identity inputs,
  *     and has computed the identical shared secret key.
- * 
+ *
  *     Since the peer is not authenticated, no action should be taken that assumes that the peer is who it claims to be.
  *     For example, do not access restricted resources on the peer’s behalf until an explicit authentication has succeeded.
- * 
+ *
  *     **Note**:
  *     Some PAKE algorithms do not include any key-confirmation steps.
- * 
+ *
  * The exact sequence of calls to perform a password-authenticated key exchange depends on the algorithm in use.
  * Refer to the documentation of individual PAKE algorithms for more information.
- * 
+ *
  * When this function returns successfully, operation becomes inactive.
  * If this function returns an error status, the operation enters an error state and must be aborted by calling psa_pake_abort().
  *  
@@ -5839,17 +5834,17 @@ psa_status_t psa_pake_get_shared_key(psa_pake_operation_t *operation,
 /**
  * psa_pake_abort() - Abort a PAKE operation.
  * @operation: Initialized PAKE operation.
- * 
+ *
  * **Warning: Not supported**
  *
  * Aborting an operation frees all associated resources except for the operation object itself.
  * Once aborted, the operation object can be reused for another operation by calling psa_pake_setup() again.
- * 
+ *
  * This function can be called any time after the operation object has been initialized as described in psa_pake_operation_t.
- * 
+ *
  * In particular, calling psa_pake_abort() after the operation has been terminated by a call to
  * psa_pake_abort() or psa_pake_get_shared_key() is safe and has no effect.
- * 
+ *
  * Return:
  * * PSA_SUCCESS:
  *      Success. The operation object can now be discarded or reused.

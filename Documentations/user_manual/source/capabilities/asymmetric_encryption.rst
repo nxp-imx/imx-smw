@@ -22,7 +22,7 @@ Supported Operations versus Subsystems
    | RSA          | PKCS#1 v1.5   | Single-Part    | **Y***  |    Y    |    N     | **ELE** not supported on:\  |
    |              |               |                |         |         |          |                             |
    |              |               |                |         |         |          |  - i.MX8ULP                 |
-   |              |               |                |         |         |          |  - i.MX943                  |
+   |              |               |                |         |         |          |                             |
    +              +---------------+----------------+---------+---------+----------+                             +
    |              | OAEP          | Single-Part    |    Y    |    Y    |    N     |                             |
    +              +---------------+----------------+---------+---------+----------+                             +

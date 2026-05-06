@@ -1538,7 +1538,7 @@ derivation operation success.
   The OEM SRKH must be fused.
 
 .. note::
-  Only supported on i.MX8ULP, i.MX91 and i.MX93
+  Only supported on i.MX8ULP, i.MX91, i.MX93 and i.MX943
 
 Usage Example
 ~~~~~~~~~~~~~
@@ -2384,7 +2384,7 @@ The TLS 1.3 key schedule provides improved security through a more structured
 key derivation process and forward secrecy.
 
 .. note::
-   Only supported on i.MX91, i.MX93 and i.MX95
+   Only supported on i.MX91, i.MX93, i.MX943 and i.MX95
 
 Key Schedule Overview
 """""""""""""""""""""
@@ -2583,7 +2583,7 @@ Subsystem Support
    +---------------+-------------+------------------------------------------+
    | **Subsystem** | **Support** | **Notes**                                |
    +===============+=============+==========================================+
-   | ELE           | Yes         | i.MX91, i.MX93, i.MX95 only              |
+   | ELE           | Yes         | i.MX91, i.MX93, i.MX943, i.MX95 only     |
    +---------------+-------------+------------------------------------------+
    | TEE           | No          | Not supported                            |
    +---------------+-------------+------------------------------------------+

@@ -17,7 +17,11 @@
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "ELE",
-		"key_name": "key 1"
+		"key_name": "key 1",
+		"restriction_list": [
+			"imx943",
+			"imx95"
+		]
 	},
 	"subtest 2": {
 		"command": "OP_CONTEXT_ALLOCATE",

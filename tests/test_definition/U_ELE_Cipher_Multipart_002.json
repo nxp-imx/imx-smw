@@ -1,0 +1,522 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"ECB_NO_PADDING"
+			]
+		},
+		"key 2": {
+			"type": "AES",
+			"security_size": 256,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CBC_NO_PADDING"
+			]
+		},
+		"key 3": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"OFB"
+			]
+		},
+		"key 4": {
+			"type": "AES",
+			"security_size": 256,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CFB"
+			]
+		},
+		"key 5": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CTR"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 1,
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 2": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 2,
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 3": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 3,
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 4": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 4,
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 5": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 5,
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 6": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 7": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 8": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 3",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 9": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 4",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 10": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 5",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 11": {
+		"command": "CIPHER_INIT",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"context_id": 1,
+		"depends": [
+			1,
+			6
+		]
+	},
+	"subtest 12": {
+		"command": "CIPHER_UPDATE",
+		"input": [
+			"eaf1760c0f25310dada6debeb966304d",
+			"b7a9f1b2d1c3af922623b263649031d2",
+			"99b3c56146d61d55b6ebf4cf8dd04039",
+			"a4d1ace3146f49ee915f806afad64cbb"
+		],
+		"save_output": true,
+		"context_id": 1,
+		"depends": 11
+	},
+	"subtest 13": {
+		"command": "CIPHER_UPDATE",
+		"input": [
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4"
+		],
+		"save_output": true,
+		"context_id": 1,
+		"depends": 12
+	},
+	"subtest 14": {
+		"command": "CIPHER_FINAL",
+		"input": [
+			"dcc43ecd0c61f54e0a692fc2673dddd3"
+		],
+		"context_id": 1,
+		"cipher_id": 1,
+		"depends": 13
+	},
+	"subtest 15": {
+		"command": "CIPHER",
+		"mode": "ECB",
+		"op_type": "DECRYPT",
+		"key_name": "key 1",
+		"cipher_id": 1,
+		"output": [
+			"eaf1760c0f25310dada6debeb966304d",
+			"b7a9f1b2d1c3af922623b263649031d2",
+			"99b3c56146d61d55b6ebf4cf8dd04039",
+			"a4d1ace3146f49ee915f806afad64cbb",
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4",
+			"dcc43ecd0c61f54e0a692fc2673dddd3"
+		],
+		"depends": [
+			6,
+			14
+		]
+	},
+	"subtest 16": {
+		"command": "CIPHER_INIT",
+		"mode": "CBC",
+		"op_type": "ENCRYPT",
+		"key_name": "key 2",
+		"iv": "d6375e6b44a333b3d8db56a57f7c6139",
+		"context_id": 2,
+		"depends": [
+			2,
+			7
+		]
+	},
+	"subtest 17": {
+		"command": "CIPHER_UPDATE",
+		"input": [
+			"eaf1760c0f25310dada6debeb966304d",
+			"b7a9f1b2d1c3af922623b263649031d2",
+			"99b3c56146d61d55b6ebf4cf8dd04039",
+			"a4d1ace3146f49ee915f806afad64cbb"
+		],
+		"save_output": true,
+		"context_id": 2,
+		"depends": 16
+	},
+	"subtest 18": {
+		"command": "CIPHER_UPDATE",
+		"input": [
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4"
+		],
+		"save_output": true,
+		"context_id": 2,
+		"depends": 17
+	},
+	"subtest 19": {
+		"command": "CIPHER_FINAL",
+		"input": [
+			"dcc43ecd0c61f54e0a692fc2673dddd3"
+		],
+		"context_id": 2,
+		"cipher_id": 2,
+		"depends": 18
+	},
+	"subtest 20": {
+		"command": "CIPHER",
+		"mode": "CBC",
+		"op_type": "DECRYPT",
+		"key_name": "key 2",
+		"iv": "d6375e6b44a333b3d8db56a57f7c6139",
+		"cipher_id": 2,
+		"output": [
+			"eaf1760c0f25310dada6debeb966304d",
+			"b7a9f1b2d1c3af922623b263649031d2",
+			"99b3c56146d61d55b6ebf4cf8dd04039",
+			"a4d1ace3146f49ee915f806afad64cbb",
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4",
+			"dcc43ecd0c61f54e0a692fc2673dddd3"
+		],
+		"depends": [
+			7,
+			19
+		]
+	},
+	"subtest 21": {
+		"command": "CIPHER_INIT",
+		"mode": "OFB",
+		"op_type": "ENCRYPT",
+		"key_name": "key 3",
+		"iv": "d6375e6b44a333b3d8db56a57f7c6139",
+		"context_id": 3,
+		"depends": [
+			2,
+			7
+		]
+	},
+	"subtest 22": {
+		"command": "CIPHER_UPDATE",
+		"input": [
+			"eaf1760c0f25310dada6debeb966304d",
+			"b7a9f1b2d1c3af922623b263649031d2",
+			"99b3c56146d61d55b6ebf4cf8dd04039",
+			"a4d1ace3146f49ee915f806afad64cbb"
+		],
+		"save_output": true,
+		"context_id": 3,
+		"depends": 21
+	},
+	"subtest 23": {
+		"command": "CIPHER_UPDATE",
+		"input": [
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4"
+		],
+		"save_output": true,
+		"context_id": 3,
+		"depends": 22
+	},
+	"subtest 24": {
+		"command": "CIPHER_FINAL",
+		"input": [
+			"dcc43ecd0c61f54e0a692fc2673dddd3"
+		],
+		"context_id": 3,
+		"cipher_id": 3,
+		"depends": 23
+	},
+	"subtest 25": {
+		"command": "CIPHER",
+		"mode": "OFB",
+		"op_type": "DECRYPT",
+		"key_name": "key 3",
+		"iv": "d6375e6b44a333b3d8db56a57f7c6139",
+		"cipher_id": 3,
+		"output": [
+			"eaf1760c0f25310dada6debeb966304d",
+			"b7a9f1b2d1c3af922623b263649031d2",
+			"99b3c56146d61d55b6ebf4cf8dd04039",
+			"a4d1ace3146f49ee915f806afad64cbb",
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4",
+			"dcc43ecd0c61f54e0a692fc2673dddd3"
+		],
+		"depends": [
+			8,
+			24
+		]
+	},
+	"subtest 26": {
+		"command": "CIPHER_INIT",
+		"mode": "CFB",
+		"op_type": "ENCRYPT",
+		"key_name": "key 4",
+		"iv": "d6375e6b44a333b3d8db56a57f7c6139",
+		"context_id": 4,
+		"depends": [
+			2,
+			7
+		]
+	},
+	"subtest 27": {
+		"command": "CIPHER_UPDATE",
+		"input": [
+			"eaf1760c0f25310dada6debeb966304d",
+			"b7a9f1b2d1c3af922623b263649031d2",
+			"99b3c56146d61d55b6ebf4cf8dd04039",
+			"a4d1ace3146f49ee915f806afad64cbb"
+		],
+		"save_output": true,
+		"context_id": 4,
+		"depends": 26
+	},
+	"subtest 28": {
+		"command": "CIPHER_UPDATE",
+		"input": [
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4"
+		],
+		"save_output": true,
+		"context_id": 4,
+		"depends": 27
+	},
+	"subtest 29": {
+		"command": "CIPHER_FINAL",
+		"input": [
+			"dcc43ecd0c61f54e0a692fc2673dddd3"
+		],
+		"context_id": 4,
+		"cipher_id": 4,
+		"depends": 28
+	},
+	"subtest 30": {
+		"command": "CIPHER",
+		"mode": "CFB",
+		"op_type": "DECRYPT",
+		"key_name": "key 4",
+		"iv": "d6375e6b44a333b3d8db56a57f7c6139",
+		"cipher_id": 4,
+		"output": [
+			"eaf1760c0f25310dada6debeb966304d",
+			"b7a9f1b2d1c3af922623b263649031d2",
+			"99b3c56146d61d55b6ebf4cf8dd04039",
+			"a4d1ace3146f49ee915f806afad64cbb",
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4",
+			"dcc43ecd0c61f54e0a692fc2673dddd3"
+		],
+		"depends": [
+			9,
+			29
+		]
+	},
+		"subtest 31": {
+		"command": "CIPHER_INIT",
+		"mode": "CTR",
+		"op_type": "ENCRYPT",
+		"key_name": "key 5",
+		"iv": "d6375e6b44a333b3d8db56a57f7c6139",
+		"context_id": 5,
+		"depends": [
+			2,
+			7
+		]
+	},
+	"subtest 32": {
+		"command": "CIPHER_UPDATE",
+		"input": [
+			"eaf1760c0f25310dada6debeb966304d",
+			"b7a9f1b2d1c3af922623b263649031d2",
+			"99b3c56146d61d55b6ebf4cf8dd04039",
+			"a4d1ace3146f49ee915f806afad64cbb"
+		],
+		"save_output": true,
+		"context_id": 5,
+		"depends": 31
+	},
+	"subtest 33": {
+		"command": "CIPHER_UPDATE",
+		"input": [
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4"
+		],
+		"save_output": true,
+		"context_id": 5,
+		"depends": 32
+	},
+	"subtest 34": {
+		"command": "CIPHER_FINAL",
+		"input": [
+			"dcc43ecd0c61f54e0a692fc2673dddd3"
+		],
+		"context_id": 5,
+		"cipher_id": 5,
+		"depends": 33
+	},
+	"subtest 35": {
+		"command": "CIPHER",
+		"mode": "CTR",
+		"op_type": "DECRYPT",
+		"key_name": "key 5",
+		"iv": "d6375e6b44a333b3d8db56a57f7c6139",
+		"cipher_id": 5,
+		"output": [
+			"eaf1760c0f25310dada6debeb966304d",
+			"b7a9f1b2d1c3af922623b263649031d2",
+			"99b3c56146d61d55b6ebf4cf8dd04039",
+			"a4d1ace3146f49ee915f806afad64cbb",
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4",
+			"dcc43ecd0c61f54e0a692fc2673dddd3"
+		],
+		"depends": [
+			10,
+			34
+		]
+	},
+	"subtest 36": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 6
+	},
+	"subtest 37": {
+		"command": "DELETE",
+		"key_name": "key 2",
+		"depends": 7
+	},
+	"subtest 38": {
+		"command": "DELETE",
+		"key_name": "key 3",
+		"depends": 8
+	},
+	"subtest 39": {
+		"command": "DELETE",
+		"key_name": "key 4",
+		"depends": 9
+	},
+	"subtest 40": {
+		"command": "DELETE",
+		"key_name": "key 5",
+		"depends": 10
+	}
+}

@@ -1,0 +1,179 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 256,
+			"priv_key": [
+				"f984b0f534fc0ae2c0a8593e16ab8365",
+				"f25fcc9c5947f9a2db45b588160d35c3"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 0,
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 2": {
+		"description": [
+			"NIST CAVP Block ciphers AES Multiblock Message Test (MMT)",
+			"ECBMMT246, Encrypt, Count = 3"
+		],
+		"command": "CIPHER_INIT",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 3": {
+		"command": "CIPHER_UPDATE",
+		"input": [
+			"351fee099122e371c4830f409c6c4411",
+			"186d22176f7138b054f16b3c79679c2f"
+		],
+		"save_output": true,
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 4": {
+		"description": "Allocate operation context 1 for context copy",
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 1,
+		"depends": 1
+	},
+	"subtest 5": {
+		"description": "Allocate operation context 2 for context copy",
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 2,
+		"depends": 1
+	},
+	"subtest 6": {
+		"command": "OP_CONTEXT_COPY",
+		"type": "CIPHER_MULTI_PART",
+		"copy_output": true,
+		"context_id": [
+			0,
+			1
+		],
+		"depends": 4
+	},
+	"subtest 7": {
+		"command": "OP_CONTEXT_COPY",
+		"type": "CIPHER_MULTI_PART",
+		"copy_output": true,
+		"context_id": [
+			0,
+			2
+		],
+		"depends": 4
+	},
+	"subtest 8": {
+		"description": "Finish the multi-part operation on context 1",
+		"command": "CIPHER_FINAL",
+		"op_type": "ENCRYPT",
+		"input": [
+			"520685651ba8e4b61c08dccb2c31982f",
+			"743631a97524d2ca4d351ac23546c178"
+		],
+		"output": [
+			"8b9c9e692c16e7059818e285e85d8fa5",
+			"433dee2aff9fec61d6a0a781e24b24f6",
+			"4902fbd18cef7461ad7760cfb2442fb7",
+			"4ffd9be108a386545f2a216430ef16fb"
+		],
+		"context_id": 1,
+		"cipher_id": 0,
+		"depends": 5
+	},
+	"subtest 9": {
+		"description": "Verify multi-part encryption using one-shot decryption",
+		"command": "CIPHER",
+		"key_name": "key 1",
+		"mode": "ECB",
+		"op_type": "DECRYPT",
+		"output": [
+			"351fee099122e371c4830f409c6c4411",
+			"186d22176f7138b054f16b3c79679c2f",
+			"520685651ba8e4b61c08dccb2c31982f",
+			"743631a97524d2ca4d351ac23546c178"
+		],
+		"cipher_id": 0,
+		"depends": 6
+	},
+	"subtest 10": {
+		"description": [
+			"Continue using context 0"
+		],
+		"command": "CIPHER_UPDATE",
+		"input": [
+			"351fee099122e371c4830f409c6c4411",
+			"186d22176f7138b054f16b3c79679c2f"
+		],
+		"save_output": true,
+		"context_id": 0,
+		"depends": 3
+	},
+	"subtest 11": {
+		"description": "Continue using context 2" ,
+		"command": "CIPHER_UPDATE",
+		"input": [
+			"351fee099122e371c4830f409c6c4411",
+			"186d22176f7138b054f16b3c79679c2f"
+		],
+		"save_output": true,
+		"context_id": 2,
+		"depends": 7
+	},
+	"subtest 12": {
+		"description": "Cancel context 0",
+		"command": "OP_CONTEXT_CANCEL",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 13": {
+		"description": "Attempt FINAL on cancelled context 0",
+		"command": "CIPHER_FINAL",
+		"op_type": "ENCRYPT",
+		"input": [
+			"530aa792f796b8138eeab2e86c7b7bee"
+		],
+		"output": [
+			"91fbd061ddc5a7fcc9513fcdfdc9c3a7",
+			"c5d4d64cedf6a9c24ab8a77c36eefbf1",
+			"c5dc00bc50121b96456c8cd8b6ff1f8b",
+			"3e480f"
+		],
+		"context_id": 0,
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 12
+	},
+	"subtest 14": {
+		"description": "Attempt FINAL on finished context 1",
+		"command": "CIPHER_FINAL",
+		"op_type": "ENCRYPT",
+		"input": [
+			"530aa792f796b8138eeab2e86c7b7bee"
+		],
+		"output": [
+			"91fbd061ddc5a7fcc9513fcdfdc9c3a7",
+			"c5d4d64cedf6a9c24ab8a77c36eefbf1",
+			"c5dc00bc50121b96456c8cd8b6ff1f8b",
+			"3e480f"
+		],
+		"context_id": 1,
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 9
+	},
+	"subtest 15": {
+		"description": "Attempt FINAL on valid context 2",
+		"command": "CIPHER_FINAL",
+		"op_type": "ENCRYPT",
+		"context_id": 2,
+		"depends": 11
+	}
+}

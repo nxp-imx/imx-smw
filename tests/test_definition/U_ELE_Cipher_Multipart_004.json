@@ -1,0 +1,382 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"ECB_NO_PADDING"
+			],
+			"priv_key": [
+				"b53e54b1b09f78abcd6afac1f7e7cda9"
+			]
+		},
+		"key 2": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CBC_NO_PADDING"
+			],
+			"priv_key": [
+				"fd6e0b954ae2e3b723d6c9fcae6ab09b"
+			]
+		},
+		"key 3": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"OFB"
+			],
+			"priv_key": [
+				"1956f40b2334a6546b3071f2d17f4a59"
+			]
+		},
+		"key 4": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CFB"
+			],
+			"priv_key": [
+				"aef49da33f538ee66e178d4b6121055d"
+			]
+		},
+		"key 5": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CTR"
+			],
+			"priv_key": [
+				"2b7e151628aed2a6abf7158809cf4f3c"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 0,
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 2": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 1,
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 3": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 2,
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 4": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 3,
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 5": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 4,
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 6": {
+		"description": [
+			"NIST CAVP Block ciphers AES Multiblock Message Test (MMT)",
+			"ECBMMT128, Decrypt, Count = 7"
+		],
+		"command": "CIPHER_INIT",
+		"mode": "ECB",
+		"op_type": "DECRYPT",
+		"key_name": "key 1",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 7": {
+		"command": "CIPHER_UPDATE",
+		"input": [
+			"447557bd1561b09a082cabdbf49b0612",
+			"b46c9793db3c987aa4a843ef28b39fa8",
+			"d46799b019c0566765c5c8cb53f87ff5",
+			"1ff0c2e65c45df84e9acbfe02163bdba"
+		],
+		"save_output": true,
+		"context_id": 0,
+		"depends": 6
+	},
+	"subtest 8": {
+		"command": "CIPHER_UPDATE",
+		"input": [
+			"52d0b847706567320bc6ede07f2eaef8",
+			"6b0f602364f86510eabc58bc9ad1e6f0"
+		],
+		"save_output": true,
+		"context_id": 0,
+		"depends": 7
+	},
+	"subtest 9": {
+		"command": "CIPHER_FINAL",
+		"input": [
+			"a6f6df0b83188c01e17744a4e0053a22",
+			"810e99cf5a1ed3258f203509fdc3c050"
+		],
+		"output": [
+			"398db04b45a724393e4baec86a220f22",
+			"358df1bbf0cab278dcfecf7a3f8f6275",
+			"ef45ed9f039bc1f5030c3a0c245fbb6e",
+			"a0bff3e2da0859ac498db6624a572023",
+			"de7c221bf3567f51e98947970dfc581b",
+			"3ca670ab92953d3bdd97dbf5d6bef8aa",
+			"2f31500d221198ed9f23b049eaeed676",
+			"83083034b4a5a82a0e49319e368c6f55"
+		],
+		"context_id": 0,
+		"depends": 8
+	},
+
+	"subtest 10": {
+		"description": [
+			"NIST CAVP Block ciphers AES Multiblock Message Test (MMT)",
+			"CBCMMT128, Decrypt, Count = 2"
+		],
+		"command": "CIPHER_INIT",
+		"mode": "CBC",
+		"op_type": "DECRYPT",
+		"iv": "f08b65c9f4dd950039941da2e8058c4e",
+		"key_name": "key 2",
+		"context_id": 1,
+		"depends": 2
+	},
+	"subtest 11": {
+		"command": "CIPHER_UPDATE",
+		"input": [
+			"e29e3114c8000eb484395b256b1b3267"
+		],
+		"save_output": true,
+		"context_id": 1,
+		"depends": 10
+	},
+	"subtest 12": {
+		"command": "CIPHER_UPDATE",
+		"input": [
+			"894f290d3999819ff35da03e6463c186"
+		],
+		"save_output": true,
+		"context_id": 1,
+		"depends": 11
+	},
+	"subtest 13": {
+		"command": "CIPHER_FINAL",
+		"input": [
+			"c4d7ebb964941f1986a2d69572fcaba8"
+		],
+		"output": [
+			"a206385945b21f812a9475f47fddbb7f",
+			"bdda958a8d14c0dbcdaec36e8b28f1f6",
+			"ececa1ceae4ce17721d162c1d42a66c1"
+		],
+		"context_id": 1,
+		"depends": 12
+	},
+
+	"subtest 14": {
+		"description": [
+			"NIST CAVP Block ciphers AES Multiblock Message Test (MMT)",
+			"OFBMMT128, Decrypt, Count = 5"
+		],
+		"command": "CIPHER_INIT",
+		"mode": "OFB",
+		"op_type": "DECRYPT",
+		"iv": "765cfb560c46777a20cce091232ccaf2",
+		"key_name": "key 3",
+		"context_id": 2,
+		"depends": 3
+	},
+	"subtest 15": {
+		"command": "CIPHER_UPDATE",
+		"input": [
+			"bd2190e1bfa0be9430f5081e9ec58dee",
+			"5186fbcb80e5605ec4643df1cc48dd76",
+			"53b2e4cb4f0c2b3c6ba6cb4ab8a178aa"
+		],
+		"save_output": true,
+		"context_id": 2,
+		"depends": 14
+	},
+	"subtest 16": {
+		"command": "CIPHER_UPDATE",
+		"input": [
+			"9f0d11911b4e742f25c497796fabd52c"
+		],
+		"save_output": true,
+		"context_id": 2,
+		"depends": 15
+	},
+	"subtest 17": {
+		"command": "CIPHER_FINAL",
+		"input": [
+			"543f850f0f24d1782c06c6113d7da7dc",
+			"ce3387759b48169800f5bce2b070e4dc"
+		],
+		"output": [
+			"045ad66c515d407ab73ea0c6f6ae8698",
+			"72342fc72956a659945454005e37c76e",
+			"d07df996ffe1322840cf23843b34346a",
+			"1e730ab721ddceaf362ed256054c105e",
+			"d581a80c04ef22ae1b5eb8742c6e3c9c",
+			"0e0e29fad211b4f40adc1520f7c6821e"
+		],
+		"context_id": 2,
+		"depends": 16
+	},
+
+	"subtest 18": {
+		"description": [
+			"NIST CAVP Block ciphers AES Multiblock Message Test (MMT)",
+			"CFB128MMT128, Decrypt, Count = 9"
+		],
+		"command": "CIPHER_INIT",
+		"mode": "CFB",
+		"op_type": "DECRYPT",
+		"iv": "842566e68b61ff7bf001f2642da62f64",
+		"key_name": "key 4",
+		"context_id": 3,
+		"depends": 4
+	},
+	"subtest 19": {
+		"command": "CIPHER_UPDATE",
+		"input": [
+			"6625811419bdee71535f597f7c228baf",
+			"d890fd69b805a699ed58116a82bdb251",
+			"abea7a4ef879a96fce8ee49518b9877a",
+			"3a1e3cf346d3cd73738936d1cb6fff4b"
+		],
+		"save_output": true,
+		"context_id": 3,
+		"depends": 18
+	},
+	"subtest 20": {
+		"command": "CIPHER_UPDATE",
+		"input": [
+			"2353c8ca500a26689813ad2f67774e23",
+			"43f3e4830259094d3b342e00faabeba5",
+			"b8a893108a390c649836ddd5d12489b2",
+			"dd591ca25361032e2da1207f793a1e69"
+		],
+		"save_output": true,
+		"context_id": 3,
+		"depends": 19
+	},
+	"subtest 21": {
+		"command": "CIPHER_UPDATE",
+		"input": [
+			"513002a90ccc036bb63e9c10be87df2d"
+		],
+		"save_output": true,
+		"context_id": 3,
+		"depends": 20
+	},
+	"subtest 22": {
+		"command": "CIPHER_FINAL",
+		"input": [
+			"ef960cd7a1b1621e311735d7aee4419f"
+		],
+		"output": [
+			"415991f65e1a95040cef9960556f61e6",
+			"17827c30c74bf353cdd86173dbe4cc98",
+			"3a2ee6bc8ca6cfb71121e7b0d0178f2e",
+			"13445c710dcc176b781201971171f748",
+			"9f18faf110f39accd1cf08c85a958d76",
+			"98b116f1c0d75812ac9b0b39aee7f715",
+			"9ccad8fdae9b99f2d695eacf12c6469d",
+			"5b51a34de26eac73613dcb2f77122cb1",
+			"f8dd5162786a12052dc7b6dea6acc498",
+			"9dcc7eafd9374f6c29697c74749ef16d"
+		],
+		"context_id": 3,
+		"depends": 21
+	},
+
+	"subtest 23": {
+		"description": [
+			"https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38a.pdf",
+			"F.5.2 CTR-AES128.Decrypt"
+		],
+		"command": "CIPHER_INIT",
+		"mode": "CTR",
+		"op_type": "DECRYPT",
+		"iv": "f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff",
+		"key_name": "key 5",
+		"context_id": 4,
+		"depends": 5
+	},
+	"subtest 24": {
+		"command": "CIPHER_UPDATE",
+		"input": [
+			"874d6191b620e3261bef6864990db6ce",
+			"9806f66b7970fdff8617187bb9fffdff"
+		],
+		"save_output": true,
+		"context_id": 4,
+		"depends": 23
+	},
+	"subtest 25": {
+		"command": "CIPHER_UPDATE",
+		"input": [
+			"5ae4df3edbd5d35e5b4f09020db03eab"
+		],
+		"save_output": true,
+		"context_id": 4,
+		"depends": 24
+	},
+	"subtest 26": {
+		"command": "CIPHER_FINAL",
+		"input": [
+			"1e031dda2fbe03d1792170a0f3009cee"
+		],
+		"output": [
+			"6bc1bee22e409f96e93d7e117393172a",
+			"ae2d8a571e03ac9c9eb76fac45af8e51",
+			"30c81c46a35ce411e5fbc1191a0a52ef",
+			"f69f2445df4f9b17ad2b417be66c3710"
+		],
+		"context_id": 4,
+		"depends": 25
+	}
+}

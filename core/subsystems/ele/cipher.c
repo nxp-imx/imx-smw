@@ -22,6 +22,15 @@ struct cipher_context {
 	uint16_t ele_context_size;
 	uint32_t ele_cipher_algo;
 	unsigned int remaining_buffered_len;
+
+	/*
+	 * ELE may return an expected output size that is not correct - sometimes
+	 * it is larger than the provided output size. When this happens, use this
+	 * scratch temporary output buffer that is sized according to the ELE expected
+	 * size.
+	 */
+	unsigned char *tmp_output;
+	unsigned int tmp_output_len;
 };
 
 static void set_cipher_flags(struct smw_crypto_cipher_args *cipher_args,
@@ -225,7 +234,7 @@ end:
 }
 
 static int set_output_length(struct smw_crypto_cipher_args *cipher_args,
-			     struct cipher_context *context)
+			     struct cipher_context *cipher_ctx)
 {
 	int status = SMW_STATUS_OK;
 	unsigned int expected_output_len = 0;
@@ -233,7 +242,7 @@ static int set_output_length(struct smw_crypto_cipher_args *cipher_args,
 
 	params.input_len = smw_crypto_get_cipher_input_len(cipher_args);
 	params.op_step = cipher_args->op_step;
-	params.remaining_buffered_len = context->remaining_buffered_len;
+	params.remaining_buffered_len = cipher_ctx->remaining_buffered_len;
 
 	status = ele_calculate_expected_output_len(&params,
 						   &expected_output_len);
@@ -241,6 +250,9 @@ static int set_output_length(struct smw_crypto_cipher_args *cipher_args,
 		goto end;
 
 	smw_crypto_set_cipher_output_len(cipher_args, expected_output_len);
+
+	if (expected_output_len)
+		status = SMW_STATUS_OUTPUT_TOO_SHORT;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned with output length = %u\n",
@@ -380,10 +392,6 @@ static int cipher_setup_context(struct subsystem_context *ele_ctx,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (cipher_args->nb_keys == 0 || !cipher_args->keys_desc ||
-	    !cipher_args->keys_desc[0])
-		return SMW_STATUS_INVALID_PARAM;
-
 	key_descriptor = cipher_args->keys_desc[0];
 
 	cipher_ctx = SMW_UTILS_CALLOC(1, sizeof(*cipher_ctx));
@@ -513,6 +521,10 @@ static int cipher_update_common(struct cipher_context *cipher_ctx,
 {
 	int status = SMW_STATUS_OK;
 	op_cipher_args_t op_args = { 0 };
+	unsigned int needed_output_length = 0;
+	bool use_tmp_output = false;
+
+	struct crypto_output_params params = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -524,8 +536,40 @@ static int cipher_update_common(struct cipher_context *cipher_ctx,
 
 	op_args.input = smw_crypto_get_cipher_input(cipher_args);
 	op_args.input_size = smw_crypto_get_cipher_input_len(cipher_args);
-	op_args.output = smw_crypto_get_cipher_output(cipher_args);
 	op_args.output_size = smw_crypto_get_cipher_output_len(cipher_args);
+
+	params.input_len = smw_crypto_get_cipher_input_len(cipher_args);
+	params.op_step = cipher_args->op_step;
+	params.remaining_buffered_len = cipher_ctx->remaining_buffered_len;
+
+	status = ele_calculate_expected_output_len(&params,
+						   &needed_output_length);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	if (!is_implicit_update && op_args.input_size <= op_args.output_size &&
+	    op_args.output_size < needed_output_length) {
+		if (cipher_ctx->tmp_output_len < needed_output_length) {
+			cipher_ctx->tmp_output =
+				SMW_UTILS_REALLOC(cipher_ctx->tmp_output,
+						  needed_output_length);
+			if (!cipher_ctx->tmp_output) {
+				status = SMW_STATUS_ALLOC_FAILURE;
+				goto end;
+			}
+		}
+
+		cipher_ctx->tmp_output_len = needed_output_length;
+		op_args.output_size = cipher_ctx->tmp_output_len;
+		op_args.output = cipher_ctx->tmp_output;
+
+		SMW_DBG_PRINTF(VERBOSE,
+			       "Using scratch buffer for cipher output\n");
+
+		use_tmp_output = true;
+	} else {
+		op_args.output = smw_crypto_get_cipher_output(cipher_args);
+	}
 
 	set_cipher_flags(cipher_args, cipher_ctx->op_type_id, &op_args.flags);
 
@@ -552,23 +596,40 @@ static int cipher_update_common(struct cipher_context *cipher_ctx,
 		goto end;
 	}
 
-	if (bytes_written) {
-		if (SET_OVERFLOW(op_args.exp_output_size, *bytes_written)) {
+	if (bytes_written)
+		*bytes_written = op_args.exp_output_size;
+
+	if (use_tmp_output) {
+		if (op_args.exp_output_size >
+		    smw_crypto_get_cipher_output_len(cipher_args)) {
+			status = SMW_STATUS_OUTPUT_TOO_SHORT;
+			goto end;
+		}
+
+		if (op_args.exp_output_size == 0) {
 			status = SMW_STATUS_OPERATION_FAILURE;
 			goto end;
 		}
+
+		SMW_UTILS_MEMCPY(smw_crypto_get_cipher_output(cipher_args),
+				 cipher_ctx->tmp_output,
+				 op_args.exp_output_size);
 	}
 
-	if (!is_implicit_update) {
+	if (!is_implicit_update)
 		smw_crypto_set_cipher_output_len(cipher_args,
 						 op_args.exp_output_size);
-	}
 
 	status = ele_update_buffered_len(&cipher_ctx->remaining_buffered_len,
 					 op_args.input_size,
 					 op_args.exp_output_size);
 
 end:
+	/* Clear the scratch buffer but don't free it so it can re-used. */
+	if (use_tmp_output && cipher_ctx->tmp_output)
+		SMW_UTILS_MEMSET(cipher_ctx->tmp_output, 0,
+				 cipher_ctx->tmp_output_len);
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }

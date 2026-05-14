@@ -23,23 +23,23 @@ Supported Operations versus Subsystems
    +==============+========================+================+=========+=========+==========+
    | AES          | Electronic Codebook    | Single-Part    |    Y    |    Y    |    Y     |
    +              +                        +----------------+---------+---------+----------+
-   |              | (ECB) with no padding  | Multi-Part     |    N    |    Y    |    N     |
+   |              | (ECB) with no padding  | Multi-Part     |  Y (1)  |    Y    |    N     |
    +              +------------------------+----------------+---------+---------+----------+
    |              | Cipher Block Chaining  | Single-Part    |    Y    |    Y    |    Y     |
    +              +                        +----------------+---------+---------+----------+
-   |              | (CBC) with no padding  | Multi-Part     |    N    |    Y    |    N     |
+   |              | (CBC) with no padding  | Multi-Part     |  Y (1)  |    Y    |    N     |
    +              +------------------------+----------------+---------+---------+----------+
    |              | Counter (CTR)          | Single-Part    |    Y    |    Y    |    N     |
    +              +                        +----------------+---------+---------+----------+
-   |              |                        | Multi-Part     |    N    |    Y    |    N     |
+   |              |                        | Multi-Part     |  Y (1)  |    Y    |    N     |
    +              +------------------------+----------------+---------+---------+----------+
    |              | Cipher Feedback (CFB)  | Single-Part    |    Y    |    N    |    N     |
    +              +                        +----------------+---------+---------+----------+
-   |              |                        | Multi-Part     |    N    |    N    |    N     |
+   |              |                        | Multi-Part     |  Y (1)  |    N    |    N     |
    +              +------------------------+----------------+---------+---------+----------+
    |              | Output Feedback (OFB)  | Single-Part    |    Y    |    N    |    N     |
    +              +                        +----------------+---------+---------+----------+
-   |              |                        | Multi-Part     |    N    |    N    |    N     |
+   |              |                        | Multi-Part     |  Y (1)  |    N    |    N     |
    +              +------------------------+----------------+---------+---------+----------+
    |              | Ciphertext Stealing    | Single-Part    |    N    |    Y    |    N     |
    +              +                        +----------------+---------+---------+----------+
@@ -77,6 +77,9 @@ Supported Operations versus Subsystems
    +              +                        +----------------+---------+---------+----------+
    |              |                        | Multi-Part     |    N    |    Y    |    N     |
    +--------------+------------------------+----------------+---------+---------+----------+
+
+(1) ELE multi-part encryption and decryption operations not supported on the i.MX8ULP, i.MX93 and i.MX91 platforms.
+
 
 .. table:: Symmetric Encryption APIs
    :name: table_sym_enc_apis

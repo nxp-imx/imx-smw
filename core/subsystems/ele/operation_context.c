@@ -21,6 +21,10 @@ static int ele_cancel_operation(struct smw_op_context *ctx)
 		status = ele_cancel_aead_op(ctx);
 		break;
 
+	case SMW_CRYPTO_OP_ID_CIPHER_MULTI_PART:
+		status = ele_cancel_cipher_operation(ctx);
+		break;
+
 	default:
 		status = SMW_STATUS_OK;
 		break;
@@ -51,6 +55,10 @@ static void ele_free_context(struct smw_op_context *ctx)
 		ele_free_aead_context(ctx);
 		break;
 
+	case SMW_CRYPTO_OP_ID_CIPHER_MULTI_PART:
+		ele_free_cipher_context(ctx);
+		break;
+
 	default:
 		break;
 	}
@@ -75,6 +83,10 @@ static int ele_copy_context(struct smw_op_context *src_ctx,
 
 	case SMW_CRYPTO_OP_ID_AEAD_MULTI_PART:
 		status = ele_copy_aead_context(src_ctx, dst_ctx);
+		break;
+
+	case SMW_CRYPTO_OP_ID_CIPHER_MULTI_PART:
+		status = ele_copy_cipher_context(src_ctx, dst_ctx);
 		break;
 
 	default:

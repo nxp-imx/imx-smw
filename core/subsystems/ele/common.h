@@ -64,6 +64,7 @@ struct ele_info {
 	bool sign_verif_opaque_key;
 	bool edwards_be;
 	bool aead_multipart;
+	bool cipher_multipart;
 };
 
 /**
@@ -250,8 +251,38 @@ bool ele_rng_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
 		    int *status);
 
 /**
+ * ele_free_cipher_context() - Free the cipher context
+ * @ctx: Cipher context
+ */
+void ele_free_cipher_context(struct smw_op_context *ctx);
+
+/**
+ * ele_copy_cipher_context() - Copy the cipher context
+ * @src_ctx: Source operation context arguments structure
+ * @dst_ctx: Destination operation context arguments structure
+ *
+ * Allocates and copies the cipher source context to destination source context.
+ *
+ * Return:
+ * SMW_STATUS_OK                      - Success
+ * SMW_STATUS_ALLOC_FAILURE           - Memory allocation failure
+ */
+int ele_copy_cipher_context(struct smw_op_context *src_ctx,
+			    struct smw_op_context *dst_ctx);
+
+/**
+ * ele_cancel_cipher_operation() - Cancel/abort the multi-part cipher operation.
+ * @ctx: Pointer to the operation context structure.
+ *
+ * Return:
+ * SMW_STATUS_OK                      - Success
+ * SMW_STATUS_INVALID_PARAM           - Parameter invalid
+ */
+int ele_cancel_cipher_operation(struct smw_op_context *ctx);
+
+/**
  * ele_cipher_handle() - Handle the cipher encryption/decryption operation.
- * @hdl: Pointer to the ELE handles structure.
+ * @ele_ctx: Pointer to the ELE subsystem context structure.
  * @operation_id: Security Operation ID.
  * @args: Pointer to a structure of arguments defined by the internal API.
  * @status: Error code set only if the Security Operation is handled.
@@ -263,8 +294,8 @@ bool ele_rng_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
  * * true:	- the Security Operation has been handled.
  * * false:	- the Security Operation has not been handled.
  */
-bool ele_cipher_handle(struct hdl *hdl, enum operation_id operation_id,
-		       void *args, int *status);
+bool ele_cipher_handle(struct subsystem_context *ele_ctx,
+		       enum operation_id operation_id, void *args, int *status);
 
 /**
  * ele_device_manager_handle() - Handle the device management operations.

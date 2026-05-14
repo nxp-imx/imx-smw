@@ -33,6 +33,7 @@ static void features_per_soc(struct ele_info *info)
 
 	case SOC_IMX943:
 		info->aead_multipart = true;
+		info->cipher_multipart = true;
 		info->sign_verif_opaque_key = true;
 
 		break;
@@ -46,6 +47,7 @@ static void features_per_soc(struct ele_info *info)
 		/* All others SOC (95, 952, ...)*/
 		info->sign_verif_opaque_key = true;
 		info->aead_multipart = true;
+		info->cipher_multipart = true;
 		break;
 	}
 }

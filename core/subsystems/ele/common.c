@@ -287,16 +287,9 @@ int ele_calculate_expected_output_len(struct crypto_output_params *params,
 		break;
 
 	case SMW_OP_STEP_UPDATE:
-		/*
-		 * For UPDATE: output may be less than input due to buffering
-		 * Return input_len as maximum estimate
-		 */
-		output_len = params->input_len;
-		break;
-
 	case SMW_OP_STEP_FINAL:
 		/*
-		 * For FINAL: output = remaining_buffered + input
+		 * Return remaining_buffered_len + input_len as maximum estimate
 		 */
 		output_len = params->remaining_buffered_len;
 
@@ -353,20 +346,22 @@ int ele_update_buffered_len(unsigned int *remaining_buffered_len,
 
 	/*
 	 * Calculate newly buffered bytes for this UPDATE operation
-	 * buffered_bytes = input_len - output_len
+	 * buffered_bytes = (input_len + remaining_buffered_len) - output_len
 	 *
 	 * The subsystem may buffer incomplete blocks, so output can be
 	 * less than input. The difference is buffered internally.
 	 */
+	if (INC_OVERFLOW(input_len, *remaining_buffered_len)) {
+		status = SMW_STATUS_OPERATION_FAILURE;
+		goto end;
+	}
+
 	if (SUB_OVERFLOW(input_len, output_len, &buffered_bytes)) {
 		status = SMW_STATUS_OPERATION_FAILURE;
 		goto end;
 	}
 
-	if (INC_OVERFLOW(*remaining_buffered_len, buffered_bytes)) {
-		status = SMW_STATUS_OPERATION_FAILURE;
-		goto end;
-	}
+	*remaining_buffered_len = buffered_bytes;
 
 	SMW_DBG_PRINTF(VERBOSE, "remaining buffered len = %u\n",
 		       *remaining_buffered_len);
@@ -435,6 +430,27 @@ __weak int ele_copy_sign_context(struct smw_op_context *src_ctx,
 {
 	(void)src_ctx;
 	(void)dst_ctx;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__weak void ele_free_cipher_context(struct smw_op_context *ctx)
+{
+	(void)ctx;
+}
+
+__weak int ele_copy_cipher_context(struct smw_op_context *src_ctx,
+				   struct smw_op_context *dst_ctx)
+{
+	(void)src_ctx;
+	(void)dst_ctx;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__weak int ele_cancel_cipher_operation(struct smw_op_context *ctx)
+{
+	(void)ctx;
 
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }

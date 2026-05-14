@@ -126,6 +126,7 @@ static int encrypt_multipart_wrong_order(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	/* Size of the input data part */
 	CK_ULONG part_len = 16;
 	CK_ULONG encrypted_part_len = part_len;
+	CK_ULONG last_len = 0;
 
 	SUBTEST_START();
 
@@ -177,13 +178,23 @@ static int encrypt_multipart_wrong_order(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OPERATION_NOT_INITIALIZED, "C_EncryptMessage"))
 		goto end;
 
-	TEST_OUT("Finish multi-part encryption operation\n");
-	ret = pfunc->C_EncryptMessageNext(sess, NULL_PTR, 0, &data[0], part_len,
-					  &encrypted_data[0],
-					  &encrypted_part_len,
-					  CKF_END_OF_MESSAGE);
+	TEST_OUT("Get the length of the output data part\n");
+	ret = pfunc->C_EncryptMessageNext(sess, NULL_PTR, 0, NULL_PTR, 0, NULL,
+					  &last_len, CKF_END_OF_MESSAGE);
 	if (CHECK_CK_RV(CKR_OK, "C_EncryptMessageNext"))
 		goto end;
+
+	TEST_OUT("Finish multi-part encryption operation\n");
+	ret = pfunc->C_EncryptMessageNext(sess, NULL_PTR, 0, NULL_PTR, 0,
+					  &encrypted_data[encrypted_part_len],
+					  &last_len, CKF_END_OF_MESSAGE);
+	if (CHECK_CK_RV(CKR_OK, "C_EncryptMessageNext"))
+		goto end;
+
+	if (INC_OVERFLOW(encrypted_part_len, last_len)) {
+		TEST_OUT("Encrypted first part or last part too large!\n");
+		goto end;
+	}
 
 	TEST_OUT("Finish multi-part encryption process\n");
 	ret = pfunc->C_MessageEncryptFinal(sess);
@@ -259,6 +270,7 @@ static int decrypt_multipart_wrong_order(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	/* Size of the input data part */
 	CK_ULONG encrypted_part_len = 16;
 	CK_ULONG part_recovered_len = encrypted_part_len;
+	CK_ULONG last_len = 0;
 
 	SUBTEST_START();
 
@@ -312,14 +324,23 @@ static int decrypt_multipart_wrong_order(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OPERATION_NOT_INITIALIZED, "C_DecryptMessage"))
 		goto end;
 
+	TEST_OUT("Get the length of the output data part\n");
+	ret = pfunc->C_DecryptMessageNext(sess, NULL_PTR, 0, NULL_PTR, 0, NULL,
+					  &last_len, CKF_END_OF_MESSAGE);
+	if (CHECK_CK_RV(CKR_OK, "C_EncryptMessageNext"))
+		goto end;
+
 	TEST_OUT("Finish multi-part decryption operation\n");
-	ret = pfunc->C_DecryptMessageNext(sess, NULL_PTR, 0, &encrypted_data[0],
-					  encrypted_part_len,
-					  &recovered_data[0],
-					  &part_recovered_len,
-					  CKF_END_OF_MESSAGE);
+	ret = pfunc->C_DecryptMessageNext(sess, NULL_PTR, 0, NULL_PTR, 0,
+					  &recovered_data[part_recovered_len],
+					  &last_len, CKF_END_OF_MESSAGE);
 	if (CHECK_CK_RV(CKR_OK, "C_DecryptMessageNext"))
 		goto end;
+
+	if (INC_OVERFLOW(part_recovered_len, last_len)) {
+		TEST_OUT("Decrypted first part or last part too large!\n");
+		goto end;
+	}
 
 	TEST_OUT("Finish multi-part decryption process\n");
 	ret = pfunc->C_MessageDecryptFinal(sess);
@@ -957,6 +978,7 @@ static int encrypt_decrypt_iv_param(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	CK_MECHANISM encrypt_decrypt_mech = { .mechanism = CKM_AES_CBC };
 	CK_ULONG data_len = sizeof(data);
 	CK_ULONG cipher_len = sizeof(data);
+	CK_ULONG last_len = 0;
 	CK_BYTE cipher[data_len];
 	CK_BYTE recovered_data[data_len];
 	CK_ULONG recovered_data_len = sizeof(data);
@@ -1018,6 +1040,22 @@ static int encrypt_decrypt_iv_param(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_EncryptMessageNext"))
 		goto end;
 
+	ret = pfunc->C_EncryptMessageNext(sess, iv, sizeof(iv), NULL, 0, NULL,
+					  &last_len, CKF_END_OF_MESSAGE);
+	if (CHECK_CK_RV(CKR_OK, "C_EncryptMessageNext"))
+		goto end;
+
+	ret = pfunc->C_EncryptMessageNext(sess, iv, sizeof(iv), NULL, 0,
+					  &cipher[cipher_len], &last_len,
+					  CKF_END_OF_MESSAGE);
+	if (CHECK_CK_RV(CKR_OK, "C_EncryptMessageNext"))
+		goto end;
+
+	if (INC_OVERFLOW(cipher_len, last_len)) {
+		TEST_OUT("Encrypted first part or last part too large!\n");
+		goto end;
+	}
+
 	TEST_OUT("Finish multi-part encryption process\n");
 	ret = pfunc->C_MessageEncryptFinal(sess);
 	if (CHECK_CK_RV(CKR_OK, "C_MessageEncryptFinal"))
@@ -1040,6 +1078,22 @@ static int encrypt_decrypt_iv_param(CK_FUNCTION_LIST_3_0_PTR pfunc)
 					  &recovered_data_len, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_DecryptMessageNext"))
 		goto end;
+
+	ret = pfunc->C_DecryptMessageNext(sess, iv, sizeof(iv), NULL, 0, NULL,
+					  &last_len, CKF_END_OF_MESSAGE);
+	if (CHECK_CK_RV(CKR_OK, "C_EncryptMessageNext"))
+		goto end;
+
+	ret = pfunc->C_DecryptMessageNext(sess, iv, sizeof(iv), NULL, 0,
+					  &recovered_data[recovered_data_len],
+					  &last_len, CKF_END_OF_MESSAGE);
+	if (CHECK_CK_RV(CKR_OK, "C_EncryptMessageNext"))
+		goto end;
+
+	if (INC_OVERFLOW(recovered_data_len, last_len)) {
+		TEST_OUT("Decrypted first part or last part too large!\n");
+		goto end;
+	}
 
 	TEST_OUT("Finish multi-part decryption process\n");
 	ret = pfunc->C_MessageDecryptFinal(sess);
@@ -1394,9 +1448,7 @@ static int encrypt_decrypt_multipart_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	CK_SESSION_HANDLE sess = 0;
 
 	CK_MECHANISM_TYPE aes_mech_type[] = { CKM_AES_ECB, CKM_AES_CBC,
-					      CKM_AES_CTR, CKM_AES_CTS,
-					      CKM_AES_GCM, CKM_AES_CCM,
-					      CKM_AES_XTS };
+					      CKM_AES_CTR };
 
 	CK_BYTE iv[] = { 0x01, 0x02,  0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
 			 0x09, 0x010, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };

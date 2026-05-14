@@ -161,6 +161,13 @@ static int encrypt_multipart_wrong_order(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OPERATION_NOT_INITIALIZED, "C_Encrypt"))
 		goto end;
 
+	if (encrypted_part_len == 0) {
+		TEST_OUT("Get multi-part encryption final length\n");
+		ret = pfunc->C_EncryptFinal(sess, NULL, &encrypted_part_len);
+		if (CHECK_CK_RV(CKR_OK, "C_EncryptFinal"))
+			goto end;
+	}
+
 	TEST_OUT("Finish multi-part encryption operation\n");
 	ret = pfunc->C_EncryptFinal(sess, &encrypted_data[encrypted_part_len],
 				    &encrypted_part_len);
@@ -277,6 +284,13 @@ static int decrypt_multipart_wrong_order(CK_FUNCTION_LIST_PTR pfunc)
 			       recovered_data, &data_len);
 	if (CHECK_CK_RV(CKR_OPERATION_NOT_INITIALIZED, "C_Decrypt"))
 		goto end;
+
+	if (part_recovered_len == 0) {
+		TEST_OUT("Get multi-part decryption final length\n");
+		ret = pfunc->C_DecryptFinal(sess, NULL, &part_recovered_len);
+		if (CHECK_CK_RV(CKR_OK, "C_DecryptFinal"))
+			goto end;
+	}
 
 	TEST_OUT("Finish multi-part decryption operation\n");
 	ret = pfunc->C_DecryptFinal(sess, &recovered_data[part_recovered_len],

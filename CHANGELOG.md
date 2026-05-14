@@ -89,6 +89,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE: Add support for AEAD multi-part operations.
 * ELE: Multi-part AEAD operations support GCM and CCM only. CHACHA20-POLY1305 is not supported.
 * ELE: Fix cipher service handle management for AEAD operations.
+* ELE: Add support for symmetric cipher multi-part operations.
 
 ##### 3. ARM PSA APIs
 
@@ -125,6 +126,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add ELE tests to validate AEAD multi-part operations.
 * Fix U_ELE_Context_004 - Remove context_id reference from subtest 7 and update
   subtest 8 to process remaining 19 bytes instead of 32 bytes.
+* Add ELE tests to validate symmetric cipher multi-part operations.
 
 #### PKCS#11 Library
 

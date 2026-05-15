@@ -218,3 +218,27 @@ int util_get_file_size(FILE *fp, size_t *size, const char *filename)
 
 	return 0;
 }
+
+/**
+ * @brief Get the size of a file by path.
+ *
+ * @param path File path to query
+ */
+size_t util_get_file_size_by_path(const char *path)
+{
+	FILE *fp = NULL;
+	size_t size = 0;
+
+	if (!path)
+		return 0;
+
+	fp = fopen(path, "rb");
+	if (!fp)
+		return 0;
+
+	if (util_get_file_size(fp, &size, path))
+		size = 0;
+
+	FCLOSE(fp);
+	return size;
+}

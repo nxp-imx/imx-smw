@@ -28,5 +28,6 @@ int util_write_output_data(const unsigned char *buffer, size_t size,
 			   const char *filename, bool text_format);
 void *util_alloc_buffer(size_t size, const char *purpose);
 int util_get_file_size(FILE *fp, size_t *size, const char *filename);
+size_t util_get_file_size_by_path(const char *path);
 
 #endif /* CLI_UTILS_H */

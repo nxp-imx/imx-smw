@@ -21,7 +21,8 @@ enum operation {
 	OP_DEV_SET_LIFECYCLE,
 	OP_DEV_GET_ATTESTATION,
 	OP_KEYGEN_SYM,
-	OP_KEYGEN_ASYM
+	OP_KEYGEN_ASYM,
+	OP_KEY_EXPORT
 };
 
 /* RNG-specific options */
@@ -56,6 +57,14 @@ struct keygen {
 	bool non_sensitive;
 };
 
+/* Key export-specific options */
+struct key_export {
+	unsigned int key_id;
+	char *key_file;
+	bool use_der;
+	bool use_pem;
+};
+
 /* Parsed options structure */
 struct parsed_options {
 	enum operation operation;
@@ -80,6 +89,7 @@ struct parsed_options {
 		struct dev_att dev_att;
 		struct dev_set_lc dev_set_lc;
 		struct keygen keygen;
+		struct key_export key_export;
 	} op;
 };
 

@@ -17,6 +17,7 @@
 #include "parser_device_set_lifecycle.h"
 #include "parser_device_uuid.h"
 #include "parser_hash.h"
+#include "parser_key_export.h"
 #include "parser_keygen_sym.h"
 #include "parser_keygen_asym.h"
 #include "parser_rng.h"
@@ -110,6 +111,10 @@ static const struct operation_parser operation_parsers[] = {
 	{ .name = "keygen-asym",
 	  .op = OP_KEYGEN_ASYM,
 	  .parse_func = parse_keygen_asym_options },
+	{ .name = "key-export",
+	  .op = OP_KEY_EXPORT,
+	  .parse_func = parse_key_export_options,
+	  .special_func = NULL },
 	/* Add more operations here */
 	{ NULL, OP_NONE, NULL, NULL } /* Sentinel */
 };
@@ -340,6 +345,13 @@ void opt_parser_cleanup(struct parsed_options *opts)
 		if (opts->op.dev_att.challenge_filename) {
 			free(opts->op.dev_att.challenge_filename);
 			opts->op.dev_att.challenge_filename = NULL;
+		}
+	}
+
+	if (opts->operation == OP_KEY_EXPORT) {
+		if (opts->op.key_export.key_file) {
+			free(opts->op.key_export.key_file);
+			opts->op.key_export.key_file = NULL;
 		}
 	}
 }

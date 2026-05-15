@@ -7,6 +7,20 @@ add_compile_definitions(
     SMW_LIB_VERSION="${CMAKE_PROJECT_VERSION}"
 )
 
+# Python script for public key format conversion
+set(PUBKEY_SCRIPT_INSTALL_DIR "${CMAKE_INSTALL_DATADIR}/smw-cli")
+set(PUBKEY_SCRIPT_INSTALL_PATH "${PUBKEY_SCRIPT_INSTALL_DIR}/pubkey_convert.py")
+
+add_compile_definitions(
+    CLI_VERSION="${PROJECT_VERSION}"
+    SMW_LIB_VERSION="${CMAKE_PROJECT_VERSION}"
+    PUBKEY_CONVERT_SCRIPT="${CMAKE_INSTALL_PREFIX}/${PUBKEY_SCRIPT_INSTALL_PATH}"
+)
+
+install(PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/scripts/pubkey_convert.py
+        DESTINATION ${PUBKEY_SCRIPT_INSTALL_DIR}
+        COMPONENT cli-tools)
+
 # Generate SMW error table (runs at CMake configure time)
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 

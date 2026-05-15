@@ -62,6 +62,7 @@ cli/
 │   ├── parser_device_set_lifecycle.c   # Set-lifecycle-specific option parsing
 │   ├── parser_device_uuid.c            # Device UUID option parsing
 │   ├── parser_hash.c                   # Hash-specific option parsing
+│   ├── parser_key_delete.c             # Key delete option parsing
 │   ├── parser_key_export.c             # Key export option parsing
 │   ├── parser_keygen_asym.c            # Asymmetric key generation option parsing
 │   ├── parser_keygen_sym.c             # Symmetric key generation option parsing
@@ -73,6 +74,7 @@ cli/
 │   ├── weak_device_set_lifecycle.c     # Weak default dev-set-lifecycle implementation
 │   ├── weak_device_uuid.c              # Weak default dev-get-uuid implementation
 │   ├── weak_hash.c                     # Weak default hash implementation
+│   ├── weak_key_delete.c               # Weak default key-delete implementation
 │   ├── weak_key_export.c               # Weak default key-export implementation
 │   ├── weak_keygen_asym.c              # Weak default asymmetric keygen implementation
 │   ├── weak_keygen_sym.c               # Weak default symmetric keygen implementation
@@ -91,6 +93,7 @@ cli/
 │   ├── parser_device_set_lifecycle.h   # Set-lifecycle parser API
 │   ├── parser_device_uuid.h            # Device UUID parser API
 │   ├── parser_hash.h                   # Hash parser API
+│   ├── parser_key_delete.h             # Key delete parser API
 │   ├── parser_key_export.h             # Key export parser API
 │   ├── parser_keygen_asym.h            # Asymmetric key generation parser API
 │   ├── parser_keygen_sym.h             # Symmetric key generation parser API
@@ -104,6 +107,7 @@ cli/
 │   ├── common.h                        # Common PSA definitions and macros
 │   ├── hash.c                          # PSA hash operation
 │   ├── init.c                          # PSA crypto initialization
+│   ├── key_delete.c                    # PSA key delete operation
 │   ├── key_export.c                    # PSA key export operation
 │   ├── keygen_asym.c                   # PSA asymmetric key generation operation
 │   ├── keygen_common.c                 # PSA common key generation utilities
@@ -136,6 +140,7 @@ cli/
 │   ├── device_uuid.c                   # SMW dev-get-uuid operation
 │   ├── hash.c                          # SMW hash operation
 │   ├── init.c                          # SMW library initialization
+│   ├── key_delete.c                    # SMW key delete operation
 │   ├── key_export.c                    # SMW key export operation
 │   ├── keygen_asym.c                   # SMW asymmetric key generation operation
 │   ├── keygen_common.c                 # SMW common key generation utilities
@@ -269,6 +274,7 @@ To add a new operation (e.g., `cipher`):
 | `keygen-asym` | Generate asymmetric key | ✅ | ✅ |
 | `keygen-sym` | Generate symmetric key | ✅ | ✅ |
 | `key-export` | Export key material | ✅ | ✅ |
+| `key-delete` | Delete a key | ✅ | ✅ |
 | `rng` | Generate random numbers | ✅ | ✅ |
 *(More operations coming soon: cipher, sign, verify, etc.)*
 

@@ -18,6 +18,7 @@
 #include "parser_device_uuid.h"
 #include "parser_hash.h"
 #include "parser_key_export.h"
+#include "parser_key_delete.h"
 #include "parser_keygen_sym.h"
 #include "parser_keygen_asym.h"
 #include "parser_rng.h"
@@ -114,6 +115,10 @@ static const struct operation_parser operation_parsers[] = {
 	{ .name = "key-export",
 	  .op = OP_KEY_EXPORT,
 	  .parse_func = parse_key_export_options,
+	  .special_func = NULL },
+	{ .name = "key-delete",
+	  .op = OP_KEY_DELETE,
+	  .parse_func = parse_key_delete_options,
 	  .special_func = NULL },
 	/* Add more operations here */
 	{ NULL, OP_NONE, NULL, NULL } /* Sentinel */

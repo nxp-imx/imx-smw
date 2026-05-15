@@ -16,6 +16,7 @@
 #include "parser_device_uuid.h"
 #include "parser_hash.h"
 #include "parser_key_export.h"
+#include "parser_key_delete.h"
 #include "parser_keygen_asym.h"
 #include "parser_keygen_sym.h"
 #include "parser_rng.h"
@@ -77,6 +78,10 @@ static const struct operation_entry operation_table[] = {
 	  .opt_func = cli_key_export_operation,
 	  .help_func = cli_key_export_help,
 	  .inline_desc_func = cli_key_export_inline_desc },
+	{ .operation_name = "key-delete",
+	  .opt_func = cli_key_delete_operation,
+	  .help_func = cli_key_delete_help,
+	  .inline_desc_func = cli_key_delete_inline_desc },
 	/* Add more operations here as we implement them */
 	{ NULL, NULL, NULL, NULL } /* Sentinel */
 };

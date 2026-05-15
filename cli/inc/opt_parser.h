@@ -22,7 +22,8 @@ enum operation {
 	OP_DEV_GET_ATTESTATION,
 	OP_KEYGEN_SYM,
 	OP_KEYGEN_ASYM,
-	OP_KEY_EXPORT
+	OP_KEY_EXPORT,
+	OP_KEY_DELETE
 };
 
 /* RNG-specific options */
@@ -65,6 +66,11 @@ struct key_export {
 	bool use_pem;
 };
 
+/* Key delete-specific options */
+struct key_delete {
+	unsigned int key_id;
+};
+
 /* Parsed options structure */
 struct parsed_options {
 	enum operation operation;
@@ -90,6 +96,7 @@ struct parsed_options {
 		struct dev_set_lc dev_set_lc;
 		struct keygen keygen;
 		struct key_export key_export;
+		struct key_delete key_delete;
 	} op;
 };
 

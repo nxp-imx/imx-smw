@@ -14,6 +14,7 @@
 #include "opt_parser.h"
 #include "parser_device_attestation.h"
 #include "parser_device_get_lifecycle.h"
+#include "parser_device_set_lifecycle.h"
 #include "parser_device_uuid.h"
 #include "parser_hash.h"
 #include "parser_rng.h"
@@ -86,15 +87,19 @@ static const struct operation_parser operation_parsers[] = {
 	  .parse_func = NULL,
 	  .special_func = print_logging_help },
 	{ .name = "dev-get-uuid",
-	  .op = OP_DEVICE_UUID,
+	  .op = OP_DEV_GET_UUID,
 	  .parse_func = parse_device_uuid_options,
 	  .special_func = NULL },
 	{ .name = "dev-get-lifecycle",
-	  .op = OP_DEVICE_LIFECYCLE,
+	  .op = OP_DEV_GET_LIFECYCLE,
 	  .parse_func = parse_dev_get_lifecycle_options,
 	  .special_func = NULL },
+	{ .name = "dev-set-lifecycle",
+	  .op = OP_DEV_SET_LIFECYCLE,
+	  .parse_func = parse_dev_set_lifecycle_options,
+	  .special_func = NULL },
 	{ .name = "dev-get-attestation",
-	  .op = OP_DEVICE_ATTESTATION,
+	  .op = OP_DEV_GET_ATTESTATION,
 	  .parse_func = parse_device_attestation_options,
 	  .special_func = NULL },
 	/* Add more operations here */
@@ -323,7 +328,7 @@ void opt_parser_cleanup(struct parsed_options *opts)
 		opts->log_filename = NULL;
 	}
 
-	if (opts->operation == OP_DEVICE_ATTESTATION) {
+	if (opts->operation == OP_DEV_GET_ATTESTATION) {
 		if (opts->op.dev_att.challenge_filename) {
 			free(opts->op.dev_att.challenge_filename);
 			opts->op.dev_att.challenge_filename = NULL;

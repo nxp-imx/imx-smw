@@ -7,6 +7,7 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include <string.h>
+#include "apis_dispatcher.h"
 #include "helper.h"
 #include "opt_parser.h"
 #include "parser_device_uuid.h"
@@ -75,6 +76,12 @@ int parse_device_uuid_options(int argc, char **argv,
 			      const char *prog_name)
 {
 	int opt = 0;
+
+	/* This operation is only supported by SMW backend */
+	if (prog_name && strstr(prog_name, "nxp_psa")) {
+		cli_device_uuid_operation(NULL);
+		return -1;
+	}
 
 	while ((opt = getopt_long(argc, argv, device_uuid_short_opts,
 				  device_uuid_options, NULL)) != -1) {

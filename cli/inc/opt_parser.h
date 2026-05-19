@@ -16,9 +16,10 @@ enum operation {
 	OP_NONE = 0,
 	OP_RNG,
 	OP_HASH,
-	OP_DEVICE_UUID,
-	OP_DEVICE_LIFECYCLE,
-	OP_DEVICE_ATTESTATION
+	OP_DEV_GET_UUID,
+	OP_DEV_GET_LIFECYCLE,
+	OP_DEV_SET_LIFECYCLE,
+	OP_DEV_GET_ATTESTATION,
 };
 
 /* RNG-specific options */
@@ -35,6 +36,11 @@ struct hash {
 /* Device attestation-specific options */
 struct dev_att {
 	char *challenge_filename;
+};
+
+/* Device set lifecycle-specific options */
+struct dev_set_lc {
+	const char *lifecycle_name;
 };
 
 /* Parsed options structure */
@@ -59,6 +65,7 @@ struct parsed_options {
 		struct rng rng;
 		struct hash hash;
 		struct dev_att dev_att;
+		struct dev_set_lc dev_set_lc;
 	} op;
 };
 

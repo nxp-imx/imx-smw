@@ -7,6 +7,7 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include <string.h>
+#include "apis_dispatcher.h"
 #include "helper.h"
 #include "lifecycle_table.h"
 #include "opt_parser.h"
@@ -63,29 +64,6 @@ void cli_dev_get_lifecycle_help(void)
 }
 
 /**
- * @brief Print list of available lifecycle values
- */
-static void print_lifecycle_list(void)
-{
-	size_t i = 0;
-	const struct lifecycle_info *info = NULL;
-
-	printf("\n");
-	printf("Available Device Lifecycle Values\n");
-	printf("=================================\n\n");
-	printf("%-20s %s\n", "Lifecycle", "Description");
-	printf("%-20s %s\n", "---------", "-----------");
-
-	for (; i < lifecycle_table_size; i++) {
-		info = &lifecycle_table[i];
-
-		printf("%-20s %s\n", info->name, info->description);
-	}
-	printf("\nNote: Actual support depends on the backend and subsystem capabilities.\n");
-	printf("      The operation may fail at runtime if unsupported.\n\n");
-}
-
-/**
  * @brief Parse command-line options for dev-get-lifecycle operation
  *
  * @param argc Argument count from command line
@@ -98,6 +76,12 @@ int parse_dev_get_lifecycle_options(int argc, char **argv,
 				    const char *prog_name)
 {
 	int opt = 0;
+
+	/* This operation is only supported by SMW backend */
+	if (prog_name && strstr(prog_name, "nxp_psa")) {
+		cli_dev_get_lifecycle_operation(NULL);
+		return -1;
+	}
 
 	while ((opt = getopt_long(argc, argv, dev_get_lifecycle_short_opts,
 				  dev_get_lifecycle_options, NULL)) != -1) {

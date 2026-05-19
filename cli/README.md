@@ -59,12 +59,14 @@ cli/
 │   ├── opt_parser.c                    # Command-line argument parsing
 │   ├── parser_device_attestation.c     # Device attestation option parsing
 │   ├── parser_device_get_lifecycle.c   # Get-lifecycle-specific option parsing
+│   ├── parser_device_set_lifecycle.c   # Set-lifecycle-specific option parsing
 │   ├── parser_device_uuid.c            # Device UUID option parsing
 │   ├── parser_hash.c                   # Hash-specific option parsing
 │   ├── parser_rng.c                    # RNG-specific option parsing
 │   ├── utils.c                         # Utility functions (hex dump, program info)
 │   ├── weak_device_attestation.c       # Weak default dev-attestation implementation
 │   ├── weak_device_get_lifecycle.c     # Weak default dev-get-lifecycle implementation
+│   ├── weak_device_set_lifecycle.c     # Weak default dev-set-lifecycle implementation
 │   ├── weak_device_uuid.c              # Weak default dev-get-uuid implementation
 │   ├── weak_hash.c                     # Weak default hash implementation
 │   └── weak_rng.c                      # Weak default RNG implementation
@@ -77,6 +79,7 @@ cli/
 │   ├── opt_parser.h                    # CLI parser API
 │   ├── parser_device_attestation.h     # Device attestation parser API
 │   ├── parser_device_get_lifecycle.h   # Get-lifecycle parser API
+│   ├── parser_device_get_lifecycle.h   # Set-lifecycle parser API
 │   ├── parser_device_uuid.h            # Device UUID parser API
 │   ├── parser_hash.h                   # Hash parser API
 │   ├── parser_rng.h                    # RNG parser API
@@ -105,7 +108,8 @@ cli/
 │   ├── common.c                        # SMW common utilities (subsystem names, etc.)
 │   ├── common.h                        # Common SMW definitions and macros
 │   ├── device_attestation.c            # SMW dev-get-attestation operation
-│   ├── device_lifecycle.c              # SMW dev-get-lifecycle operation
+│   ├── device_get_lifecycle.c          # SMW dev-get-lifecycle operation
+│   ├── device_set_lifecycle.c          # SMW dev-set-lifecycle operation
 │   ├── device_uuid.c                   # SMW dev-get-uuid operation
 │   ├── hash.c                          # SMW hash operation
 │   ├── init.c                          # SMW library initialization
@@ -228,11 +232,12 @@ To add a new operation (e.g., `cipher`):
 
 | Operation | Description | SMW | PSA |
 |-----------|-------------|-----|-----|
-| `rng` | Generate random numbers | ✅ | ✅ |
-| `hash` | Compute cryptographic hash | ✅ | ✅ |
-| `dev-get-uuid` | Get device UUID | ✅ | ❌ |
-| `dev-get-lifecycle` | Get device lifecycle | ✅ | ❌ |
 | `dev-get-attestation` | Get device attestation | ✅ | ❌ |
+| `dev-get-lifecycle` | Get device lifecycle | ✅ | ❌ |
+| `dev-get-uuid` | Get device UUID | ✅ | ❌ |
+| `dev-set-lifecycle` | Set device lifecycle | ✅ | ❌ |
+| `hash` | Compute cryptographic hash | ✅ | ✅ |
+| `rng` | Generate random numbers | ✅ | ✅ |
 *(More operations coming soon: cipher, sign, verify, etc.)*
 
 ### Dependencies

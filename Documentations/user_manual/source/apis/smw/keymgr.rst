@@ -6,20 +6,24 @@ such as generation, derivation, import, export, and deletion.
 
 Key Creation
 """"""""""""
-
+Key Generate
+~~~~~~~~~~~~
 .. kdoc-extension:: /public/smw_keymgr.h
     :functions: smw_generate_key
     :structs: smw_generate_key_args
 
+Key import
+~~~~~~~~~~
 .. kdoc-extension:: /public/smw_keymgr.h
     :functions: smw_import_key
     :structs: smw_import_key_args
-
 
 Key Derivation
 """"""""""""""
 .. _smw_key_derivation:
 
+Function
+~~~~~~~~
 .. kdoc-extension:: /public/smw_keymgr.h
     :functions: smw_derive_key
     :structs: smw_derive_key_args
@@ -66,7 +70,8 @@ OEM Master Key derivation
 
 Key Exportation
 """""""""""""""
-
+Function
+~~~~~~~~
 .. kdoc-extension:: /public/smw_keymgr.h
     :functions: smw_export_key
     :structs: smw_export_key_args
@@ -74,7 +79,8 @@ Key Exportation
 
 Key Deletion
 """"""""""""
-
+Function
+~~~~~~~~
 .. kdoc-extension:: /public/smw_keymgr.h
     :functions: smw_delete_key
     :structs: smw_delete_key_args
@@ -82,6 +88,8 @@ Key Deletion
 
 Key Attributes
 """"""""""""""
+Functions
+~~~~~~~~~
 .. kdoc-extension:: /public/smw_keymgr.h
     :functions: smw_get_key_attributes
     :structs: smw_get_key_attributes_args
@@ -93,6 +101,8 @@ Key Attributes
 
 Key Storage Protection
 """"""""""""""""""""""
+Function
+~~~~~~~~
 .. kdoc-extension:: /public/smw_keymgr.h
     :functions: smw_commit_key_storage
     :structs: smw_commit_key_storage_args
@@ -100,6 +110,8 @@ Key Storage Protection
 
 Key Attestation
 """""""""""""""
+Function
+~~~~~~~~
 .. kdoc-extension:: /public/smw_keymgr.h
     :functions: smw_key_attestation
     :structs: smw_key_attestation_args
@@ -107,6 +119,8 @@ Key Attestation
 
 Key Descriptors
 """""""""""""""
+Structures
+~~~~~~~~~~
 .. kdoc-extension:: /public/smw_keymgr.h
     :structs: smw_key_descriptor smw_derived_key_descriptor smw_key_attributes
               smw_keypair_buffer smw_keypair_gen smw_keypair_rsa

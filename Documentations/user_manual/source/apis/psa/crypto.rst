@@ -1,13 +1,19 @@
 Cryptography APIs
 ^^^^^^^^^^^^^^^^^
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Contents:
-   :glob:
+The Cryptography APIs allow user of the library to perform cryptographic
+operations such as hashing, signing, encryption, decryption, MAC and RNG.
+For some cryptographic operations, both oneshot and multipart modes are
+supported.
 
-   crypto/values
-   crypto/sizes
-   crypto/types
-   crypto/struct
-   crypto/functions
+.. toctree::
+   :maxdepth: 3
+
+   crypto/random
+   crypto/hash
+   crypto/mac
+   crypto/asymmetric_signature
+   crypto/aead
+   crypto/asymmetric_encryption
+   crypto/symmetric_encryption
+   crypto/pake

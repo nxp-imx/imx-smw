@@ -219,7 +219,7 @@ permitted algorithms for Truncated HMAC operations.
    |                 | PSA     | PSA_ALG_HMAC(hash)                                                 |
    |                 |         |                                                                    |
    |                 |         | Where ``hash`` is one of PSA Hash algorithm (`PSA_ALG_xxx`) such   |
-   |                 |         | as PSA_ALG_IS_HASH(hash) is true. Refer to :c:func:`PSA_ALG_HMAC`. |
+   |                 |         | as :c:macro:`PSA_ALG_IS_HASH` is true.                             |
    |                 |         |                                                                    |
    +                 +---------+--------------------------------------------------------------------+
    |                 | PKCS11  | Key's CKA_ALLOWED_MECHANISMS must be one or more CKM_SHAxxx_HMAC   |
@@ -254,8 +254,7 @@ permitted algorithms for Truncated HMAC operations.
    |                 |         | Where: \                                                             |
    |                 |         |                                                                      |
    |                 |         |   - ``hash`` is one of PSA Hash algorithm (`PSA_ALG_xxx`) such       |
-   |                 |         |     as PSA_ALG_IS_HASH(hash) is true. Refer to                       |
-   |                 |         |     :c:func:`PSA_ALG_HMAC`.                                          |
+   |                 |         |     as :c:macro:`PSA_ALG_IS_HASH` is true.                           |
    |                 |         |   - ``mac_length`` is output MAC length that can't exceed the full   |
    |                 |         |     MAC length as detailed in the                                    |
    |                 |         |     :numref:`table_hmac_support_details`.                            |
@@ -277,8 +276,7 @@ permitted algorithms for Truncated HMAC operations.
    |                 |         | Where: \                                                             |
    |                 |         |                                                                      |
    |                 |         |   - ``hash`` is one of PSA Hash algorithm (`PSA_ALG_xxx`) such       |
-   |                 |         |     as PSA_ALG_IS_HASH(hash) is true. Refer to                       |
-   |                 |         |     :c:func:`PSA_ALG_HMAC`.                                          |
+   |                 |         |     as :c:macro:`PSA_ALG_IS_HASH` is true.                           |
    |                 |         |   - ``min_mac_length`` is minimum output MAC length that can't       |
    |                 |         |     exceed the full MAC length as detailed in the                    |
    |                 |         |     :numref:`table_hmac_support_details`.                            |

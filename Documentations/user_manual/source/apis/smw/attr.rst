@@ -1,7 +1,8 @@
-.. _objects_attributes_definition:
+.. _smw_objects_attributes_definition:
 
 Objects Attributes definitions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Objects Attributes definitions provide bitmasks and macros to manage
 attributes associated to keys and data objects.
 
@@ -49,11 +50,13 @@ Usage restriction
 """""""""""""""""
 Definition of the key usage restriction if supported by the subsystem.
 
+Typedef
+~~~~~~~
 .. kdoc-extension:: /public/smw/attr.h
    :typedefs: smw_attr_usage_t
 
 .. table:: Key Usage bitmask value
-   :name: table_key_usage_encoding
+   :name: table_smw_key_usage_encoding
    :align: center
    :widths: 14 46 40
    :class: wrap-table
@@ -84,7 +87,8 @@ Definition of the key usage restriction if supported by the subsystem.
    | 0x00000200 | SMW_ATTR_USAGE_DERIVE         | Permission to derive other keys from this key.         |
    +------------+-------------------------------+--------------------------------------------------------+
 
-
+Macros
+~~~~~~
 .. kdoc-extension:: /public/smw/attr.h
    :macros: SMW_ATTR_USAGE_SET_CACHE SMW_ATTR_USAGE_IS_CACHE
             SMW_ATTR_USAGE_SET_COPY SMW_ATTR_USAGE_IS_COPY
@@ -103,11 +107,13 @@ Object attributes
 Definition of the object (key or data) attributes as Persistence, Lifecycle
 usage restriction (if supported by subsystem), ...
 
+Typedef
+~~~~~~~
 .. kdoc-extension:: /public/smw/attr.h
    :typedefs: smw_attr_attributes_t
 
 .. table:: Object attributes bit field
-   :name: table_object_attribute_encoding
+   :name: table_smw_object_attribute_encoding
    :align: center
    :widths: 10 90
    :width: 100%
@@ -187,7 +193,8 @@ usage restriction (if supported by subsystem), ...
    |             |      - Object is permanent. Can't be deleted.                                  |
    +-------------+--------------------------------------------------------------------------------+
 
-
+Macros
+~~~~~~
 .. kdoc-extension:: /public/smw/attr.h
    :macros: SMW_ATTR_SET_PERSISTENCE SMW_ATTR_GET_PERSISTENCE
             SMW_ATTR_SET_TRANSIENT SMW_ATTR_IS_TRANSIENT
@@ -207,7 +214,6 @@ usage restriction (if supported by subsystem), ...
 .. kdoc-extension:: /public/smw/attr.h
    :macros: SMW_ATTR_SET_SENSITIVE SMW_ATTR_CLEAR_SENSITIVE SMW_ATTR_IS_SENSITIVE
 
-
 Storage location
 """"""""""""""""
 Definition of the object (key or data) storage location. Giving Information
@@ -216,11 +222,13 @@ such as storage location, type of object.
 The storage location attribute is used only by the ELE subsystem and only part
 of the bit field is used, other bits are reserved for future use.
 
+Typedef
+~~~~~~~
 .. kdoc-extension:: /public/smw/attr.h
    :typedefs: smw_attr_storage_id_t
 
 .. table:: Object storage identifier bit field
-   :name: table_object_storag_encoding
+   :name: table_smw_object_storag_encoding
    :align: center
    :widths: 10 90
    :class: wrap-table
@@ -257,8 +265,8 @@ Examples
 In case of *EdgeLock 2GO* object, the storage location attribute should be set
 as follows:
 
-  - Key type object: ``0x00E0000_``
-  - Data type object: ``0x00E0800_``
+  - Key type object: ``0x00E000__``
+  - Data type object: ``0x00E080__``
 
 where `_` means any value.
 

@@ -1,11 +1,25 @@
-Examples
-^^^^^^^^
+Authentication Encryption/Decryption with associated data (AEAD)
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Single Part
+~~~~~~~~~~~
+.. kernel-doc:: /public/smw/crypto/aead.h
+   :functions: smw_aead
 
-Authentication Encryption/Decryption (AEAD)
-"""""""""""""""""""""""""""""""""""""""""""
+Multiple Part
+~~~~~~~~~~~~~
+.. kernel-doc:: /public/smw/crypto/aead.h
+   :functions: smw_aead_init smw_aead_update smw_aead_update_aad smw_aead_final
+
+Structures
+~~~~~~~~~~
+.. kdoc-extension:: /public/smw/crypto/aead.h
+   :structs:
+
+Examples
+~~~~~~~~
 
 Example 1: AEAD one-shot encryption operation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#############################################
 
 .. code-block:: c
 
@@ -63,7 +77,7 @@ Example 1: AEAD one-shot encryption operation
     }
 
 Example 2: AEAD one-shot encryption operation (Tag stored in tag field)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#######################################################################
 
 .. code-block:: c
 
@@ -123,7 +137,7 @@ Example 2: AEAD one-shot encryption operation (Tag stored in tag field)
     }
 
 Example 3: AEAD one-shot decryption operation (Tag stored in tag field)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#######################################################################
 
 .. code-block:: c
 
@@ -181,7 +195,7 @@ Example 3: AEAD one-shot decryption operation (Tag stored in tag field)
 
 
 Example 4: AEAD multi-part encryption operation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+###############################################
 
 .. code-block:: c
 
@@ -286,7 +300,7 @@ Example 4: AEAD multi-part encryption operation
     }
 
 Example 5: AEAD multi-part decryption operation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+###############################################
 
 .. code-block:: c
 

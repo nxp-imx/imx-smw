@@ -273,7 +273,7 @@ data content.
    +---------+------------------------------+
 
 The metadata available for the data are described in the
-:ref:`objects_attributes_definition` chapter and are:
+:ref:`smw_objects_attributes_definition` chapter and are:
 
   - **Size**: The size of the stored data in bytes.
   - **Persistence**: Indicates whether the data is persistent or volatile.

@@ -243,7 +243,7 @@ Encryption algorithms.
    |                 | PSA     | PSA_ALG_RSA_OAEP(hash)                                             |
    |                 |         |                                                                    |
    |                 |         | Where ``hash`` is one of PSA Hash algorithm (`PSA_ALG_xxx`) such   |
-   |                 |         | as PSA_ALG_IS_HASH(hash) is true.                                  |
+   |                 |         | as :c:macro:`PSA_ALG_IS_HASH` is true.                             |
    |                 |         |                                                                    |
    |                 |         | Supported hash are listed in the                                   |
    |                 |         | :numref:`table_rsa_oaep_asym_enc_support_details`.                 |

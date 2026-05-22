@@ -4,9 +4,14 @@ PSA APIs
 --------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
 
+   psa/initialization
+   psa/keymgr
    psa/crypto
-   psa/initial_attestation
+   psa/attestation
    psa/storage
    psa/error
+   psa/attr
+   psa/algorithm
+   psa/key_type

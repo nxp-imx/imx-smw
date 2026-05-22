@@ -253,7 +253,7 @@ The following table outlines the ECDSA permitted signature algorithms.
    |                 | PSA     | PSA_ALG_ECDSA(hash)                                                |
    |                 |         |                                                                    |
    |                 |         | Where ``hash`` is one of PSA Hash algorithm (`PSA_ALG_xxx`) such   |
-   |                 |         | as PSA_ALG_IS_HASH(hash) is true. Refer to :c:func:`PSA_ALG_ECDSA`.|
+   |                 |         | as :c:macro:`PSA_ALG_IS_HASH` is true.                             |
    |                 |         |                                                                    |
    |                 |         | Defining a ``hash`` algorithm as PSA_ALG_ANY_HASH, allow to use    |
    |                 |         | the key for any hash algorithm.                                    |
@@ -496,8 +496,7 @@ The following table outlines the RSA PKCS#1 v1.5 permitted signature algorithm.
    |                 | PSA     | PSA_ALG_RSA_PKCS1V15_SIGN(hash)                                    |
    |                 |         |                                                                    |
    |                 |         | Where ``hash`` is one of PSA Hash algorithm (`PSA_ALG_xxx`) such   |
-   |                 |         | as PSA_ALG_IS_HASH(hash) is true. Refer to                         |
-   |                 |         | :c:func:`PSA_ALG_RSA_PKCS1V15_SIGN`.                               |
+   |                 |         | as :c:macro:`PSA_ALG_IS_HASH` is true.                             |
    |                 |         |                                                                    |
    |                 |         | Defining a ``hash`` algorithm as PSA_ALG_ANY_HASH, allow to use    |
    |                 |         | the key for any hash algorithm.                                    |
@@ -612,8 +611,7 @@ The following table outlines the RSA PSS permitted signature algorithms.
    |                 | PSA     | PSA_ALG_RSA_PSS(hash)                                              |
    |                 |         |                                                                    |
    |                 |         | Where ``hash`` is one of PSA Hash algorithm (`PSA_ALG_xxx`) such   |
-   |                 |         | as PSA_ALG_IS_HASH(hash) is true. Refer to                         |
-   |                 |         | :c:func:`PSA_ALG_RSA_PSS`.                                         |
+   |                 |         | as :c:macro:`PSA_ALG_IS_HASH` is true.                             |
    |                 |         |                                                                    |
    |                 |         | Defining a ``hash`` algorithm as PSA_ALG_ANY_HASH, allow to use    |
    |                 |         | the key for any hash algorithm.                                    |

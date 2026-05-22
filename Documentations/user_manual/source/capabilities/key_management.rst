@@ -3597,7 +3597,7 @@ key from the secure subsystem without retrieving the actual key material.
    +---------+-----------------------------------+
 
 The metadata available for the key are described in the
-:ref:`objects_attributes_definition` chapter and are:
+:ref:`smw_objects_attributes_definition` chapter and are:
 
   - **Type**: Type of the key (e.g. RSA, ECC, AES, HMAC, etc.).
   - **Security size**: The security size of the data in bits.

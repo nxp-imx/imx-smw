@@ -10,24 +10,34 @@ Two methods are available to find object(s):
  - By its identifier
  - By its attribute(s)
 
+Find by identifier
+~~~~~~~~~~~~~~~~~~
 .. kdoc-extension:: /public/smw/object.h
     :functions: smw_find_object_db
 
+Find by attributes
+~~~~~~~~~~~~~~~~~~
 .. kdoc-extension:: /public/smw/object.h
     :functions: smw_find_object_db_init smw_find_object_db_next
                 smw_find_object_db_final
 
+Structures
+~~~~~~~~~~
 .. kdoc-extension:: /public/smw/object.h
     :structs: smw_find_object_db_args
 
 
 Updating object properties
 """"""""""""""""""""""""""
+Function
+~~~~~~~~
 .. kdoc-extension:: /public/smw/object.h
     :functions: smw_update_object_db
 
 
 Object Descriptor
 """""""""""""""""
+Structure
+~~~~~~~~~
 .. kdoc-extension:: /public/smw/object.h
     :structs: smw_object_descriptor

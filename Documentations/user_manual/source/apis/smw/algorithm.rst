@@ -1,7 +1,7 @@
 .. _algorithm-smw_attr_algo_t-encoding:
 
 Cryptographic Algorithm (smw_attr_algo_t) encoding
---------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This chapter intends to detail the algorithm encoding definitions used to
 describe cryptographic algorithms and their parameters within the SMW API.
@@ -15,7 +15,10 @@ The same 64-bit encoding is used throughout the SMW API to specify:
   - Algorithm modes and parameters.
   - Permitted key algorithm when requested by the Security Subsystem.
 
-
+Algorithm Encoding
+""""""""""""""""""
+Typedef
+~~~~~~~
 .. kdoc-extension:: /public/smw/attr.h
    :typedefs: smw_attr_algo_t
 
@@ -52,10 +55,8 @@ The same 64-bit encoding is used throughout the SMW API to specify:
    | **[7:0]**   | Main Algorithm :numref:`table_main_algorithm`                               |
    +-------------+-----------------------------------------------------------------------------+
 
-
 Main algorithm
-^^^^^^^^^^^^^^
-
+""""""""""""""
 .. table:: Main Algorithm value
    :name: table_main_algorithm
    :align: center
@@ -108,14 +109,13 @@ Main algorithm
    |  0xFF     | SMW_ATTR_ALGO_HASH         | Hash.                                            |
    +-----------+----------------------------+--------------------------------------------------+
 
-
+Macro
+~~~~~
 .. kdoc-extension:: /public/smw/attr.h
    :macros: SMW_ATTR_GET_ALGO
 
-
 Mode
-^^^^
-
+""""
 .. table:: Algorithm Mode value
    :name: table_algorithm_mode
    :align: center
@@ -166,13 +166,13 @@ Mode
    |  0xFF     | SMW_ATTR_MODE_ANY        | Any mode.                                  |
    +-----------+--------------------------+--------------------------------------------+
 
-
+Macros
+~~~~~~
 .. kdoc-extension:: /public/smw/attr.h
    :macros: SMW_ATTR_GET_MODE SMW_ATTR_SET_MODE
 
 Curve
-^^^^^
-
+"""""
 .. table:: Algorithm Curve value
    :name: table_algorithm_curve
    :align: center
@@ -198,13 +198,13 @@ Curve
    +-----------+-----------------------------+-----------------------------+
 
 
+Macro
+~~~~~
 .. kdoc-extension:: /public/smw/attr.h
    :macros: SMW_ATTR_GET_CURVE
 
-
 Key Derivation Function
-^^^^^^^^^^^^^^^^^^^^^^^
-
+"""""""""""""""""""""""
 .. table:: Algorithm Key Derivation Function value
    :name: table_algorithm_kdf
    :align: center
@@ -217,13 +217,13 @@ Key Derivation Function
    | 0xE       | SMW_ATTR_ALGO_HKDF          | HMAC Key derivation function |
    +-----------+-----------------------------+------------------------------+
 
-
+Macro
+~~~~~
 .. kdoc-extension:: /public/smw/attr.h
    :macros: SMW_ATTR_GET_KDF
 
 Hash
-^^^^
-
+""""
 .. table:: Algorithm Hash value
    :name: table_algorithm_hash
    :align: center
@@ -264,14 +264,13 @@ Hash
    |  0xFF    | SMW_ATTR_HASH_ANY      | Any hash algorithm.                |
    +----------+------------------------+------------------------------------+
 
-
+Macros
+~~~~~~
 .. kdoc-extension:: /public/smw/attr.h
    :macros: SMW_ATTR_GET_HASH SMW_ATTR_SET_HASH
 
-
 Class
-^^^^^
-
+"""""
 .. table:: Algorithm Operation value
    :name: table_algorithm_operation
    :align: center
@@ -302,6 +301,8 @@ Class
    |  0x9      | SMW_ATTR_CLASS_KEY_AGREEMENT         | Key agreement.                                 |
    +-----------+--------------------------------------+------------------------------------------------+
 
+Macros
+~~~~~~
 .. kdoc-extension:: /public/smw/attr.h
    :macros: SMW_ATTR_GET_CLASS
 
@@ -331,8 +332,7 @@ Class
 
 
 Additional Parameters: Salt length
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
+""""""""""""""""""""""""""""""""""
 The Salt length parameter defines the number of bytes used as RSA PSS salt
 output length in RSA PSS signature operations.
 
@@ -373,6 +373,8 @@ of at least the ``SaltLen`` bytes size. ``SaltLen`` can't be 0.
 If this additional parameter is not set, the default salt length is the
 selected operation hash algorithm output length.
 
+Macros
+~~~~~~
 .. kdoc-extension:: /public/smw/attr.h
    :macros: SMW_ATTR_SET_SALT_LENGTH
             SMW_ATTR_GET_SALT_LENGTH
@@ -382,8 +384,7 @@ selected operation hash algorithm output length.
             SMW_ATTR_IS_MIN_SALT_LENGTH
 
 Additional Parameters: MAC length
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
+"""""""""""""""""""""""""""""""""
 The MAC length parameter defines the number of bytes used as MAC output length
 in MAC. It's used to truncate the MAC output to a shorter length.
 
@@ -417,6 +418,8 @@ the full MAC output length:
   - For CMAC algorithms, the MAC output length is the block size of the
     underlying cipher.
 
+Macros
+~~~~~~
 .. kdoc-extension:: /public/smw/attr.h
    :macros: SMW_ATTR_SET_MAC_LENGTH
             SMW_ATTR_GET_MAC_LENGTH
@@ -426,8 +429,7 @@ the full MAC output length:
             SMW_ATTR_IS_MIN_MAC_LENGTH
 
 Additional Parameters: Tag length
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
+"""""""""""""""""""""""""""""""""
 The Tag length parameter defines the number of bytes used as AEAD output Tag
 length in AEAD. It's used to truncate the AEAD Tag length to a shorter length.
 
@@ -466,6 +468,8 @@ at least the ``TagLen`` bytes size. ``TagLen`` can't be 0.
 If this additional algorithm parameter is not set, the default Tag length is
 the full Tag output length which is 16 bytes.
 
+Macros
+~~~~~~
 .. kdoc-extension:: /public/smw/attr.h
    :macros: SMW_ATTR_SET_TAG_LENGTH
             SMW_ATTR_GET_TAG_LENGTH
@@ -475,7 +479,7 @@ the full Tag output length which is 16 bytes.
             SMW_ATTR_IS_MIN_TAG_LENGTH
 
 Additional Parameters: Signature Message
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""
 The Signature Message parameter defines the input message type for asymmetric
 signature operations. It specifies whether the input is a full message or a
 pre-computed hash digest.
@@ -495,13 +499,15 @@ pre-computed hash digest.
    | Signature Message Hashed  | 0x1         | \-                                   |
    +---------------------------+-------------+--------------------------------------+
 
+Macros
+~~~~~~
 .. kdoc-extension:: /public/smw/attr.h
    :macros: SMW_ATTR_SET_MSG_HASHED
             SMW_ATTR_IS_MSG_HASHED
 
 
 Additional Parameters: EdDSA Signature
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""
 The EDDSA Signature parameter defines the signature scheme variant for
 Edwards-curve Digital Signature Algorithm operations. It specifies whether
 the signature uses the pre-hashed PureEDDSA variant or the context variant.
@@ -520,6 +526,8 @@ the signature uses the pre-hashed PureEDDSA variant or the context variant.
    | EDDSA context             | \-          | 0x2                                  |
    +---------------------------+-------------+--------------------------------------+
 
+Macros
+~~~~~~
 .. kdoc-extension:: /public/smw/attr.h
    :macros: SMW_ATTR_SET_SIGN_EDDSA_PREHASHED
             SMW_ATTR_IS_SIGN_EDDSA_PREHASHED
@@ -529,7 +537,9 @@ the signature uses the pre-hashed PureEDDSA variant or the context variant.
             SMW_ATTR_IS_SIGN_EDDSA_CONTEXT
 
 Additional Parameter: generic length
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""
+Macros
+~~~~~~
 .. kdoc-extension:: /public/smw/attr.h
    :macros: SMW_ATTR_SET_LENGTH
             SMW_ATTR_GET_LENGTH
@@ -539,8 +549,7 @@ Additional Parameter: generic length
             SMW_ATTR_IS_MIN_LENGTH
 
 Additional Parameter: generic signature
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
+"""""""""""""""""""""""""""""""""""""""
 The following defines can be used to set or get signature parameters in the
 algorithm attributes.
 
@@ -562,6 +571,8 @@ algorithm attributes.
    | SMW_ATTR_SIGN_HASHED_FLAG           | Message to sign is hashed    |
    +-------------------------------------+------------------------------+
 
+Macros
+~~~~~~
 .. kdoc-extension:: /public/smw/attr.h
    :macros: SMW_ATTR_SET_SIGN_PARAM
             SMW_ATTR_GET_SIGN_PARAM

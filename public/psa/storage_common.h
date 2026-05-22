@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022 NXP
+ * Copyright 2022, 2026 NXP
  */
 
 #ifndef __PSA_STORAGE_COMMON_H__
@@ -11,37 +11,22 @@
 
 #include "psa/error.h"
 
-/**
- * DOC:
+/*
  * This file defines common definitions for PSA storage.
  */
 
-/**
- * DOC: Reference
+/*
+ * Reference
  * Documentation:
- *	PSA Storage API v1.0.0 section 5.1 General Definitions
+ *   PSA Storage API v1.0.4 section 5.1 General Definitions
  * Link:
- *	https://armkeil.blob.core.windows.net/developer/Files/pdf/PlatformSecurityArchitecture/Implement/IHI0087-PSA_Storage_API-1.0.0.pdf
+ *   https://arm-software.github.io/psa-api/storage/1.0
  */
 
 /**
  * typedef psa_storage_create_flags_t - Storage create flags
  *
  * Flags used when creating a data entry.
- *
- * Values:
- * * PSA_STORAGE_FLAG_NONE:
- *	No flags to pass.
- * * PSA_STORAGE_FLAG_WRITE_ONCE:
- *	The data associated with the uid will not be able to be modified or deleted. Intended to be
- *	used to set bits in &typedef psa_storage_create_flags_t.
- * * PSA_STORAGE_FLAG_NO_CONFIDENTIALITY:
- *	The data associated with the uid is public and therefore does not require confidentiality.
- *	It therefore only needs to be integrity protected.
- * * PSA_STORAGE_FLAG_NO_REPLAY_PROTECTION:
- *	The data associated with the uid does not require replay protection. This may permit faster
- *	storage - but it permits an attacker with physical access to revert to an earlier version
- *	of the data.
  */
 typedef uint32_t psa_storage_create_flags_t;
 

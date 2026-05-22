@@ -8,17 +8,16 @@
 
 #include <stdint.h>
 
-/**
- * DOC:
+/*
  * This file defines the error codes returned by the PSA Cryptography API
  */
 
-/**
- * DOC: Reference
+/*
+ * Reference
  * Documentation:
- *	PSA Cryptography API v1.3.2
+ *   PSA Cryptography API v1.3.2
  * Link:
- *	https://arm-software.github.io/psa-api/crypto/1.3/about
+ *   https://arm-software.github.io/psa-api/crypto/1.3/
  */
 
 /**
@@ -62,7 +61,7 @@
  *	cryptoprocessor or between the cryptoprocessor and an external volatile or persistent
  *	memory. A communication failure can be transient or permanent depending on the cause.
  *
- *	**Warning**:
+ *	.. warning::
  *	  If a function returns this error, it is undetermined whether the requested action
  *	  has completed. Returning PSA_SUCCESS is recommended on successful completion
  *	  whenever possible, however functions can return PSA_ERROR_COMMUNICATION_FAILURE if
@@ -194,7 +193,7 @@
  * * PSA_ERROR_INVALID_PADDING:
  *	The decrypted padding is incorrect.
  *
- *	**Warning**:
+ *	.. warning::
  *	  In some protocols, when decrypting data, it is essential that the behavior of the
  *	  application does not depend on whether the padding is correct, down to precise timing.
  *	  Protocols that use authenticated encryption are recommended for use by applications,

@@ -8,17 +8,16 @@
 
 #include <stdbool.h>
 
-/**
- * DOC:
+/*
  * This file contains the definitions of the data structures exposed by the PSA Cryptography API.
  */
 
-/**
- * DOC: Reference
+/*
+ * Reference
  * Documentation:
- *	PSA Cryptography API v1.3.2
+ *   PSA Cryptography API v1.3.2
  * Link:
- *	https://arm-software.github.io/psa-api/crypto/1.3/about
+ *   https://arm-software.github.io/psa-api/crypto/1.3/
  */
 
 /* To be defined */
@@ -27,9 +26,8 @@ struct psa_aead_operation_s {
 };
 
 /**
- * DOC: PSA_AEAD_OPERATION_INIT
- * This macro returns a suitable initializer for an AEAD operation object of type
- * &typedef psa_aead_operation_t.
+ * PSA_AEAD_OPERATION_INIT - Suitable initializer for an AEAD operation object
+ *                           of &typedef psa_aead_operation_t.
  */
 #define PSA_AEAD_OPERATION_INIT ((psa_aead_operation_t){ 0 })
 
@@ -44,9 +42,8 @@ struct psa_cipher_operation_s {
 };
 
 /**
- * DOC: PSA_CIPHER_OPERATION_INIT
- * This macro returns a suitable initializer for a cipher operation object of type
- * &typedef psa_cipher_operation_t.
+ * PSA_CIPHER_OPERATION_INIT - Suitable initializer for a cipher operation
+ *                             object of &typedef psa_cipher_operation_t.
  */
 #define PSA_CIPHER_OPERATION_INIT ((psa_cipher_operation_t){ 0 })
 
@@ -60,9 +57,8 @@ struct psa_hash_operation_s {
 };
 
 /**
- * DOC: PSA_HASH_OPERATION_INIT
- * This macro returns a suitable initializer for a hash operation object of type
- * &typedef psa_hash_operation_t.
+ * PSA_HASH_OPERATION_INIT - Returns a suitable initializer for a hash operation
+ *                           object of &typedef psa_hash_operation_t.
  */
 #define PSA_HASH_OPERATION_INIT ((psa_hash_operation_t){ 0 })
 
@@ -80,6 +76,10 @@ struct psa_key_attributes_s {
 	psa_algorithm_t alg;
 };
 
+/**
+ * PSA_KEY_ATTRIBUTES_INIT -  Initializer for a key attribute object of
+ *                            &typedef psa_key_attributes_t.
+ */
 #define PSA_KEY_ATTRIBUTES_INIT ((psa_key_attributes_t){ 0, 0, 0, 0, 0, 0 })
 
 static inline struct psa_key_attributes_s psa_key_attributes_init(void)
@@ -92,9 +92,9 @@ struct psa_key_derivation_operation_s {
 };
 
 /**
- * DOC: PSA_KEY_DERIVATION_OPERATION_INIT
- * This macro returns a suitable initializer for a key derivation operation object of type
- * &typedef psa_key_derivation_operation_t.
+ * PSA_KEY_DERIVATION_OPERATION_INIT - Initializer for a key derivation
+ *                                     operation object of
+ *                                     &typedef psa_key_derivation_operation_t.
  */
 #define PSA_KEY_DERIVATION_OPERATION_INIT                                      \
 	((psa_key_derivation_operation_t){ NULL })
@@ -111,9 +111,8 @@ struct psa_mac_operation_s {
 };
 
 /**
- * DOC: PSA_MAC_OPERATION_INIT
- * This macro returns a suitable initializer for a MAC operation object of type
- * &typedef psa_mac_operation_t.
+ * PSA_MAC_OPERATION_INIT - Returns a suitable initializer for a MAC operation
+ *                          object of &typedef psa_mac_operation_t.
  */
 #define PSA_MAC_OPERATION_INIT ((psa_mac_operation_t){ 0 })
 
@@ -230,9 +229,8 @@ struct psa_pake_cipher_suite_s {
 };
 
 /**
- * DOC: PSA_PAKE_CIPHER_SUITE_INIT
- * This macro returns a suitable initializer for a PAKE cipher suite object of 
- * type psa_pake_cipher_suite_t.
+ * PSA_PAKE_CIPHER_SUITE_INIT - Suitable initializer for a PAKE cipher suite
+ *                              object of &typedef psa_pake_cipher_suite_t.
  */
 #define PSA_PAKE_CIPHER_SUITE_INIT ((psa_pake_cipher_suite_t){ 0 })
 
@@ -247,9 +245,8 @@ struct psa_pake_operation_s {
 };
 
 /**
- * DOC: PSA_PAKE_OPERATION_INIT
- * This macro returns a suitable initializer for a PAKE operation object 
- * of type psa_pake_operation_t.
+ * PSA_PAKE_OPERATION_INIT - Suitable initializer for a PAKE operation object
+ *                           of &typedef psa_pake_operation_t.
  */
 #define PSA_PAKE_OPERATION_INIT ((psa_pake_operation_t){ 0 })
 

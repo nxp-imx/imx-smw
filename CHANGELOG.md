@@ -100,6 +100,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Initialize the SMW library from `psa_crypto_init()` so that applications won't need to initialize the SMW library separately.
 * Add support for asymmetric encryption and decryption APIs: `psa_asymmetric_encrypt()` and `psa_asymmetric_decrypt()`.
 * Remove unnecessary TLS1.3 vendor defines.
+* Remove non documented and non supported key attestation APIs.
 
 ##### 4. OSAL
 

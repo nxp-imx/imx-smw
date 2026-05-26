@@ -93,6 +93,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix `PSA_HASH_LENGTH()` and `PSA_HASH_BLOCK_LENGTH()` macros to return compile-time constant values if possible.
 * Initialize the SMW library from `psa_crypto_init()` so that applications won't need to initialize the SMW library separately.
 * Add support for asymmetric encryption and decryption APIs: `psa_asymmetric_encrypt()` and `psa_asymmetric_decrypt()`.
+* Remove unnecessary TLS1.3 vendor defines.
 
 ##### 4. OSAL
 

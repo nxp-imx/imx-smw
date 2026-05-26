@@ -103,21 +103,6 @@
 #define PSA_ALG_VENDOR_TLS13_BASE                                              \
 	((psa_algorithm_t)PSA_ALG_VENDOR_MASK | 0x0800D000)
 
-#define PSA_ALG_VENDOR_TLS13_SECRET_MASK ((psa_algorithm_t)0xf00)
-
-#define PSA_ALG_VENDOR_TLS13_EARLY_SECRET                                      \
-	((psa_algorithm_t)PSA_ALG_VENDOR_TLS13_BASE | 0x000)
-#define PSA_ALG_VENDOR_TLS13_HANDSHAKE_SECRET                                  \
-	((psa_algorithm_t)PSA_ALG_VENDOR_TLS13_BASE | 0x100)
-#define PSA_ALG_VENDOR_TLS13_MASTER_SECRET                                     \
-	((psa_algorithm_t)PSA_ALG_VENDOR_TLS13_BASE | 0x200)
-#define PSA_ALG_VENDOR_TLS13_KEYING_MATERIAL                                   \
-	((psa_algorithm_t)PSA_ALG_VENDOR_TLS13_BASE | 0x300)
-#define PSA_ALG_VENDOR_TLS13_IV                                                \
-	((psa_algorithm_t)PSA_ALG_VENDOR_TLS13_BASE | 0x400)
-#define PSA_ALG_VENDOR_TLS13_INTERNAL                                          \
-	((psa_algorithm_t)PSA_ALG_VENDOR_TLS13_BASE | 0x500)
-
 #define PSA_ALG_CATEGORY_MASK		       ((psa_algorithm_t)0x7f000000)
 #define PSA_ALG_CATEGORY_AEAD		       ((psa_algorithm_t)0x05000000)
 #define PSA_ALG_CATEGORY_ASYMMETRIC_ENCRYPTION ((psa_algorithm_t)0x07000000)
@@ -784,8 +769,7 @@
  *
  */
 #define PSA_ALG_IS_VENDOR_TLS13(alg)                                           \
-	(((alg) & ~PSA_ALG_HASH_MASK & ~PSA_ALG_VENDOR_TLS13_SECRET_MASK) ==   \
-	 PSA_ALG_VENDOR_TLS13_BASE)
+	(((alg) & ~PSA_ALG_HASH_MASK) == PSA_ALG_VENDOR_TLS13_BASE)
 
 /**
  * PSA_ALG_IS_HKDF_EXTRACT() - Whether the specified algorithm is an HKDF-Extract algorithm.
@@ -1876,7 +1860,7 @@
  * This is the proof in the Schnorr Non-Interactive Zero-Knowledge Proof,
  * this is the value denoted by r in [RFC8235].
  *
- * Both for input and output, the value at this step is an integer 
+ * Both for input and output, the value at this step is an integer
  * less than the order of the group specified by the PAKE operation’s primitive.
  * The format depends on the group as well:
  *
@@ -1886,7 +1870,7 @@
  *
  * In both cases leading zeroes are permitted as long as the length in bytes does
  * not exceed the byte length of the group order.
- *  
+ *
  * For information regarding how the group is determined, consult the documentation PSA_PAKE_PRIMITIVE().
  *
  */

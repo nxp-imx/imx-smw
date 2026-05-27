@@ -309,6 +309,77 @@ end:
 	return rc;
 }
 
+static uint32_t configure_rsa_key(TPMT_PUBLIC *pub, uint32_t attrs,
+				  struct smw_key_descriptor *key_desc)
+{
+	TSS2_RC rc = TSS2_RC_SUCCESS;
+	uint16_t key_size_bytes = 0;
+	smw_attr_algo_t hash_attr = SMW_ATTR_HASH_NONE;
+	TPMS_RSA_PARMS *params = &pub->parameters.rsaDetail;
+
+	if (!key_desc->buffer) {
+		rc = TSS2_TCTI_RC_BAD_REFERENCE;
+		goto end;
+	}
+
+	if (params->scheme.scheme != TPM2_ALG_NULL &&
+	    params->scheme.scheme != TPM2_ALG_RSA) {
+		DBG_TRACE("Unsupported RSA scheme: 0x%04x\n",
+			  params->scheme.scheme);
+		rc = TSS2_TCTI_RC_IO_ERROR;
+		goto end;
+	}
+
+	if (params->scheme.scheme == TPM2_ALG_RSA) {
+		/* Map TPM2 hash algorithm to SMW hash algorithm */
+		rc = map_hash_info(params->scheme.details.rsassa.hashAlg,
+				   &key_size_bytes, NULL, &hash_attr);
+		if (rc != TSS2_RC_SUCCESS) {
+			DBG_TRACE("Failed to map hash algorithm: 0x%04x\n",
+				  params->scheme.details.rsassa.hashAlg);
+			goto end;
+		}
+	} else {
+		hash_attr = SMW_ATTR_HASH_SHA256;
+		key_size_bytes = BITS_TO_BYTES_SIZE(params->keyBits);
+	}
+
+	key_desc->buffer->rsa.public_length = key_size_bytes;
+
+	/* Configure SMW key descriptor for RSA */
+	key_desc->type_name = SMW_KEY_TYPE_NAME_RSA;
+	key_desc->security_size = BYTES_TO_BITS(key_size_bytes);
+
+	if (attrs & TPMA_OBJECT_SIGN_ENCRYPT) {
+		DBG_TRACE("  - TPMA_OBJECT_SIGN_ENCRYPT\n");
+		key_desc->attributes.usage_flags |=
+			(SMW_ATTR_USAGE_SIGN_HASH |
+			 SMW_ATTR_USAGE_SIGN_MESSAGE);
+		key_desc->attributes.permitted_algo =
+			SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_RSA(/* Without this comment */
+							       /* clang-format does not meet the */
+							       /* checkpatch requirement. */
+							       SMW_ATTR_MODE_PKCS1_1_5,
+							       hash_attr, 0);
+	}
+
+	if (attrs & TPMA_OBJECT_DECRYPT) {
+		DBG_TRACE("  - TPMA_OBJECT_DECRYPT\n");
+		key_desc->attributes.usage_flags |=
+			(SMW_ATTR_USAGE_ENCRYPT | SMW_ATTR_USAGE_DECRYPT);
+		key_desc->attributes.permitted_algo =
+			SMW_ATTR_ALGO_ASYMMETRIC_ENCRYPTION_RSA(/* Without this comment */
+								/* clang-format does not meet the */
+								/* checkpatch requirement. */
+								SMW_ATTR_MODE_PKCS1_1_5,
+								SMW_ATTR_HASH_NONE);
+	}
+
+end:
+	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
+	return rc;
+}
+
 static uint32_t configure_hmac_key(TPMT_PUBLIC *pub, uint32_t attrs,
 				   struct smw_key_descriptor *key_desc)
 {
@@ -488,6 +559,10 @@ configure_smw_key_descriptor(TPMT_PUBLIC *pub,
 		rc = configure_ecc_key(pub, attrs, key_desc);
 		break;
 
+	case TPM2_ALG_RSA:
+		rc = configure_rsa_key(pub, attrs, key_desc);
+		break;
+
 	default:
 		DBG_TRACE("Unsupported key type: 0x%04x\n", pub->type);
 		rc = TSS2_TCTI_RC_IO_ERROR;
@@ -546,6 +621,55 @@ static uint32_t extract_ecc_coordinates(struct smw_keypair_buffer *key_buffer,
 	out_public->publicArea.unique.ecc.y.size = ecc_coord_size;
 	memcpy(out_public->publicArea.unique.ecc.y.buffer,
 	       &key_buffer->gen.public_data[ecc_coord_size], ecc_coord_size);
+
+end:
+	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
+	return rc;
+}
+
+static uint32_t extract_rsa_public_key(struct smw_keypair_buffer *key_buffer,
+				       TPM2B_PUBLIC *out_public)
+{
+	TSS2_RC rc = TSS2_RC_SUCCESS;
+
+	if (!key_buffer || !out_public || !key_buffer->rsa.public_data ||
+	    !key_buffer->rsa.modulus) {
+		rc = TSS2_TCTI_RC_BAD_REFERENCE;
+		goto end;
+	}
+
+	/*
+	 * For RSA, public_data contains modulus n
+	 * Typical sizes:
+	 * - RSA-2048: 256 bytes
+	 * - RSA-3072: 384 bytes
+	 * - RSA-4096: 512 bytes
+	 */
+	if (key_buffer->rsa.public_length == 0) {
+		DBG_TRACE("RSA modulus length is zero\n");
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	if (key_buffer->rsa.modulus_length >
+	    sizeof(out_public->publicArea.unique.rsa.buffer)) {
+		DBG_TRACE("RSA modulus too large: %u > %zu\n",
+			  key_buffer->rsa.modulus_length,
+			  sizeof(out_public->publicArea.unique.rsa.buffer));
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	if (SET_OVERFLOW(key_buffer->rsa.modulus_length,
+			 out_public->publicArea.unique.rsa.size)) {
+		DBG_TRACE("RSA modulus length too large: %u\n",
+			  key_buffer->rsa.modulus_length);
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	memcpy(out_public->publicArea.unique.rsa.buffer,
+	       key_buffer->rsa.modulus, key_buffer->rsa.modulus_length);
 
 end:
 	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
@@ -885,7 +1009,9 @@ uint32_t handle_create(tcti_smw_context_t *ctx, uint16_t tag,
 	/* Output parameters */
 	create_output_t output = { 0 };
 	TPMT_PUBLIC *pub = NULL;
-	unsigned char public_data_buf[TPM2_MAX_ECC_KEY_BYTES * 2] = { 0 };
+	unsigned char public_data_buf[TPM2_MAX_RSA_KEY_BYTES] = { 0 };
+	uint8_t modulus_buf[TPM2_MAX_RSA_KEY_BYTES] = { 0 };
+
 	TPM2B_NAME object_name = { 0 };
 
 	/* Session handling */
@@ -959,6 +1085,12 @@ uint32_t handle_create(tcti_smw_context_t *ctx, uint16_t tag,
 		if (pub->type == TPM2_ALG_ECC)
 			key_buffer.gen.public_data = public_data_buf;
 
+		else if (pub->type == TPM2_ALG_RSA) {
+			key_buffer.rsa.public_data = public_data_buf;
+			key_buffer.rsa.modulus = modulus_buf;
+			key_buffer.rsa.modulus_length = sizeof(modulus_buf);
+		}
+
 		tss2_rc = configure_smw_key_descriptor(pub, &key_desc,
 						       &key_buffer);
 		if (tss2_rc != TSS2_RC_SUCCESS)
@@ -993,6 +1125,11 @@ uint32_t handle_create(tcti_smw_context_t *ctx, uint16_t tag,
 		if (pub->type == TPM2_ALG_ECC) {
 			tss2_rc = extract_ecc_coordinates(&key_buffer,
 							  &output.out_public);
+			if (tss2_rc != TSS2_RC_SUCCESS)
+				goto end;
+		} else if (pub->type == TPM2_ALG_RSA) {
+			tss2_rc = extract_rsa_public_key(&key_buffer,
+							 &output.out_public);
 			if (tss2_rc != TSS2_RC_SUCCESS)
 				goto end;
 		}
@@ -1211,7 +1348,7 @@ uint32_t handle_load(tcti_smw_context_t *ctx, uint16_t tag, const uint8_t *cmd,
 	pub = &input.in_public.publicArea;
 
 	if (!is_sealed && pub->type != TPM2_ALG_ECC &&
-	    pub->type != TPM2_ALG_KEYEDHASH) {
+	    pub->type != TPM2_ALG_KEYEDHASH && pub->type != TPM2_ALG_RSA) {
 		DBG_TRACE("Unsupported key type: 0x%04x\n", pub->type);
 		tss2_rc = TSS2_TCTI_RC_IO_ERROR;
 		goto end;

@@ -126,7 +126,6 @@
 			"530aa792f796b8138eeab2e86c7b7bee",
 			"1d40b0"
 		],
-		"context_id": 1,
 		"iv": 16,
 		"aead_id": 0,
 		"depends": 6
@@ -134,14 +133,13 @@
 	"subtest 8": {
 		"description": [
 			"Continue using original context 0 (not the copy)",
-			"Second UPDATE: Process another 32 bytes of plaintext",
-			"This demonstrates context 0 is still valid after copy operation",
-			"Save output for final verification"
+			"Second UPDATE: Process another 19 bytes of plaintext",
+			"This demonstrates context 0 is still valid after copy operation"
 		],
 		"command": "AEAD_UPDATE",
 		"input": [
-			"06b2c75853df9aeb17befd33cea81c63",
-			"0b0fc53667ff45199c629c8e15dce41e"
+			"530aa792f796b8138eeab2e86c7b7bee",
+			"1d40b0"
 		],
 		"save_output": true,
 		"context_id": 0,

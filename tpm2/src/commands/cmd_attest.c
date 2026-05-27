@@ -14,6 +14,178 @@
 #include "smw_keymgr.h"
 #include "crypto.h"
 
+static uint32_t encrypt_seed_rsa(tcti_smw_object_t *ek, uint8_t *seed,
+				 size_t seed_size,
+				 TPM2B_ENCRYPTED_SECRET *secret)
+{
+	TSS2_RC rc = TSS2_RC_SUCCESS;
+	enum smw_status_code smw_status = SMW_STATUS_OK;
+	struct smw_asymmetric_encryption_args smw_args = { 0 };
+	struct smw_key_descriptor key_desc = { 0 };
+
+	if (!ek || !seed || !secret) {
+		rc = TSS2_TCTI_RC_BAD_REFERENCE;
+		goto end;
+	}
+
+	/* Validate key type */
+	if (ek->public_area.publicArea.type != TPM2_ALG_RSA) {
+		DBG_TRACE("EK is not RSA: 0x%04x\n",
+			  ek->public_area.publicArea.type);
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	DBG_TRACE("Encrypting seed with RSA-%u\n",
+		  ek->public_area.publicArea.parameters.rsaDetail.keyBits);
+
+	key_desc.id = ek->smw_key_id;
+
+	/* Setup encryption args - RSA-PKCS with SHA256 */
+	smw_args.subsystem_name = SMW_SUBSYSTEM_NAME_ELE;
+	smw_args.algo =
+		SMW_ATTR_ALGO_ASYMMETRIC_ENCRYPTION_RSA(SMW_ATTR_MODE_PKCS1_1_5,
+							SMW_ATTR_HASH_NONE);
+	smw_args.key_descriptor = &key_desc;
+	if (SET_OVERFLOW(seed_size, smw_args.input_length)) {
+		DBG_TRACE("Seed size too large: %zu\n", seed_size);
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+	smw_args.input = seed;
+	smw_args.output_length = sizeof(secret->secret);
+	smw_args.output = secret->secret;
+
+	smw_status = smw_asymmetric_encrypt(&smw_args);
+	if (smw_status != SMW_STATUS_OK) {
+		DBG_TRACE("RSA encrypt failed: %d\n", smw_status);
+		rc = smw_rc_to_tcti_rc(smw_status);
+		goto end;
+	}
+
+	secret->size = smw_args.output_length;
+
+	DBG_TRACE("Seed encrypted: secret.size=%u\n", secret->size);
+
+end:
+	return rc;
+}
+
+static uint32_t build_credential_blob(const TPM2B_DIGEST *credential,
+				      const TPM2B_NAME *ak_name,
+				      const uint8_t *seed,
+				      TPM2B_ID_OBJECT *credential_blob)
+{
+	TSS2_RC rc = TSS2_RC_SUCCESS;
+	enum smw_status_code smw_status = SMW_STATUS_OK;
+
+	struct smw_aead_args aead_args = { 0 };
+	struct smw_aead_init_args init_args = { 0 };
+	struct smw_aead_aad_args aad_args = { 0 };
+	struct smw_aead_final_args final_args = { 0 };
+	struct smw_aead_data_args data_args = { 0 };
+	struct smw_key_descriptor key_desc = { 0 };
+	struct smw_keypair_buffer key_buffer = { 0 };
+
+	uint8_t *ptr = NULL;
+	size_t offset = 0;
+	size_t iv_offset = 0;
+	size_t aad_size = 0;
+	uint8_t output_iv[SEAL_NONCE_SIZE] = { 0 };
+
+	if (!credential || !ak_name || !seed || !credential_blob) {
+		rc = TSS2_TCTI_RC_BAD_REFERENCE;
+		goto end;
+	}
+
+	ptr = credential_blob->credential;
+
+	/* Build AAD: MAGIC || AK_Name_size || AK_Name */
+	memcpy(ptr + offset, SMW_CRED_BLOB_MAGIC, SMW_CRED_BLOB_MAGIC_LEN);
+	offset += SMW_CRED_BLOB_MAGIC_LEN;
+
+	memcpy(ptr + offset, &ak_name->size, sizeof(uint16_t));
+
+	if (ADD_OVERFLOW(offset, sizeof(uint16_t), &offset)) {
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	memcpy(ptr + offset, ak_name->name, ak_name->size);
+
+	if (ADD_OVERFLOW(offset, ak_name->size, &offset)) {
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	aad_size = offset;
+
+	/* Reserve space for IV */
+	iv_offset = offset;
+	offset += SEAL_NONCE_SIZE;
+
+	/* Setup AEAD with seed as key */
+	key_buffer.gen.private_data = (uint8_t *)seed;
+	key_buffer.gen.private_length = SMW_SEED_SIZE;
+
+	key_desc.type_name = SMW_KEY_TYPE_NAME_AES;
+	key_desc.buffer = &key_buffer;
+	key_desc.security_size = BYTES_TO_BITS(SMW_SEED_SIZE);
+
+	init_args.subsystem_name = SMW_SUBSYSTEM_NAME_ELE;
+	init_args.mode_name = SMW_AEAD_MODE_NAME_GCM;
+	init_args.op_type_name = SMW_AEAD_OP_TYPE_NAME_ENCRYPT;
+	init_args.iv_length = SEAL_NONCE_SIZE;
+	init_args.plaintext_length = credential->size;
+	init_args.key_desc = &key_desc;
+
+	aad_args.data = ptr;
+	if (SET_OVERFLOW(aad_size, aad_args.data_length)) {
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	data_args.input = (uint8_t *)credential->buffer;
+	data_args.input_length = credential->size;
+	data_args.output = ptr + offset;
+	data_args.output_length = credential->size;
+
+	final_args.data = &data_args;
+	final_args.tag = ptr + offset + credential->size;
+	final_args.tag_length = SEAL_TAG_SIZE;
+	final_args.output_iv = output_iv;
+	final_args.output_iv_length = SEAL_NONCE_SIZE;
+
+	aead_args.init = &init_args;
+	aead_args.aad = &aad_args;
+	aead_args.final = &final_args;
+
+	smw_status = smw_aead(&aead_args);
+	if (smw_status != SMW_STATUS_OK) {
+		DBG_TRACE("AEAD encrypt failed: %d\n", smw_status);
+		rc = smw_rc_to_tcti_rc(smw_status);
+		goto end;
+	}
+
+	/* Store IV */
+	memcpy(ptr + iv_offset, output_iv, SEAL_NONCE_SIZE);
+
+	credential_blob->size =
+		aad_size + SEAL_NONCE_SIZE + credential->size + SEAL_TAG_SIZE;
+
+	DBG_TRACE("Credential blob built:\n"
+		  "  AAD: %zu bytes (magic + name)\n"
+		  "  IV: %u bytes\n"
+		  "  Encrypted credential: %u bytes\n"
+		  "  Tag: %u bytes\n"
+		  "  Total: %u bytes\n",
+		  aad_size, SEAL_NONCE_SIZE, credential->size, SEAL_TAG_SIZE,
+		  credential_blob->size);
+
+end:
+	return rc;
+}
+
 static uint32_t decrypt_sealed_data(TPMI_RH_HIERARCHY hierarchy,
 				    const uint8_t *blob, uint16_t blob_size,
 				    uint8_t *plaintext_out,
@@ -765,6 +937,192 @@ uint32_t handle_unseal(tcti_smw_context_t *ctx, uint16_t tag,
 
 	DBG_TRACE("Unseal successful: handle=0x%08x, data_size=%u\n",
 		  item_handle, out_data.size);
+
+end:
+	if (params_buffer)
+		free(params_buffer);
+
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		rc = tcti_rc_to_tpm2_rc(tss2_rc);
+		tss2_rc = build_rc_response(ctx, TPM_HEADER_SIZE, tag, rc);
+	}
+
+	return tss2_rc;
+}
+
+uint32_t handle_makecredential(tcti_smw_context_t *ctx, uint16_t tag,
+			       const uint8_t *cmd, size_t cmd_size)
+{
+	TSS2_RC tss2_rc = TSS2_TCTI_RC_GENERAL_FAILURE;
+	TPM2_RC rc = TPM2_RC_SUCCESS;
+	size_t offset = TPM_HEADER_SIZE;
+	enum smw_status_code smw_status = SMW_STATUS_OK;
+
+	/* Input parameters */
+	TPMI_DH_OBJECT handle = 0;
+	TPM2B_DIGEST credential = { 0 };
+	TPM2B_NAME object_name = { 0 };
+
+	/* Output parameters */
+	TPM2B_ID_OBJECT credential_blob = { 0 };
+	TPM2B_ENCRYPTED_SECRET secret = { 0 };
+
+	/* Seed */
+	struct smw_rng_args rng_args = { 0 };
+	uint8_t seed[SMW_SEED_SIZE] = { 0 };
+
+	/* EK object */
+	tcti_smw_object_t *obj_ek = NULL;
+
+	/* Session handling */
+	uint32_t session_handle = 0;
+	TPM2B_NONCE nonce_caller = { 0 };
+	tcti_smw_session_t *sess = NULL;
+
+	/* Response buffer */
+	uint8_t *params_buffer = NULL;
+	size_t resp_params_size = 0;
+
+	/* 1. Check initialization */
+	if (!ctx || !ctx->initialized) {
+		tss2_rc = TSS2_TCTI_RC_BAD_SEQUENCE;
+		goto end;
+	}
+
+	/* 2. Unmarshal handle */
+	tss2_rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset, &handle);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* 3. Unmarshal authorization area if present */
+	if (tag == TPM2_ST_SESSIONS) {
+		tss2_rc = unmarshal_auth_area(cmd, cmd_size, &offset,
+					      &nonce_caller, &session_handle);
+		if (tss2_rc != TSS2_RC_SUCCESS)
+			goto end;
+
+		if (session_handle != TPM2_RH_PW) {
+			sess = find_session_by_handle(ctx, session_handle);
+			if (!sess || !sess->active) {
+				tss2_rc = TSS2_TCTI_RC_IO_ERROR;
+				goto end;
+			}
+		}
+	}
+
+	/* 4. Unmarshal credential */
+	tss2_rc = Tss2_MU_TPM2B_DIGEST_Unmarshal(cmd, cmd_size, &offset,
+						 &credential);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* 5. Unmarshal objectName (AK Name) */
+	tss2_rc = Tss2_MU_TPM2B_NAME_Unmarshal(cmd, cmd_size, &offset,
+					       &object_name);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	DBG_TRACE("MakeCredential:\n"
+		  "  handle: 0x%08x\n"
+		  "  credential.size: %u\n"
+		  "  objectName.size: %u\n",
+		  handle, credential.size, object_name.size);
+
+	/* 6. Validate inputs */
+	if (credential.size == 0 || credential.size > TPM2_SHA256_DIGEST_SIZE) {
+		DBG_TRACE("Invalid credential size: %u\n", credential.size);
+		tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	if (object_name.size < 2 ||
+	    object_name.size > sizeof(object_name.name)) {
+		DBG_TRACE("Invalid objectName size: %u\n", object_name.size);
+		tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	/* 7. Find EK object */
+	obj_ek = find_object_by_handle(ctx, handle);
+	if (!obj_ek) {
+		DBG_TRACE("Object handle 0x%08x not found\n", handle);
+		tss2_rc = TSS2_TCTI_RC_IO_ERROR;
+		goto end;
+	}
+
+	/* 8. Validate EK is RSA with decrypt attribute */
+	if (obj_ek->public_area.publicArea.type != TPM2_ALG_RSA) {
+		DBG_TRACE("Key 0x%08x is not RSA\n", handle);
+		tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	if (!(obj_ek->attributes & TPMA_OBJECT_DECRYPT)) {
+		DBG_TRACE("Key 0x%08x does not have DECRYPT attribute\n",
+			  handle);
+		tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	/* 9. Generate random seed */
+	rng_args.subsystem_name = SMW_SUBSYSTEM_NAME_ELE;
+	rng_args.output = seed;
+	rng_args.output_length = sizeof(seed);
+
+	smw_status = smw_rng(&rng_args);
+	if (smw_status != SMW_STATUS_OK) {
+		DBG_TRACE("RNG failed: %d\n", smw_status);
+		tss2_rc = smw_rc_to_tcti_rc(smw_status);
+		goto end;
+	}
+
+	DBG_TRACE("Seed generated (%zu bytes)\n", sizeof(seed));
+
+	/* 10. Encrypt seed with EK public key -> secret */
+	tss2_rc = encrypt_seed_rsa(obj_ek, seed, sizeof(seed), &secret);
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to encrypt seed with EK\n");
+		goto end;
+	}
+
+	/* 11. Build credentialBlob (AES-GCM with seed, AAD = AK_Name) */
+	tss2_rc = build_credential_blob(&credential, &object_name, seed,
+					&credential_blob);
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to build credential blob\n");
+		goto end;
+	}
+
+	DBG_TRACE("MakeCredential success:\n"
+		  "  credentialBlob.size: %u\n"
+		  "  secret.size: %u\n",
+		  credential_blob.size, secret.size);
+
+	/* 12. Marshal output parameters */
+	params_buffer = calloc(1, TPM2_MAX_CAP_BUFFER);
+	if (!params_buffer) {
+		tss2_rc = TSS2_TCTI_RC_MEMORY;
+		goto end;
+	}
+
+	tss2_rc =
+		Tss2_MU_TPM2B_ID_OBJECT_Marshal(&credential_blob, params_buffer,
+						TPM2_MAX_CAP_BUFFER,
+						&resp_params_size);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	tss2_rc = Tss2_MU_TPM2B_ENCRYPTED_SECRET_Marshal(&secret, params_buffer,
+							 TPM2_MAX_CAP_BUFFER,
+							 &resp_params_size);
+	if (tss2_rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	/* 13. Build response */
+	tss2_rc =
+		build_auth_response(ctx, sess, TPM2_RC_SUCCESS,
+				    TPM2_CC_MakeCredential, tag, params_buffer,
+				    resp_params_size, &nonce_caller, NULL);
 
 end:
 	if (params_buffer)

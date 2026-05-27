@@ -521,4 +521,35 @@ uint32_t handle_certifycreation(tcti_smw_context_t *ctx, uint16_t tag,
  */
 uint32_t handle_unseal(tcti_smw_context_t *ctx, uint16_t tag,
 		       const uint8_t *cmd, size_t cmd_size);
+
+/**
+ * handle_makecredential() - Process TPM2_MakeCredential command
+ * @ctx:      Pointer to the SMW TCTI context structure
+ * @tag:      TPM structure tag from the command header
+ * @cmd:      Pointer to the command buffer containing the full TPM command
+ * @cmd_size: Size of the command buffer in bytes
+ *
+ * This function handles the TPM2_MakeCredential command which creates a
+ * credential blob that can only be decrypted by a specific TPM object.
+ * The credential is encrypted using the public key of the target object
+ * and bound to its name for integrity protection.
+ *
+ * The command takes:
+ *   - handle: Handle of the object used to protect the credential
+ *   - credential: Sensitive data to be protected (max 256 bytes)
+ *   - objectName: Name of the object that can activate the credential
+ *
+ * The function returns:
+ *   - credentialBlob: Encrypted credential data
+ *   - secret: Encrypted seed used for key derivation
+ *
+ * The credential blob can only be decrypted by TPM2_ActivateCredential
+ * using the corresponding private key and matching object name.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful credential creation, or the corresponding
+ * error code.
+ */
+uint32_t handle_makecredential(tcti_smw_context_t *ctx, uint16_t tag,
+			       const uint8_t *cmd, size_t cmd_size);
 #endif /* __COMMANDS_H__ */

@@ -14,6 +14,265 @@
 #include "smw_keymgr.h"
 #include "crypto.h"
 
+static uint32_t decrypt_seed_rsa(tcti_smw_object_t *ek,
+				 const TPM2B_ENCRYPTED_SECRET *secret,
+				 uint8_t *seed, size_t *seed_size)
+{
+	TSS2_RC rc = TSS2_RC_SUCCESS;
+	enum smw_status_code smw_status = SMW_STATUS_OK;
+	struct smw_key_descriptor key_desc = { 0 };
+	struct smw_asymmetric_encryption_args smw_args = { 0 };
+
+	if (!ek || !secret || !seed || !seed_size) {
+		rc = TSS2_TCTI_RC_BAD_REFERENCE;
+		goto end;
+	}
+
+	/* Validate key type */
+	if (ek->public_area.publicArea.type != TPM2_ALG_RSA) {
+		DBG_TRACE("EK is not RSA: 0x%04x\n",
+			  ek->public_area.publicArea.type);
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	/* Validate EK has decrypt attribute */
+	if (!(ek->attributes & TPMA_OBJECT_DECRYPT)) {
+		DBG_TRACE("EK does not have DECRYPT attribute\n");
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	DBG_TRACE("Decrypting seed with EK:\n"
+		  "  SMW key ID: %u\n"
+		  "  RSA key size: %u bits\n"
+		  "  secret.size: %u\n",
+		  ek->smw_key_id,
+		  ek->public_area.publicArea.parameters.rsaDetail.keyBits,
+		  secret->size);
+
+	key_desc.id = ek->smw_key_id;
+
+	/* Setup decryption args - RSA-PKCS with SHA256 */
+	smw_args.subsystem_name = SMW_SUBSYSTEM_NAME_ELE;
+	smw_args.algo =
+		SMW_ATTR_ALGO_ASYMMETRIC_ENCRYPTION_RSA(SMW_ATTR_MODE_PKCS1_1_5,
+							SMW_ATTR_HASH_NONE);
+	smw_args.key_descriptor = &key_desc;
+	smw_args.input_length = secret->size;
+	smw_args.input = (uint8_t *)secret->secret;
+	if (SET_OVERFLOW(*seed_size, smw_args.output_length)) {
+		DBG_TRACE("Seed size too large: %zu\n", *seed_size);
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+	smw_args.output = seed;
+
+	smw_status = smw_asymmetric_decrypt(&smw_args);
+	if (smw_status != SMW_STATUS_OK) {
+		DBG_TRACE("RSA decrypt failed: %d\n", smw_status);
+		rc = smw_rc_to_tcti_rc(smw_status);
+		goto end;
+	}
+
+	*seed_size = smw_args.output_length;
+
+	DBG_TRACE("Seed decrypted successfully: %zu bytes\n", *seed_size);
+
+end:
+	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
+	return rc;
+}
+
+static uint32_t decrypt_credential_blob(const TPM2B_ID_OBJECT *credential_blob,
+					const TPM2B_NAME *ak_name,
+					const uint8_t *seed,
+					TPM2B_DIGEST *credential)
+{
+	TSS2_RC rc = TSS2_RC_SUCCESS;
+	enum smw_status_code smw_status = SMW_STATUS_OK;
+
+	struct smw_aead_args aead_args = { 0 };
+	struct smw_aead_init_args init_args = { 0 };
+	struct smw_aead_aad_args aad_args = { 0 };
+	struct smw_aead_final_args final_args = { 0 };
+	struct smw_aead_data_args data_args = { 0 };
+	struct smw_key_descriptor key_desc = { 0 };
+	struct smw_keypair_buffer key_buffer = { 0 };
+
+	const uint8_t *ptr = NULL;
+	const uint8_t *iv = NULL;
+	const uint8_t *ciphertext = NULL;
+	const uint8_t *tag = NULL;
+	size_t offset = 0;
+	uint16_t stored_name_size = 0;
+	size_t aad_size = 0;
+	size_t ciphertext_size = 0;
+	size_t min_blob_size = 0;
+	size_t temp_size = 0;
+
+	if (!credential_blob || !ak_name || !seed || !credential) {
+		rc = TSS2_TCTI_RC_BAD_REFERENCE;
+		goto end;
+	}
+
+	ptr = credential_blob->credential;
+
+	/* Calculate minimum blob size */
+	min_blob_size = SMW_CRED_BLOB_MAGIC_LEN + sizeof(uint16_t) +
+			SEAL_NONCE_SIZE + SEAL_TAG_SIZE;
+
+	if (credential_blob->size < min_blob_size) {
+		DBG_TRACE("Credential blob too small: %u < %zu\n",
+			  credential_blob->size, min_blob_size);
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	/* 1. Verify magic */
+	if (memcmp(ptr, SMW_CRED_BLOB_MAGIC, SMW_CRED_BLOB_MAGIC_LEN) != 0) {
+		DBG_TRACE("Invalid credential blob magic\n");
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	offset += SMW_CRED_BLOB_MAGIC_LEN;
+
+	/* 2. Extract stored AK Name size */
+	memcpy(&stored_name_size, ptr + offset, sizeof(uint16_t));
+
+	if (ADD_OVERFLOW(offset, sizeof(uint16_t), &offset)) {
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	/* 3. Verify AK Name size matches */
+	if (stored_name_size != ak_name->size) {
+		DBG_TRACE("AK Name size mismatch:\n"
+			  "  stored: %u\n"
+			  "  expected: %u\n",
+			  stored_name_size, ak_name->size);
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	/* Validate we have enough data for the name */
+	if (ADD_OVERFLOW(offset, stored_name_size, &temp_size)) {
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	temp_size += SEAL_NONCE_SIZE + SEAL_TAG_SIZE;
+
+	if (credential_blob->size < temp_size) {
+		DBG_TRACE("Credential blob too small for stored name\n");
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	/* 4. Verify AK Name matches (binding check) */
+	if (memcmp(ptr + offset, ak_name->name, ak_name->size) != 0) {
+		DBG_TRACE("AK Name mismatch credential not bound to this AK\n");
+		DBG_TRACE("Stored AK Name:\n");
+		DBG_BUF_HEX(ptr + offset, stored_name_size);
+		DBG_TRACE("Expected AK Name:\n");
+		DBG_BUF_HEX(ak_name->name, ak_name->size);
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	offset += ak_name->size;
+	aad_size = offset;
+
+	DBG_TRACE("AK Name binding verified successfully\n");
+
+	/* 5. Extract IV */
+	iv = ptr + offset;
+	offset += SEAL_NONCE_SIZE;
+
+	/* 6. Calculate ciphertext size */
+	ciphertext_size = credential_blob->size - aad_size - SEAL_NONCE_SIZE -
+			  SEAL_TAG_SIZE;
+
+	if (ciphertext_size == 0) {
+		DBG_TRACE("Ciphertext size is zero\n");
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	if (ciphertext_size > sizeof(credential->buffer)) {
+		DBG_TRACE("Credential too large: %zu > %zu\n", ciphertext_size,
+			  sizeof(credential->buffer));
+		rc = TSS2_TCTI_RC_INSUFFICIENT_BUFFER;
+		goto end;
+	}
+
+	ciphertext = ptr + offset;
+	tag = ptr + offset + ciphertext_size;
+
+	DBG_TRACE("Credential blob structure:\n"
+		  "  AAD size: %zu\n"
+		  "  IV offset: %zu\n"
+		  "  Ciphertext size: %zu\n"
+		  "  Tag offset: %zu\n",
+		  aad_size, aad_size, ciphertext_size,
+		  aad_size + SEAL_NONCE_SIZE + ciphertext_size);
+
+	/* 7. Setup AEAD decryption with seed as key */
+	key_buffer.gen.private_data = (uint8_t *)seed;
+	key_buffer.gen.private_length = SMW_SEED_SIZE;
+
+	key_desc.type_name = SMW_KEY_TYPE_NAME_AES;
+	key_desc.buffer = &key_buffer;
+	key_desc.security_size = BYTES_TO_BITS(SMW_SEED_SIZE);
+
+	init_args.subsystem_name = SMW_SUBSYSTEM_NAME_ELE;
+	init_args.mode_name = SMW_AEAD_MODE_NAME_GCM;
+	init_args.op_type_name = SMW_AEAD_OP_TYPE_NAME_DECRYPT;
+	init_args.user_iv = (unsigned char *)iv;
+	init_args.user_iv_length = SEAL_NONCE_SIZE;
+	init_args.iv_length = SEAL_NONCE_SIZE;
+	init_args.plaintext_length = ciphertext_size;
+	init_args.key_desc = &key_desc;
+
+	aad_args.data = (unsigned char *)ptr;
+	aad_args.data_length = aad_size;
+
+	data_args.input = (unsigned char *)ciphertext;
+	data_args.input_length = ciphertext_size;
+	data_args.output = credential->buffer;
+	data_args.output_length = sizeof(credential->buffer);
+
+	final_args.data = &data_args;
+	final_args.tag = (unsigned char *)tag;
+	final_args.tag_length = SEAL_TAG_SIZE;
+
+	aead_args.init = &init_args;
+	aead_args.aad = &aad_args;
+	aead_args.final = &final_args;
+
+	/* 8. Execute AEAD decryption */
+	smw_status = smw_aead(&aead_args);
+	if (smw_status != SMW_STATUS_OK) {
+		DBG_TRACE("AEAD decrypt failed: %d\n", smw_status);
+		DBG_TRACE("This could mean:\n"
+			  "  - Wrong seed (EK mismatch)\n"
+			  "  - Tampered credential blob\n"
+			  "  - AK Name was modified\n");
+		rc = smw_rc_to_tcti_rc(smw_status);
+		goto end;
+	}
+
+	credential->size = ciphertext_size;
+
+	DBG_TRACE("Credential decrypted successfully: %u bytes\n",
+		  credential->size);
+
+end:
+	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
+	return rc;
+}
+
 static uint32_t encrypt_seed_rsa(tcti_smw_object_t *ek, uint8_t *seed,
 				 size_t seed_size,
 				 TPM2B_ENCRYPTED_SECRET *secret)
@@ -62,7 +321,6 @@ static uint32_t encrypt_seed_rsa(tcti_smw_object_t *ek, uint8_t *seed,
 		rc = smw_rc_to_tcti_rc(smw_status);
 		goto end;
 	}
-
 	secret->size = smw_args.output_length;
 
 	DBG_TRACE("Seed encrypted: secret.size=%u\n", secret->size);
@@ -203,7 +461,7 @@ static uint32_t decrypt_sealed_data(TPMI_RH_HIERARCHY hierarchy,
 	struct smw_key_descriptor key_desc = { 0 };
 	struct smw_keypair_buffer key_buffer = { 0 };
 
-	const uint8_t *ptr = blob;
+	const uint8_t *ptr = NULL;
 	size_t offset = 0;
 	uint8_t *proof = NULL;
 	uint16_t stored_plaintext_size = 0;
@@ -229,6 +487,7 @@ static uint32_t decrypt_sealed_data(TPMI_RH_HIERARCHY hierarchy,
 	}
 
 	/* 2. Verify magic */
+	ptr = blob;
 	if (memcmp(ptr, SMW_SEALED_BLOB_MAGIC, SMW_SEALED_BLOB_MAGIC_LEN) !=
 	    0) {
 		DBG_TRACE("Invalid blob magic\n");
@@ -1123,6 +1382,242 @@ uint32_t handle_makecredential(tcti_smw_context_t *ctx, uint16_t tag,
 		build_auth_response(ctx, sess, TPM2_RC_SUCCESS,
 				    TPM2_CC_MakeCredential, tag, params_buffer,
 				    resp_params_size, &nonce_caller, NULL);
+
+end:
+	if (params_buffer)
+		free(params_buffer);
+
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		rc = tcti_rc_to_tpm2_rc(tss2_rc);
+		tss2_rc = build_rc_response(ctx, TPM_HEADER_SIZE, tag, rc);
+	}
+
+	return tss2_rc;
+}
+
+uint32_t handle_activatecredential(tcti_smw_context_t *ctx, uint16_t tag,
+				   const uint8_t *cmd, size_t cmd_size)
+{
+	TSS2_RC tss2_rc = TSS2_TCTI_RC_GENERAL_FAILURE;
+	TPM2_RC rc = TPM2_RC_SUCCESS;
+	size_t offset = TPM_HEADER_SIZE;
+
+	/* Input parameters */
+	TPMI_DH_OBJECT activate_handle = 0;
+	TPMI_DH_OBJECT key_handle = 0;
+	TPM2B_ID_OBJECT credential_blob = { 0 };
+	TPM2B_ENCRYPTED_SECRET secret = { 0 };
+
+	/* Output */
+	TPM2B_DIGEST cert_info = { 0 };
+
+	/* Seed buffer */
+	uint8_t seed[SMW_SEED_SIZE] = { 0 };
+	size_t seed_size = sizeof(seed);
+
+	/* Objects */
+	tcti_smw_object_t *obj_ak = NULL;
+	tcti_smw_object_t *obj_ek = NULL;
+
+	/* AK Name for binding verification */
+	TPM2B_NAME ak_name = { 0 };
+
+	/* Session handling - need auth for both AK and EK */
+	auth_session_info_t auth_sessions[2] = { 0 };
+	tcti_smw_session_t *sess_ak = NULL;
+	tcti_smw_session_t *sess_ek = NULL;
+	size_t nb_auth_sessions = 0;
+	TPM2_HANDLE session_handle = 0;
+
+	/* Response buffer */
+	uint8_t *params_buffer = NULL;
+	size_t resp_params_size = 0;
+
+	/* 1. Check initialization */
+	if (!ctx || !ctx->initialized) {
+		tss2_rc = TSS2_TCTI_RC_BAD_SEQUENCE;
+		goto end;
+	}
+
+	/* 2. Unmarshal activate handle (AK) */
+	tss2_rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset,
+					   &activate_handle);
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to unmarshal activate_handle\n");
+		goto end;
+	}
+
+	/* 3. Unmarshal key handle (EK) */
+	tss2_rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, &offset, &key_handle);
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to unmarshal key_handle\n");
+		goto end;
+	}
+
+	DBG_TRACE("ActivateCredential:\n"
+		  "  activate_handle (AK): 0x%08x\n"
+		  "  key_handle (EK): 0x%08x\n",
+		  activate_handle, key_handle);
+
+	/* 4. Find AK object */
+	obj_ak = find_object_by_handle(ctx, activate_handle);
+	if (!obj_ak) {
+		DBG_TRACE("AK handle 0x%08x not found\n", activate_handle);
+		tss2_rc = TSS2_TCTI_RC_IO_ERROR;
+		goto end;
+	}
+
+	/* 5. Find EK object */
+	obj_ek = find_object_by_handle(ctx, key_handle);
+	if (!obj_ek) {
+		DBG_TRACE("EK handle 0x%08x not found\n", key_handle);
+		tss2_rc = TSS2_TCTI_RC_IO_ERROR;
+		goto end;
+	}
+
+	/* 6. Unmarshal authorization area (up to 2 sessions) */
+	if (tag == TPM2_ST_SESSIONS) {
+		tss2_rc = unmarshal_auth_area_multi(cmd, cmd_size, &offset,
+						    auth_sessions,
+						    &nb_auth_sessions);
+		if (tss2_rc != TSS2_RC_SUCCESS) {
+			DBG_TRACE("Failed to unmarshal auth area\n");
+			goto end;
+		}
+
+		DBG_TRACE("Unmarshaled %zu auth session(s)\n",
+			  nb_auth_sessions);
+
+		/* Find sessions */
+		if (nb_auth_sessions >= 1) {
+			session_handle = auth_sessions[0].session_handle;
+			if (session_handle != TPM2_RH_PW) {
+				sess_ak =
+					find_session_by_handle(ctx,
+							       session_handle);
+				if (!sess_ak || !sess_ak->active) {
+					DBG_TRACE("Session 0x%08x not found\n",
+						  session_handle);
+					tss2_rc = TSS2_TCTI_RC_IO_ERROR;
+					goto end;
+				}
+			}
+		}
+
+		if (nb_auth_sessions == 2) {
+			session_handle = auth_sessions[1].session_handle;
+			if (session_handle != TPM2_RH_PW) {
+				sess_ek =
+					find_session_by_handle(ctx,
+							       session_handle);
+				if (!sess_ek || !sess_ek->active) {
+					DBG_TRACE("Session 0x%08x not found\n",
+						  session_handle);
+					tss2_rc = TSS2_TCTI_RC_IO_ERROR;
+					goto end;
+				}
+			}
+		}
+	}
+
+	/* 7. Unmarshal credentialBlob */
+	tss2_rc = Tss2_MU_TPM2B_ID_OBJECT_Unmarshal(cmd, cmd_size, &offset,
+						    &credential_blob);
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to unmarshal credentialBlob\n");
+		goto end;
+	}
+
+	/* 8. Unmarshal secret */
+	tss2_rc = Tss2_MU_TPM2B_ENCRYPTED_SECRET_Unmarshal(cmd, cmd_size,
+							   &offset, &secret);
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to unmarshal secret\n");
+		goto end;
+	}
+
+	DBG_TRACE("Input parameters:\n"
+		  "  credentialBlob.size: %u\n"
+		  "  secret.size: %u\n",
+		  credential_blob.size, secret.size);
+
+	/* 9. Validate EK is RSA with decrypt attribute */
+	if (obj_ek->public_area.publicArea.type != TPM2_ALG_RSA) {
+		DBG_TRACE("EK is not RSA: 0x%04x\n",
+			  obj_ek->public_area.publicArea.type);
+		tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	if (!(obj_ek->attributes & TPMA_OBJECT_DECRYPT)) {
+		DBG_TRACE("EK does not have DECRYPT attribute\n");
+		tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	/* 10. Calculate AK Name for binding verification */
+	tss2_rc = calculate_object_name(&obj_ak->public_area, &ak_name);
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to calculate AK Name\n");
+		goto end;
+	}
+
+	DBG_TRACE("AK Name calculated: %u bytes\n", ak_name.size);
+
+	/* 11. Decrypt seed using EK private key (RSA-OAEP) */
+	tss2_rc = decrypt_seed_rsa(obj_ek, &secret, seed, &seed_size);
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to decrypt seed\n");
+		goto end;
+	}
+
+	/* Validate seed size */
+	if (seed_size != SMW_SEED_SIZE) {
+		DBG_TRACE("Invalid seed size: %zu (expected %u)\n", seed_size,
+			  SMW_SEED_SIZE);
+		tss2_rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	/* 12. Decrypt credentialBlob and verify AK Name binding */
+	tss2_rc = decrypt_credential_blob(&credential_blob, &ak_name, seed,
+					  &cert_info);
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to decrypt credential blob\n");
+		goto end;
+	}
+
+	DBG_TRACE("ActivateCredential success:\n"
+		  "  certInfo.size: %u\n",
+		  cert_info.size);
+
+	/* 13. Marshal output parameters */
+	params_buffer = calloc(1, TPM2_MAX_CAP_BUFFER);
+	if (!params_buffer) {
+		tss2_rc = TSS2_TCTI_RC_MEMORY;
+		goto end;
+	}
+
+	tss2_rc = Tss2_MU_TPM2B_DIGEST_Marshal(&cert_info, params_buffer,
+					       TPM2_MAX_CAP_BUFFER,
+					       &resp_params_size);
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to marshal certInfo\n");
+		goto end;
+	}
+
+	/* 14. Build response */
+	tss2_rc = build_auth_response_multi(ctx, auth_sessions, 2,
+					    TPM2_RC_SUCCESS,
+					    TPM2_CC_ActivateCredential, tag,
+					    params_buffer, resp_params_size,
+					    NULL);
+	if (tss2_rc != TSS2_RC_SUCCESS) {
+		DBG_TRACE("Failed to build auth response\n");
+		goto end;
+	}
+
+	DBG_TRACE("ActivateCredential completed successfully\n");
 
 end:
 	if (params_buffer)

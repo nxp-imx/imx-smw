@@ -552,4 +552,38 @@ uint32_t handle_unseal(tcti_smw_context_t *ctx, uint16_t tag,
  */
 uint32_t handle_makecredential(tcti_smw_context_t *ctx, uint16_t tag,
 			       const uint8_t *cmd, size_t cmd_size);
+
+/**
+ * handle_activatecredential() - Process TPM2_ActivateCredential command
+ * @ctx:      Pointer to the SMW TCTI context structure
+ * @tag:      TPM structure tag from the command header
+ * @cmd:      Pointer to the command buffer containing the full TPM command
+ * @cmd_size: Size of the command buffer in bytes
+ *
+ * This function handles the TPM2_ActivateCredential command which decrypts
+ * a credential blob created by TPM2_MakeCredential. This command requires
+ * two authorization sessions: one for the activation object (private key)
+ * and one for the key object (endorsement key).
+ *
+ * The command takes:
+ *   - activateHandle: Handle of the object with the private key
+ *   - keyHandle: Handle of the key object (typically endorsement key)
+ *   - credentialBlob: Encrypted credential from MakeCredential
+ *   - secret: Encrypted seed from MakeCredential
+ *
+ * The function performs:
+ *   - Validates both authorization sessions
+ *   - Decrypts the secret using the key object's private key
+ *   - Decrypts and verifies the credential blob HMAC
+ *   - Returns the original credential data
+ *
+ * This implements the TPM credential activation protocol used for
+ * attestation identity key (AIK) certification.
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful credential activation, or the corresponding
+ * error code.
+ */
+uint32_t handle_activatecredential(tcti_smw_context_t *ctx, uint16_t tag,
+				   const uint8_t *cmd, size_t cmd_size);
 #endif /* __COMMANDS_H__ */

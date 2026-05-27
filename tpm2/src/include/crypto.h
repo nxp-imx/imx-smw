@@ -61,6 +61,10 @@
 #define SMW_MAX_SEALED_BLOB_SIZE                                               \
 	(SEAL_AAD_SIZE + SMW_MAX_SEALED_DATA + SEAL_NONCE_SIZE + SEAL_TAG_SIZE)
 
+#define SMW_CRED_BLOB_MAGIC	"SMWCRED"
+#define SMW_CRED_BLOB_MAGIC_LEN strlen(SMW_CRED_BLOB_MAGIC)
+#define SMW_SEED_SIZE		TPM2_SHA256_DIGEST_SIZE
+
 /* Mocked proof - in production, load from secure storage */
 extern uint8_t proof_owner[TPM2_SHA384_DIGEST_SIZE];
 extern uint8_t proof_platform[TPM2_SHA384_DIGEST_SIZE];

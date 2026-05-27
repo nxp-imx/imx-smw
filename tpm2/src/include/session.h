@@ -14,6 +14,28 @@
 
 #define SMW_SESSION_METADATA_SIZE 20
 
+#define MAX_AUTH_SESSIONS 2
+
+/**
+ * struct auth_session_info_t - Authorization session information
+ * @session_handle:      TPM session handle (or TPM2_RH_PW for password auth)
+ * @nonce_caller:        Pointer to caller's nonce for session freshness
+ * @session_attributes:  Session attributes (continueSession, auditExclusive, etc.)
+ * @hmac:                Authorization HMAC or password
+ * @session:             Pointer to internal session context (NULL for password auth)
+ *
+ * This structure holds the complete authorization information for a single
+ * session extracted from a TPM command's authorization area. It is used to
+ * process multi-session authorization.
+ */
+typedef struct {
+	TPM2_HANDLE session_handle;
+	TPM2B_NONCE nonce_caller;
+	TPMA_SESSION session_attributes;
+	TPM2B_AUTH hmac;
+	tcti_smw_session_t *session;
+} auth_session_info_t;
+
 /**
  * struct start_auth_session_params_t - Parameters for TPM2_StartAuthSession command.
  * @tpmKey:        Handle to the key used to encrypt the salt. Set to TPM2_RH_NULL

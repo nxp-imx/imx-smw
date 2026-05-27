@@ -164,16 +164,19 @@ end:
 	return rc;
 }
 
-uint32_t unmarshal_auth_area(const uint8_t *cmd, size_t cmd_size,
-			     size_t *offset, TPM2B_NONCE *nonce_caller,
-			     uint32_t *session_handle)
+uint32_t unmarshal_auth_area_multi(const uint8_t *cmd, size_t cmd_size,
+				   size_t *offset,
+				   auth_session_info_t *auth_sessions,
+				   size_t *nb_sessions)
 {
 	TSS2_RC rc = TSS2_TCTI_RC_GENERAL_FAILURE;
+
 	size_t auth_start = 0;
 	size_t auth_end = 0;
+	size_t session_count = 0;
 	uint32_t auth_size = 0;
 
-	if (!cmd || !offset || !nonce_caller || !session_handle) {
+	if (!cmd || !offset || !auth_sessions) {
 		rc = TSS2_TCTI_RC_BAD_REFERENCE;
 		goto end;
 	}
@@ -202,17 +205,6 @@ uint32_t unmarshal_auth_area(const uint8_t *cmd, size_t cmd_size,
 		goto end;
 	}
 
-	/* Parse session handle */
-	rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, offset, session_handle);
-	if (rc != TSS2_RC_SUCCESS)
-		goto end;
-
-	/* Parse nonce */
-	rc = Tss2_MU_TPM2B_NONCE_Unmarshal(cmd, cmd_size, offset, nonce_caller);
-	if (rc != TSS2_RC_SUCCESS)
-		goto end;
-
-	/* Skip to end of auth area */
 	if (ADD_OVERFLOW(auth_start, (size_t)auth_size, &auth_end) ||
 	    auth_end > cmd_size) {
 		DBG_TRACE("Invalid authorization area size\n");
@@ -220,7 +212,98 @@ uint32_t unmarshal_auth_area(const uint8_t *cmd, size_t cmd_size,
 		goto end;
 	}
 
-	*offset = auth_end;
+	/* Parse each auth session until we reach the end of auth area */
+	while (*offset < auth_end && session_count < MAX_AUTH_SESSIONS) {
+		auth_session_info_t *auth = &auth_sessions[session_count];
+
+		/* Parse session handle */
+		rc = Tss2_MU_UINT32_Unmarshal(cmd, cmd_size, offset,
+					      &auth->session_handle);
+		if (rc != TSS2_RC_SUCCESS)
+			goto end;
+
+		/* Parse nonce */
+		rc = Tss2_MU_TPM2B_NONCE_Unmarshal(cmd, cmd_size, offset,
+						   &auth->nonce_caller);
+		if (rc != TSS2_RC_SUCCESS)
+			goto end;
+
+		/* Parse session attributes */
+		rc = Tss2_MU_UINT8_Unmarshal(cmd, cmd_size, offset,
+					     &auth->session_attributes);
+		if (rc != TSS2_RC_SUCCESS)
+			goto end;
+
+		/* Parse HMAC */
+		rc = Tss2_MU_TPM2B_AUTH_Unmarshal(cmd, cmd_size, offset,
+						  &auth->hmac);
+		if (rc != TSS2_RC_SUCCESS)
+			goto end;
+
+		session_count++;
+
+		DBG_TRACE("Auth session %zu:\n"
+			  "  handle: 0x%08x\n"
+			  "  nonce size: %u\n"
+			  "  attributes: 0x%02x\n"
+			  "  hmac size: %u\n",
+			  session_count, auth->session_handle,
+			  auth->nonce_caller.size, auth->session_attributes,
+			  auth->hmac.size);
+	}
+
+	/* Verify we consumed exactly the auth area */
+	if (*offset != auth_end) {
+		DBG_TRACE("Auth area size mismatch: parsed %zu, expected %zu\n",
+			  *offset - auth_start, (size_t)auth_size);
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	*nb_sessions = session_count;
+
+	DBG_TRACE("Unmarshaled %zu auth session(s)\n", session_count);
+
+end:
+	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);
+	return rc;
+}
+
+uint32_t unmarshal_auth_area(const uint8_t *cmd, size_t cmd_size,
+			     size_t *offset, TPM2B_NONCE *nonce_caller,
+			     uint32_t *session_handle)
+{
+	TSS2_RC rc = TSS2_TCTI_RC_GENERAL_FAILURE;
+	TPM2B_AUTH hmac = { 0 };
+	size_t nb_sessions = 0;
+
+	if (!nonce_caller || !session_handle) {
+		rc = TSS2_TCTI_RC_BAD_REFERENCE;
+		goto end;
+	}
+
+	auth_session_info_t auth_sessions[1] = { { .session_handle =
+							   *session_handle,
+						   .nonce_caller = { 0 },
+						   .session_attributes = 0,
+						   .hmac = hmac,
+						   .session = NULL } };
+
+	/* Use the multi-session version */
+	rc = unmarshal_auth_area_multi(cmd, cmd_size, offset, auth_sessions,
+				       &nb_sessions);
+	if (rc != TSS2_RC_SUCCESS)
+		goto end;
+
+	if (nb_sessions != 1) {
+		DBG_TRACE("Expected 1 auth session, got %zu\n", nb_sessions);
+		rc = TSS2_TCTI_RC_BAD_VALUE;
+		goto end;
+	}
+
+	/* Copy results */
+	*session_handle = auth_sessions[0].session_handle;
+	*nonce_caller = auth_sessions[0].nonce_caller;
 
 end:
 	DBG_TRACE_COND(rc != TSS2_RC_SUCCESS, "return error: 0x%08x\n", rc);

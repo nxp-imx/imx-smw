@@ -73,6 +73,41 @@ uint32_t build_auth_response(tcti_smw_context_t *ctx, tcti_smw_session_t *sess,
 			     TPM2_HANDLE *handle);
 
 /**
+ * build_auth_response_multi() - Build TPM response with multiple authorization sessions
+ * @ctx:            Pointer to the SMW TCTI context
+ * @auth_sessions:  Array of authorization session information
+ * @nb_sessions:    Number of authorization sessions
+ * @response_code:  TPM response code (TPM2_RC_SUCCESS or error)
+ * @command_code:   TPM command code being responded to
+ * @tag:            Response tag (TPM2_ST_SESSIONS or TPM2_ST_NO_SESSIONS)
+ * @params_buffer:  Pointer to marshaled response parameters
+ * @params_size:    Size of marshaled parameters in bytes
+ * @handle:         Optional pointer to handle to include in response (may be NULL)
+ *
+ * Constructs a complete TPM response including header, optional handle,
+ * response parameters, and authorization area with HMACs for multiple sessions.
+ *
+ * Response structure:
+ *   - Header (tag, size, responseCode)
+ *   - Optional handle (4 bytes)
+ *   - Response parameters (params_size bytes)
+ *   - Authorization area:
+ *     - parameterSize (4 bytes)
+ *     - For each session:
+ *       - nonce (2 + N bytes)
+ *       - sessionAttributes (1 byte)
+ *       - hmac (2 + M bytes)
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on successful response construction, or the corresponding error code.
+ */
+uint32_t build_auth_response_multi(tcti_smw_context_t *ctx,
+				   auth_session_info_t *auth_sessions,
+				   size_t nb_sessions, TPM2_RC response_code,
+				   TPM2_CC command_code, uint16_t tag,
+				   uint8_t *params_buffer, size_t params_size,
+				   TPM2_HANDLE *handle);
+/**
  * header_unmarshal() - Parse the first 10 bytes of a buffer into a header structure.
  * @buf:    Pointer to the source buffer containing the raw TPM header.
  * @header: Pointer to the &tpm_smw_header_t structure to be populated.
@@ -261,4 +296,32 @@ uint32_t verifysignature_unmarshal(const uint8_t *cmd, size_t cmd_size,
 uint32_t unmarshal_auth_area(const uint8_t *cmd, size_t cmd_size,
 			     size_t *offset, TPM2B_NONCE *nonce_caller,
 			     uint32_t *session_handle);
+
+/**
+ * unmarshal_auth_area_multi() - Unmarshal multiple authorization sessions from command
+ * @cmd:           Pointer to the command buffer
+ * @cmd_size:      Size of the command buffer in bytes
+ * @offset:        Pointer to current offset in buffer (updated after unmarshaling)
+ * @auth_sessions: Array to store unmarshaled session information
+ * @nb_sessions:   Pointer to store the number of sessions unmarshaled
+ *
+ * Unmarshals the authorization area from a TPM command that may contain
+ * multiple authorization sessions. Extracts session handles, nonces,
+ * attributes, and HMACs for each session.
+ *
+ * The authorization area format is:
+ *   - authorizationSize (4 bytes)
+ *   - For each session:
+ *     - sessionHandle (4 bytes)
+ *     - nonce (2 + N bytes)
+ *     - sessionAttributes (1 byte)
+ *     - hmac (2 + M bytes)
+ *
+ * Return:
+ * TSS2_RC_SUCCESS on success, or appropriate error code on failure.
+ */
+uint32_t unmarshal_auth_area_multi(const uint8_t *cmd, size_t cmd_size,
+				   size_t *offset,
+				   auth_session_info_t *auth_sessions,
+				   size_t *nb_sessions);
 #endif /* __UTILS_H__ */

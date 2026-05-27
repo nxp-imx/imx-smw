@@ -514,22 +514,29 @@ static int validate_tag_length(struct smw_crypto_aead_args *aead_args)
  * @hdl: Pointer to ELE subsystem handle
  * @cipher_hdl: Pointer to cipher handle
  * @op_args: Pointer to ELE AEAD operation arguments
- * @open_cipher_service_flow: If true, open key store and cipher services
  *
  * Execute the HSM AEAD operation and optionally opens key store and
- * cipher services if requested.
+ * cipher services if cipher handle is 0.
  *
  * Return:
  * SMW_STATUS_OK or error code
  */
 static int do_aead(struct hdl *hdl, hsm_hdl_t *cipher_hdl,
-		   op_auth_enc_new_args_t *op_args,
-		   bool open_cipher_service_flow)
+		   op_auth_enc_new_args_t *op_args)
 {
 	hsm_err_t err = HSM_NO_ERROR;
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_INVALID_PARAM;
+	int tmp_status = SMW_STATUS_OK;
 
-	if (open_cipher_service_flow) {
+	bool is_oneshot = op_args->flags & HSM_AUTH_ENC_FLAGS_ONE_SHOT;
+
+	if (!cipher_hdl)
+		goto end;
+
+	if (*cipher_hdl == 0) {
+		if (!hdl)
+			goto end;
+
 		status = ele_open_key_store_service(hdl);
 		if (status != SMW_STATUS_OK)
 			goto end;
@@ -589,6 +596,17 @@ static int do_aead(struct hdl *hdl, hsm_hdl_t *cipher_hdl,
 		       op_args->exp_output_size);
 
 	status = ele_convert_err(err);
+
+	/*
+	 * Close cipher service only for oneshot operations.
+	 * For multi-part operations, cipher service is closed in the
+	 * ele_free_aead_context().
+	 */
+	if (is_oneshot)
+		tmp_status = close_cipher_service(*cipher_hdl);
+
+	if (status == SMW_STATUS_OK)
+		status = tmp_status;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -959,7 +977,7 @@ static int aead(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	status = do_aead(hdl, &cipher_hdl, &op_args, true);
+	status = do_aead(hdl, &cipher_hdl, &op_args);
 	if (status != SMW_STATUS_OK && status != SMW_STATUS_OUTPUT_TOO_SHORT)
 		goto end;
 
@@ -994,7 +1012,6 @@ static int aead_init(struct hdl *hdl, struct smw_crypto_aead_args *aead_args)
 	struct smw_op_context *op_context = NULL;
 	struct smw_keymgr_descriptor *key_desc = &aead_args->key_desc;
 	struct smw_keymgr_identifier *key_identifier = &key_desc->identifier;
-	bool open_cipher_service_flow = true;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1049,12 +1066,9 @@ static int aead_init(struct hdl *hdl, struct smw_crypto_aead_args *aead_args)
 	if (!key_identifier->s_id) {
 		op_args.flags |= HSM_AUTH_ENC_FLAGS_GET_CTX_SIZE;
 
-		status = do_aead(hdl, &cipher_hdl, &op_args,
-				 open_cipher_service_flow);
+		status = do_aead(hdl, &cipher_hdl, &op_args);
 		if (status != SMW_STATUS_OK)
 			goto end;
-
-		open_cipher_service_flow = false;
 
 		op_args.context = SMW_UTILS_MALLOC(op_args.exp_output_size);
 		if (!op_args.context) {
@@ -1070,15 +1084,13 @@ static int aead_init(struct hdl *hdl, struct smw_crypto_aead_args *aead_args)
 		op_args.flags &= ~HSM_AUTH_ENC_FLAGS_GET_CTX_SIZE;
 	}
 
-	status = do_aead(hdl, &cipher_hdl, &op_args, open_cipher_service_flow);
-	if (status != SMW_STATUS_OK)
-		goto end;
-
-	status = set_aead_context(op_context, aead_args, &op_args, cipher_hdl);
+	status = do_aead(hdl, &cipher_hdl, &op_args);
+	if (status == SMW_STATUS_OK)
+		status = set_aead_context(op_context, aead_args, &op_args,
+					  cipher_hdl);
 
 end:
-	if (status != SMW_STATUS_OK &&
-	    (!op_context || !op_context->subsystem_context)) {
+	if (status != SMW_STATUS_OK) {
 		(void)close_cipher_service(cipher_hdl);
 
 		if (op_args.context)
@@ -1155,8 +1167,7 @@ static int aead_update_aad(struct subsystem_context *ele_ctx, void *args)
 		goto end;
 	}
 
-	status = do_aead(&ele_ctx->hdl, &aead_ctx->ele_cipher_handle, &op_args,
-			 false);
+	status = do_aead(&ele_ctx->hdl, &aead_ctx->ele_cipher_handle, &op_args);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -1225,7 +1236,7 @@ static int aead_update_common(struct hdl *hdl, struct aead_context *aead_ctx,
 	op_args.output = smw_crypto_get_aead_output(aead_args);
 
 	/* Call UPDATE operation */
-	status = do_aead(hdl, &aead_ctx->ele_cipher_handle, &op_args, false);
+	status = do_aead(hdl, &aead_ctx->ele_cipher_handle, &op_args);
 	if (status == SMW_STATUS_OUTPUT_TOO_SHORT) {
 		if (expected_output_len) {
 			/*
@@ -1466,7 +1477,7 @@ static int aead_final(struct hdl *hdl, void *args)
 		op_args.context_size = aead_ctx->ele_ctx_size;
 	}
 
-	status = do_aead(hdl, &aead_ctx->ele_cipher_handle, &op_args, false);
+	status = do_aead(hdl, &aead_ctx->ele_cipher_handle, &op_args);
 	if (status != SMW_STATUS_OK && status != SMW_STATUS_OUTPUT_TOO_SHORT)
 		goto end;
 
@@ -1561,11 +1572,10 @@ void ele_free_aead_context(struct smw_op_context *ctx)
 	if (ctx && ctx->subsystem_context) {
 		aead_ctx = ctx->subsystem_context;
 
-		if (aead_ctx && aead_ctx->ele_ctx) {
-			(void)close_cipher_service(aead_ctx->ele_cipher_handle);
+		(void)close_cipher_service(aead_ctx->ele_cipher_handle);
 
+		if (aead_ctx->ele_ctx)
 			SMW_UTILS_FREE(aead_ctx->ele_ctx);
-		}
 	}
 }
 
@@ -1622,7 +1632,8 @@ int ele_copy_aead_context(struct smw_op_context *src_ctx,
 	dst_aead_ctx->opaque_key = src_aead_ctx->opaque_key;
 	dst_aead_ctx->remaining_buffered_len =
 		src_aead_ctx->remaining_buffered_len;
-	dst_aead_ctx->ele_cipher_handle = src_aead_ctx->ele_cipher_handle;
+	dst_aead_ctx->ele_cipher_handle = 0;
+
 	dst_aead_ctx->op_type_id = src_aead_ctx->op_type_id;
 
 	if (src_aead_ctx->ele_ctx_size && src_aead_ctx->ele_ctx) {
@@ -1645,6 +1656,8 @@ int ele_copy_aead_context(struct smw_op_context *src_ctx,
 
 end:
 	if (status != SMW_STATUS_OK && dst_aead_ctx) {
+		(void)close_cipher_service(dst_aead_ctx->ele_cipher_handle);
+
 		if (dst_aead_ctx->ele_ctx)
 			SMW_UTILS_FREE(dst_aead_ctx->ele_ctx);
 
@@ -1676,7 +1689,7 @@ int ele_cancel_aead_op(struct smw_op_context *ctx)
 
 	op_args.ae_algo = aead_ctx->ele_aead_algo;
 
-	status = do_aead(NULL, &aead_ctx->ele_cipher_handle, &op_args, false);
+	status = do_aead(NULL, &aead_ctx->ele_cipher_handle, &op_args);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

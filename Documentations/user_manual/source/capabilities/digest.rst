@@ -64,9 +64,9 @@ Supported Operations versus Subsystems
    +               +                 +----------------+---------+---------+----------+                            +
    |               | (default 64)    | Multi-Part     |  **Y*** |    Y    |    N     |  - i.MX8ULP                |
    +---------------+-----------------+----------------+---------+---------+----------+----------------------------+
-   | SM3           | 32              | Single-Part    |    N    |    Y    |    N     |                            |
+   | SM3           | 32              | Single-Part    |  **Y*** |    Y    |    N     |                            |
    +               +                 +----------------+---------+---------+----------+                            +
-   |               |                 | Multi-Part     |    N    |    Y    |    N     |                            |
+   |               |                 | Multi-Part     |  **Y*** |    Y    |    N     |                            |
    +---------------+-----------------+----------------+---------+---------+----------+----------------------------+
 
 .. Note::
@@ -77,6 +77,9 @@ Supported Operations versus Subsystems
    SHAKE256 is an extendable-output function (XOF). The digest size can be
    any size greater than 0. The digest size shown is the default output length
    (64 bytes).
+
+.. Note::
+   - i.MX8ULP, i.MX91, i.MX93 and i.MX95 don't support the SM3 algorithm with ELE.
 
 .. table:: Hash APIs
    :name: table_hash_apis

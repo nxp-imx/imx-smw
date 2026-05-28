@@ -128,6 +128,7 @@ static int get_standard_public_length(struct smw_keymgr_identifier *identifier,
 	case SMW_CONFIG_KEY_TYPE_ID_SECP_R1:
 	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_R1:
 	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_T1:
+	case SMW_CONFIG_KEY_TYPE_ID_SM2:
 		*length = BITS_TO_BYTES_SIZE(identifier->security_size) * 2;
 		break;
 
@@ -140,10 +141,6 @@ static int get_standard_public_length(struct smw_keymgr_identifier *identifier,
 
 	case SMW_CONFIG_KEY_TYPE_ID_ED448:
 		*length = BITS_TO_BYTES_SIZE(identifier->security_size) + 1;
-		break;
-
-	case SMW_CONFIG_KEY_TYPE_ID_DSA_SM2_FP:
-		*length = 64;
 		break;
 
 	case SMW_CONFIG_KEY_TYPE_ID_AES:
@@ -218,6 +215,7 @@ static int get_standard_private_length(struct smw_keymgr_identifier *identifier,
 	case SMW_CONFIG_KEY_TYPE_ID_X25519:
 	case SMW_CONFIG_KEY_TYPE_ID_AES:
 	case SMW_CONFIG_KEY_TYPE_ID_DES3:
+	case SMW_CONFIG_KEY_TYPE_ID_SM2:
 	case SMW_CONFIG_KEY_TYPE_ID_SM4:
 	case SMW_CONFIG_KEY_TYPE_ID_HMAC:
 	case SMW_CONFIG_KEY_TYPE_ID_RSA:
@@ -228,10 +226,6 @@ static int get_standard_private_length(struct smw_keymgr_identifier *identifier,
 
 	case SMW_CONFIG_KEY_TYPE_ID_ED448:
 		*length = BITS_TO_BYTES_SIZE(identifier->security_size) + 1;
-		break;
-
-	case SMW_CONFIG_KEY_TYPE_ID_DSA_SM2_FP:
-		*length = 32;
 		break;
 
 	case SMW_CONFIG_KEY_TYPE_ID_DES:
@@ -298,7 +292,7 @@ static int get_standard_modulus_length(struct smw_keymgr_identifier *identifier,
 	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_R1:
 	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_T1:
 	case SMW_CONFIG_KEY_TYPE_ID_DH:
-	case SMW_CONFIG_KEY_TYPE_ID_DSA_SM2_FP:
+	case SMW_CONFIG_KEY_TYPE_ID_SM2:
 	case SMW_CONFIG_KEY_TYPE_ID_AES:
 	case SMW_CONFIG_KEY_TYPE_ID_DES:
 	case SMW_CONFIG_KEY_TYPE_ID_DES3:
@@ -370,7 +364,7 @@ static int get_standard_pub_exp_length(struct smw_keymgr_identifier *identifier,
 	case SMW_CONFIG_KEY_TYPE_ID_ED25519:
 	case SMW_CONFIG_KEY_TYPE_ID_X25519:
 	case SMW_CONFIG_KEY_TYPE_ID_DH:
-	case SMW_CONFIG_KEY_TYPE_ID_DSA_SM2_FP:
+	case SMW_CONFIG_KEY_TYPE_ID_SM2:
 	case SMW_CONFIG_KEY_TYPE_ID_AES:
 	case SMW_CONFIG_KEY_TYPE_ID_DES:
 	case SMW_CONFIG_KEY_TYPE_ID_DES3:
@@ -1515,7 +1509,7 @@ int smw_keymgr_get_privacy_id(enum smw_config_key_type_id type_id,
 	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_T1:
 	case SMW_CONFIG_KEY_TYPE_ID_ED25519:
 	case SMW_CONFIG_KEY_TYPE_ID_X25519:
-	case SMW_CONFIG_KEY_TYPE_ID_DSA_SM2_FP:
+	case SMW_CONFIG_KEY_TYPE_ID_SM2:
 	case SMW_CONFIG_KEY_TYPE_ID_RSA:
 	case SMW_CONFIG_KEY_TYPE_ID_ED448:
 	case SMW_CONFIG_KEY_TYPE_ID_X448:

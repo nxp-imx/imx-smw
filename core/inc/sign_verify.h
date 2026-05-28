@@ -21,6 +21,7 @@
 #define DSA_STR	    "DSA"
 #define RSA_STR	    "RSA"
 #define TLS_1_2_STR "TLS_1_2"
+#define SM2_STR	    "SM2"
 
 /* Signature type strings */
 #define PKCS1_1_5_STR  "PKCS1_1_5"
@@ -169,7 +170,20 @@ struct smw_eddsa_params *
 smw_sign_verify_get_eddsa_context(struct smw_crypto_sign_verify_args *args);
 
 /**
- * smw_sing_verify_get_op_context() - Get signature operation context pointer
+ * smw_sign_verify_get_sm2_params() - Return the SM2 parameters.
+ * @args: Pointer to the internal Sign/Verify args structure.
+ *
+ * This function returns the Sign/Verify SM2 parameters.
+ *
+ * Return:
+ * NULL
+ * address of the Sign/Verify SM2 context parameters.
+ */
+struct smw_sm2_params *
+smw_sign_verify_get_sm2_params(struct smw_crypto_sign_verify_args *args);
+
+/**
+ * smw_sign_verify_get_op_context() - Get signature operation context pointer
  * @args: Pointer to internal signature arguments.
  *
  * Return:
@@ -177,5 +191,21 @@ smw_sign_verify_get_eddsa_context(struct smw_crypto_sign_verify_args *args);
  */
 struct smw_op_context *
 smw_sign_verify_get_op_context(struct smw_crypto_sign_verify_args *args);
+
+/**
+ * smw_utils_get_sm2_a_b_xg_yg() - Get SM2 constant parameters
+ *
+ * Return:
+ * Address of the table that contains SM2 constant parameters
+ */
+const unsigned char *smw_utils_get_sm2_a_b_xg_yg(void);
+
+/**
+ * smw_utils_get_sm2_a_b_xg_yg_size() - Get SM2 constant parameters table size
+ *
+ * Return:
+ * Size of the table that contains SM2 constant parameters
+ */
+unsigned int smw_utils_get_sm2_a_b_xg_yg_size(void);
 
 #endif /* __SIGN_VERIFY_H__ */

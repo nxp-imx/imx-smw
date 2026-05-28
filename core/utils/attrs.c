@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2025 NXP
+ * Copyright 2025-2026 NXP
  */
 #include <inttypes.h>
 
@@ -60,12 +60,12 @@ int smw_utils_hash_attr_to_algo_id(smw_attr_algo_t attr,
 	return status;
 }
 
-#define SIGN_ALGO_ECDSA(_class, _curve, _type)                                 \
+#define SIGN_ALGO_ECC(_class, _algo, _curve, _type)                            \
 	{                                                                      \
 		.is_curve = true, .class = SMW_ATTR_CLASS_##_class,            \
-		.algo = SMW_ATTR_ALGO_ECDSA, .param = 0,                       \
+		.algo = SMW_ATTR_ALGO_##_algo, .param = 0,                     \
 		.curve = SMW_ATTR_CURVE_##_curve,                              \
-		.algo_id = SMW_CONFIG_SIGN_ALGO_ID_ECDSA,                      \
+		.algo_id = SMW_CONFIG_SIGN_ALGO_ID_##_algo,                    \
 		.type_id = SMW_CONFIG_SIGN_TYPE_ID_##_type                     \
 	}
 
@@ -96,6 +96,7 @@ int smw_utils_hash_attr_to_algo_id(smw_attr_algo_t attr,
 		.algo_id = SMW_CONFIG_SIGN_ALGO_ID_##_algo,                    \
 		.type_id = SMW_CONFIG_SIGN_TYPE_ID_##_type                     \
 	}
+
 static const struct {
 	smw_attr_algo_t class;
 	smw_attr_algo_t algo;
@@ -110,7 +111,7 @@ static const struct {
 	enum smw_config_sign_algo_id algo_id;
 	enum smw_config_sign_type_id type_id;
 } sign_list[] = {
-	SIGN_ALGO_ECDSA(ASYMMETRIC_SIGNATURE, ANY, DEFAULT),
+	SIGN_ALGO_ECC(ASYMMETRIC_SIGNATURE, ECDSA, ANY, DEFAULT),
 	SIGN_ALGO_EDDSA(ASYMMETRIC_SIGNATURE, EDDSA, ANY, NONE, PURE_EDDSA),
 	SIGN_ALGO_EDDSA(ASYMMETRIC_SIGNATURE, EDDSA, ED25519, PREHASHED,
 			EDDSA_PH),
@@ -126,7 +127,8 @@ static const struct {
 	SIGN_ALGO_TLS(ASYMMETRIC_SIGNATURE, TLS_1_2, CLIENT),
 	SIGN_ALGO_TLS(ASYMMETRIC_SIGNATURE, TLS_1_2, SERVER),
 	SIGN_ALGO_MODE(KEY_ATTESTATION, AES, CMAC, DEFAULT, CMAC),
-	SIGN_ALGO_ECDSA(KEY_ATTESTATION, ANY, DEFAULT),
+	SIGN_ALGO_ECC(KEY_ATTESTATION, ECDSA, ANY, DEFAULT),
+	SIGN_ALGO_ECC(ASYMMETRIC_SIGNATURE, SM2, SM2, DEFAULT),
 };
 
 int smw_utils_sign_attr_to_ids(smw_attr_algo_t attr,

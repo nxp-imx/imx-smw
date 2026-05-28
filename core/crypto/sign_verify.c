@@ -193,6 +193,7 @@ static unsigned int get_sign_size(struct smw_keymgr_descriptor *key)
 	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_R1:
 	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_T1:
 	case SMW_CONFIG_KEY_TYPE_ID_ED25519:
+	case SMW_CONFIG_KEY_TYPE_ID_SM2:
 		/* Signature size is public key size */
 		size = key->identifier.security_size;
 
@@ -298,6 +299,18 @@ static int sign_verify(enum operation_id operation_id,
 				status = SMW_STATUS_INVALID_PARAM;
 				goto end;
 			}
+		}
+	}
+
+	if (sign_verify_args.attributes.algo_id ==
+		    SMW_CONFIG_SIGN_ALGO_ID_SM2 &&
+	    (sign_verify_args.op_step == SMW_OP_STEP_ONESHOT ||
+	     sign_verify_args.op_step == SMW_OP_STEP_INIT)) {
+		/* 𝐸𝑁𝑇𝐿𝐴 is encoded in 2 bytes */
+		if (args->sm2_params && args->sm2_params->identifier_length >=
+						BITS_TO_BYTES_SIZE(0xFFFFu)) {
+			status = SMW_STATUS_INVALID_PARAM;
+			goto end;
 		}
 	}
 
@@ -660,6 +673,39 @@ smw_sign_verify_get_eddsa_context(struct smw_crypto_sign_verify_args *args)
 		param = NULL;
 
 	return param;
+}
+
+inline struct smw_sm2_params *
+smw_sign_verify_get_sm2_params(struct smw_crypto_sign_verify_args *args)
+{
+	struct smw_sm2_params *params = NULL;
+
+	if (!args)
+		return params;
+
+	switch (args->op_step) {
+	case SMW_OP_STEP_ONESHOT:
+		if (!args->oneshot_pub || !args->oneshot_pub->sm2_params)
+			break;
+
+		params = args->oneshot_pub->sm2_params;
+		break;
+
+	case SMW_OP_STEP_INIT:
+		if (!args->init_pub || !args->init_pub->sm2_params)
+			break;
+
+		params = args->init_pub->sm2_params;
+		break;
+
+	default:
+		break;
+	}
+
+	if (params && (!params->identifier || !params->identifier_length))
+		params = NULL;
+
+	return params;
 }
 
 struct smw_op_context *

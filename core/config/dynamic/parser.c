@@ -285,7 +285,7 @@ int read_range(char **start, char *end, struct range *range)
 	int status = SMW_STATUS_OK;
 
 	char *cur = *start;
-	unsigned int m;
+	unsigned int m = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 

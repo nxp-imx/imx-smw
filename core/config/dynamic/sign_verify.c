@@ -43,6 +43,7 @@ static const char *const sign_algo_strings[] = {
 	[SMW_CONFIG_SIGN_ALGO_ID_DSA] = DSA_STR,
 	[SMW_CONFIG_SIGN_ALGO_ID_RSA] = RSA_STR,
 	[SMW_CONFIG_SIGN_ALGO_ID_TLS_1_2] = TLS_1_2_STR,
+	[SMW_CONFIG_SIGN_ALGO_ID_SM2] = SM2_STR,
 };
 
 static const char *const sign_type_strings[] = {

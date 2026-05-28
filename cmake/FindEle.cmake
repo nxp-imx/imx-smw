@@ -23,7 +23,7 @@ The following cache variables may also be set:
 
 ``ELE_INCLUDE_DIR``
   the directory containing ``hsm_api.h``.
-``ELE_LIBRARIES``
+``ELE_LIBRARY``
   the path to the EdgeLock Enclave library.
 ``ELE_LIB_NAMES``
   name of the EdgeLock Enclave library without path.

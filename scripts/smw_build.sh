@@ -31,6 +31,7 @@ opt_libsqlite=""
 opt_libtss2=""
 opt_doc_only="-DDOC_ONLY=No"
 opt_dest=""
+opt_ela_enable=0
 
 #
 # Get script name and path
@@ -187,6 +188,44 @@ function ele()
 
     printf "Execute %s\n" "${cmd_script}"
     eval "${cmd_script}"
+
+    #
+    # Build ELA library only if enabled
+    #
+    if [[ ${opt_ela_enable} -eq 1 ]]; then
+        if ! ela; then
+            printf "ELA library build failed\n"
+            usage_ele
+            exit 1
+        fi
+    fi
+}
+
+function ela()
+{
+    cmd_script="cmake ${opt_toolchain}"
+    ela_script="${script_dir}/build_ela.cmake"
+
+    printf "\033[0;32m\n"
+    printf "***************************************\n"
+    printf " Install ELA to %s\n" "${opt_export}"
+    printf "***************************************\n"
+    printf "\033[0m\n"
+
+    if [[ -z ${opt_export} || -z ${opt_src} ]]; then
+        usage_ele
+        return 1
+    fi
+
+    cmd_script="${cmd_script} -DELE_SRC_PATH=${opt_src}"
+    cmd_script="${cmd_script} -DELE_ROOT=${opt_export} -P ${ela_script}"
+
+    printf "Execute %s\n" "${cmd_script}"
+    if eval "${cmd_script}"; then
+        return 0
+    else
+        return 1
+    fi
 }
 
 function libuuid_config()
@@ -629,9 +668,11 @@ function usage_ele()
     printf "===============================================\n"
     printf "\n"
     printf "  %s ele export=[dir] src=[dir] " "${script_name}"
+    printf "enable_ela=[on|off] "
     printf "arch=[arch] toolpath=[dir] toolname=[name]\n"
     printf "    export   = Export directory\n"
     printf "    src      = Source directory\n"
+    printf "    enable_ela = [optional] Enable ELA (default: off)\n"
     printf "    arch     = [optional] Toolchain architecture (aarch32|aarch64)\n"
     printf "    toolpath = [optional] Toolchain path where installed\n"
     printf "    toolname = [optional] Toolchain name\n"
@@ -648,7 +689,7 @@ function usage_teec()
     printf "===============================================\n"
     printf "\n"
     printf "  %s teec export=[dir] src=[dir] out=[dir] " "${script_name}"
-    printf "libuuid_config=[dir] pkg_config=[dir]"
+    printf "libuuid_config=[dir] pkg_config=[dir] "
     printf "arch=[arch] toolpath=[dir] toolname=[name]\n"
     printf "    export         = Export directory\n"
     printf "    src            = Source directory\n"
@@ -670,7 +711,7 @@ function usage_tadevkit()
     printf "===============================================\n"
     printf "\n"
     printf "  %s tadevkit export=[dir] src=[dir] out=[dir] " "${script_name}"
-    printf "platform=[platforn] arch=[arch] toolpath=[dir] toolname=[name]\n"
+    printf "platform=[platform] arch=[arch] toolpath=[dir] toolname=[name]\n"
     printf "    export   = Export directory\n"
     printf "    src      = Source directory\n"
     printf "    out      = [optional] Build root directory\n"
@@ -1006,6 +1047,19 @@ do
         config=*)
             config_value="${arg#*=}"
             opt_config=$(convert_config_to_cmake_flag "${config_value}")
+            ;;
+
+        enable_ela=*)
+            # Track enable_ela separately for ELE build step
+            ela_value="${arg#*=}"
+            if [[ "${ela_value}" == "on" ]]; then
+                opt_ela_enable=1
+            else
+                opt_ela_enable=0
+            fi
+
+            # Add to features for cmake
+            opt_features="${opt_features} $(convert_feature_to_cmake_flag "${arg}")"
             ;;
 
         # Handle individual feature options dynamically

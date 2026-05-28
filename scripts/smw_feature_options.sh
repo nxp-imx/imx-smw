@@ -27,6 +27,7 @@ declare -a SMW_FEATURE_OPTIONS=(
     "enable_device_reprovision|Device reprovision"
     "enable_rng|Random number generation"
     "enable_tls|TLS support"
+    "enable_ela|ELA extension for ELE subsystem (requires ELE)"
     # Build/development features
     "enable_code_coverage|Enable code coverage support"
     "enable_psa_default_alt|Enable the support of an alternative subsystem for the PSA interface operations."
@@ -124,6 +125,8 @@ declare -a CONFIG_SECURE_DEVICE=(
 
 # config: all
 # Enable all functional features
+# NOTE: enable_ela intentionally excluded
+# It requires ELE subsystem and affects build step
 declare -a CONFIG_ALL=(
     "enable_hash=on"
     "enable_rng=on"
@@ -144,6 +147,8 @@ declare -a CONFIG_ALL=(
 
 # config: all-no-tls
 # All functional features except TLS
+# NOTE: enable_ela intentionally excluded
+# It requires ELE subsystem and affects build step
 declare -a CONFIG_ALL_NO_TLS=(
     "enable_hash=on"
     "enable_rng=on"

@@ -75,6 +75,9 @@ $(get_feature_options_usage | sed 's/^/      /')
       # Multiple subsystems with custom toolchain path
       $(basename "$0") build aarch64 tee,ele toolpath=/opt/toolchains
 
+      # ELE with ELA enabled
+      $(basename "$0") build aarch64 ele enable_ela=on
+
       # Multiple subsystems with crypto-basic config
       $(basename "$0") build aarch64 tee,seco config=crypto-basic
 
@@ -198,6 +201,7 @@ tee_build="../build_arm""${arch//[^0-9]/}"
 psaarchtests_src_path="../psa-arch-tests"
 opt_config=""
 opt_feature_options=""
+opt_ela_enable=0
 opt_debug=0
 
 for arg in "$@"
@@ -214,6 +218,23 @@ do
 
             if validate_config "${config_value}"; then
                 opt_config="${arg}"
+            else
+                exit 1
+            fi
+            ;;
+
+        enable_ela=*)
+            # Extract option value
+            option_name="${arg%%=*}"
+            option_value="${arg#*=}"
+
+            # Track enable_ela separately for ELE build step
+            if validate_feature_option "${option_name}" "${option_value}"; then
+                if [[ "${option_value}" == "on" ]]; then
+                    opt_ela_enable=1
+                fi
+
+                opt_feature_options="${opt_feature_options} ${arg}"
             else
                 exit 1
             fi
@@ -250,6 +271,14 @@ if [[ ${opt_doc_only} -eq 1 ]]; then
 fi
 
 #
+# enable_ela requires ELE subsystem
+#
+if [[ ${opt_ela_enable} -eq 1 && ${opt_ele} -eq 0 ]]; then
+    pr_err "enable_ela=on requires ELE subsystem to be enabled"
+    exit 1
+fi
+
+#
 # Build/Prepare external dependencies
 #
 eval "./scripts/smw_build.sh toolchain ${arch} ${opt_toolpath}"
@@ -269,8 +298,13 @@ fi
 
 # Enable ELE if supported
 if [[ ${opt_ele} -eq 1 ]]; then
+    ela_opt="enable_ela=off"
+    if [[ ${opt_ela_enable} -eq 1 ]]; then
+        ela_opt="enable_ela=on"
+    fi
+
     eval "./scripts/smw_build.sh ele export=${ele_export} \
-        src=../secure_enclave ${arch} ${opt_toolpath}"
+        src=../secure_enclave ${arch} ${opt_toolpath} ${ela_opt}"
 
     conf_opts="${conf_opts} ele=${ele_export}"
 fi

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #ifndef TEE_SUBSYSTEM_H
@@ -61,6 +61,7 @@ enum tee_key_type {
 	TEE_KEY_TYPE_ID_RSA,
 	TEE_KEY_TYPE_ID_GENERIC_SECRET,
 	TEE_KEY_TYPE_ID_HKDF_IKM,
+	TEE_KEY_TYPE_ID_SM2,
 	TEE_KEY_TYPE_ID_NB,
 	TEE_KEY_TYPE_ID_INVALID
 };
@@ -98,6 +99,7 @@ enum tee_algorithm_id {
 	TEE_ALGORITHM_ID_EDDSA,
 	TEE_ALGORITHM_ID_RSA,
 	TEE_ALGORITHM_ID_SHAKE256,
+	TEE_ALGORITHM_ID_SM2,
 	TEE_ALGORITHM_ID_INVALID
 };
 
@@ -208,6 +210,10 @@ struct sign_verify_shared_params {
 		struct {
 			uint8_t ctx_length;
 			uint8_t ctx[];
+		};
+		struct {
+			uint16_t identifier_length;
+			uint8_t identifier[];
 		};
 	};
 };

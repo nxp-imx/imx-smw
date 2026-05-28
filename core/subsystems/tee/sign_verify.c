@@ -105,7 +105,7 @@ static int get_pub_key_hex_len(struct smw_keymgr_descriptor *key_desc,
 static void get_eddsa_context(unsigned char **ctx, unsigned int *ctx_length,
 			      struct smw_crypto_sign_verify_args *args)
 {
-	struct smw_eddsa_params *param = NULL;
+	struct smw_eddsa_params *params = NULL;
 	struct smw_op_context *op_context = NULL;
 	struct sign_context *sign_ctx = NULL;
 
@@ -118,12 +118,47 @@ static void get_eddsa_context(unsigned char **ctx, unsigned int *ctx_length,
 			*ctx_length = sign_ctx->eddsa_params.context_length;
 		}
 	} else {
-		param = smw_sign_verify_get_eddsa_context(args);
-		if (param) {
-			*ctx = param->context;
-			*ctx_length = param->context_length;
+		params = smw_sign_verify_get_eddsa_context(args);
+		if (params) {
+			*ctx = params->context;
+			*ctx_length = params->context_length;
 		}
 	}
+}
+
+static void get_sm2_identifier(unsigned char **identifier,
+			       unsigned int *identifier_length,
+			       struct smw_crypto_sign_verify_args *args)
+{
+	struct smw_sm2_params *params = smw_sign_verify_get_sm2_params(args);
+
+	if (params) {
+		*identifier = params->identifier;
+		*identifier_length = params->identifier_length;
+	}
+}
+
+static int get_public_key_buffer(struct smw_keymgr_descriptor *export_key_desc,
+				 unsigned char **hex_key_buf,
+				 unsigned int *hex_key_size)
+{
+	int status = SMW_STATUS_OK;
+
+	status = tee_export_public_key(export_key_desc);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	if (export_key_desc->identifier.type_id == SMW_CONFIG_KEY_TYPE_ID_RSA) {
+		*hex_key_size = smw_keymgr_get_modulus_length(export_key_desc);
+		*hex_key_buf = smw_keymgr_get_modulus(export_key_desc);
+
+	} else {
+		*hex_key_size = smw_keymgr_get_public_length(export_key_desc);
+		*hex_key_buf = smw_keymgr_get_public_data(export_key_desc);
+	}
+
+end:
+	return status;
 }
 
 /**
@@ -152,6 +187,8 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 		sizeof(struct sign_verify_shared_params);
 	unsigned char *ctx = NULL;
 	unsigned int ctx_length = 0;
+	unsigned char *identifier = NULL;
+	unsigned int identifier_length = 0;
 	unsigned int sign_length = 0;
 	unsigned char *hex_pub_key = NULL;
 
@@ -202,6 +239,16 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 
 		if (ctx && ctx_length) {
 			if (ADD_OVERFLOW(shared_params_size, ctx_length,
+					 &shared_params_size)) {
+				status = SMW_STATUS_INVALID_PARAM;
+				goto exit;
+			}
+		}
+	} else if (sign_attrs->algo_id == SMW_CONFIG_SIGN_ALGO_ID_SM2) {
+		get_sm2_identifier(&identifier, &identifier_length, args);
+
+		if (identifier && identifier_length) {
+			if (ADD_OVERFLOW(shared_params_size, identifier_length,
 					 &shared_params_size)) {
 				status = SMW_STATUS_INVALID_PARAM;
 				goto exit;
@@ -320,6 +367,20 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 
 	case SMW_CONFIG_SIGN_ALGO_ID_ECDSA:
 		shared_params->sign_algorithm = TEE_ALGORITHM_ID_ECDSA;
+		break;
+
+	case SMW_CONFIG_SIGN_ALGO_ID_SM2:
+		shared_params->sign_algorithm = TEE_ALGORITHM_ID_SM2;
+		if (identifier && identifier_length) {
+			if (SET_OVERFLOW(identifier_length,
+					 shared_params->identifier_length)) {
+				status = SMW_STATUS_INVALID_PARAM;
+				goto exit;
+			}
+
+			SMW_UTILS_MEMCPY(shared_params->identifier, identifier,
+					 identifier_length);
+		}
 		break;
 
 	default:
@@ -468,6 +529,115 @@ end:
 	return status;
 }
 
+static int set_sm2_digest(struct smw_keymgr_descriptor *key_descriptor,
+			  enum smw_config_hash_algo_id hash_id,
+			  unsigned char *msg, unsigned int msg_len,
+			  unsigned char *id, unsigned int id_len,
+			  unsigned char *digest, unsigned int digest_len)
+{
+	int status = SMW_STATUS_OK;
+
+	struct smw_crypto_hash_args hash_args = { 0 };
+	struct smw_hash_args oneshot_pub = { .version = 1 };
+	unsigned char *p = NULL;
+	unsigned char *buf = NULL;
+	unsigned int buf_len = 2;
+	unsigned char *pub_key = NULL;
+	unsigned int pub_key_size = 0;
+	const unsigned char *sm2_a_b_xg_yg = smw_utils_get_sm2_a_b_xg_yg();
+	unsigned int sm2_a_b_xg_yg_size = smw_utils_get_sm2_a_b_xg_yg_size();
+	struct smw_keymgr_descriptor export_key_desc = { 0 };
+	unsigned int tmp = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (key_descriptor->identifier.s_id != INVALID_KEY_ID) {
+		export_key_desc.identifier.s_id =
+			key_descriptor->identifier.s_id;
+
+		status = get_public_key_buffer(&export_key_desc, &pub_key,
+					       &pub_key_size);
+		if (status != SMW_STATUS_OK)
+			goto end;
+	} else {
+		pub_key = smw_keymgr_get_public_data(key_descriptor);
+		pub_key_size = smw_keymgr_get_public_length(key_descriptor);
+	}
+
+	if (!pub_key || !pub_key_size) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	/* Concatenate ENTLA || IDA || a || b || xG || yG || xA || yA */
+	if (ADD_OVERFLOW(buf_len, id_len, &buf_len)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+	if (ADD_OVERFLOW(buf_len, sm2_a_b_xg_yg_size, &buf_len)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+	if (ADD_OVERFLOW(buf_len, pub_key_size, &buf_len)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	buf = SMW_UTILS_MALLOC(buf_len);
+	if (!buf) {
+		status = SMW_STATUS_ALLOC_FAILURE;
+		goto end;
+	}
+	p = buf;
+	*p++ = (BYTES_TO_BITS(id_len) >> 8) & 0xFF;
+	*p++ = BYTES_TO_BITS(id_len) & 0xFF;
+	SMW_UTILS_MEMCPY(p, id, id_len);
+	p += id_len;
+	SMW_UTILS_MEMCPY(p, sm2_a_b_xg_yg, sm2_a_b_xg_yg_size);
+	p += sm2_a_b_xg_yg_size;
+	SMW_UTILS_MEMCPY(p, pub_key, pub_key_size);
+
+	hash_args.algo_id = hash_id;
+	hash_args.op_step = SMW_OP_STEP_ONESHOT;
+	hash_args.oneshot_pub = &oneshot_pub;
+
+	oneshot_pub.input = buf;
+	oneshot_pub.input_length = buf_len;
+	oneshot_pub.output = digest;
+	oneshot_pub.output_length = digest_len;
+
+	/* Compute ZA = H256(ENTLA || IDA || a || b || xG || yG || xA || yA) */
+	if (!tee_hash_handle(OPERATION_ID_HASH, &hash_args, &status))
+		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	if (status != SMW_STATUS_OK) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	if (ADD_OVERFLOW(oneshot_pub.output_length, msg_len, &tmp)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	if (digest_len != tmp) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	/* Concatenate ZA || M */
+	SMW_UTILS_MEMCPY(digest + oneshot_pub.output_length, msg, msg_len);
+
+end:
+	if (export_key_desc.pub)
+		(void)smw_keymgr_free_keypair_buffer(&export_key_desc);
+
+	if (buf)
+		SMW_UTILS_FREE(buf);
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 static int signature_init(struct smw_crypto_sign_verify_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
@@ -479,6 +649,12 @@ static int signature_init(struct smw_crypto_sign_verify_args *args)
 	struct smw_op_context *op_context = NULL;
 	struct sign_context *ctx = NULL;
 	enum tee_key_type key_type_id = TEE_KEY_TYPE_ID_INVALID;
+	unsigned char *msg_buf = smw_sign_verify_get_msg_buf(args);
+	unsigned int msg_len = smw_sign_verify_get_msg_len(args);
+	unsigned char *identifier = NULL;
+	unsigned int identifier_length = 0;
+	unsigned char *input = NULL;
+	unsigned int input_length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -519,6 +695,37 @@ static int signature_init(struct smw_crypto_sign_verify_args *args)
 
 		/* Force the hash algorithm to be SHA512 */
 		sign_attrs->hash_id = SMW_CONFIG_HASH_ALGO_ID_SHA512;
+	} else if (sign_attrs->algo_id == SMW_CONFIG_SIGN_ALGO_ID_SM2) {
+		get_sm2_identifier(&identifier, &identifier_length, args);
+
+		if (!identifier || !identifier_length) {
+			status = SMW_STATUS_INVALID_PARAM;
+			goto end;
+		}
+
+		status = tee_get_digest_length(sign_attrs->hash_id,
+					       &input_length);
+		if (status != SMW_STATUS_OK)
+			goto end;
+
+		if (INC_OVERFLOW(input_length, msg_len)) {
+			status = SMW_STATUS_OPERATION_FAILURE;
+			goto end;
+		}
+
+		input = SMW_UTILS_MALLOC(input_length);
+		if (!input) {
+			status = SMW_STATUS_ALLOC_FAILURE;
+			goto end;
+		}
+
+		status = set_sm2_digest(&args->key_descriptor,
+					sign_attrs->hash_id, msg_buf, msg_len,
+					identifier, identifier_length, input,
+					input_length);
+
+		if (status != SMW_STATUS_OK)
+			goto end;
 	}
 
 	status = set_sign_context(op_context, args);
@@ -535,14 +742,23 @@ static int signature_init(struct smw_crypto_sign_verify_args *args)
 	hash_args.op_step = SMW_OP_STEP_INIT;
 	hash_args.init_pub = &init_pub;
 
-	init_pub.input = smw_sign_verify_get_msg_buf(args);
-	init_pub.input_length = smw_sign_verify_get_msg_len(args);
+	if (input || input_length) {
+		init_pub.input = input;
+		init_pub.input_length = input_length;
+	} else {
+		init_pub.input = msg_buf;
+		init_pub.input_length = msg_len;
+	}
+
 	init_pub.context = &ctx->hash_ctx;
 
 	if (!tee_hash_handle(OPERATION_ID_HASH_MULTI_PART, &hash_args, &status))
 		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
 end:
+	if (input)
+		SMW_UTILS_FREE(input);
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }

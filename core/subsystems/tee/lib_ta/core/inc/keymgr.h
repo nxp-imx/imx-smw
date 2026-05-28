@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #ifndef TA_KEYMGR_H
@@ -13,6 +13,22 @@
 		__typeof__(size) _bits = 0;                                    \
 		ADD_OVERFLOW((size), 7, &_bits) ? 0 : _bits / 8;               \
 	})
+
+/**
+ * export_public_key() - Export the public key.
+ * @handle: Key handle.
+ * @pub_data: Pointer to public key buffer.
+ * @pub_len: @pub_data length in bytes.
+ * @modulus: Modulus buffer.
+ * @modulus_len: @modulus length in bytes.
+ *
+ * Return:
+ * TEE_SUCCESS			- Success.
+ * Error code from internal functions.
+ */
+TEE_Result export_public_key(TEE_ObjectHandle handle, unsigned char *pub_data,
+			     size_t *pub_len, unsigned char *modulus,
+			     size_t *modulus_len);
 
 /**
  * generate_key() - Generate a key.
@@ -154,6 +170,18 @@ TEE_Result key_usage_to_tee(unsigned int key_usage, uint32_t *tee_key_usage);
  * Error code from TEE_RestrictObjectUsage1().
  */
 TEE_Result set_key_usage(uint32_t key_usage, TEE_ObjectHandle key_handle);
+
+/**
+ * get_ecc_public_key_size() - Get the asymmetric public key size.
+ * @handle: Key handle.
+ * @size: Public key size retrieved in bytes.
+ *
+ * Return:
+ * TEE_SUCCESS        - Success.
+ * TEE_ERROR_GENERIC  - Unexpected success.
+ * Error code from TEE_GetObjectBufferAttribute().
+ */
+TEE_Result get_ecc_public_key_size(TEE_ObjectHandle handle, size_t *size);
 
 /**
  * get_key_obj_type() - Get key's object type.

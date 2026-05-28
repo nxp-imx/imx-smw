@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #include <inttypes.h>
@@ -60,10 +60,17 @@ RANGE_DEF(HKDF_IKM, 8, 4096, 8);
 		.security_size = _security_size, .symmetric = _symmetric       \
 	}
 
-#define KEY_DEF_ASYM(_key_type, _security_size, _hash)                         \
+#define KEY_DEF_ECDSA(_key_type, _security_size, _hash)                        \
 	KEY_DEF(_key_type, _security_size,                                     \
 		SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(                      \
 			SMW_ATTR_CURVE_##_key_type, SMW_ATTR_HASH_##_hash),    \
+		false)
+
+#define KEY_DEF_EDDSA(_key_type, _security_size, _hash)                        \
+	KEY_DEF(_key_type, _security_size,                                     \
+		SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_EDDSA(                      \
+			SMW_ATTR_CURVE_##_key_type, SMW_ATTR_HASH_##_hash,     \
+			SMW_ATTR_SIGN_PARAM_EDDSA_NONE),                       \
 		false)
 
 #define KEY_DEF_SYM(_key_type, _security_size)                                 \
@@ -107,6 +114,11 @@ RANGE_DEF(HKDF_IKM, 8, 4096, 8);
 		.symmetric = true                                              \
 	}
 
+#define KEY_DEF_SM2(_security_size, _hash)                                     \
+	KEY_DEF(SM2, _security_size,                                           \
+		SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_SM2(SMW_ATTR_HASH_##_hash), \
+		false)
+
 /**
  * struct key_def - TEE Key definition
  * @key_type_id: SMW key type ID
@@ -132,12 +144,12 @@ static const struct key_def {
 	struct security_size_range security_size_range;
 	bool symmetric;
 } key_def_list[] = {
-	KEY_DEF_ASYM(SECP_R1, 192, ANY),
-	KEY_DEF_ASYM(SECP_R1, 224, ANY),
-	KEY_DEF_ASYM(SECP_R1, 256, ANY),
-	KEY_DEF_ASYM(SECP_R1, 384, ANY),
-	KEY_DEF_ASYM(SECP_R1, 521, ANY),
-	KEY_DEF_ASYM(ED25519, 255, SHA512),
+	KEY_DEF_ECDSA(SECP_R1, 192, ANY),
+	KEY_DEF_ECDSA(SECP_R1, 224, ANY),
+	KEY_DEF_ECDSA(SECP_R1, 256, ANY),
+	KEY_DEF_ECDSA(SECP_R1, 384, ANY),
+	KEY_DEF_ECDSA(SECP_R1, 521, ANY),
+	KEY_DEF_EDDSA(ED25519, 255, SHA512),
 	KEY_DEF_RANGE_SYM(AES),
 	KEY_DEF_SYM(DES, 56),
 	KEY_DEF_RANGE_SYM(DES3),
@@ -152,6 +164,7 @@ static const struct key_def {
 	KEY_DEF_RANGE_ASYM(RSA, 0),
 	KEY_DEF_DERIVE(DERIVE, GENERIC_SECRET),
 	KEY_DEF_DERIVE(HKDF_IKM, HKDF_IKM),
+	KEY_DEF_SM2(256, SM3),
 };
 
 /**
@@ -831,6 +844,7 @@ static int check_import_key_buffers_presence(enum tee_key_type key_type,
 	case TEE_KEY_TYPE_ID_SECP_R1:
 	case TEE_KEY_TYPE_ID_ED25519:
 	case TEE_KEY_TYPE_ID_RSA:
+	case TEE_KEY_TYPE_ID_SM2:
 		/*
 		 * OPTEE does not support import of private key only for
 		 * asymmetric key type.
@@ -869,6 +883,7 @@ static int check_export_key_config(struct smw_keymgr_descriptor *key_descriptor)
 	case SMW_CONFIG_KEY_TYPE_ID_SECP_R1:
 	case SMW_CONFIG_KEY_TYPE_ID_ED25519:
 	case SMW_CONFIG_KEY_TYPE_ID_RSA:
+	case SMW_CONFIG_KEY_TYPE_ID_SM2:
 		/*
 		 * For RSA key type, modulus presence is already check in
 		 * core/keymgr.c file
@@ -2045,6 +2060,62 @@ int tee_delete_key(uint32_t id)
 
 exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+int tee_export_public_key(struct smw_keymgr_descriptor *key_desc)
+{
+	int status = SMW_STATUS_OK;
+
+	struct smw_keymgr_get_key_attributes_args key_attrs_args = { 0 };
+	struct smw_keymgr_identifier *key_identifier =
+		&key_attrs_args.key_descriptor.identifier;
+	unsigned int public_length = 0;
+	unsigned int modulus_length = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	/* First get the key attributes */
+	key_identifier->s_id = key_desc->identifier.s_id;
+	status = get_key_attributes(&key_attrs_args);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	key_desc->identifier.type_id = key_identifier->type_id;
+	key_desc->identifier.security_size = key_identifier->security_size;
+	key_desc->format_id = SMW_KEYMGR_FORMAT_ID_HEX;
+
+	status = smw_keymgr_alloc_keypair_buffer(key_desc, 0, 0, 0);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	status = get_key_lengths(key_desc);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	public_length = smw_keymgr_get_public_length(key_desc);
+	modulus_length = smw_keymgr_get_modulus_length(key_desc);
+
+	status = smw_keymgr_free_keypair_buffer(key_desc);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	/* Allocate key descriptor's keypair buffer and its public data */
+	status = smw_keymgr_alloc_keypair_buffer(key_desc, public_length, 0,
+						 modulus_length);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	/* Export the public key */
+	if (!tee_key_handle(OPERATION_ID_EXPORT_KEY, key_desc, &status))
+		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+
+end:
+	if (status != SMW_STATUS_OK && key_desc->pub)
+		(void)smw_keymgr_free_keypair_buffer(key_desc);
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	// coverity[missing_unlock]
 	return status;
 }
 

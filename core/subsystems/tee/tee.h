@@ -123,10 +123,22 @@ tee_get_hash_algo(enum smw_config_hash_algo_id smw_id);
  *
  * Return:
  * SMW_STATUS_OK			- Success.
- * SMW_STATUS_OPERATION_NOT_SUPPORTED	- Invalid key type.
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED	- Invalid hash algorithm ID.
  */
 int tee_convert_hash_algorithm_id(enum smw_config_hash_algo_id smw_id,
 				  enum tee_algorithm_id *tee_id);
+
+/**
+ * tee_get_digest_length() - Get digest length.
+ * @smw_id: Hash algorithm ID as defined in SMW.
+ * @digest_len: Pointer to the digest length.
+ *
+ * Return:
+ * SMW_STATUS_OK			- Success.
+ * SMW_STATUS_INVALID_PARAM	- Invalid hash algorithm ID.
+ */
+int tee_get_digest_length(enum smw_config_hash_algo_id smw_id,
+			  unsigned int *digest_len);
 
 /**
  * execute_tee_cmd() - Invoke a command within the SMW TA session.
@@ -401,5 +413,24 @@ int check_persistence(smw_attr_attributes_t attributes, bool *persistent_flag);
 int set_tmpref_buffer(unsigned int mem_type, unsigned int param_idx,
 		      unsigned char *buffer, unsigned int buffer_len,
 		      TEEC_Operation *op);
+
+/**
+ * tee_export_public_key() - Export the TEE public key
+ * @key_desc: Key descriptor.
+ *
+ * The function exports the public key of the given @key_desc->identifier.id.
+ * The following fields of @key_desc parameters are output:
+ *  - identifier.type_id
+ *  - identifier.security_size
+ *  - format_id
+ *  - pub (if operation success)
+ *  - ops (if operation success)
+ *
+ * Return:
+ * SMW_STATUS_OK                       - Success
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED  - Key type not supported
+ * Other SMW status error.
+ */
+int tee_export_public_key(struct smw_keymgr_descriptor *key_desc);
 
 #endif /* TEE_H */

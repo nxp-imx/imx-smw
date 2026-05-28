@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #include <util.h>
@@ -20,6 +20,8 @@
 #define NB_ATTR_ED25519_KEYPAIR 2
 #define NB_ATTR_RSA_PUB_KEY	2
 #define NB_ATTR_RSA_KEYPAIR	3
+#define NB_ATTR_SM2_PUB_KEY	2
+#define NB_ATTR_SM2_KEYPAIR	3
 #define NB_ATTR_SYMM_KEY	1
 
 #define SECURITY_SIZE_RANGE UINT_MAX
@@ -109,21 +111,22 @@ struct {
 		.obj_type = TEE_TYPE_##_obj_type, .ecc_curve = 0               \
 	}
 
-#define KEY_DEF_ECC_KEYPAIR(_key_type, _security_size, _ecc_curve)             \
+#define KEY_DEF_ECC_KEYPAIR(_key_type, _security_size, _obj_type, _ecc_curve)  \
 	{                                                                      \
 		.key_type = TEE_KEY_TYPE_ID_##_key_type,                       \
 		.key_privacy = TEE_KEY_PAIR, .security_size = _security_size,  \
-		.obj_type = TEE_TYPE_ECDSA_KEYPAIR,                            \
-		.ecc_curve = TEE_ECC_CURVE_NIST_##_ecc_curve                   \
+		.obj_type = TEE_TYPE_##_obj_type##_KEYPAIR,                    \
+		.ecc_curve = TEE_ECC_CURVE_##_ecc_curve                        \
 	}
 
-#define KEY_DEF_ECC_PUBLIC_KEY(_key_type, _security_size, _ecc_curve)          \
+#define KEY_DEF_ECC_PUBLIC_KEY(_key_type, _security_size, _obj_type,           \
+			       _ecc_curve)                                     \
 	{                                                                      \
 		.key_type = TEE_KEY_TYPE_ID_##_key_type,                       \
 		.key_privacy = TEE_KEY_PUBLIC,                                 \
 		.security_size = _security_size,                               \
-		.obj_type = TEE_TYPE_ECDSA_PUBLIC_KEY,                         \
-		.ecc_curve = TEE_ECC_CURVE_NIST_##_ecc_curve                   \
+		.obj_type = TEE_TYPE_##_obj_type##_PUBLIC_KEY,                 \
+		.ecc_curve = TEE_ECC_CURVE_##_ecc_curve                        \
 	}
 
 /**
@@ -144,16 +147,16 @@ struct {
 	unsigned int obj_type;
 	unsigned int ecc_curve;
 } key_def_list[] = {
-	KEY_DEF_ECC_KEYPAIR(SECP_R1, 192, P192),
-	KEY_DEF_ECC_KEYPAIR(SECP_R1, 224, P224),
-	KEY_DEF_ECC_KEYPAIR(SECP_R1, 256, P256),
-	KEY_DEF_ECC_KEYPAIR(SECP_R1, 384, P384),
-	KEY_DEF_ECC_KEYPAIR(SECP_R1, 521, P521),
-	KEY_DEF_ECC_PUBLIC_KEY(SECP_R1, 192, P192),
-	KEY_DEF_ECC_PUBLIC_KEY(SECP_R1, 224, P224),
-	KEY_DEF_ECC_PUBLIC_KEY(SECP_R1, 256, P256),
-	KEY_DEF_ECC_PUBLIC_KEY(SECP_R1, 384, P384),
-	KEY_DEF_ECC_PUBLIC_KEY(SECP_R1, 521, P521),
+	KEY_DEF_ECC_KEYPAIR(SECP_R1, 192, ECDSA, NIST_P192),
+	KEY_DEF_ECC_KEYPAIR(SECP_R1, 224, ECDSA, NIST_P224),
+	KEY_DEF_ECC_KEYPAIR(SECP_R1, 256, ECDSA, NIST_P256),
+	KEY_DEF_ECC_KEYPAIR(SECP_R1, 384, ECDSA, NIST_P384),
+	KEY_DEF_ECC_KEYPAIR(SECP_R1, 521, ECDSA, NIST_P521),
+	KEY_DEF_ECC_PUBLIC_KEY(SECP_R1, 192, ECDSA, NIST_P192),
+	KEY_DEF_ECC_PUBLIC_KEY(SECP_R1, 224, ECDSA, NIST_P224),
+	KEY_DEF_ECC_PUBLIC_KEY(SECP_R1, 256, ECDSA, NIST_P256),
+	KEY_DEF_ECC_PUBLIC_KEY(SECP_R1, 384, ECDSA, NIST_P384),
+	KEY_DEF_ECC_PUBLIC_KEY(SECP_R1, 521, ECDSA, NIST_P521),
 	KEY_DEF_KEYPAIR(ED25519, 255, ED25519),
 	KEY_DEF_PUBLIC_KEY(ED25519, 255, ED25519),
 	KEY_DEF_RANGE_PRIVATE(AES, AES),
@@ -171,6 +174,8 @@ struct {
 	KEY_DEF_RANGE_PUBLIC_KEY(RSA, RSA),
 	KEY_DEF_RANGE_SECRET(GENERIC_SECRET, GENERIC_SECRET),
 	KEY_DEF_RANGE_PRIVATE(HKDF_IKM, HKDF_IKM),
+	KEY_DEF_ECC_KEYPAIR(SM2, 256, SM2_DSA, SM2),
+	KEY_DEF_ECC_PUBLIC_KEY(SM2, 256, SM2_DSA, SM2),
 };
 
 /**
@@ -354,32 +359,50 @@ TEE_Result set_key_usage(uint32_t key_usage, TEE_ObjectHandle key_handle)
 	return TEE_RestrictObjectUsage1(key_handle, key_usage);
 }
 
-/**
- * get_ecc_public_key_size() - Get the asymmetric public key size.
- * @obj_info: Key object information.
- * @size: Public key size retrieved in bytes.
- *
- * Return:
- * TEE_SUCCESS        - Success.
- * TEE_ERROR_GENERIC  - Unexpected success.
- * Error code from TEE_GetObjectBufferAttribute().
- */
-static TEE_Result get_ecc_public_key_size(TEE_ObjectInfo *obj_info,
-					  size_t *size)
+TEE_Result get_ecc_public_key_size(TEE_ObjectHandle handle, size_t *size)
 {
-	TEE_Result res = TEE_ERROR_GENERIC;
+	TEE_Result res = TEE_SUCCESS;
 	size_t tmp = 0;
 
 	FMSG("Executing %s", __func__);
 
-	if (ADD_OVERFLOW(obj_info->objectSize, 7, &tmp))
-		return res;
+	res = TEE_GetObjectBufferAttribute(handle, TEE_ATTR_ECC_PUBLIC_VALUE_X,
+					   NULL, &tmp);
+	if (res != TEE_ERROR_SHORT_BUFFER) {
+		res = TEE_ERROR_GENERIC;
+		goto err;
+	}
 
-	tmp /= 8;
+	if (ROUNDUP_OVERFLOW(tmp, 2, &tmp)) {
+		res = TEE_ERROR_GENERIC;
+		goto err;
+	}
 
-	if (!MUL_OVERFLOW(tmp, 2, size))
-		res = TEE_SUCCESS;
+	if (ADD_OVERFLOW(tmp, 0, size)) {
+		res = TEE_ERROR_OVERFLOW;
+		goto err;
+	}
 
+	res = TEE_GetObjectBufferAttribute(handle, TEE_ATTR_ECC_PUBLIC_VALUE_Y,
+					   NULL, &tmp);
+	if (res != TEE_ERROR_SHORT_BUFFER) {
+		res = TEE_ERROR_GENERIC;
+		goto err;
+	}
+
+	if (ROUNDUP_OVERFLOW(tmp, 2, &tmp)) {
+		res = TEE_ERROR_GENERIC;
+		goto err;
+	}
+
+	if (ADD_OVERFLOW(*size, tmp, size)) {
+		res = TEE_ERROR_OVERFLOW;
+		goto err;
+	}
+
+	res = TEE_SUCCESS;
+
+err:
 	return res;
 }
 
@@ -450,104 +473,6 @@ static TEE_Result get_rsa_public_key_size(TEE_ObjectHandle handle,
 }
 
 /**
- * export_pub_key_ecc() - Export asymmetric public key.
- * @handle: Key handle.
- * @obj_info: Key object information?
- * @pub_key: Pointer to public key buffer.
- * @pub_key_size: Pointer to @pub_key size (bytes).
- *
- * Return:
- * TEE_SUCCESS        - Success.
- * TEE_ERROR_NO_DATA  - @pub_key is not set.
- * TEE_ERROR_GENERIC  - Unexpected success.
- * Error code from TEE_GetObjectBufferAttribute().
- */
-static TEE_Result export_pub_key_ecc(TEE_ObjectHandle handle,
-				     TEE_ObjectInfo *obj_info,
-				     unsigned char *pub_key,
-				     size_t *pub_key_size)
-{
-	TEE_Result res = TEE_ERROR_NO_DATA;
-	size_t half_size = 0;
-	size_t size = 0;
-
-	FMSG("Executing %s", __func__);
-
-	if (!pub_key)
-		return res;
-
-	res = get_ecc_public_key_size(obj_info, &size);
-	if (res)
-		return res;
-
-	if (*pub_key_size < size) {
-		*pub_key_size = size;
-		return TEE_ERROR_SHORT_BUFFER;
-	}
-
-	half_size = size / 2;
-	*pub_key_size = size;
-
-	/* Get first part of public key */
-	res = TEE_GetObjectBufferAttribute(handle, TEE_ATTR_ECC_PUBLIC_VALUE_X,
-					   pub_key, &size);
-	if (!res) {
-		/* If x size is odd, ensure the MSB = 0 */
-		if (size & 1)
-			pub_key[size] = 0;
-
-		res = TEE_GetObjectBufferAttribute(handle,
-						   TEE_ATTR_ECC_PUBLIC_VALUE_Y,
-						   pub_key + half_size,
-						   &half_size);
-
-		if (!res) {
-			/* If y size is odd, ensure the MSB = 0 */
-			if (half_size & 1)
-				pub_key[*pub_key_size - 1] = 0;
-		}
-	}
-
-	if (res)
-		EMSG("TEE_GetObjectBufferAttribute returned 0x%x", res);
-
-	return res;
-}
-
-/**
- * export_pub_key_ed25519() - Export asymmetric ED25519 public key.
- * @handle: Key handle.
- * @pub_key: Pointer to public key buffer.
- * @pub_key_size: Pointer to @pub_key size (bytes).
- *
- * Return:
- * TEE_SUCCESS        - Success.
- * TEE_ERROR_NO_DATA  - @pub_key is not set.
- * TEE_ERROR_GENERIC  - Unexpected success.
- * Error code from TEE_GetObjectBufferAttribute().
- */
-static TEE_Result export_pub_key_ed25519(TEE_ObjectHandle handle,
-					 unsigned char *pub_key,
-					 size_t *pub_key_size)
-{
-	TEE_Result res = TEE_ERROR_NO_DATA;
-
-	FMSG("Executing %s", __func__);
-
-	if (!pub_key)
-		return res;
-
-	res = TEE_GetObjectBufferAttribute(handle,
-					   TEE_ATTR_ED25519_PUBLIC_VALUE,
-					   pub_key, pub_key_size);
-
-	if (res)
-		EMSG("TEE_GetObjectBufferAttribute returned 0x%x", res);
-
-	return res;
-}
-
-/**
  * set_ecc_public_key() - Set ecc public key attributes.
  * @attr: Pointer to TEE Attrbute structure to update.
  * @key: Public key.
@@ -567,58 +492,7 @@ static inline void set_ecc_public_key(TEE_Attribute *attr, unsigned char *key,
 }
 
 /**
- * set_import_key_public_attributes() - Set import attributes for public key.
- * @attr: TEE Attribute structure to allocate and set.
- * @attr_count: Number of attributes to set.
- * @key_type: Key type.
- * @security_size: Key security size.
- * @pub_key: Pointer to public key buffer.
- * @pub_key_len: @pub_key length in bytes.
- *
- * Return:
- * TEE_SUCCESS			- Success.
- * TEE_ERROR_BAD_PARAMETERS	- Bad parameters.
- * TEE_ERROR_OUT_OF_MEMORY	- Memory allocation failed.
- * Error code from conf_key_ecc_attribute().
- */
-static TEE_Result set_import_key_public_attributes(TEE_Attribute **attr,
-						   uint32_t attr_count,
-						   enum tee_key_type key_type,
-						   unsigned int security_size,
-						   unsigned char *pub_key,
-						   unsigned int pub_key_len)
-{
-	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
-	TEE_Attribute *key_attr = NULL;
-	size_t attr_size = 0;
-
-	FMSG("Executing %s", __func__);
-
-	if (MUL_OVERFLOW(attr_count, sizeof(TEE_Attribute), &attr_size))
-		return res;
-
-	key_attr = TEE_Malloc(attr_size, TEE_USER_MEM_HINT_NO_FILL_ZERO);
-	if (!key_attr) {
-		EMSG("TEE_Malloc failed");
-		return TEE_ERROR_OUT_OF_MEMORY;
-	}
-
-	*attr = key_attr;
-
-	res = conf_key_ecc_attribute(key_type, security_size, key_attr++);
-	if (res != TEE_SUCCESS) {
-		TEE_Free(*attr);
-		*attr = NULL;
-		return res;
-	}
-
-	set_ecc_public_key(key_attr, pub_key, pub_key_len);
-
-	return TEE_SUCCESS;
-}
-
-/**
- * set_import_keypair_attrs() - Set import attributes for keypair.
+ * set_import_key_ecc_attrs() - Set the import key ecc attributes.
  * @attr: TEE Attribute structure to allocate and set.
  * @attr_count: Number of attributes to set.
  * @key_type: Key type.
@@ -635,7 +509,7 @@ static TEE_Result set_import_key_public_attributes(TEE_Attribute **attr,
  * Error code from conf_key_ecc_attribute().
  */
 static TEE_Result
-set_import_keypair_attrs(TEE_Attribute **attr, uint32_t attr_count,
+set_import_key_ecc_attrs(TEE_Attribute **attr, uint32_t attr_count,
 			 enum tee_key_type key_type, unsigned int security_size,
 			 unsigned char *priv_key, unsigned int priv_key_len,
 			 unsigned char *pub_key, unsigned int pub_key_len)
@@ -657,15 +531,22 @@ set_import_keypair_attrs(TEE_Attribute **attr, uint32_t attr_count,
 
 	*attr = key_attr;
 
-	res = conf_key_ecc_attribute(key_type, security_size, key_attr++);
-	if (res != TEE_SUCCESS) {
-		TEE_Free(*attr);
-		*attr = NULL;
-		return res;
+	if (key_type == TEE_KEY_TYPE_ID_SECP_R1) {
+		res = conf_key_ecc_attribute(key_type, security_size,
+					     key_attr++);
+		if (res != TEE_SUCCESS) {
+			TEE_Free(*attr);
+			*attr = NULL;
+			return res;
+		}
 	}
 
-	TEE_InitRefAttribute(key_attr++, TEE_ATTR_ECC_PRIVATE_VALUE, priv_key,
-			     priv_key_len);
+	if ((key_type == TEE_KEY_TYPE_ID_SECP_R1 &&
+	     attr_count == NB_ATTR_SECP_R1_KEYPAIR) ||
+	    (key_type == TEE_KEY_TYPE_ID_SM2 &&
+	     attr_count == NB_ATTR_SM2_KEYPAIR))
+		TEE_InitRefAttribute(key_attr++, TEE_ATTR_ECC_PRIVATE_VALUE,
+				     priv_key, priv_key_len);
 
 	set_ecc_public_key(key_attr, pub_key, pub_key_len);
 
@@ -732,44 +613,7 @@ static TEE_Result set_import_ikm_attributes(TEE_Attribute **attr,
 }
 
 /**
- * set_import_public_ed25519_attrs() - Set import attributes for public key.
- * @attr: TEE Attribute structure to allocate and set.
- * @attr_count: Number of attributes to set.
- * @pub_key: Pointer to public key buffer.
- * @pub_key_len: @pub_key length in bytes.
- *
- * Return:
- * TEE_SUCCESS			- Success.
- * TEE_ERROR_BAD_PARAMETERS	- Bad parameters
- * TEE_ERROR_OUT_OF_MEMORY	- Memory allocation failed.
- */
-static TEE_Result set_import_public_ed25519_attrs(TEE_Attribute **attr,
-						  uint32_t attr_count,
-						  unsigned char *pub_key,
-						  unsigned int pub_key_len)
-{
-	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
-	size_t attr_size = 0;
-
-	FMSG("Executing %s", __func__);
-
-	if (MUL_OVERFLOW(attr_count, sizeof(TEE_Attribute), &attr_size))
-		return res;
-
-	*attr = TEE_Malloc(attr_size, TEE_USER_MEM_HINT_NO_FILL_ZERO);
-	if (!*attr) {
-		EMSG("TEE_Malloc failed");
-		return TEE_ERROR_OUT_OF_MEMORY;
-	}
-
-	TEE_InitRefAttribute(*attr, TEE_ATTR_ED25519_PUBLIC_VALUE, pub_key,
-			     pub_key_len);
-
-	return TEE_SUCCESS;
-}
-
-/**
- * set_import_keypair_ed25519_attrs() - Set import attributes for keypair.
+ * set_import_key_ed25519_attrs() - Set the import key ed25519 attributes.
  * @attr: TEE Attribute structure to allocate and set.
  * @attr_count: Number of attributes to set.
  * @priv_key: Pointer to private key buffer.
@@ -782,32 +626,33 @@ static TEE_Result set_import_public_ed25519_attrs(TEE_Attribute **attr,
  * TEE_ERROR_BAD_PARAMETERS	- Bad parameters
  * TEE_ERROR_OUT_OF_MEMORY	- Memory allocation failed.
  */
-static TEE_Result set_import_keypair_ed25519_attrs(TEE_Attribute **attr,
-						   uint32_t attr_count,
-						   unsigned char *priv_key,
-						   unsigned int priv_key_len,
-						   unsigned char *pub_key,
-						   unsigned int pub_key_len)
+static TEE_Result
+set_import_key_ed25519_attrs(TEE_Attribute **attr, uint32_t attr_count,
+			     unsigned char *priv_key, unsigned int priv_key_len,
+			     unsigned char *pub_key, unsigned int pub_key_len)
 {
-	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
+	TEE_Attribute *key_attr = NULL;
 	size_t attr_size = 0;
 
 	FMSG("Executing %s", __func__);
 
 	if (MUL_OVERFLOW(attr_count, sizeof(TEE_Attribute), &attr_size))
-		return res;
+		return TEE_ERROR_BAD_PARAMETERS;
 
-	*attr = TEE_Malloc(attr_size, TEE_USER_MEM_HINT_NO_FILL_ZERO);
-	if (!*attr) {
+	key_attr = TEE_Malloc(attr_size, TEE_USER_MEM_HINT_NO_FILL_ZERO);
+	if (!key_attr) {
 		EMSG("TEE_Malloc failed");
 		return TEE_ERROR_OUT_OF_MEMORY;
 	}
 
-	TEE_InitRefAttribute(&attr[0][0], TEE_ATTR_ED25519_PRIVATE_VALUE,
-			     priv_key, priv_key_len);
+	*attr = key_attr;
 
-	TEE_InitRefAttribute(&attr[0][1], TEE_ATTR_ED25519_PUBLIC_VALUE,
-			     pub_key, pub_key_len);
+	if (attr_count == NB_ATTR_ED25519_KEYPAIR)
+		TEE_InitRefAttribute(key_attr++, TEE_ATTR_ED25519_PRIVATE_VALUE,
+				     priv_key, priv_key_len);
+
+	TEE_InitRefAttribute(key_attr, TEE_ATTR_ED25519_PUBLIC_VALUE, pub_key,
+			     pub_key_len);
 
 	return TEE_SUCCESS;
 }
@@ -904,7 +749,7 @@ set_import_key_rsa_attributes(TEE_Attribute **attr, uint32_t attr_count,
  * TEE_SUCCESS			- Success.
  * TEE_ERROR_BAD_PARAMETERS	- One of the parameters is bad.
  * Error code from set_import_key_public_attributes().
- * Error code from set_import_keypair_attrs().
+ * Error code from set_import_key_ecc_attrs().
  * Error code from set_import_key_private_attributes().
  * Error code from set_import_key_rsa_attributes().
  */
@@ -925,15 +770,14 @@ set_import_key_attributes(TEE_Attribute **attr, uint32_t *attr_count,
 	switch (object_type) {
 	case TEE_TYPE_ECDSA_PUBLIC_KEY:
 		*attr_count = NB_ATTR_SECP_R1_PUB_KEY;
-		return set_import_key_public_attributes(attr,
-							NB_ATTR_SECP_R1_PUB_KEY,
-							TEE_KEY_TYPE_ID_SECP_R1,
-							security_size, pub_key,
-							pub_key_len);
+		return set_import_key_ecc_attrs(attr, NB_ATTR_SECP_R1_PUB_KEY,
+						TEE_KEY_TYPE_ID_SECP_R1,
+						security_size, NULL, 0, pub_key,
+						pub_key_len);
 
 	case TEE_TYPE_ECDSA_KEYPAIR:
 		*attr_count = NB_ATTR_SECP_R1_KEYPAIR;
-		return set_import_keypair_attrs(attr, NB_ATTR_SECP_R1_KEYPAIR,
+		return set_import_key_ecc_attrs(attr, NB_ATTR_SECP_R1_KEYPAIR,
 						TEE_KEY_TYPE_ID_SECP_R1,
 						security_size, priv_key,
 						priv_key_len, pub_key,
@@ -941,16 +785,17 @@ set_import_key_attributes(TEE_Attribute **attr, uint32_t *attr_count,
 
 	case TEE_TYPE_ED25519_PUBLIC_KEY:
 		*attr_count = NB_ATTR_ED25519_PUB_KEY;
-		return set_import_public_ed25519_attrs(attr,
-						       NB_ATTR_ED25519_PUB_KEY,
-						       pub_key, pub_key_len);
+		return set_import_key_ed25519_attrs(attr,
+						    NB_ATTR_ED25519_PUB_KEY,
+						    NULL, 0, pub_key,
+						    pub_key_len);
 
 	case TEE_TYPE_ED25519_KEYPAIR:
 		*attr_count = NB_ATTR_ED25519_KEYPAIR;
-		return set_import_keypair_ed25519_attrs(attr,
-							NB_ATTR_ED25519_KEYPAIR,
-							priv_key, priv_key_len,
-							pub_key, pub_key_len);
+		return set_import_key_ed25519_attrs(attr,
+						    NB_ATTR_ED25519_KEYPAIR,
+						    priv_key, priv_key_len,
+						    pub_key, pub_key_len);
 
 	case TEE_TYPE_RSA_PUBLIC_KEY:
 		*attr_count = NB_ATTR_RSA_PUB_KEY;
@@ -966,6 +811,20 @@ set_import_key_attributes(TEE_Attribute **attr, uint32_t *attr_count,
 						     pub_key, pub_key_len,
 						     priv_key, priv_key_len);
 
+	case TEE_TYPE_SM2_DSA_PUBLIC_KEY:
+		*attr_count = NB_ATTR_SM2_PUB_KEY;
+		return set_import_key_ecc_attrs(attr, NB_ATTR_SM2_PUB_KEY,
+						TEE_KEY_TYPE_ID_SM2,
+						security_size, NULL, 0, pub_key,
+						pub_key_len);
+
+	case TEE_TYPE_SM2_DSA_KEYPAIR:
+		*attr_count = NB_ATTR_SM2_KEYPAIR;
+		return set_import_key_ecc_attrs(attr, NB_ATTR_SM2_KEYPAIR,
+						TEE_KEY_TYPE_ID_SM2,
+						security_size, priv_key,
+						priv_key_len, pub_key,
+						pub_key_len);
 	case TEE_TYPE_AES:
 	case TEE_TYPE_DES:
 	case TEE_TYPE_DES3:
@@ -1027,6 +886,11 @@ static TEE_Result get_import_key_obj_type(enum tee_key_type key_type,
 		return TEE_SUCCESS;
 	}
 
+	if (key_type == TEE_KEY_TYPE_ID_SM2 && !priv_key) {
+		*obj_type = TEE_TYPE_SM2_DSA_PUBLIC_KEY;
+		return TEE_SUCCESS;
+	}
+
 	return get_key_obj_type(key_type, obj_type);
 }
 
@@ -1065,7 +929,6 @@ static TEE_Result set_key_rsa_attribute(unsigned char *pub_exp,
  * Return:
  * TEE_SUCCESS        - Success.
  * TEE_ERROR_NO_DATA  - @modulus and @pub_exp are not set.
- * TEE_ERROR_GENERIC  - Unexpected success.
  * Error code from TEE_GetObjectBufferAttribute().
  */
 static TEE_Result export_pub_key_rsa(TEE_ObjectHandle handle,
@@ -1108,9 +971,104 @@ static TEE_Result export_pub_key_rsa(TEE_ObjectHandle handle,
 	return res;
 }
 
-static TEE_Result export_public_key(TEE_ObjectHandle handle,
-				    unsigned char *pub_data, size_t *pub_len,
-				    unsigned char *modulus, size_t *modulus_len)
+/**
+ * export_pub_key_ecc() - Export asymmetric public key.
+ * @handle: Key handle.
+ * @pub_key: Pointer to public key buffer.
+ * @pub_key_size: Pointer to @pub_key size (bytes).
+ *
+ * Return:
+ * TEE_SUCCESS        - Success.
+ * TEE_ERROR_NO_DATA  - @pub_key is not set.
+ * TEE_ERROR_GENERIC  - Unexpected error.
+ * Error code from TEE_GetObjectBufferAttribute().
+ */
+static TEE_Result export_pub_key_ecc(TEE_ObjectHandle handle,
+				     unsigned char *pub_key,
+				     size_t *pub_key_size)
+{
+	TEE_Result res = TEE_ERROR_NO_DATA;
+	size_t half_size = 0;
+	size_t size = 0;
+
+	FMSG("Executing %s", __func__);
+
+	if (!pub_key)
+		return res;
+
+	res = get_ecc_public_key_size(handle, &size);
+	if (res)
+		return res;
+
+	if (*pub_key_size < size) {
+		*pub_key_size = size;
+		return TEE_ERROR_SHORT_BUFFER;
+	}
+
+	half_size = size / 2;
+	*pub_key_size = size;
+
+	/* Get first part of public key */
+	res = TEE_GetObjectBufferAttribute(handle, TEE_ATTR_ECC_PUBLIC_VALUE_X,
+					   pub_key, &size);
+	if (!res) {
+		/* If x size is odd, ensure the MSB = 0 */
+		if (size & 1)
+			pub_key[size] = 0;
+
+		res = TEE_GetObjectBufferAttribute(handle,
+						   TEE_ATTR_ECC_PUBLIC_VALUE_Y,
+						   pub_key + half_size,
+						   &half_size);
+
+		if (!res) {
+			/* If y size is odd, ensure the MSB = 0 */
+			if (half_size & 1)
+				pub_key[*pub_key_size - 1] = 0;
+		}
+	}
+
+	if (res)
+		EMSG("TEE_GetObjectBufferAttribute returned 0x%x", res);
+
+	return res;
+}
+
+/**
+ * export_pub_key_ed25519() - Export asymmetric ED25519 public key.
+ * @handle: Key handle.
+ * @pub_key: Pointer to public key buffer.
+ * @pub_key_size: Pointer to @pub_key size (bytes).
+ *
+ * Return:
+ * TEE_SUCCESS        - Success.
+ * TEE_ERROR_NO_DATA  - @pub_key is not set.
+ * Error code from TEE_GetObjectBufferAttribute().
+ */
+static TEE_Result export_pub_key_ed25519(TEE_ObjectHandle handle,
+					 unsigned char *pub_key,
+					 size_t *pub_key_size)
+{
+	TEE_Result res = TEE_ERROR_NO_DATA;
+
+	FMSG("Executing %s", __func__);
+
+	if (!pub_key)
+		return res;
+
+	res = TEE_GetObjectBufferAttribute(handle,
+					   TEE_ATTR_ED25519_PUBLIC_VALUE,
+					   pub_key, pub_key_size);
+
+	if (res)
+		EMSG("TEE_GetObjectBufferAttribute returned 0x%x", res);
+
+	return res;
+}
+
+TEE_Result export_public_key(TEE_ObjectHandle handle, unsigned char *pub_data,
+			     size_t *pub_len, unsigned char *modulus,
+			     size_t *modulus_len)
 {
 	TEE_Result res = TEE_SUCCESS;
 	TEE_ObjectInfo obj_info = { 0 };
@@ -1131,7 +1089,9 @@ static TEE_Result export_public_key(TEE_ObjectHandle handle,
 
 	case TEE_TYPE_ECDSA_PUBLIC_KEY:
 	case TEE_TYPE_ECDSA_KEYPAIR:
-		res = export_pub_key_ecc(handle, &obj_info, pub_data, pub_len);
+	case TEE_TYPE_SM2_DSA_PUBLIC_KEY:
+	case TEE_TYPE_SM2_DSA_KEYPAIR:
+		res = export_pub_key_ecc(handle, pub_data, pub_len);
 		break;
 
 	case TEE_TYPE_ED25519_PUBLIC_KEY:
@@ -1630,7 +1590,9 @@ TEE_Result get_key_lengths(uint32_t param_types,
 
 	case TEE_TYPE_ECDSA_PUBLIC_KEY:
 	case TEE_TYPE_ECDSA_KEYPAIR:
-		res = get_ecc_public_key_size(&obj_info, &public_length);
+	case TEE_TYPE_SM2_DSA_PUBLIC_KEY:
+	case TEE_TYPE_SM2_DSA_KEYPAIR:
+		res = get_ecc_public_key_size(key_handle, &public_length);
 		break;
 
 	case TEE_TYPE_ED25519_PUBLIC_KEY:

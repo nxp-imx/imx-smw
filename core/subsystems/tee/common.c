@@ -67,6 +67,27 @@ end:
 	return status;
 }
 
+int tee_get_digest_length(enum smw_config_hash_algo_id smw_id,
+			  unsigned int *digest_len)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+	const struct tee_hash_algo *hash_algo = NULL;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	hash_algo = tee_get_hash_algo(smw_id);
+	if (!hash_algo)
+		goto end;
+
+	*digest_len = hash_algo->length;
+
+	status = SMW_STATUS_OK;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 int set_tmpref_buffer(unsigned int mem_type, unsigned int param_idx,
 		      unsigned char *buffer, unsigned int buffer_len,
 		      TEEC_Operation *op)

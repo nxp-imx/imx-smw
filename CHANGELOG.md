@@ -40,6 +40,10 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * ECC Signature verification with imported public key having x or y coordinate
   MSB=0 is not supported.
+* AEAD multi-part encryption operations using GCM mode with opaque keys produce
+  incorrect authentication tags on i.MX95. However, using plaintext key
+  buffers works correctly.
+
 
 ##### 3. TEE Subsystem
 

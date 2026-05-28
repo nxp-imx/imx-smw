@@ -497,14 +497,15 @@ static bool read_operation(char **start, char *end,
 
 	status = store_operation_params(operation_id, params, func,
 					subsystem_id);
-	if (status != SMW_STATUS_OK) {
-		SMW_UTILS_FREE(params);
+	if (status != SMW_STATUS_OK)
 		goto end;
-	}
 
 	*start = cur;
 
 end:
+	if (status != SMW_STATUS_OK && params)
+		SMW_UTILS_FREE(params);
+
 	if (return_status)
 		*return_status = status;
 
@@ -611,6 +612,26 @@ end:
 
 __weak bool is_psa_default_alt_enabled(void)
 {
+	return false;
+}
+
+__weak bool check_ela_tag(char **start, char *end, const char *buffer,
+			  int *status)
+{
+	char *cur = *start;
+
+	if (!SMW_UTILS_STRNCMP(buffer, use_ela_tag,
+			       SMW_UTILS_STRLEN(use_ela_tag))) {
+		SMW_DBG_PRINTF(DEBUG,
+			       "USE_ELA tag found but ELA is disabled\n");
+		cur++;
+		skip_insignificant_chars(&cur, end);
+		*start = cur;
+
+		*status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+		return true;
+	}
+
 	return false;
 }
 

@@ -34,3 +34,4 @@ const char *mode_values = "MODE_VALUES";
 const char *_size_range = "_SIZE_RANGE";
 const char *rng_range = "RNG_RANGE";
 const char *enc_algo_values = "ENC_ALGO_VALUES";
+const char *use_ela_tag = "USE_ELA";

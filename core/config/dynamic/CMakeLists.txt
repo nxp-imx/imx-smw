@@ -21,6 +21,7 @@ add_private_sources_ifdef(config ENABLE_DEVMGR_MODULE dynamic/device.c)
 add_private_sources_ifdef(config ENABLE_STORAGE_MODULE dynamic/storage.c)
 add_private_sources_ifdef(config ENABLE_AEAD dynamic/aead.c)
 add_private_sources_ifdef(config ENABLE_ASYMMETRIC_ENCRYPTION dynamic/asymmetric_encryption.c)
+add_private_sources_ifdef(config ENABLE_ELA dynamic/parse_enable_ela.c)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND VERBOSE AND NOT VERBOSE EQUAL 0)
         add_private_sources(config database_debug.c)

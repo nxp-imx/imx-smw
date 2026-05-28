@@ -427,4 +427,40 @@ int smw_utils_get_aead_mode_id(smw_aead_mode_t name,
 int smw_utils_get_aead_op_type_id(smw_aead_op_type_t name,
 				  enum smw_config_aead_op_type_id *id);
 
+/**
+ * aead_is_ela_enabled() - Check if ELA is enabled for AEAD
+ *
+ * Return:
+ * true  - ELA is enabled
+ * false - ELA is not enabled
+ */
+bool aead_is_ela_enabled(enum subsystem_id subsystem_id);
+
+/**
+ * cipher_is_ela_enabled() - Check if ELA is enabled for CIPHER
+ *
+ * Return:
+ * true  - ELA is enabled
+ * false - ELA is not enabled
+ */
+bool cipher_is_ela_enabled(enum subsystem_id subsystem_id);
+
+/**
+ * hash_is_ela_enabled() - Check if ELA is enabled for HASH
+ *
+ * Return:
+ * true  - ELA is enabled
+ * false - ELA is not enabled
+ */
+bool hash_is_ela_enabled(enum subsystem_id subsystem_id);
+
+/**
+ * mac_is_ela_enabled() - Check if ELA is enabled for MAC
+ *
+ * Return:
+ * true  - ELA is enabled
+ * false - ELA is not enabled
+ */
+bool mac_is_ela_enabled(enum subsystem_id subsystem_id);
+
 #endif /* __CONFIG_H__ */

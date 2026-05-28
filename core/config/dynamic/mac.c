@@ -46,6 +46,13 @@ static int mac_read_params(char **start, char *end, void **params)
 
 	while ((cur < end) && (open_square_bracket != *cur)) {
 		status = read_params_string(&cur, end, buffer);
+		if (check_ela_tag(&cur, end, buffer, &status)) {
+			if (status == SMW_STATUS_OK)
+				p->use_ela = true;
+
+			continue;
+		}
+
 		if (status != SMW_STATUS_OK)
 			goto end;
 
@@ -110,6 +117,9 @@ static void mac_merge_params(void *caps, void *params)
 
 	mac_caps->algo_bitmap |= mac_params->algo_bitmap;
 	mac_caps->hash_bitmap |= mac_params->hash_bitmap;
+
+	if (mac_params->use_ela)
+		mac_caps->use_ela = true;
 
 	merge_key_params(&mac_caps->key, &mac_params->key);
 }
@@ -233,4 +243,23 @@ __export enum smw_status_code smw_config_check_mac(smw_subsystem_t subsystem,
 	}
 
 	return SMW_STATUS_OK;
+}
+
+bool mac_is_ela_enabled(enum subsystem_id subsystem_id)
+{
+	bool enabled = false;
+	int status = SMW_STATUS_OK;
+	struct mac_params params = { 0 };
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	status = get_operation_params_lock(OPERATION_ID_MAC, subsystem_id,
+					   &params);
+	if (status == SMW_STATUS_OK)
+		enabled = params.use_ela;
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %s\n", __func__,
+		       enabled ? "true" : "false");
+
+	return enabled;
 }

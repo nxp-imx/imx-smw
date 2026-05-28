@@ -23,6 +23,7 @@ static int hash_common_read_params(char **start, char *end, void **params)
 {
 	int status = SMW_STATUS_OK;
 	char *cur = *start;
+	bool use_ela = false;
 
 	char buffer[SMW_CONFIG_MAX_PARAMS_STRING_LENGTH + 1] = { 0 };
 	size_t length = 0;
@@ -35,6 +36,13 @@ static int hash_common_read_params(char **start, char *end, void **params)
 
 	while ((cur < end) && (open_square_bracket != *cur)) {
 		status = read_params_string(&cur, end, buffer);
+		if (check_ela_tag(&cur, end, buffer, &status)) {
+			if (status == SMW_STATUS_OK)
+				use_ela = true;
+
+			continue;
+		}
+
 		if (status != SMW_STATUS_OK)
 			goto end;
 		SMW_DBG_PRINTF(INFO, "Parameter: %s\n", buffer);
@@ -64,6 +72,8 @@ static int hash_common_read_params(char **start, char *end, void **params)
 
 	p->algo_bitmap = algo_bitmap;
 
+	p->use_ela = use_ela;
+
 	*params = p;
 
 	*start = cur;
@@ -91,6 +101,9 @@ static void hash_common_merge_params(void *caps, void *params)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	hash_caps->algo_bitmap |= hash_params->algo_bitmap;
+
+	if (hash_params->use_ela)
+		hash_caps->use_ela = true;
 }
 
 static void hash_merge_params(void *caps, void *params)
@@ -176,4 +189,23 @@ __export enum smw_status_code smw_config_check_digest(smw_subsystem_t subsystem,
 		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
 	return SMW_STATUS_OK;
+}
+
+bool hash_is_ela_enabled(enum subsystem_id subsystem_id)
+{
+	bool enabled = false;
+	int status = SMW_STATUS_OK;
+	struct hash_params params = { 0 };
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	status = get_operation_params_lock(OPERATION_ID_HASH, subsystem_id,
+					   &params);
+	if (status == SMW_STATUS_OK)
+		enabled = params.use_ela;
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %s\n", __func__,
+		       enabled ? "true" : "false");
+
+	return enabled;
 }

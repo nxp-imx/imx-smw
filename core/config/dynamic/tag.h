@@ -37,5 +37,6 @@ extern const char *mode_values;
 extern const char *_size_range;
 extern const char *rng_range;
 extern const char *enc_algo_values;
+extern const char *use_ela_tag;
 
 #endif /* __TAG_H__ */

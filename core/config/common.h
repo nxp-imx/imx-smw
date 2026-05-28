@@ -63,12 +63,14 @@ struct key_operation_params {
 
 struct hash_params {
 	unsigned long algo_bitmap;
+	bool use_ela;
 };
 
 struct mac_params {
 	unsigned long algo_bitmap;
 	unsigned long hash_bitmap;
 	struct op_key key;
+	bool use_ela;
 };
 
 struct sign_verify_params {
@@ -85,6 +87,7 @@ struct cipher_params {
 	unsigned long mode_bitmap;
 	unsigned long op_bitmap;
 	struct op_key key;
+	bool use_ela;
 };
 
 struct storage_store_params {
@@ -98,6 +101,7 @@ struct aead_params {
 	unsigned long mode_bitmap;
 	unsigned long op_bitmap;
 	struct op_key key;
+	bool use_ela;
 };
 
 struct asymmetric_encryption_params {
@@ -575,5 +579,23 @@ void unload_subsystems(void);
  * * false: - ENABLE_PSA_DEFAULT_ALT is not enabled.
  */
 bool is_psa_default_alt_enabled(void);
+
+/**
+ * check_ela_tag() - Check and validate USE_ELA flag tag
+ * @start: Pointer to current position in config buffer
+ * @end: Pointer to the last char of the buffer being parsed
+ * @buffer: Buffer containing the parsed tag string
+ * @status: Pointer to parsing status
+ *          (input from read_params_string(), output after validation)
+ *
+ * Validates USE_ELA flag format. Must be a standalone flag without
+ * value, terminated by semicolon. Updates @status to SMW_STATUS_OK on
+ * success or SMW_STATUS_SYNTAX_ERROR on format error.
+ *
+ * Return:
+ * * true  - USE_ELA tag found
+ * * false - Not a USE_ELA tag or invalid format
+ */
+bool check_ela_tag(char **start, char *end, const char *buffer, int *status);
 
 #endif /* __COMMON_H__ */

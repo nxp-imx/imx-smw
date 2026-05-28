@@ -131,6 +131,12 @@ static int aead_common_read_params(char **start, char *end, void **params)
 
 	while ((cur < end) && (open_square_bracket != *cur)) {
 		status = read_params_string(&cur, end, buffer);
+		if (check_ela_tag(&cur, end, buffer, &status)) {
+			if (status == SMW_STATUS_OK)
+				p->use_ela = true;
+
+			continue;
+		}
 
 		if (status != SMW_STATUS_OK)
 			goto end;
@@ -206,6 +212,9 @@ static void aead_common_merge_params(void *caps, void *params)
 
 	aead_caps->mode_bitmap |= aead_params->mode_bitmap;
 	aead_caps->op_bitmap |= aead_params->op_bitmap;
+
+	if (aead_params->use_ela)
+		aead_caps->use_ela = true;
 
 	merge_key_params(&aead_caps->key, &aead_params->key);
 }
@@ -384,4 +393,23 @@ __export enum smw_status_code smw_config_check_aead(smw_subsystem_t subsystem,
 		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
 	return SMW_STATUS_OK;
+}
+
+bool aead_is_ela_enabled(enum subsystem_id subsystem_id)
+{
+	bool enabled = false;
+	int status = SMW_STATUS_OK;
+	struct aead_params params = { 0 };
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	status = get_operation_params_lock(OPERATION_ID_AEAD, subsystem_id,
+					   &params);
+	if (status == SMW_STATUS_OK)
+		enabled = params.use_ela;
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %s\n", __func__,
+		       enabled ? "true" : "false");
+
+	return enabled;
 }

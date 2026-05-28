@@ -66,8 +66,9 @@ The failure is due to the storage manager which is already loaded and a new inst
   the operation will fail with `SMW_STATUS_KEY_RANGE_NOT_CONFIGURABLE`.
 * Remove unused SMW_SIGNATURE_TYPE_NAME_CMAC.
 
-
 ##### 2. Subsystems
+
+* TEE: Add support for SM2.
 
 ##### 3. ARM PSA APIs
 

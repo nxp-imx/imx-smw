@@ -1,0 +1,47 @@
+{
+	"subtest 1": {
+		"description": [
+			"SM3",
+			"https://tools.ietf.org/html/draft-oscca-cfrg-sm3-02 Appendix B.2"
+		],
+		"command": "HASH",
+		"subsystem": "ELE",
+		"algo": "SM3",
+		"input": [
+			"F4A38489E32B45B6F876E3AC2168CA39",
+			"2362DC8F23459C1D1146FC3DBFB7BC9A",
+			"6D65737361676520646967657374"
+		],
+		"digest": [
+			"B524F552CD82B8B028476E005C377FB1",
+			"9A87E6FC682D48BB5D42E3D9B9EFFE76"
+		],
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93",
+			"imx95"
+		]
+	},
+	"subtest 2": {
+		"description": [
+			"SM3",
+			"https://tools.ietf.org/html/draft-oscca-cfrg-sm3-02 Appendix B.2"
+		],
+		"command": "HASH",
+		"subsystem": "ELE",
+		"algo": "SM3",
+		"input": [
+			"F4A38489E32B45B6F876E3AC2168CA39",
+			"2362DC8F23459C1D1146FC3DBFB7BC9A",
+			"6D65737361676520646967657374"
+		],
+		"digest": 32,
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93",
+			"imx95"
+		]
+	}
+}

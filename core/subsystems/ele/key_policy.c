@@ -173,6 +173,7 @@ static const struct {
 		       ASYMMETRIC_ENCRYPTION),
 	PERMITTED_ALGO(RSA_PKCS1_CRYPT_ALL, RSA, ANY, ANY,
 		       ASYMMETRIC_ENCRYPTION),
+	PERMITTED_ALGO_CURVE(SM2_SM3, SM2, SM2, SM3, ASYMMETRIC_SIGNATURE),
 };
 
 static void convert_usage_to_ele(smw_attr_usage_t smw, hsm_key_usage_t *ele)

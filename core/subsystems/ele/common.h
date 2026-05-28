@@ -115,6 +115,18 @@ struct crypto_output_params {
 };
 
 /**
+ * ele_get_digest_length() - Get digest length.
+ * @smw_id: Hash algorithm ID as defined in SMW.
+ * @digest_len: Pointer to the digest length.
+ *
+ * Return:
+ * SMW_STATUS_OK			- Success.
+ * SMW_STATUS_INVALID_PARAM	- Invalid hash algorithm ID.
+ */
+int ele_get_digest_length(enum smw_config_hash_algo_id smw_id,
+			  unsigned int *digest_len);
+
+/**
  * ele_get_hash_algo() - Get the ELE hash algorithm information
  * @algo_id: SMW Hash algorithm id.
  *

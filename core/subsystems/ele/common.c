@@ -26,13 +26,40 @@
  * 512 bits for the digest length.
  */
 static const struct ele_hash_algo hash_algos[] = {
-	HASH_ALGO(MD5, MD5, 16),	   HASH_ALGO(SHA1, SHA_1, 20),
-	HASH_ALGO(SHA224, SHA_224, 28),	   HASH_ALGO(SHA256, SHA_256, 32),
-	HASH_ALGO(SHA384, SHA_384, 48),	   HASH_ALGO(SHA512, SHA_512, 64),
-	HASH_ALGO(SHA3_224, SHA3_224, 28), HASH_ALGO(SHA3_256, SHA3_256, 32),
-	HASH_ALGO(SHA3_384, SHA3_384, 48), HASH_ALGO(SHA3_512, SHA3_512, 64),
-	HASH_ALGO(SHAKE256, SHAKE_256, 64)
+	HASH_ALGO(MD5, MD5, 16),
+	HASH_ALGO(SHA1, SHA_1, 20),
+	HASH_ALGO(SHA224, SHA_224, 28),
+	HASH_ALGO(SHA256, SHA_256, 32),
+	HASH_ALGO(SHA384, SHA_384, 48),
+	HASH_ALGO(SHA512, SHA_512, 64),
+	HASH_ALGO(SHA3_224, SHA3_224, 28),
+	HASH_ALGO(SHA3_256, SHA3_256, 32),
+	HASH_ALGO(SHA3_384, SHA3_384, 48),
+	HASH_ALGO(SHA3_512, SHA3_512, 64),
+	HASH_ALGO(SHAKE256, SHAKE_256, 64),
+	HASH_ALGO(SM3, SM3, 32)
 };
+
+int ele_get_digest_length(enum smw_config_hash_algo_id smw_id,
+			  unsigned int *digest_len)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+	const struct ele_hash_algo *hash_algo = NULL;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	hash_algo = ele_get_hash_algo(smw_id);
+	if (!hash_algo)
+		goto end;
+
+	*digest_len = hash_algo->length;
+
+	status = SMW_STATUS_OK;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
 
 const struct ele_hash_algo *
 ele_get_hash_algo(enum smw_config_hash_algo_id algo_id)

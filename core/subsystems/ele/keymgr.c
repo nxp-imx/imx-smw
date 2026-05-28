@@ -134,6 +134,7 @@ static const struct key_def {
 	KEY_DEF(DERIVE, DERIVE, 384, NULL, NULL),
 	KEY_DEF(HKDF_IKM, DERIVE, 256, NULL, NULL),
 	KEY_DEF(HKDF_IKM, DERIVE, 384, NULL, NULL),
+	KEY_DEF(SM2, SM2, 256, ecc_public_key_length, NULL),
 };
 
 #define SIGN_ALGO(_algo_id, _type_id, _hash_id, _sign_algo)                    \
@@ -336,6 +337,7 @@ static int check_export_key_config(struct smw_keymgr_descriptor *key_descriptor)
 	case SMW_CONFIG_KEY_TYPE_ID_X25519:
 	case SMW_CONFIG_KEY_TYPE_ID_ED448:
 	case SMW_CONFIG_KEY_TYPE_ID_X448:
+	case SMW_CONFIG_KEY_TYPE_ID_SM2:
 		if (smw_keymgr_get_public_data(key_descriptor) &&
 		    !smw_keymgr_get_private_data(key_descriptor)) {
 			status = SMW_STATUS_OK;

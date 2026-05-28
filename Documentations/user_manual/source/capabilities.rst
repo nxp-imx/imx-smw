@@ -19,9 +19,9 @@ SECO (Security Controller - First MPU Secure Enclave) subsystems.
    +===========+==========================================+
    | TEE       | TrustZone OPTEE OS supported on all i.MX |
    +-----------+------------------------------------------+
-   | ELE       | i.MX8ulp, i.MX9x                         |
+   | ELE       | i.MX8ULP, i.MX9x                         |
    +-----------+------------------------------------------+
-   | SECO      | i.MX8qxp                                 |
+   | SECO      | i.MX8QXP                                 |
    +-----------+------------------------------------------+
 
 

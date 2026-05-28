@@ -35,6 +35,10 @@ Supported Operations versus Subsystems
    +                       +----------------+---------+---------+----------+
    |                       | Multi-Part     |    Y    |    Y    |    N     |
    +-----------------------+----------------+---------+---------+----------+
+   | SM2                   | Single-Part    |    N    |    Y    |    N     |
+   +                       +----------------+---------+---------+----------+
+   |                       | Multi-Part     |    N    |    Y    |    N     |
+   +-----------------------+----------------+---------+---------+----------+
 
 
 .. table:: Asymmetric Signature APIs
@@ -622,4 +626,80 @@ The following table outlines the RSA PSS permitted signature algorithms.
    |                 |         | If CKM_RSA_PKCS_PSS is set or if multiple CKM_SHAxxx_RSA_PKCS_PSS  |
    |                 |         | are set, the key permitted algorithm is RSA PSS Signature any      |
    |                 |         | hash type.                                                         |
+   +-----------------+---------+--------------------------------------------------------------------+
+
+
+SM2 Signatures
+^^^^^^^^^^^^^^
+
+.. table:: SM2 Support Details
+   :name: table_sm2_support_details
+   :align: center
+   :widths: 14 14 14 14 14
+   :width: 100%
+   :class: wrap-table
+
+   +---------------+----------------+-----------+------------+-----------------+
+   | **Subsystem** | **Message**                | **Key**                      |
+   +               +----------------+-----------+------------+-----------------+
+   |               | **Pre-hashed** | **Full**  | **Opaque** | **Plaintext**   |
+   +===============+================+===========+============+=================+
+   | TEE           | Y              | Y         | Y          | Y               |
+   +---------------+----------------+-----------+------------+-----------------+
+
+Key attributes
+""""""""""""""
+Key Usage
+~~~~~~~~~
+For signature operations, keys must be configured with appropriate key usage
+flags:
+
+.. table:: SM2 Key Usage Flags
+   :name: table_sm2_key_usage
+   :align: center
+   :widths: 25 12 35
+   :width: 100%
+   :class: wrap-table
+
+   +-----------------------+---------+-------------------------------+
+   | **Operation**         | **API** | **Required Key Usage**        |
+   +=======================+=========+===============================+
+   | Sign full message     | SMW     | SMW_ATTR_USAGE_SIGN_MESSAGE   |
+   +-----------------------+---------+-------------------------------+
+   | Sign message hashed   | SMW     | SMW_ATTR_USAGE_SIGN_HASH      |
+   +-----------------------+---------+-------------------------------+
+   | Verify full message   | SMW     | SMW_ATTR_USAGE_VERIFY_MESSAGE |
+   +-----------------------+---------+-------------------------------+
+   | Verify message hashed | SMW     | SMW_ATTR_USAGE_VERIFY_HASH    |
+   +-----------------------+---------+-------------------------------+
+
+.. note::
+   - SM2 key type is not supported with PSA and PKCS11 APIs.
+   - If an SM2 key is present, it cannot be used with PSA and PKCS11 APIs and
+     its attributes are not retrievable as well with PSA and PKCS11 APIs.
+
+Permitted Algorithm
+~~~~~~~~~~~~~~~~~~~
+The following table outlines the SM2 permitted signature algorithms.
+
+.. table:: Permitted Algorithms for SM2 Asymmetric Signature
+   :name: table_permitted_key_algorithms_sm2_asym_sign
+   :align: center
+   :widths: 15 15 70
+   :width: 100%
+   :class: wrap-table
+
+   +-----------------+---------+--------------------------------------------------------------------+
+   | **Signature**   | **API** | **Permitted Algorithm**                                            |
+   +=================+=========+====================================================================+
+   | SM2             | SMW     | SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_SM2(hash)                       |
+   |                 |         |                                                                    |
+   |                 |         | Where:\                                                            |
+   |                 |         |                                                                    |
+   |                 |         |  - ``hash`` is one of SMW Attribute Hash algorithm define in the   |
+   |                 |         |    :numref:`table_algorithm_hash`. Only SM3 is supported now.      |
+   +                 +---------+--------------------------------------------------------------------+
+   |                 | PSA     | Not defined                                                        |
+   +                 +---------+--------------------------------------------------------------------+
+   |                 | PKCS11  | Not defined                                                        |
    +-----------------+---------+--------------------------------------------------------------------+

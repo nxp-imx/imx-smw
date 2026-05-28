@@ -11,30 +11,30 @@ Supported Operations versus Subsystems
 .. table:: AEAD Operations vs. subsystem
    :name: table_aead_operations_subsystem
    :align: center
-   :widths: 10 15 15 10 10 10 30
+   :widths: 10 15 15 10 10 10
    :class: wrap-table
 
-   +--------------+------------------------+----------------+---------+---------+----------+-----------------------------+
-   | **Key Type** | **Mode**               | **Processing** | **Subsystem**                | **Notes**                   |
-   +              +                        +                +---------+---------+----------+                             +
-   |              |                        |                | **ELE** | **TEE** | **SECO** |                             |
-   +==============+========================+================+=========+=========+==========+=============================+
-   | AES          | Counter with CBC-MAC   | Single-Part    |    Y    |    Y    |    Y     |                             |
-   +              +                        +----------------+---------+---------+----------+                             +
-   |              | (CCM)                  | Multi-Part     |    Y    |    Y    |    N     |                             |
-   +              +------------------------+----------------+---------+---------+----------+-----------------------------+
-   |              | Galois/Counter Mode    | Single-Part    |  **Y*** |    Y    |    Y     | **ELE** not supported on:\  |
-   +              +                        +----------------+---------+---------+----------+                             +
-   |              | (GCM)                  | Multi-Part     |    Y    |    Y    |    N     |  - i.MX8ULP                 |
-   +              +------------------------+----------------+---------+---------+----------+                             +
-   |              | ChaCha20-Poly1305      | Single-Part    |  **Y*** |    N    |    N     |                             |
-   +              +                        +----------------+---------+---------+----------+                             +
-   |              |                        | Multi-Part     |    Y    |    N    |    N     |                             |
-   +--------------+------------------------+----------------+---------+---------+----------+-----------------------------+
+   +--------------+------------------------+----------------+---------+---------+----------+
+   | **Key Type** | **Mode**               | **Processing** | **Subsystem**                |
+   +              +                        +                +---------+---------+----------+
+   |              |                        |                | **ELE** | **TEE** | **SECO** |
+   +==============+========================+================+=========+=========+==========+
+   | AES          | Counter with CBC-MAC   | Single-Part    |    Y    |    Y    |    Y     |
+   +              +                        +----------------+---------+---------+----------+
+   |              | (CCM)                  | Multi-Part     |   Y (2) |    Y    |    N     |
+   +              +------------------------+----------------+---------+---------+----------+
+   |              | Galois/Counter Mode    | Single-Part    |   Y (1) |    Y    |    Y     |
+   +              +                        +----------------+---------+---------+----------+
+   |              | (GCM)                  | Multi-Part     |   Y (2) |    Y    |    N     |
+   +              +------------------------+----------------+---------+---------+----------+
+   |              | ChaCha20-Poly1305      | Single-Part    |   Y (1) |    N    |    N     |
+   +              +                        +----------------+---------+---------+----------+
+   |              |                        | Multi-Part     |    N    |    N    |    N     |
+   +--------------+------------------------+----------------+---------+---------+----------+
 
-.. note::
-   ELE Multi-part AEAD Support: Multi-part AEAD encryption and decryption operations are only
-   supported on the i.MX943, i.MX95 and i.MX952 platforms.
+(1) ELE single-part encryption and decryption operations using GCM and ChaCha20-Poly1305 are not supported on the i.MX8ULP platform.
+(2) ELE Multi-part encryption and decryption operations not supported on the i.MX8ULP, i.MX93 and i.MX91 platforms.
+
 
 .. table:: AEAD APIs
    :name: table_aead_apis

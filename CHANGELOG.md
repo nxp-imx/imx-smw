@@ -83,6 +83,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE: For X25519/X448 key exchange, convert the public key to the format required by ELE.
 * ELE: TLS is now enabled by default for ELE subsystem when all required dependencies are satisfied.
 * ELE: Add support for AEAD multi-part operations.
+* ELE: Multi-part AEAD operations support GCM and CCM only. CHACHA20-POLY1305 is not supported.
 
 ##### 3. ARM PSA APIs
 

@@ -84,6 +84,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE: Add ELA one-shot HMAC (HMAC-SHA256, HMAC-SHA384 and HMAC-SHA512)
   compute and verify support for plaintext key buffers.
 * ELE: Add HKDF key derivation support (full HKDF, Extract and Expand steps).
+* ELE: Add support for SM2.
+  SMW library version 5.5 requires ELE library version lf-6.18.20-2.0.0 or more recent.
 
 ##### 3. ARM PSA APIs
 

@@ -136,7 +136,7 @@ typedef enum {
  * * SMW_KEY_TYPE_NAME_AES: AES key
  * * SMW_KEY_TYPE_NAME_DES: DES key
  * * SMW_KEY_TYPE_NAME_DES3: Triple DES key
- * * SMW_KEY_TYPE_NAME_DSA_SM2_FP: DSA SM2 key
+ * * SMW_KEY_TYPE_NAME_SM2: SM2 key
  * * SMW_KEY_TYPE_NAME_SM4: SM4 key
  * * SMW_KEY_TYPE_NAME_HMAC: HMAC key
  * * SMW_KEY_TYPE_NAME_RSA: RSA key
@@ -160,7 +160,7 @@ typedef enum {
 	SMW_KEY_TYPE_NAME_AES,	   /* [symmetric] */
 	SMW_KEY_TYPE_NAME_DES,	   /* [symmetric] */
 	SMW_KEY_TYPE_NAME_DES3,	   /* [symmetric] */
-	SMW_KEY_TYPE_NAME_DSA_SM2_FP,
+	SMW_KEY_TYPE_NAME_SM2,
 	SMW_KEY_TYPE_NAME_SM4,	/* [symmetric] */
 	SMW_KEY_TYPE_NAME_HMAC, /* [symmetric] */
 	SMW_KEY_TYPE_NAME_RSA,	/* [asymmetric, signature, encryption] */
@@ -353,11 +353,12 @@ typedef enum {
  * Values:
  * * SMW_SIGNATURE_ALGO_NAME_NONE: No signature algorithm specified
  * * SMW_SIGNATURE_ALGO_NAME_DEFAULT: Signature algorithm is given by the key type
- * * SMW_SIGNATURE_ALGO_NAME_ECDSA: Elliptic Curve Digital Signature Algorithm
- * * SMW_SIGNATURE_ALGO_NAME_EDDSA: Edwards-curve Digital Signature Algorithm
- * * SMW_SIGNATURE_ALGO_NAME_DSA: Digital Signature Algorithm
+ * * SMW_SIGNATURE_ALGO_NAME_ECDSA: Elliptic Curve Digital signature algorithm
+ * * SMW_SIGNATURE_ALGO_NAME_EDDSA: Edwards-curve Digital signature algorithm
+ * * SMW_SIGNATURE_ALGO_NAME_DSA: Digital signature algorithm
  * * SMW_SIGNATURE_ALGO_NAME_RSA: Rivest, Shamir and Adleman signature algorithm
  * * SMW_SIGNATURE_ALGO_NAME_TLS_1_2: Transport Layer Security 1.2 signature algorithm
+ * * SMW_SIGNATURE_ALGO_NAME_SM2: ShāngMì 2 signature algorithm
  * * SMW_SIGNATURE_ALGO_NAME_NB: Number of signature algorithms
  */
 typedef enum {
@@ -368,6 +369,7 @@ typedef enum {
 	SMW_SIGNATURE_ALGO_NAME_DSA,
 	SMW_SIGNATURE_ALGO_NAME_RSA,
 	SMW_SIGNATURE_ALGO_NAME_TLS_1_2,
+	SMW_SIGNATURE_ALGO_NAME_SM2,
 	SMW_SIGNATURE_ALGO_NAME_NB
 } smw_signature_algo_t;
 

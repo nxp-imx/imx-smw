@@ -23,6 +23,16 @@ struct smw_eddsa_params {
 };
 
 /**
+ * struct smw_sm2_params - SM2 signature parameters
+ * @identifier: [in] Distinguishable identifier.
+ * @identifier_length: [in] Length of the identifier.
+ */
+struct smw_sm2_params {
+	unsigned char *identifier;
+	unsigned short identifier_length;
+};
+
+/**
  * struct smw_sign_verify_args - Sign or verify arguments
  * @version: [in] Version of this structure.
  * @subsystem_name: [in] Secure Subsystem name. See &typedef smw_subsystem_t.
@@ -38,7 +48,10 @@ struct smw_eddsa_params {
  * @signature_length:
  *  - [in] Length in bytes of the signature buffer.
  *  - [out] Length in bytes of the signature buffer generated.
- * @eddsa_params: [in] (**optional**) Pointer to eddsa parameters.
+ * @eddsa_params: [in] (**optional**) Pointer to edwards signature parameters.
+ *                See &typedef smw_eddsa_params.
+ * @sm2_params: [in] (**optional**) Pointer to SM2 signature parameters.
+ *              See &typedef smw_sm2_params.
  *
  * The @subsystem_name designates the Secure Subsystem to be used.
  * If this field is :ref:`SMW_SUBSYSTEM_NAME_NONE <smw_subsystem_t>`,
@@ -56,6 +69,7 @@ struct smw_sign_verify_args {
 	unsigned int signature_length;
 	union {
 		struct smw_eddsa_params *eddsa_params;
+		struct smw_sm2_params *sm2_params;
 	};
 };
 
@@ -71,6 +85,7 @@ struct smw_sign_verify_args {
  * @message: [in] Pointer to the message to sign or verify.
  * @message_length: [in] Length in bytes of the message.
  * @eddsa_params: [in] (**optional**) Pointer to edwards signature parameters.
+ * @sm2_params: [in] Pointer to SM2 signature parameters.
  * @context: [in/out] Pointer the multipart operation context.
  *
  * Field @context:\
@@ -93,6 +108,7 @@ struct smw_sign_verify_init_args {
 	unsigned int message_length;
 	union {
 		struct smw_eddsa_params *eddsa_params;
+		struct smw_sm2_params *sm2_params;
 	};
 	struct smw_op_context *context;
 };

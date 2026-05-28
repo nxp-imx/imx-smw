@@ -242,6 +242,7 @@ typedef uint32_t smw_attr_storage_id_t;
  * - SMW_ATTR_CURVE_BRAINPOOL_T1: Brainpool T1 curve.
  * - SMW_ATTR_CURVE_ED25519: Twisted Edwards25519.
  * - SMW_ATTR_CURVE_ED448: Twisted Edwards448.
+ * - SMW_ATTR_CURVE_SM2: ShāngMì 2.
  * - SMW_ATTR_CURVE_ANY: Any curve.
  */
 #define SMW_ATTR_CURVE_NONE	    0x00
@@ -250,6 +251,7 @@ typedef uint32_t smw_attr_storage_id_t;
 #define SMW_ATTR_CURVE_BRAINPOOL_T1 0x03
 #define SMW_ATTR_CURVE_ED25519	    0x04
 #define SMW_ATTR_CURVE_ED448	    0x05
+#define SMW_ATTR_CURVE_SM2	    0x06
 #define SMW_ATTR_CURVE_ANY	    0xFF
 
 /*
@@ -890,6 +892,22 @@ typedef uint32_t smw_attr_storage_id_t;
 #define SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_TLS_1_2_SERVER(hash)                \
 	(SMW_ATTR_NAME(CLASS, ASYMMETRIC_SIGNATURE) |                          \
 	 SMW_ATTR_NAME(ALGO, TLS_1_2) | SMW_ATTR_NAME(MODE, SERVER) |          \
+	 SMW_ATTR_VALUE(HASH, hash))
+
+/**
+ * SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_SM2() - Build an asymmetric signature
+ * SM2 algorithm.
+ * @hash: A valid hash algorithm. See &typedef smw_attr_algo_t.
+ *
+ * This macro builds an asymmetric signature SM2 algorithm given
+ * the @hash algorithm.
+ *
+ * Return:
+ * A valid asymmetric signature SM2 algorithm.
+ */
+#define SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_SM2(hash)                           \
+	(SMW_ATTR_NAME(CLASS, ASYMMETRIC_SIGNATURE) |                          \
+	 SMW_ATTR_NAME(ALGO, SM2) | SMW_ATTR_NAME(CURVE, SM2) |                \
 	 SMW_ATTR_VALUE(HASH, hash))
 
 /**

@@ -42,6 +42,7 @@
 #define HASH_OBJ		  "hash"
 #define SECO_INFO_OBJ		  "seco_info"
 #define ID_OBJ			  "id"
+#define IDENTIFIER_OBJ		  "identifier"
 #define INFO_OBJ		  "info"
 #define INPUT_OBJ		  "input"
 #define IV_OBJ			  "iv"

@@ -1,0 +1,159 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "SM2",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			]
+		},
+		"key 2": {
+			"type": "SM2",
+			"security_size": 256,
+			"priv_key": [
+				"3945208F7B2144B13F36E38AC6D39F95",
+				"889393692860B51A42FB81EF4DF7C5B8"
+			],
+			"pub_key": [
+				"09F9DF311E5421A150DD7D161E4BC5C6",
+				"72179FAD1833FC076BB08FF356F35020",
+				"CCEA490CE26775A52DC6EA718CC1AA60",
+				"0AED05FBF35E084A6632F6072DA9AD13"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key 1"
+	},
+	"subtest 2": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 3": {
+		"description": "Generate signature multi-part with no data in final stage",
+		"command": "SIGN_INIT",
+		"sign_attr": [
+			"SM2",
+			"HASH=SM3"
+		],
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a",
+			"59f8237a1cb51b42f3ded6b202d9af09"
+		],
+		"identifier": "31323334353637383132333435363738",
+		"context_id": 0,
+		"key_name": "key 1",
+		"depends": 2
+	},
+	"subtest 4": {
+		"description": "Update the message to sign",
+		"command": "SIGN_UPDATE",
+		"message": [
+			"97898fdd03cf60bda951c514547a0850",
+			"cec25444ae2f24cb711bfbafcc3956c9",
+			"41d3de69f155e3f8b10f06db5f37359b",
+			"772ddd43e1035a0a0d3db33242d58430"
+		],
+		"context_id": 0,
+		"depends": 3
+	},
+	"subtest 5": {
+		"description": "Update the message to sign",
+		"command": "SIGN_UPDATE",
+		"message": [
+			"33833b0dd43b870c6bf60e8deab55f31",
+			"7cc3273f5e3ba747f0cb65050cb72287",
+			"96210d9254873643008d45f29cfd6c5b",
+			"060c9a"
+		],
+		"context_id": 0,
+		"depends": 4
+	},
+	"subtest 6": {
+		"description": "Finalize the message to sign (no data)",
+		"command": "SIGN_FINAL",
+		"sign_id": 0,
+		"context_id": 0,
+		"depends": 5
+	},
+	"subtest 7": {
+		"description": "Verify signature multi-part with no data in final stage",
+		"command": "VERIFY",
+		"sign_attr": [
+			"SM2",
+			"HASH=SM3"
+		],
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a",
+			"59f8237a1cb51b42f3ded6b202d9af09",
+			"97898fdd03cf60bda951c514547a0850",
+			"cec25444ae2f24cb711bfbafcc3956c9",
+			"41d3de69f155e3f8b10f06db5f37359b",
+			"772ddd43e1035a0a0d3db33242d58430",
+			"33833b0dd43b870c6bf60e8deab55f31",
+			"7cc3273f5e3ba747f0cb65050cb72287",
+			"96210d9254873643008d45f29cfd6c5b",
+			"060c9a"
+		],
+		"identifier": "31323334353637383132333435363738",
+		"sign_id": 0,
+		"key_name": "key 1",
+		"depends": 6
+	},
+	"subtest 8": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 9": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 1
+	},
+	"subtest 10": {
+		"description": [
+			"Verify signature multi-part with plaintext key",
+			"and no data in final stage"
+		],
+		"command": "VERIFY_INIT",
+		"subsystem": "TEE",
+		"sign_attr": [
+			"SM2",
+			"HASH=SM3"
+		],
+		"message": "6D657373616765",
+		"identifier": "31323334353637383132333435363738",
+		"context_id": 1,
+		"key_name": "key 2",
+		"depends": 9
+	},
+	"subtest 11": {
+		"description": "Update message to verify signature",
+		"command": "VERIFY_UPDATE",
+		"message": "20646967657374",
+		"context_id": 1,
+		"depends": 10
+	},
+	"subtest 12": {
+		"description": "Verify signature final stage with no data in final stage",
+		"command": "VERIFY_FINAL",
+		"context_id": 1,
+		"signature": [
+			"F5A03B0648D2C4630EEAC513E1BB81A1",
+			"5944DA3827D5B74143AC7EACEEE720B3",
+			"B1B6AA29DF212FD8763182BC0D421CA1",
+			"BB9038FD1F7F42D4840B69C485BBC1AA"
+		],
+		"depends": 11
+	}
+}

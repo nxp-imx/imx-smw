@@ -91,6 +91,25 @@
 		"key 14": {
 			"key_name": "key 12",
 			"priv_key": 32
+		},
+		"key 15": {
+			"type": "SM2",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE"
+			]
+		},
+		"key 16": {
+			"key_name": "key 15",
+			"pub_key": 64
+		},
+		"key 17": {
+			"key_name": "key 15",
+			"priv_key": 32
 		}
 	},
 	"subtest 1": {
@@ -215,5 +234,26 @@
 		"command": "DELETE",
 		"key_name": "key 12",
 		"depends": 18
+	},
+	"subtest 22": {
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key 15"
+	},
+	"subtest 23": {
+		"command": "EXPORT_PUBLIC",
+		"key_name": "key 16",
+		"depends": 22
+	},
+	"subtest 24": {
+		"command": "EXPORT_PRIVATE",
+		"key_name": "key 17",
+		"depends": 22,
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+	},
+	"subtest 25": {
+		"command": "DELETE",
+		"key_name": "key 15",
+		"depends": 22
 	}
 }

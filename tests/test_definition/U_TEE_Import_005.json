@@ -1,0 +1,94 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "SM2",
+			"security_size": 256,
+			"priv_key": [
+				"861157a028574cdd47858b73a036023e",
+				"cb0d3378a6d60edc162b621d27c3d289"
+			],
+			"pub_key": [
+				"91f4b43229bfd57e6d12bec4340a92e5",
+				"3a252fc6e3af69a375ca1aaed05651dd",
+				"f99457045d82168deb360940e016ecfd",
+				"b381db45267baf72308deb47cba3ff7a"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			]
+		},
+		"key 2": {
+			"type": "SM2",
+			"security_size": 256,
+			"pub_key": [
+				"91f4b43229bfd57e6d12bec4340a92e5",
+				"3a252fc6e3af69a375ca1aaed05651dd",
+				"f99457045d82168deb360940e016ecfd",
+				"b381db45267baf72308deb47cba3ff7a"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			]
+		},
+		"key 3": {
+			"type": "SM2",
+			"security_size": 256,
+			"format": "BASE64",
+			"pub_key": [
+				"kfS0Mim/1X5tEr7ENAqS5TolL8bjr2mj",
+				"dcoartBWUd35lFcEXYIWjes2CUDgFuz9",
+				"s4HbRSZ7r3IwjetHy6P/eg=="
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			]
+		}
+	},
+	"subtest 1": {
+		"description": "Import SM2 keypair",
+		"command": "IMPORT",
+		"subsystem": "TEE",
+		"key_name": "key 1"
+	},
+	"subtest 2": {
+		"description": "Import SM2 public key",
+		"command": "IMPORT",
+		"subsystem": "TEE",
+		"key_name": "key 2"
+	},
+	"subtest 3": {
+		"description": "Import SM2 public key base 64 format",
+		"command": "IMPORT",
+		"subsystem": "TEE",
+		"key_name": "key 3"
+	},
+	"subtest 4": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 5": {
+		"command": "DELETE",
+		"key_name": "key 2",
+		"depends": 2
+	},
+	"subtest 6": {
+		"command": "DELETE",
+		"key_name": "key 3",
+		"depends": 3
+	}
+}

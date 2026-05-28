@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024-2025 NXP
+ * Copyright 2024-2026 NXP
  */
 
 #include <stdlib.h>
@@ -56,7 +56,7 @@ static int key_type_to_object_type(struct keypair_ops *key,
 	case SMW_KEY_TYPE_NAME_ED448:
 	case SMW_KEY_TYPE_NAME_X25519:
 	case SMW_KEY_TYPE_NAME_X448:
-	case SMW_KEY_TYPE_NAME_DSA_SM2_FP:
+	case SMW_KEY_TYPE_NAME_SM2:
 	case SMW_KEY_TYPE_NAME_RAW:
 	case SMW_KEY_TYPE_NAME_RSA:
 		if (!key_desc->buffer || key_is_private_key_defined(key) ||

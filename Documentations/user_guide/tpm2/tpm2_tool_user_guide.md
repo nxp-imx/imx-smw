@@ -429,27 +429,29 @@ tpm2_unseal -c sealed.ctx -o unsealed_secret.txt
 
 Following table lists TPM2 Commands implemented in the SMW's TSS2 TCTI library.
 
-| TPM2 Commands           |
-| :---------------------- |
-| `TPM2_Startup`          |
-| `TPM2_Shutdown`         |
-| `TPM2_Hash`             |
-| `TPM2_StartAuthSession` |
-| `TPM2_CreatePrimary`    |
-| `TPM2_GetCapability`    |
-| `TPM2_ContextLoad`      |
-| `TPM2_ContextSave`      |
-| `TPM2_FlushContext`     |
-| `TPM2_GetRandom`        |
-| `TPM2_ReadPublic`       |
-| `TPM2_Create`           |
-| `TPM2_Load`             |
-| `TPM2_Sign`             |
-| `TPM2_VerifySignature`  |
-| `TPM2_HMAC`             |
-| `TPM2_PCR_Read`         |
-| `TPM2_PCR_Reset`        |
-| `TPM2_PCR_Extend`       |
-| `TPM2_PCR_Allocate`     |
-| `TPM2_CertifyCreation`  |
-| `TPM2_Unseal`           |
+| TPM2 Commands               |
+| :-------------------------- |
+| `TPM2_Startup`              |
+| `TPM2_Shutdown`             |
+| `TPM2_Hash`                 |
+| `TPM2_StartAuthSession`     |
+| `TPM2_CreatePrimary`        |
+| `TPM2_GetCapability`        |
+| `TPM2_ContextLoad`          |
+| `TPM2_ContextSave`          |
+| `TPM2_FlushContext`         |
+| `TPM2_GetRandom`            |
+| `TPM2_ReadPublic`           |
+| `TPM2_Create`               |
+| `TPM2_Load`                 |
+| `TPM2_Sign`                 |
+| `TPM2_VerifySignature`      |
+| `TPM2_HMAC`                 |
+| `TPM2_PCR_Read`             |
+| `TPM2_PCR_Reset`            |
+| `TPM2_PCR_Extend`           |
+| `TPM2_PCR_Allocate`         |
+| `TPM2_CertifyCreation`      |
+| `TPM2_Unseal`               |
+| `TPM2_MakeCredential`       |
+| `TPM2_ActivateCredential`   |

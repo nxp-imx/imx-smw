@@ -20,5 +20,7 @@ if(CONFIG_SMW_ELE_RTOS)
                 lifecycle.c
                 keymgr.c)
 
+        add_private_sources_ifdef(ele_rtos CONFIG_ENABLE_MAC mac.c)
+
         add_private_directories(ele_rtos ${INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 endif()

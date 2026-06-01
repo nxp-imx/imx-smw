@@ -72,6 +72,9 @@
 #define MAC_ONE_GO_RESPONSE_HDR	 (0xe1520407u)
 #define MAC_ONE_GO_MAC_SIZE_MASK (0xffffu)
 
+#define MAC_ONE_GO_PT_KEY      (0x17520d07u)
+#define MAC_ONE_GO_SIZE_PT_KEY (0xdu)
+
 #define OPEN_RNG_SESSION	      (0x17200607u)
 #define OPEN_RNG_SESSION_SIZE	      (0x6u)
 #define OPEN_RNG_SESSION_RESPONSE_HDR (0xe1200307u)

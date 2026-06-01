@@ -19,6 +19,8 @@ add_private_sources_ifdef(ele_crypto CONFIG_SMW_NVM_MANAGER
         ele_nvm_service.c
         ele_nvm_storage.c)
 
+add_private_sources_ifdef(ele_crypto CONFIG_ENABLE_MAC ele_crypto_mac.c)
+
 get_filename_component(CMAKE_PARENT_LIST_DIR ${CMAKE_PARENT_LIST_FILE} DIRECTORY)
 get_filename_component(CMAKE_PARENT_LIST_DIR ${CMAKE_PARENT_LIST_DIR} DIRECTORY)
 

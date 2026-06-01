@@ -8,6 +8,7 @@
 
 #define PSA_COMPLIANT
 #include "ele_crypto_key_mgr.h"
+#include "ele_crypto_hash.h"
 
 #include "constants.h"
 #include "list.h"
@@ -75,6 +76,23 @@ struct subsystem_context {
 	void *key_grp_mutex;
 	struct ele_info info;
 };
+
+struct ele_hash_algo {
+	enum smw_config_hash_algo_id algo_id;
+	hash_algo_t ele_algo;
+	uint32_t length;
+};
+
+/**
+ * ele_get_hash_algo() - Get the ELE hash algorithm information
+ * @algo_id: SMW Hash algorithm id.
+ *
+ * Return:
+ * NULL if algorithm not found, otherwise reference to the hash algorithm
+ * information.
+ */
+const struct ele_hash_algo *
+ele_get_hash_algo(enum smw_config_hash_algo_id algo_id);
 
 /**
  * ele_key_handle() - Handle the Key operations.

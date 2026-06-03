@@ -24,6 +24,7 @@ This release is based on SMW Release 5.5
 * Add ELE Subsystem.
 * Add RNG operation support.
 * Fix coverity 2026.3.0 findings.
+* Add Key Management support.
 
 ##### 2. OSAL
 
@@ -33,3 +34,4 @@ This release is based on SMW Release 5.5
 * Implement shared memory API.
 * Implement get mu base address API.
 * Fix coverity 2026.3.0 findings.
+* Keep object id defined by user.

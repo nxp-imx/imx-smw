@@ -69,6 +69,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   executing the key expansion operation.
 * Add support for `USE_ELA` tag in configuration file to enable runtime selection
   of EdgeLock Accelerator (ELA) for AEAD, CIPHER, HASH, and MAC operations.
+* Set the key id to the subsystem id if no id is returned by the object database.
 
 ##### 2. Subsystems
 

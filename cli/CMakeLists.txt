@@ -200,6 +200,32 @@ add_custom_command(
     COMMENT "Generating PSA asymmetric key type information table and mappings"
 )
 
+# Generate cipher algorithm combination table and mappings at build time
+set(CIPHER_ALGO_HEADER ${CMAKE_CURRENT_BINARY_DIR}/cipher_algo_generated.h)
+set(CIPHER_ALGO_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/cipher_algo_generated.c)
+set(CIPHER_SMW_MAPPING_HEADER ${CMAKE_CURRENT_BINARY_DIR}/smw_cipher_mapping_generated.h)
+set(CIPHER_SMW_MAPPING_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/smw_cipher_mapping_generated.c)
+set(CIPHER_PSA_MAPPING_HEADER ${CMAKE_CURRENT_BINARY_DIR}/psa_cipher_mapping_generated.h)
+set(CIPHER_PSA_MAPPING_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/psa_cipher_mapping_generated.c)
+set(CIPHER_ALGO_GENERATOR ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_cipher_table.py)
+
+add_custom_command(
+    OUTPUT
+        ${CIPHER_ALGO_HEADER}
+        ${CIPHER_ALGO_SOURCE}
+        ${CIPHER_SMW_MAPPING_HEADER}
+        ${CIPHER_SMW_MAPPING_SOURCE}
+        ${CIPHER_PSA_MAPPING_HEADER}
+        ${CIPHER_PSA_MAPPING_SOURCE}
+    COMMAND ${Python3_EXECUTABLE} ${CIPHER_ALGO_GENERATOR} ${CMAKE_CURRENT_BINARY_DIR}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    DEPENDS
+        ${SMW_NAMES_HEADER}
+        ${PSA_SYM_KEY_MAPPINGS_SOURCE}
+        ${CIPHER_ALGO_GENERATOR}
+    COMMENT "Generating cipher algorithm tables, SMW and PSA mappings"
+)
+
 # Include subdirectories - each sets its own source variables
 # Generate SMW MAC algo table at build time
 set(SMW_MAC_ALGO_TABLE_HEADER
@@ -273,6 +299,9 @@ add_executable(nxp_smw
 	${SMW_SYM_KEY_MAPPINGS_SOURCE}	# SMW Key Mappings Generated file
     ${SMW_ASYM_KEY_MAPPINGS_SOURCE}	# SMW Asymmetric Key Mappings Generated file
     ${SMW_MAC_ALGO_TABLE_SOURCE}        # SMW MAC tables + accessors
+    ${CIPHER_ALGO_HEADER}
+    ${CIPHER_ALGO_SOURCE}
+	${CIPHER_SMW_MAPPING_SOURCE}
 )
 
 target_include_directories(nxp_smw PRIVATE
@@ -298,6 +327,9 @@ add_executable(nxp_psa
     ${PSA_SYM_KEY_MAPPINGS_SOURCE}	# PSA Key Mappings Generated file
     ${PSA_ASYM_KEY_MAPPINGS_SOURCE}
     ${PSA_MAC_ALGO_TABLE_SOURCE}        # PSA MAC tables + accessors
+    ${CIPHER_ALGO_HEADER}
+	${CIPHER_ALGO_SOURCE}
+	${CIPHER_PSA_MAPPING_SOURCE}
 )
 
 target_include_directories(nxp_psa PRIVATE

@@ -4,6 +4,7 @@
  */
 
 #include <getopt.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -152,6 +153,60 @@ cleanup:
 	return ret;
 }
 
+/**
+ * @brief Convert a hex string to a byte array
+ *
+ * @param hex_str Input hex string (must have even length, e.g. "0A1B2C")
+ * @param out Pointer to allocated output buffer (caller must free)
+ * @param out_len Pointer to store the output byte length
+ */
+int util_hex_string_to_bytes(const char *hex_str, unsigned char **out,
+			     size_t *out_len)
+{
+	size_t hex_len = 0;
+	size_t byte_len = 0;
+	unsigned char *buf = NULL;
+	unsigned int byte_val = 0;
+	size_t i = 0;
+
+	if (!hex_str || !out || !out_len)
+		return -1;
+
+	hex_len = strlen(hex_str);
+	if (!hex_len || hex_len % 2) {
+		LOG_ERROR("Hex string must have even length (got %zu)",
+			  hex_len);
+		return -1;
+	}
+
+	byte_len = hex_len / 2;
+	buf = util_alloc_buffer(byte_len, "hex conversion");
+	if (!buf)
+		return -1;
+
+	for (i = 0; i < byte_len; i++) {
+		if (sscanf(&hex_str[i * 2], "%2x", &byte_val) != 1) {
+			LOG_ERROR("Invalid hex character at position %zu",
+				  i * 2);
+			free(buf);
+			return -1;
+		}
+
+		if (byte_val > UCHAR_MAX) {
+			LOG_ERROR("Parsed hex value 0x%x out of byte range",
+				  byte_val);
+			free(buf);
+			return -1;
+		}
+
+		buf[i] = (unsigned char)byte_val;
+	}
+
+	*out = buf;
+	*out_len = byte_len;
+	return 0;
+}
+
 /* =================================================================
  * Memory Allocation
  * =================================================================
@@ -286,4 +341,14 @@ int util_read_file(const char *filename, unsigned char **buf, size_t *size)
 cleanup:
 	FCLOSE(fp);
 	return ret;
+}
+
+/**
+ * @brief Check if the current binary is the PSA backend
+ *
+ * @param prog_name Program name string
+ */
+bool is_psa(const char *prog_name)
+{
+	return (prog_name && strstr(prog_name, "nxp_psa"));
 }

@@ -58,6 +58,12 @@ enum cli_exit_code cli_key_delete_operation(struct parsed_options *args);
 enum cli_exit_code cli_mac_operation(struct parsed_options *args);
 enum cli_exit_code cli_mac_verify_operation(struct parsed_options *args);
 
+/* Encrypt operation functions */
+enum cli_exit_code cli_encrypt_operation(struct parsed_options *args);
+
+/* Decrypt operation functions */
+enum cli_exit_code cli_decrypt_operation(struct parsed_options *args);
+
 /* More operation declarations here as we implement them */
 
 #endif /* CLI_APIS_DISPATCHER_H */

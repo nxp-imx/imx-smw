@@ -57,6 +57,7 @@ cli/
 │   ├── handler.c                       # Main entry point, operation dispatcher
 │   ├── logger.c                        # Logging system implementation
 │   ├── opt_parser.c                    # Command-line argument parsing
+│   ├── parser_cipher.c                 # Cipher encrypt/decrypt option parsing
 │   ├── parser_device_attestation.c     # Device attestation option parsing
 │   ├── parser_device_get_lifecycle.c   # Get-lifecycle-specific option parsing
 │   ├── parser_device_set_lifecycle.c   # Set-lifecycle-specific option parsing
@@ -70,6 +71,7 @@ cli/
 │   ├── parser_rng.c                    # RNG-specific option parsing
 │   ├── pubkey_encode.c                 # Public key encoding (DER/PEM via Python script)
 │   ├── utils.c                         # Utility functions (hex dump, program info)
+│   ├── weak_cipher.c                   # Weak default cipher implementation
 │   ├── weak_device_attestation.c       # Weak default dev-attestation implementation
 │   ├── weak_device_get_lifecycle.c     # Weak default dev-get-lifecycle implementation
 │   ├── weak_device_set_lifecycle.c     # Weak default dev-set-lifecycle implementation
@@ -89,6 +91,7 @@ cli/
 │   ├── key_sym_mappings.h              # Backend-agnostic key type/algo mappings
 │   ├── logger.h                        # Logging API
 │   ├── opt_parser.h                    # CLI parser API
+│   ├── parser_cipher.h                 # Cipher encrypt/decrypt parser API
 │   ├── parser_device_attestation.h     # Device attestation parser API
 │   ├── parser_device_get_lifecycle.h   # Get-lifecycle parser API
 │   ├── parser_device_set_lifecycle.h   # Set-lifecycle parser API
@@ -104,6 +107,7 @@ cli/
 │   └── utils.h                         # Utility function declarations
 │
 ├── psa/                                # PSA backend implementation
+│   ├── cipher.c                        # PSA cipher encrypt/decrypt operation
 │   ├── CMakeLists.txt
 │   ├── common.c                        # PSA common utilities (subsystem names, etc.)
 │   ├── common.h                        # Common PSA definitions and macros
@@ -119,6 +123,7 @@ cli/
 │   └── rng.c                           # PSA RNG operation
 │
 ├── scripts/                            # Build-time code generation scripts
+│   ├── generate_cipher_table.py        # Generate cipher algo enum, table, SMW and PSA mappings
 │   ├── generate_hash_common_table.py   # Generate common hash algorithm enum and table
 │   ├── generate_lifecycle_table.py     # Generate lifecycle enum and table
 │   ├── generate_psa_error_table.py     # Generate PSA error handler
@@ -136,6 +141,7 @@ cli/
 │   └── pubkey_convert.py               # Runtime public key format conversion (DER/PEM)
 │
 ├── smw/                                # SMW backend implementation
+│   ├── cipher.c                        # SMW cipher encrypt/decrypt operation
 │   ├── CMakeLists.txt
 │   ├── common.c                        # SMW common utilities (subsystem names, etc.)
 │   ├── common.h                        # Common SMW definitions and macros
@@ -234,7 +240,7 @@ When enabled, **all levels** are logged:
 
 ## Adding New Operations
 
-To add a new operation (e.g., `cipher`):
+To add a new operation (e.g., `key_import`):
 
 1. **Add operation enum** in `opt_parser.h`:
    ```c
@@ -242,29 +248,29 @@ To add a new operation (e.g., `cipher`):
         OP_NONE = 0,
         OP_RNG,
         OP_HASH,
-        OP_CIPHER   // new
+        OP_KEY_IMPORT   // new
    };
     ```
 2. **Create parser header** in `cli/inc/parser_<operation>.h`
 3. **Implement parser** in `cli/core/parser_<operation>.c`
 4.  **Add to operation parser table** in `core/opt_parser.c`:
     ```c
-    { .name = "cipher",
-      .op = OP_CIPHER,
-      .parse_func = parse_cipher_options,
+    { .name = "key_import",
+      .op = OP_KEY_IMPORT,
+      .parse_func = parse_key_import_options,
       .special_func = NULL },
     ```
 5. **Create weak implementation** in `cli/core/weak_<operation>.c`
-6. **Implement SMW version** in `cli/smw/cipher.c`
-7. **Implement PSA version** in `cli/psa/cipher.c`
+6. **Implement SMW version** in `cli/smw/key_import.c`
+7. **Implement PSA version** in `cli/psa/key_import.c`
 8. **Add operation function** in `cli/inc/apis_dispatcher.h`
 9. **Add to operation table** in `handler.c`:
    ```c
    {
-       .operation_name = "cipher",
-       .operation_func = cli_cipher_operation,
-       .help_func = cli_cipher_help,
-       .inline_desc_func = cli_cipher_inline_desc
+       .operation_name = "key_import",
+       .operation_func = cli_key_import_operation,
+       .help_func = cli_key_import_help,
+       .inline_desc_func = cli_key_import_inline_desc
    },
    ```
 
@@ -272,10 +278,12 @@ To add a new operation (e.g., `cipher`):
 
 | Operation | Description | SMW | PSA |
 |-----------|-------------|-----|-----|
+| `decrypt` | Decrypt data using a generated key | ✅ | ✅ |
 | `dev-get-attestation` | Get device attestation | ✅ | ❌ |
 | `dev-get-lifecycle` | Get device lifecycle | ✅ | ❌ |
 | `dev-get-uuid` | Get device UUID | ✅ | ❌ |
 | `dev-set-lifecycle` | Set device lifecycle | ✅ | ❌ |
+| `encrypt` | Encrypt data using a generated key | ✅ | ✅ |
 | `hash` | Compute cryptographic hash | ✅ | ✅ |
 | `keygen-asym` | Generate asymmetric key | ✅ | ✅ |
 | `keygen-sym` | Generate symmetric key | ✅ | ✅ |

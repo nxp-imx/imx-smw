@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include "apis_dispatcher.h"
 #include "common.h"
-#include "error_handler.h"
 #include "hash_table_generated.h"
 #include "helper.h"
 #include "logger.h"

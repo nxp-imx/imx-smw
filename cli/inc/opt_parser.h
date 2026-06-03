@@ -8,6 +8,7 @@
 
 #include <getopt.h>
 #include <stdbool.h>
+#include "cipher_algo_generated.h"
 #include "hash_algo_enum.h"
 #include "logger.h"
 
@@ -25,7 +26,9 @@ enum operation {
 	OP_KEY_EXPORT,
 	OP_KEY_DELETE,
 	OP_MAC,
-	OP_MAC_VERIFY
+	OP_MAC_VERIFY,
+	OP_ENCRYPT,
+	OP_DECRYPT
 };
 
 /* RNG-specific options */
@@ -80,6 +83,13 @@ struct mac {
 	char *mac_filename;
 };
 
+/* Cipher-specific options (shared by encrypt and decrypt) */
+struct cipher_options {
+	enum cipher_algo algo;
+	unsigned int key_id;
+	char *iv_hex;
+};
+
 /* Parsed options structure */
 struct parsed_options {
 	enum operation operation;
@@ -107,6 +117,7 @@ struct parsed_options {
 		struct key_export key_export;
 		struct key_delete key_delete;
 		struct mac mac;
+		struct cipher_options cipher;
 	} op;
 };
 

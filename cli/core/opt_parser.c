@@ -12,6 +12,7 @@
 #include <strings.h>
 #include "helper.h"
 #include "opt_parser.h"
+#include "parser_cipher.h"
 #include "parser_device_attestation.h"
 #include "parser_device_get_lifecycle.h"
 #include "parser_device_set_lifecycle.h"
@@ -128,6 +129,14 @@ static const struct operation_parser operation_parsers[] = {
 	{ .name = "mac-verify",
 	  .op = OP_MAC_VERIFY,
 	  .parse_func = parse_mac_verify_options,
+	  .special_func = NULL },
+	{ .name = "encrypt",
+	  .op = OP_ENCRYPT,
+	  .parse_func = parse_encrypt_options,
+	  .special_func = NULL },
+	{ .name = "decrypt",
+	  .op = OP_DECRYPT,
+	  .parse_func = parse_decrypt_options,
 	  .special_func = NULL },
 	/* Add more operations here */
 	{ NULL, OP_NONE, NULL, NULL } /* Sentinel */
@@ -377,6 +386,13 @@ void opt_parser_cleanup(struct parsed_options *opts)
 		if (opts->op.mac.mac_filename) {
 			free(opts->op.mac.mac_filename);
 			opts->op.mac.mac_filename = NULL;
+		}
+	}
+
+	if (opts->operation == OP_ENCRYPT || opts->operation == OP_DECRYPT) {
+		if (opts->op.cipher.iv_hex) {
+			free(opts->op.cipher.iv_hex);
+			opts->op.cipher.iv_hex = NULL;
 		}
 	}
 }

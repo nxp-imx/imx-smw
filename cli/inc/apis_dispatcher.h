@@ -61,8 +61,14 @@ enum cli_exit_code cli_mac_verify_operation(struct parsed_options *args);
 /* Encrypt operation functions */
 enum cli_exit_code cli_encrypt_operation(struct parsed_options *args);
 
-/* Decrypt operation functions */
+/* Symmetric decrypt operation functions */
 enum cli_exit_code cli_decrypt_operation(struct parsed_options *args);
+
+/* Asymmetric encrypt operation functions */
+enum cli_exit_code cli_asym_encrypt(struct parsed_options *args);
+
+/* Asymmetric decrypt operation functions */
+enum cli_exit_code cli_asym_decrypt(struct parsed_options *args);
 
 /* More operation declarations here as we implement them */
 

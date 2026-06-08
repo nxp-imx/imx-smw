@@ -312,10 +312,6 @@ void print_cipher_algo_list(void)
 \t\t       info->needs_iv ? "Yes" : "No", info->description);
 \t}
 
-\tprintf("\\nNote: Actual support depends on the backend"
-\t       " and subsystem capabilities.\\n");
-\tprintf("      The operation may fail at runtime"
-\t       " if unsupported.\\n\\n");
 }
 """)
 

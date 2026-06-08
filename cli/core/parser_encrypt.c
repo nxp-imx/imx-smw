@@ -10,25 +10,28 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+
+#include "asym_enc_algo_generated.h"
 #include "cipher_algo_generated.h"
 #include "cli_print.h"
 #include "helper.h"
 #include "logger.h"
 #include "opt_parser.h"
-#include "parser_cipher.h"
+#include "parser_encrypt.h"
 #include "utils.h"
 
-/* Short getopt options for CIPHER operations */
-static const char *cipher_short_opts = ":ha:k:i:o:S:";
+/* Short getopt options for asymmetric and symmetric encryption operations */
+static const char *ecnrypt_short_opts = ":ha:k:i:o:S:";
 
-/* Define options for CIPHER operations */
-static const struct option cipher_long_opts[] = {
+/* Define options for asymmetric and symmetric encryption operations */
+static const struct option encrypt_long_opts[] = {
 	{ "help", no_argument, 0, 'h' },
 	{ "algo", required_argument, 0, 'a' },
 	{ "key-id", required_argument, 0, 'k' },
 	{ "input", required_argument, 0, 'i' },
 	{ "output", required_argument, 0, 'o' },
 	{ "iv", required_argument, 0, 1 },
+	{ "salt", required_argument, 0, 2 },
 	{ "subsystem", required_argument, 0, 'S' },
 	{ "list", no_argument, 0, 0 },
 	{ "v", optional_argument, 0, 0 },
@@ -41,7 +44,7 @@ static const struct option cipher_long_opts[] = {
  */
 const char *cli_encrypt_inline_desc(void)
 {
-	return "Compute cryptographic encryption";
+	return "Compute cryptographic encryption (symmetric or asymmetric)";
 }
 
 /**
@@ -49,31 +52,31 @@ const char *cli_encrypt_inline_desc(void)
  */
 const char *cli_decrypt_inline_desc(void)
 {
-	return "Compute cryptographic decryption";
+	return "Compute cryptographic decryption (symmetric or asymmetric)";
 }
 
 /**
- * @brief Print common help for cipher operation (backend-agnostic)
+ * @brief Print common help for encrypt operation (backend-agnostic)
  */
-void cli_cipher_help_common(void)
+void cli_encrypt_help_common(void)
 {
 	const char *prog_name = get_program_name();
 
 	printf("Options:\n");
-	printf("\n      --list                List all available cipher algorithms\n\n");
-	printf("  -a, --algo <algorithm>    Cipher algorithm (required)\n");
+	printf("\n      --list                List all available algorithms\n\n");
+	printf("  -a, --algo <algorithm>    Algorithm (required)\n");
 	printf("  -k, --key-id <id>         Key identifier (required)\n");
 	printf("  -i, --input <file>        Input file (required)\n");
 	printf("  -o, --output <file>       Output file\n");
 	if (!is_psa(prog_name))
-		printf("      --iv <hex>            Initialization vector (hex string)\n");
-	printf("  -L, --log <dest>          Enable session logging");
-	printf(" (%s log --help for info)\n", prog_name);
-	printf("  -h, --help                Show help\n");
+		printf("      --iv <hex>            IV for symmetric encryption (hex string)\n");
+	printf("      --salt <hex>          Salt for RSA-OAEP (hex string, optional)\n");
+	print_log_options_help(prog_name);
+	print_help_option_help();
 }
 
 /**
- * @brief Common cipher option parser used by both encrypt and decrypt
+ * @brief Common encryption and decryption option parser
  *
  * @param argc       Argument count
  * @param argv       Argument vector
@@ -81,35 +84,38 @@ void cli_cipher_help_common(void)
  * @param prog_name  Program name for error messages
  * @param op_name    Operation name ("encrypt" or "decrypt")
  */
-static int parse_cipher_common(int argc, char **argv,
-			       struct parsed_options *opts,
-			       const char *prog_name, const char *op_name)
+static int parse_encrypt_common(int argc, char **argv,
+				struct parsed_options *opts,
+				const char *prog_name, const char *op_name)
 {
 	int opt = 0;
 	int opt_index = 0;
 	opterr = 0;
 	bool psa_backend = is_psa(prog_name);
+	char *iv_hex = NULL;
+	char *salt_hex = NULL;
 
 	LOG_VERBOSE("Parsing %s options (argc=%d)", op_name, argc);
 
-	while ((opt = getopt_long(argc, argv, cipher_short_opts,
-				  cipher_long_opts, &opt_index)) != -1) {
+	while ((opt = getopt_long(argc, argv, ecnrypt_short_opts,
+				  encrypt_long_opts, &opt_index)) != -1) {
 		switch (opt) {
 		case 0:
-			if (!strcmp(cipher_long_opts[opt_index].name, "list")) {
+			if (!strcmp(encrypt_long_opts[opt_index].name,
+				    "list")) {
 				opts->show_list = true;
-			} else if (!strcmp(cipher_long_opts[opt_index].name,
+			} else if (!strcmp(encrypt_long_opts[opt_index].name,
 					   "v")) {
 				if (parse_log_option(opts, argc, argv,
 						     prog_name, op_name,
 						     LOG_LEVEL_INFO))
-					return -1;
-			} else if (!strcmp(cipher_long_opts[opt_index].name,
+					goto err;
+			} else if (!strcmp(encrypt_long_opts[opt_index].name,
 					   "vv")) {
 				if (parse_log_option(opts, argc, argv,
 						     prog_name, op_name,
 						     LOG_LEVEL_VERBOSE))
-					return -1;
+					goto err;
 			}
 			break;
 
@@ -121,15 +127,30 @@ static int parse_cipher_common(int argc, char **argv,
 			if (!optarg) {
 				ERROR("--algo requires an argument");
 				print_help_hint(prog_name, op_name);
-				return -1;
+				goto err;
 			}
-			opts->op.cipher.algo = parse_cipher_algo_str(optarg);
-			if (opts->op.cipher.algo == CIPHER_ALGO_NONE) {
-				print_help_hint(prog_name, op_name);
-				return -1;
-			}
+
 			LOG_VERBOSE("  algo = %s", optarg);
-			break;
+
+			/* Try cipher first */
+			opts->op.cipher.algo = parse_cipher_algo_str(optarg);
+			if (opts->op.cipher.algo != CIPHER_ALGO_NONE) {
+				opts->cipher_family = CIPHER_FAMILY_SYMMETRIC;
+				break;
+			}
+
+			/* Try asymmetric encryption */
+			opts->op.asym_enc.algo =
+				parse_asym_enc_algo_str(optarg);
+			if (opts->op.asym_enc.algo != ASYM_ENC_ALGO_NONE) {
+				opts->cipher_family = CIPHER_FAMILY_ASYMMETRIC;
+				break;
+			}
+
+			ERROR("Unknown algorithm '%s'\n", optarg);
+			PRINT_USE_LIST("algorithms");
+			print_help_hint(prog_name, op_name);
+			goto err;
 
 		case 'k': {
 			char *endptr = NULL;
@@ -138,7 +159,7 @@ static int parse_cipher_common(int argc, char **argv,
 			if (!optarg) {
 				ERROR("--key-id requires an argument");
 				print_help_hint(prog_name, op_name);
-				return -1;
+				goto err;
 			}
 
 			errno = 0;
@@ -147,16 +168,16 @@ static int parse_cipher_common(int argc, char **argv,
 			if (errno || endptr == optarg || *endptr != '\0') {
 				ERROR("Invalid key ID '%s'", optarg);
 				print_help_hint(prog_name, op_name);
-				return -1;
+				goto err;
 			}
 
 			if (tmp > UINT32_MAX) {
 				ERROR("Key ID value out of range");
 				print_help_hint(prog_name, op_name);
-				return -1;
+				goto err;
 			}
 
-			opts->op.cipher.key_id = (unsigned int)tmp;
+			opts->key_id = (unsigned int)tmp;
 			LOG_VERBOSE("  key_id = %lu", tmp);
 			break;
 		}
@@ -166,7 +187,7 @@ static int parse_cipher_common(int argc, char **argv,
 				parse_file_opt(optarg, "Input filename");
 			if (!opts->input_filename) {
 				print_help_hint(prog_name, op_name);
-				return -1;
+				goto err;
 			}
 			LOG_VERBOSE("  input_filename = %s",
 				    opts->input_filename);
@@ -177,24 +198,42 @@ static int parse_cipher_common(int argc, char **argv,
 				parse_file_opt(optarg, "Output filename");
 			if (!opts->output_filename) {
 				print_help_hint(prog_name, op_name);
-				return -1;
+				goto err;
 			}
 			LOG_VERBOSE("  output_filename = %s",
 				    opts->output_filename);
 			break;
 
-		case 1: /* --iv */
+		case 1: /* --iv (stored in local, assigned to union later) */
 			if (!optarg) {
 				ERROR("--iv requires a hex string argument");
 				print_help_hint(prog_name, op_name);
-				return -1;
+				goto err;
 			}
-			opts->op.cipher.iv_hex = strdup(optarg);
-			if (!opts->op.cipher.iv_hex) {
+			free(iv_hex);
+			iv_hex = strdup(optarg);
+			if (!iv_hex) {
 				ERROR("Memory allocation failed for IV");
-				return -1;
+				goto err;
 			}
+
 			LOG_VERBOSE("  iv_hex = %s", optarg);
+			break;
+
+		case 2: /* --salt (stored in local, assigned to union later) */
+			if (!optarg) {
+				ERROR("--salt requires a hex string argument");
+				print_help_hint(prog_name, op_name);
+				goto err;
+			}
+			free(salt_hex);
+			salt_hex = strdup(optarg);
+			if (!salt_hex) {
+				ERROR("Memory allocation failed for salt");
+				goto err;
+			}
+
+			LOG_VERBOSE("  salt_hex = %s", optarg);
 			break;
 
 		case 'S':
@@ -206,54 +245,66 @@ static int parse_cipher_common(int argc, char **argv,
 			ERROR("Option '%s' requires an argument",
 			      SAFE_ARGV_OPT(argv, "<unknown>"));
 			print_help_hint(prog_name, op_name);
-			return -1;
+			goto err;
 
 		case '?':
 		default:
 			ERROR("Unknown option '%s'",
 			      SAFE_ARGV_OPT(argv, "<unknown>"));
 			print_help_hint(prog_name, op_name);
-			return -1;
+			goto err;
 		}
 	}
 
-	/* --list is requested */
+	/* --list: show both symmetric and asymmetric algorithms */
 	if (opts->show_list) {
 		print_cipher_algo_list();
+		print_asym_enc_algo_list();
+		free(iv_hex);
+		free(salt_hex);
 		return 0;
 	}
 
-	/* Validate required options (skip if --help) */
-	if (!opts->show_help) {
-		if (opts->op.cipher.algo == CIPHER_ALGO_NONE) {
-			ERROR("--algo is required for %s operation", op_name);
-			PRINT_USE_LIST("algorithms");
-			print_help_hint(prog_name, op_name);
-			return -1;
+	if (opts->show_help) {
+		free(iv_hex);
+		free(salt_hex);
+		return 0;
+	}
+
+	/* Common required options */
+	if (opts->cipher_family == CIPHER_FAMILY_NONE) {
+		ERROR("--algo is required for %s operation", op_name);
+		PRINT_USE_LIST("algorithms");
+		print_help_hint(prog_name, op_name);
+		goto err;
+	}
+
+	if (!opts->key_id) {
+		ERROR("--key-id is required for %s operation", op_name);
+		print_help_hint(prog_name, op_name);
+		goto err;
+	}
+
+	if (!opts->input_filename) {
+		ERROR("--input is required for %s operation", op_name);
+		print_help_hint(prog_name, op_name);
+		goto err;
+	}
+
+	/* Assign locals to the correct union member based on family */
+	if (opts->cipher_family == CIPHER_FAMILY_SYMMETRIC) {
+		opts->op.cipher.iv_hex = iv_hex;
+
+		if (salt_hex) {
+			WARNING("-salt is ignored for symmetric cipher\n");
+			free(salt_hex);
 		}
 
-		if (!opts->op.cipher.key_id) {
-			ERROR("--key-id is required for %s operation", op_name);
-			print_help_hint(prog_name, op_name);
-			return -1;
-		}
-
-		if (!opts->input_filename) {
-			ERROR("--input is required for %s operation", op_name);
-			print_help_hint(prog_name, op_name);
-			return -1;
-		}
-
-		/*
-		 * IV validation is backend-dependent:
-		 *   - SMW: user must provide --iv for modes that need it
-		 *   - PSA: IV is managed internally (--iv accepted but ignored)
-		 */
 		if (!psa_backend && !opts->op.cipher.iv_hex &&
 		    cipher_algo_requires_iv(opts->op.cipher.algo)) {
 			ERROR("--iv is required for this algorithm");
 			print_help_hint(prog_name, op_name);
-			return -1;
+			goto err;
 		}
 
 		if (opts->op.cipher.iv_hex &&
@@ -265,11 +316,27 @@ static int parse_cipher_common(int argc, char **argv,
 		    cipher_algo_requires_iv(opts->op.cipher.algo)) {
 			WARNING("--iv accepted but ignored (PSA manages IV internally)\n");
 		}
+	} else if (opts->cipher_family == CIPHER_FAMILY_ASYMMETRIC) {
+		opts->op.asym_enc.salt_hex = salt_hex;
+
+		if (iv_hex) {
+			WARNING("--iv is ignored for asymmetric operation\n");
+			free(iv_hex);
+		}
 	}
 
 	LOG_VERBOSE("Cipher %s options parsed successfully", op_name);
 
 	return 0;
+
+err:
+	if (iv_hex)
+		free(iv_hex);
+
+	if (salt_hex)
+		free(salt_hex);
+
+	return -1;
 }
 
 /**
@@ -283,7 +350,7 @@ static int parse_cipher_common(int argc, char **argv,
 int parse_encrypt_options(int argc, char **argv, struct parsed_options *opts,
 			  const char *prog_name)
 {
-	return parse_cipher_common(argc, argv, opts, prog_name, "encrypt");
+	return parse_encrypt_common(argc, argv, opts, prog_name, "encrypt");
 }
 
 /**
@@ -297,5 +364,5 @@ int parse_encrypt_options(int argc, char **argv, struct parsed_options *opts,
 int parse_decrypt_options(int argc, char **argv, struct parsed_options *opts,
 			  const char *prog_name)
 {
-	return parse_cipher_common(argc, argv, opts, prog_name, "decrypt");
+	return parse_encrypt_common(argc, argv, opts, prog_name, "decrypt");
 }

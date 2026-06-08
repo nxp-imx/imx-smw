@@ -57,11 +57,11 @@ cli/
 │   ├── handler.c                       # Main entry point, operation dispatcher
 │   ├── logger.c                        # Logging system implementation
 │   ├── opt_parser.c                    # Command-line argument parsing
-│   ├── parser_cipher.c                 # Cipher encrypt/decrypt option parsing
 │   ├── parser_device_attestation.c     # Device attestation option parsing
 │   ├── parser_device_get_lifecycle.c   # Get-lifecycle-specific option parsing
 │   ├── parser_device_set_lifecycle.c   # Set-lifecycle-specific option parsing
 │   ├── parser_device_uuid.c            # Device UUID option parsing
+│   ├── parser_encrypt.c                # Encrypt/decrypt option parsing
 │   ├── parser_hash.c                   # Hash-specific option parsing
 │   ├── parser_key_delete.c             # Key delete option parsing
 │   ├── parser_key_export.c             # Key export option parsing
@@ -71,6 +71,7 @@ cli/
 │   ├── parser_rng.c                    # RNG-specific option parsing
 │   ├── pubkey_encode.c                 # Public key encoding (DER/PEM via Python script)
 │   ├── utils.c                         # Utility functions (hex dump, program info)
+│   ├── weak_asym_enc.c                 # Weak default asymmetric enc/dec implementation
 │   ├── weak_cipher.c                   # Weak default cipher implementation
 │   ├── weak_device_attestation.c       # Weak default dev-attestation implementation
 │   ├── weak_device_get_lifecycle.c     # Weak default dev-get-lifecycle implementation
@@ -81,21 +82,24 @@ cli/
 │   ├── weak_key_export.c               # Weak default key-export implementation
 │   ├── weak_keygen_asym.c              # Weak default asymmetric keygen implementation
 │   ├── weak_keygen_sym.c               # Weak default symmetric keygen implementation
+│   └── weak_mac.c                      # Weak default MAC implementation
 │   └── weak_rng.c                      # Weak default RNG implementation
 │
 ├── inc/                                # Public headers
 │   ├── apis_dispatcher.h               # Backend dispatcher declarations (PSA/SMW routing)
+│   ├── cli_print.h                     # CLI output formatting helpers
 │   ├── error_handler.h                 # API status checking and error descriptions
 │   ├── helper.h                        # Safe I/O macros (FPRINTF, FCLOSE, etc.)
 │   ├── key_asym_mappings.h             # Backend-agnostic asymmetric key mappings
 │   ├── key_sym_mappings.h              # Backend-agnostic key type/algo mappings
 │   ├── logger.h                        # Logging API
+│   ├── mac_algo_mappings.h             # Backend-agnostic MAC algorithm mappings
 │   ├── opt_parser.h                    # CLI parser API
-│   ├── parser_cipher.h                 # Cipher encrypt/decrypt parser API
 │   ├── parser_device_attestation.h     # Device attestation parser API
 │   ├── parser_device_get_lifecycle.h   # Get-lifecycle parser API
 │   ├── parser_device_set_lifecycle.h   # Set-lifecycle parser API
 │   ├── parser_device_uuid.h            # Device UUID parser API
+│   ├── parser_encrypt.h                # Encrypt/decrypt parser API
 │   ├── parser_hash.h                   # Hash parser API
 │   ├── parser_key_delete.h             # Key delete parser API
 │   ├── parser_key_export.h             # Key export parser API
@@ -107,8 +111,9 @@ cli/
 │   └── utils.h                         # Utility function declarations
 │
 ├── psa/                                # PSA backend implementation
-│   ├── cipher.c                        # PSA cipher encrypt/decrypt operation
 │   ├── CMakeLists.txt
+│   ├── asym_enc.c                      # PSA asymmetric encrypt/decrypt operation
+│   ├── cipher.c                        # PSA cipher encrypt/decrypt operation
 │   ├── common.c                        # PSA common utilities (subsystem names, etc.)
 │   ├── common.h                        # Common PSA definitions and macros
 │   ├── hash.c                          # PSA hash operation
@@ -123,6 +128,7 @@ cli/
 │   └── rng.c                           # PSA RNG operation
 │
 ├── scripts/                            # Build-time code generation scripts
+│   ├── generate_asym_enc_table.py      # Generate asymmetric encryption algo enum, table, SMW and PSA mappings
 │   ├── generate_cipher_table.py        # Generate cipher algo enum, table, SMW and PSA mappings
 │   ├── generate_hash_common_table.py   # Generate common hash algorithm enum and table
 │   ├── generate_lifecycle_table.py     # Generate lifecycle enum and table
@@ -130,19 +136,20 @@ cli/
 │   ├── generate_psa_hash_table.py      # Generate PSA hash algorithm mapping table
 │   ├── generate_psa_key_asym_table.py  # Generate PSA asymmetric key mapping table
 │   ├── generate_psa_key_sym_table.py   # Generate PSA symmetric key mapping table
+│   ├── generate_psa_mac_algo_table.py  # Generate PSA MAC algorithm mapping table
 │   ├── generate_smw_error_table.py     # Generate SMW error handler
 │   ├── generate_smw_hash_table.py      # Generate SMW hash algorithm mapping table
 │   ├── generate_smw_key_asym_table.py  # Generate SMW asymmetric key type mapping table
 │   ├── generate_smw_key_sym_table.py   # Generate SMW symmetric key mapping table
-│   ├── generate_psa_mac_algo_table.py  # Generate PSA MAC algorithm mapping table
 │   ├── generate_smw_mac_algo_table.py  # Generate SMW MAC algorithm mapping table
 │   ├── nxp_psa_completion.bash         # Bash completion for nxp_psa CLI
 │   ├── nxp_smw_completion.bash         # Bash completion for nxp_smw CLI
 │   └── pubkey_convert.py               # Runtime public key format conversion (DER/PEM)
 │
 ├── smw/                                # SMW backend implementation
-│   ├── cipher.c                        # SMW cipher encrypt/decrypt operation
 │   ├── CMakeLists.txt
+│   ├── asym_enc.c                      # SMW asymmetric encrypt/decrypt operation
+│   ├── cipher.c                        # SMW cipher encrypt/decrypt operation
 │   ├── common.c                        # SMW common utilities (subsystem names, etc.)
 │   ├── common.h                        # Common SMW definitions and macros
 │   ├── device_attestation.c            # SMW dev-get-attestation operation
@@ -159,6 +166,23 @@ cli/
 │   ├── keygen_sym.c                    # SMW symmetric key generation operation
 │   ├── mac.c                           # SMW MAC operation
 │   └── rng.c                           # SMW RNG operation
+|
+├── tests/                              # Test suites
+│   ├── lib_asym_enc.sh                 # Shared library for asymmetric encryption test suites
+│   ├── lib_cipher.sh                   # Shared library for cipher test suites
+│   ├── lib_keygen_asym.sh              # Shared library for asymmetric key generation test suites
+│   ├── lib_keygen_sym.sh               # Shared library for symmetric key generation test suites
+│   ├── lib_mac.sh                      # Shared library for MAC test suites
+│   ├── psa_asym_enc.sh                 # PSA asymmetric encryption test suite
+│   ├── psa_cipher.sh                   # PSA cipher algorithm test suite
+│   ├── psa_keygen_asym.sh              # PSA asymmetric key generation test suite
+│   ├── psa_keygen_sym.sh               # PSA symmetric key generation test suite
+│   ├── psa_mac.sh                      # PSA MAC algorithm test suite
+│   ├── smw_asym_enc.sh                 # SMW asymmetric encryption test suite
+│   ├── smw_cipher.sh                   # SMW cipher algorithm test suite
+│   ├── smw_keygen_asym.sh              # SMW asymmetric key generation test suite
+│   ├── smw_keygen_sym.sh               # SMW symmetric key generation test suite
+│   └── smw_mac.sh                      # SMW MAC algorithm test suite
 │
 ├── CMakeLists.txt                      # Main build configuration
 └── README.md                           # Documentation

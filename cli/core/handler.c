@@ -11,7 +11,7 @@
 #include "helper.h"
 #include "logger.h"
 #include "opt_parser.h"
-#include "parser_cipher.h"
+#include "parser_encrypt.h"
 #include "parser_device_attestation.h"
 #include "parser_device_get_lifecycle.h"
 #include "parser_device_set_lifecycle.h"
@@ -38,6 +38,28 @@ static void print_version(const char *prog_name)
 {
 	printf("%s version %s", prog_name, CLI_VERSION);
 	printf(" using libsmw.so version %s\n", SMW_LIB_VERSION);
+}
+
+/**
+ * @brief Dispatch encrypt to symmetric or asymmetric based on cipher_family
+ */
+static enum cli_exit_code cli_encrypt_dispatch(struct parsed_options *args)
+{
+	if (args->cipher_family == CIPHER_FAMILY_ASYMMETRIC)
+		return cli_asym_encrypt(args);
+
+	return cli_encrypt_operation(args);
+}
+
+/**
+ * @brief Dispatch decrypt to symmetric or asymmetric based on cipher_family
+ */
+static enum cli_exit_code cli_decrypt_dispatch(struct parsed_options *args)
+{
+	if (args->cipher_family == CIPHER_FAMILY_ASYMMETRIC)
+		return cli_asym_decrypt(args);
+
+	return cli_decrypt_operation(args);
 }
 
 /* ============================================================================
@@ -94,11 +116,11 @@ static const struct operation_entry operation_table[] = {
 	  .help_func = cli_mac_verify_help,
 	  .inline_desc_func = cli_mac_verify_inline_desc },
 	{ .operation_name = "encrypt",
-	  .opt_func = cli_encrypt_operation,
+	  .opt_func = cli_encrypt_dispatch,
 	  .help_func = cli_encrypt_help,
 	  .inline_desc_func = cli_encrypt_inline_desc },
 	{ .operation_name = "decrypt",
-	  .opt_func = cli_decrypt_operation,
+	  .opt_func = cli_decrypt_dispatch,
 	  .help_func = cli_decrypt_help,
 	  .inline_desc_func = cli_decrypt_inline_desc },
 	/* Add more operations here as we implement them */

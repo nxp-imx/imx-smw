@@ -10,6 +10,7 @@
 #include <psa/crypto.h>
 #include <smw_crypto.h>
 #include <stdbool.h>
+#include "asym_enc_algo_generated.h"
 #include "cipher_algo_generated.h"
 #include "hash_algo_enum.h"
 #include "logger.h"
@@ -30,7 +31,14 @@ enum operation {
 	OP_MAC,
 	OP_MAC_VERIFY,
 	OP_ENCRYPT,
-	OP_DECRYPT
+	OP_DECRYPT,
+};
+
+/* Cipher family discriminator */
+enum cipher_op_family {
+	CIPHER_FAMILY_NONE = 0,
+	CIPHER_FAMILY_SYMMETRIC,
+	CIPHER_FAMILY_ASYMMETRIC,
 };
 
 /* RNG-specific options */
@@ -85,11 +93,16 @@ struct mac {
 	char *mac_filename;
 };
 
-/* Cipher-specific options (shared by encrypt and decrypt) */
+/* Symmetric encryption-specific options */
 struct cipher_options {
 	enum cipher_algo algo;
-	unsigned int key_id;
 	char *iv_hex;
+};
+
+/* Asymmetric encryption-specific options */
+struct asym_enc_options {
+	enum asym_enc_algo algo;
+	char *salt_hex;
 };
 
 /* Parsed options structure */
@@ -110,6 +123,9 @@ struct parsed_options {
 	char *log_filename;
 	enum log_level log_level; /* INFO (default) or VERBOSE */
 
+	enum cipher_op_family cipher_family;
+	unsigned int key_id;
+
 	/* Operation-specific options */
 	union {
 		struct rng rng;
@@ -121,10 +137,11 @@ struct parsed_options {
 		struct key_delete key_delete;
 		struct mac mac;
 		struct cipher_options cipher;
+		struct asym_enc_options asym_enc;
 	} op;
 };
 
-/* Shared Functions between op_parsers */
+/* Shared functions between op_parsers */
 smw_subsystem_t parse_subsystem(const char *subsystem_str);
 char *parse_file_opt(const char *src, const char *field_name);
 int parse_log_option(struct parsed_options *opts, int argc, char **argv,

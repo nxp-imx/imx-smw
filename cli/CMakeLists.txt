@@ -225,6 +225,29 @@ add_custom_command(
         ${CIPHER_ALGO_GENERATOR}
     COMMENT "Generating cipher algorithm tables, SMW and PSA mappings"
 )
+# Generate asymmetric encryption algorithm combination table and mappings at build time
+set(ASYM_ENC_ALGO_HEADER ${CMAKE_CURRENT_BINARY_DIR}/asym_enc_algo_generated.h)
+set(ASYM_ENC_ALGO_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/asym_enc_algo_generated.c)
+set(ASYM_ENC_SMW_MAPPING_HEADER ${CMAKE_CURRENT_BINARY_DIR}/smw_asym_enc_mapping_generated.h)
+set(ASYM_ENC_SMW_MAPPING_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/smw_asym_enc_mapping_generated.c)
+set(ASYM_ENC_PSA_MAPPING_HEADER ${CMAKE_CURRENT_BINARY_DIR}/psa_asym_enc_mapping_generated.h)
+set(ASYM_ENC_PSA_MAPPING_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/psa_asym_enc_mapping_generated.c)
+set(ASYM_ENC_ALGO_GENERATOR ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_asym_enc_table.py)
+
+add_custom_command(
+    OUTPUT
+        ${ASYM_ENC_ALGO_HEADER}
+        ${ASYM_ENC_ALGO_SOURCE}
+        ${ASYM_ENC_SMW_MAPPING_HEADER}
+        ${ASYM_ENC_SMW_MAPPING_SOURCE}
+        ${ASYM_ENC_PSA_MAPPING_HEADER}
+        ${ASYM_ENC_PSA_MAPPING_SOURCE}
+    COMMAND ${Python3_EXECUTABLE} ${ASYM_ENC_ALGO_GENERATOR} ${CMAKE_CURRENT_BINARY_DIR}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    DEPENDS ${SMW_NAMES_HEADER} ${PSA_CRYPTO_VALUES_HEADER} ${ASYM_ENC_ALGO_GENERATOR}
+    COMMENT "Generating asymmetric encryption algorithm tables, SMW and PSA mappings"
+)
+
 
 # Include subdirectories - each sets its own source variables
 # Generate SMW MAC algo table at build time
@@ -296,12 +319,15 @@ add_executable(nxp_smw
 	${SMW_HASH_TABLE_SOURCE}	# Hash Table Generated file
 	${HASH_TABLE_SOURCE}		# Common Hash Table Generated file
 	${LIFECYCLE_TABLE_SOURCE}	# Lifecycle Table Generated file
-	${SMW_SYM_KEY_MAPPINGS_SOURCE}	# SMW Key Mappings Generated file
+	${SMW_SYM_KEY_MAPPINGS_SOURCE}	# SMW Symmetric Key Mappings Generated file
     ${SMW_ASYM_KEY_MAPPINGS_SOURCE}	# SMW Asymmetric Key Mappings Generated file
     ${SMW_MAC_ALGO_TABLE_SOURCE}        # SMW MAC tables + accessors
     ${CIPHER_ALGO_HEADER}
     ${CIPHER_ALGO_SOURCE}
-	${CIPHER_SMW_MAPPING_SOURCE}
+	${CIPHER_SMW_MAPPING_SOURCE} # SMW Symmetric Key Encryption Generated file
+    ${ASYM_ENC_ALGO_HEADER}
+	${ASYM_ENC_ALGO_SOURCE}
+	${ASYM_ENC_SMW_MAPPING_SOURCE} # SMW Asymmetric Key Encryption Generated file
 )
 
 target_include_directories(nxp_smw PRIVATE
@@ -324,12 +350,15 @@ add_executable(nxp_psa
 	${PSA_HASH_TABLE_SOURCE}	# Hash Table Generated file
 	${HASH_TABLE_SOURCE}		# Common Hash Table Generated file
 	${LIFECYCLE_TABLE_SOURCE}	# Lifecycle Table Generated file
-    ${PSA_SYM_KEY_MAPPINGS_SOURCE}	# PSA Key Mappings Generated file
-    ${PSA_ASYM_KEY_MAPPINGS_SOURCE}
+    ${PSA_SYM_KEY_MAPPINGS_SOURCE}	# PSA Symmetric Key Mappings Generated file
+    ${PSA_ASYM_KEY_MAPPINGS_SOURCE} # PSA Asymmetric Key Mappings Generated file
     ${PSA_MAC_ALGO_TABLE_SOURCE}        # PSA MAC tables + accessors
     ${CIPHER_ALGO_HEADER}
 	${CIPHER_ALGO_SOURCE}
-	${CIPHER_PSA_MAPPING_SOURCE}
+	${CIPHER_PSA_MAPPING_SOURCE} # PSA Symmetric Key Encryption Generated file
+    ${ASYM_ENC_ALGO_HEADER}
+	${ASYM_ENC_ALGO_SOURCE}
+	${ASYM_ENC_PSA_MAPPING_SOURCE} # PSA Asymmetric Key Encryption Generated file
 )
 
 target_include_directories(nxp_psa PRIVATE

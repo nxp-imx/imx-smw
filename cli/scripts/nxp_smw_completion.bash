@@ -6,6 +6,7 @@ _nxp_smw_cache_hash_algos=""
 _nxp_smw_cache_lifecycles=""
 _nxp_smw_cache_key_types_sym=""
 _nxp_smw_cache_key_types_asym=""
+_nxp_smw_cache_cipher_algos=""
 
 # Associative arrays for caching key algorithms by type
 declare -A _nxp_smw_cache_key_algos_by_type
@@ -76,6 +77,23 @@ _nxp_smw_get_key_types() {
     fi
     echo "$_nxp_smw_cache_key_types"
 }
+
+_nxp_smw_get_cipher_algos() {
+    if [ -z "$_nxp_smw_cache_cipher_algos" ]; then
+        # Parse from encrypt --list output
+        # Extracts first column from both symmetric and asymmetric tables
+        _nxp_smw_cache_cipher_algos=$(nxp_smw encrypt --list 2>/dev/null | \
+            awk '/^[A-Z]/ && !/^Available/ && !/^Algorithm/ && !/^Note:/ {print $1}' | \
+            tr '\n' ' ')
+
+        # Fallback to static list
+        if [ -z "$_nxp_smw_cache_cipher_algos" ]; then
+            _nxp_smw_cache_cipher_algos="AES-CBC AES-CTR AES-ECB AES-CFB AES-OFB DES3-CBC DES3-ECB SM4-CBC SM4-CTR SM4-ECB RSA-OAEP-SHA256 RSA-OAEP-SHA384 RSA-OAEP-SHA512 RSA-PKCS1V15 RSA-NO_PAD"
+        fi
+    fi
+    echo "$_nxp_smw_cache_cipher_algos"
+}
+
 
 _nxp_smw_get_key_algos_for_type() {
     local key_type="$1"
@@ -491,6 +509,9 @@ _nxp_smw_completion() {
                     # No key type specified yet, show common asymmetric algorithms
                     COMPREPLY=( $(compgen -W "ECDSA-SHA256 PSS-SHA256 EDDSA-PURE ECDH" -- ${cur}) )
                 fi
+            elif [ "$operation" = "encrypt" ] || [ "$operation" = "decrypt" ]; then
+                local cipher_algos=$(_nxp_smw_get_cipher_algos)
+                COMPREPLY=( $(compgen -W "${cipher_algos}" -- ${cur}) )
             fi
             return 0
             ;;

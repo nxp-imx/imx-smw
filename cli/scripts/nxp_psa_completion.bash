@@ -5,6 +5,7 @@ _nxp_psa_cache_operations=""
 _nxp_psa_cache_hash_algos=""
 _nxp_psa_cache_key_types_sym=""
 _nxp_psa_cache_key_types_asym=""
+_nxp_psa_cache_cipher_algos=""
 
 # Associative arrays for caching key algorithms by type
 declare -A _nxp_psa_cache_key_algos_by_type
@@ -80,6 +81,23 @@ _nxp_psa_get_key_types_asym() {
     fi
     echo "$_nxp_psa_cache_key_types_asym"
 }
+
+_nxp_psa_get_cipher_algos() {
+    if [ -z "$_nxp_psa_cache_cipher_algos" ]; then
+        # Parse from encrypt --list output
+        # Extracts first column from both symmetric and asymmetric tables
+        _nxp_psa_cache_cipher_algos=$(nxp_psa encrypt --list 2>/dev/null | \
+            awk '/^[A-Z]/ && !/^Available/ && !/^Algorithm/ && !/^Note:/ {print $1}' | \
+            tr '\n' ' ')
+
+        # Fallback to static list
+        if [ -z "$_nxp_psa_cache_cipher_algos" ]; then
+            _nxp_psa_cache_cipher_algos="AES-CBC AES-CBC-PKCS7 AES-CTR AES-ECB AES-CFB AES-OFB AES-XTS DES-CBC DES-ECB ARIA-CBC ARIA-CTR ARIA-ECB CAMELLIA-CBC CAMELLIA-CTR CAMELLIA-ECB CHACHA20-STREAM-CIPHER RSA-OAEP-SHA256 RSA-OAEP-SHA384 RSA-OAEP-SHA512 RSA-PKCS1V15"
+        fi
+    fi
+    echo "$_nxp_psa_cache_cipher_algos"
+}
+
 
 _nxp_psa_get_asym_algos_for_type() {
     local key_type="$1"
@@ -380,6 +398,9 @@ _nxp_psa_completion() {
                     # No key type specified yet, show common asymmetric algorithms
                     COMPREPLY=( $(compgen -W "ECDSA-SHA256 PSS-SHA256 EDDSA-PURE ECDH OAEP-SHA256" -- ${cur}) )
                 fi
+            elif [ "$operation" = "encrypt" ] || [ "$operation" = "decrypt" ]; then
+                local cipher_algos=$(_nxp_psa_get_cipher_algos)
+                COMPREPLY=( $(compgen -W "${cipher_algos}" -- ${cur}) )
             fi
             return 0
             ;;

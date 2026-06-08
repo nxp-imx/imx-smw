@@ -13,7 +13,7 @@
 #include "cli_print.h"
 #include "helper.h"
 #include "opt_parser.h"
-#include "parser_cipher.h"
+#include "parser_encrypt.h"
 #include "parser_device_attestation.h"
 #include "parser_device_get_lifecycle.h"
 #include "parser_device_set_lifecycle.h"
@@ -408,6 +408,7 @@ void opt_parser_cleanup(struct parsed_options *opts)
 		opts->log_filename = NULL;
 	}
 
+	/* Free operation-specific union members (mutually exclusive) */
 	if (opts->operation == OP_DEV_GET_ATTESTATION) {
 		if (opts->op.dev_att.challenge_filename) {
 			free(opts->op.dev_att.challenge_filename);
@@ -433,10 +434,25 @@ void opt_parser_cleanup(struct parsed_options *opts)
 		}
 	}
 
-	if (opts->operation == OP_ENCRYPT || opts->operation == OP_DECRYPT) {
-		if (opts->op.cipher.iv_hex) {
+	if (opts->operation == OP_KEY_EXPORT) {
+		free(opts->op.key_export.key_file);
+		opts->op.key_export.key_file = NULL;
+	} else if (opts->operation == OP_KEYGEN_SYM ||
+		   opts->operation == OP_KEYGEN_ASYM) {
+		free(opts->op.keygen.key_type);
+		opts->op.keygen.key_type = NULL;
+		free(opts->op.keygen.permitted_algo);
+		opts->op.keygen.permitted_algo = NULL;
+		free(opts->op.keygen.usage);
+		opts->op.keygen.usage = NULL;
+	} else if (opts->operation == OP_ENCRYPT ||
+		   opts->operation == OP_DECRYPT) {
+		if (opts->cipher_family == CIPHER_FAMILY_SYMMETRIC) {
 			free(opts->op.cipher.iv_hex);
 			opts->op.cipher.iv_hex = NULL;
+		} else if (opts->cipher_family == CIPHER_FAMILY_ASYMMETRIC) {
+			free(opts->op.asym_enc.salt_hex);
+			opts->op.asym_enc.salt_hex = NULL;
 		}
 	}
 }

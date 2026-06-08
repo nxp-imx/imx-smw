@@ -16,7 +16,7 @@
 #include "error_handler.h"
 #include "helper.h"
 #include "logger.h"
-#include "parser_cipher.h"
+#include "parser_encrypt.h"
 #include "smw_cipher_mapping_generated.h"
 #include "utils.h"
 
@@ -35,16 +35,22 @@ void cli_encrypt_help(void)
 	printf("Encrypt data using a generated key.\n\n");
 
 	/* Print common options */
-	cli_cipher_help_common();
+	cli_encrypt_help_common();
 
 	/* SMW-specific option */
 	printf("  -S, --subsystem <name>    Force subsystem (ELE/TEE/SECO)\n\n");
 
-	printf("Examples:\n");
+	printf("Symmetric Examples:\n");
 	printf("  %s encrypt -a AES-CBC -k 1 --iv 000102030405060708090a0b0c0d0e0f",
 	       prog_name);
 	printf(" -i plain.bin -o enc.bin\n");
 	printf("  %s encrypt -a AES-CTR -k 1 --iv 00112233445566778899aabbccddeeff -i data.bin\n\n",
+	       prog_name);
+
+	printf("Asymmetric Examples:\n");
+	printf("  %s encrypt -a RSA-OAEP-SHA256 -k 2 -i plain.bin -o enc.bin\n",
+	       prog_name);
+	printf("  %s encrypt -a RSA-OAEP-SHA256 -k 2 --salt aabbccdd -i plain.bin -o enc.bin\n\n",
 	       prog_name);
 }
 
@@ -62,16 +68,22 @@ void cli_decrypt_help(void)
 	printf("Decrypt data using a generated key.\n\n");
 
 	/* Print common options */
-	cli_cipher_help_common();
+	cli_encrypt_help_common();
 
 	/* SMW-specific option */
 	printf("  -S, --subsystem <name>    Force subsystem (ELE/TEE/SECO)\n\n");
 
-	printf("Examples:\n");
+	printf("Symmetric Examples:\n");
 	printf("  %s decrypt -a AES-CBC -k 1 --iv 000102030405060708090a0b0c0d0e0f",
 	       prog_name);
 	printf(" -i enc.bin -o dec.bin\n");
 	printf("  %s decrypt -a AES-CTR -k 1 --iv 00112233445566778899aabbccddeeff -i enc.bin\n\n",
+	       prog_name);
+
+	printf("Asymmetric Examples:\n");
+	printf("  %s decrypt -a RSA-OAEP-SHA256 -k 2 -i enc.bin -o dec.bin\n",
+	       prog_name);
+	printf("  %s decrypt -a RSA-OAEP-SHA256 -k 2 --salt aabbccdd -i enc.bin -o dec.bin\n\n",
 	       prog_name);
 }
 
@@ -131,7 +143,6 @@ static enum cli_exit_code cipher_execute(struct parsed_options *args,
 	enum smw_status_code status = SMW_STATUS_OK;
 	enum cli_exit_code ret = CLI_EXIT_OPERATION_FAILURE;
 	const char *direction_str = encrypt ? "encrypt" : "decrypt";
-	FILE *fp = NULL;
 
 	if (!args) {
 		LOG_ERROR("NULL arguments passed to %s", __func__);
@@ -144,9 +155,9 @@ static enum cli_exit_code cipher_execute(struct parsed_options *args,
 	}
 
 	LOG_INFO("Cipher %s operation started (SMW API)", direction_str);
-	LOG_VERBOSE("  algo           : %s", args->op.cipher.algo);
-	LOG_VERBOSE("  key_id         : 0x%08x (%u)", args->op.cipher.key_id,
-		    args->op.cipher.key_id);
+	LOG_VERBOSE("  algo           : %d", args->op.cipher.algo);
+	LOG_VERBOSE("  key_id         : 0x%08x (%u)", args->key_id,
+		    args->key_id);
 	LOG_VERBOSE("  iv_hex         : %s",
 		    args->op.cipher.iv_hex ? args->op.cipher.iv_hex : "(none)");
 	LOG_VERBOSE("  input_filename : %s", args->input_filename);
@@ -156,30 +167,27 @@ static enum cli_exit_code cipher_execute(struct parsed_options *args,
 		    cli_smw_get_subsystem_name(args->subsystem));
 
 	/* Map CLI algorithm to SMW cipher mode */
-	LOG_VERBOSE("Mapping CLI algorithm to SMW cipher mode: %s",
+	LOG_VERBOSE("Mapping CLI algorithm to SMW cipher mode: %d",
 		    args->op.cipher.algo);
 	smw_mode = get_smw_cipher_mode(args->op.cipher.algo);
 	if (smw_mode == SMW_CIPHER_MODE_NAME_NONE) {
-		LOG_ERROR("Unsupported cipher mode: %s", args->op.cipher.algo);
+		LOG_ERROR("Unsupported cipher mode: %d", args->op.cipher.algo);
 		goto cleanup;
 	}
 
 	LOG_VERBOSE("SMW cipher mode resolved: %u", smw_mode);
 
 	/* Map CLI algorithm to SMW key type */
-	LOG_VERBOSE("Mapping CLI algorithm to SMW key type: %s",
+	LOG_VERBOSE("Mapping CLI algorithm to SMW key type: %d",
 		    args->op.cipher.algo);
 	smw_key_type = get_smw_cipher_key_type(args->op.cipher.algo);
 	if (smw_key_type == SMW_KEY_TYPE_NAME_NONE) {
-		LOG_ERROR("Unsupported key type for algorithm: %s",
+		LOG_ERROR("Unsupported key type for algorithm: %d",
 			  args->op.cipher.algo);
 		goto cleanup;
 	}
 
 	LOG_VERBOSE("SMW key type resolved: %u", smw_key_type);
-
-	LOG_INFO("  SMW mode: %u, key type: %u, key ID: %u", smw_mode,
-		 smw_key_type, args->op.cipher.key_id);
 
 	/* Parse IV from hex string (if provided) */
 	if (args->op.cipher.iv_hex) {
@@ -198,38 +206,21 @@ static enum cli_exit_code cipher_execute(struct parsed_options *args,
 		}
 
 		LOG_VERBOSE("IV parsed: %zu bytes", iv_len);
-		LOG_INFO("  IV length: %zu bytes", iv_len);
 	} else {
 		LOG_VERBOSE("No IV provided");
 	}
 
 	/* Read input file */
-	LOG_VERBOSE("Opening input file: %s", args->input_filename);
-	fp = fopen(args->input_filename, "rb");
-	if (!fp) {
-		LOG_ERROR("Failed to open input file: %s",
-			  args->input_filename);
+	LOG_VERBOSE("Reading input file: %s", args->input_filename);
+	if (util_read_file(args->input_filename, &input, &input_size))
+		goto cleanup;
+
+	LOG_VERBOSE("Input file read successfully: %zu bytes", input_size);
+
+	if (input_size > UINT32_MAX) {
+		LOG_ERROR("Input size too large for SMW API: %zu", input_size);
 		goto cleanup;
 	}
-
-	if (util_get_file_size(fp, &input_size, args->input_filename))
-		goto cleanup;
-
-	LOG_VERBOSE("Input file size: %zu bytes", input_size);
-
-	input = util_alloc_buffer(input_size, "cipher input");
-	if (!input)
-		goto cleanup;
-
-	if (fread(input, 1, input_size, fp) != input_size) {
-		LOG_ERROR("Failed to read input file");
-		goto cleanup;
-	}
-
-	LOG_VERBOSE("Input file read successfully");
-
-	FCLOSE(fp);
-	fp = NULL;
 
 	/*
 	 * Allocate output buffer.
@@ -237,6 +228,13 @@ static enum cli_exit_code cipher_execute(struct parsed_options *args,
 	 * to handle potential padding in the output.
 	 */
 	output_size = input_size + 16;
+
+	if (output_size > UINT32_MAX) {
+		LOG_ERROR("Output size too large for SMW API: %zu",
+			  output_size);
+		goto cleanup;
+	}
+
 	LOG_VERBOSE("Allocating output buffer: %zu bytes", output_size);
 	output = util_alloc_buffer(output_size, "cipher output");
 	if (!output)
@@ -244,8 +242,8 @@ static enum cli_exit_code cipher_execute(struct parsed_options *args,
 
 	/* Setup key descriptor - reference key by ID */
 	LOG_VERBOSE("Setting up key descriptor: id=0x%08x, type=%u",
-		    args->op.cipher.key_id, smw_key_type);
-	key_desc.id = args->op.cipher.key_id;
+		    args->key_id, smw_key_type);
+	key_desc.id = args->key_id;
 	key_desc.type_name = smw_key_type;
 
 	/*
@@ -306,12 +304,14 @@ static enum cli_exit_code cipher_execute(struct parsed_options *args,
 	ret = CLI_EXIT_SUCCESS;
 
 cleanup:
-	if (fp)
-		FCLOSE(fp);
+	if (input)
+		free(input);
 
-	free(input);
-	free(output);
-	free(iv);
+	if (output)
+		free(output);
+
+	if (iv)
+		free(iv);
 
 	return ret;
 }

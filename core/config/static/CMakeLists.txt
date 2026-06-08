@@ -20,6 +20,10 @@ if(ENABLE_KEYMGR_MODULE)
         add_supported_operation(OPERATION_ID_GET_KEY_LENGTHS)
 endif()
 
+if(ENABLE_MAC)
+        add_supported_operation(OPERATION_ID_MAC)
+endif()
+
 get_filename_component(CMAKE_PARENT_LIST_DIR ${CMAKE_PARENT_LIST_FILE} DIRECTORY)
 get_filename_component(CMAKE_PARENT_LIST_DIR ${CMAKE_PARENT_LIST_DIR} DIRECTORY)
 

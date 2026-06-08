@@ -48,8 +48,9 @@
 #define PSA_ALG_PBKDF2_AES_CMAC_PRF_128 ((psa_algorithm_t)0x08800200)
 #define PSA_ALG_PURE_EDDSA		((psa_algorithm_t)0x06000800)
 /* .. [[asymmetric_signature, eddsa, pure]] */
-#define PSA_ALG_RIPEMD160	       ((psa_algorithm_t)0x02000004)
-#define PSA_ALG_RSA_PKCS1V15_CRYPT     ((psa_algorithm_t)0x07000200)
+#define PSA_ALG_RIPEMD160	   ((psa_algorithm_t)0x02000004)
+#define PSA_ALG_RSA_PKCS1V15_CRYPT ((psa_algorithm_t)0x07000200)
+/* .. [[asymmetric_encryption]] */
 #define PSA_ALG_RSA_PKCS1V15_SIGN_RAW  ((psa_algorithm_t)0x06000200)
 #define PSA_ALG_SHA3_224	       ((psa_algorithm_t)0x02000010)
 #define PSA_ALG_SHA3_256	       ((psa_algorithm_t)0x02000011)

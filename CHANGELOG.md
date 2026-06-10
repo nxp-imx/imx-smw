@@ -74,6 +74,10 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Remove size range definitions for ED25519, X25519, ED448 and X448 from ELE
   config files.
+* Add data cache invalidate and clean API.
+* Add file read/write API.
+* Add shared memory API.
+* Add get mu base address API.
 
 #### SMW Tests
 

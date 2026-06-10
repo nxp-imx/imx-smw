@@ -23,3 +23,7 @@ This release is based on SMW Release 5.5
 
 ##### 2. OSAL
 * Add Zephyr abstraction layer for SMW core library.
+* Implement cache maintenance API.
+* Implement file access API.
+* Implement shared memory API.
+* Implement get mu base address API.

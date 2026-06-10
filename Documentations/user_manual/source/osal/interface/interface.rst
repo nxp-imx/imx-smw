@@ -113,3 +113,26 @@ Object database management
 
 .. kdoc-extension:: /inc/osal.h
   :structs: smw_osal_object
+
+NVM storage file operations
+""""""""""""""""""""""""""
+
+.. kdoc-extension:: /inc/osal.h
+  :typedefs: smw_osal_file_initialize_t smw_osal_file_write_t
+             smw_osal_file_read_t
+
+Data cache operations
+"""""""""""""""""""""
+.. kdoc-extension:: /inc/osal.h
+  :typedefs: smw_osal_dcache_invalidate_t smw_osal_dcache_clean_t
+
+Shared memory operations
+""""""""""""""""""""""""
+.. kdoc-extension:: /inc/osal.h
+  :typedefs: smw_osal_shared_memory_init_t smw_osal_shared_memory_deinit_t
+             smw_osal_shared_memory_alloc_t smw_osal_shared_memory_free_t
+
+MU base address
+"""""""""""""""
+.. kdoc-extension:: /inc/osal.h
+  :typedefs: smw_osal_get_mu_base_t

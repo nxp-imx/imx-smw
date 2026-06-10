@@ -386,6 +386,118 @@ typedef int (*smw_osal_db_find_next_t)(void *context,
 typedef int (*smw_osal_db_find_final_t)(void *context);
 
 /**
+ * typedef smw_osal_file_initialize_t - Initialize NVM storage file system
+ *
+ * Return:
+ *  - 0 on success.
+ *  - negative value on failure.
+ */
+typedef int (*smw_osal_file_initialize_t)(void);
+
+/**
+ * typedef smw_osal_file_write_t - Write data chunk to NVM storage
+ * @blob_id_msb: Most significant bits of blob identifier
+ * @blob_id_lsb: Least significant bits of blob identifier
+ * @blob_ext: Blob extension/type identifier
+ * @chunk: Pointer to data chunk to write
+ * @chunk_sz: Size of data chunk in bytes
+ *
+ * Return:
+ *  - 0 on success.
+ *  - negative value on failure.
+ */
+typedef int (*smw_osal_file_write_t)(uint32_t blob_id_msb, uint32_t blob_id_lsb,
+				     uint32_t blob_ext, uint32_t *chunk,
+				     size_t chunk_sz);
+
+/**
+ * typedef smw_osal_file_read_t - Read data chunk from NVM storage
+ * @blob_id_msb: Most significant bits of blob identifier
+ * @blob_id_lsb: Least significant bits of blob identifier
+ * @blob_ext: Blob extension/type identifier
+ * @chunk: Pointer to data chunk to read
+ * @chunk_sz: Size of data chunk in bytes
+ *
+ * Return:
+ *  - 0 on success.
+ *  - negative value on failure.
+ */
+typedef int (*smw_osal_file_read_t)(uint32_t blob_id_msb, uint32_t blob_id_lsb,
+				    uint32_t blob_ext, uint32_t *chunk,
+				    size_t *sz);
+
+/**
+ * typedef smw_osal_dcache_invalidate_t - Invalidate data cache for a memory range
+ * @addr: Pointer to the start of the memory range
+ * @size: Size of the memory range in bytes
+ */
+typedef void (*smw_osal_dcache_invalidate_t)(void *addr, size_t size);
+
+/**
+ * typedef smw_osal_dcache_clean_t - Clean data cache for a memory range
+ * @addr: Pointer to the start of the memory range
+ * @size: Size of the memory range in bytes
+ */
+typedef void (*smw_osal_dcache_clean_t)(void *addr, size_t size);
+
+/**
+ * typedef smw_osal_shared_memory_init_t - Initialize shared memory for ELE
+ *
+ * This function initializes the shared memory for communication with EdgeLock Enclave.
+ * It should be called once during system initialization before any communication with ELE.
+ *
+ */
+typedef void (*smw_osal_shared_memory_init_t)(void);
+
+/**
+ * typedef smw_osal_shared_memory_deinit_t - Deinitialize shared memory for ELE
+ *
+ * This function deinitializes the shared memory for communication with EdgeLock Enclave.
+ * It should be called during system deinitialization.
+ *
+ */
+typedef void (*smw_osal_shared_memory_deinit_t)(void);
+
+/**
+ * typedef smw_osal_shared_memory_alloc_t - Allocate shared buffer for ELE
+ * @buf: pointer to the buffer to be shared with ELE
+ * @size: size of the buffer in bytes
+ * @phys_addr: pointer where to output the physical address of the allocated buffer,
+ *             which will be used by ELE.
+ *
+ * This function allocates a shared buffer for ELE.
+ * If MMU is enabled, the function allocates an aligned buffer in a memory region with appropriate
+ * attributes and copies the content of the input buffer to the allocated buffer.
+ * If MMU is not enabled, the function returns the input buffer as is.
+ *
+ * Return:
+ * Pointer to the allocated shared buffer, or NULL if allocation fails.
+ */
+typedef void *(*smw_osal_shared_memory_alloc_t)(void *buf, size_t size,
+						uintptr_t *phys_addr);
+
+/**
+ * typedef smw_osal_shared_memory_free_t - Free shared buffer allocated for ELE
+ * @buf: pointer to the buffer to be freed
+ * @size: size of the buffer in bytes
+ * @original_buf: pointer to the original buffer provided to alloc_ele_shared()
+ *
+ * This function frees a shared buffer allocated for ELE.
+ * If MMU is enabled, the function unmaps the memory region allocated for the buffer.
+ * If MMU is not enabled, the function does nothing.
+ */
+typedef void (*smw_osal_shared_memory_free_t)(void *buf, size_t size,
+					      void *original_buf);
+
+/**
+ * typedef smw_osal_get_mu_base_t - Get MU base address
+ *
+ * Return:
+ * MU Base pointer, or NULL if no MU found.
+ */
+typedef void *(*smw_osal_get_mu_base_t)(void);
+
+/**
  * struct smw_ops - SMW OSAL operations interface
  * @critical_section_start: (**optional**) Start critical section, see
  *                          smw_osal_critical_section_start_t().
@@ -420,6 +532,26 @@ typedef int (*smw_osal_db_find_final_t)(void *context);
  *                 smw_osal_db_find_next_t().
  * @find_obj_final: (**mandatory**) Close the find object query, see
  *                  smw_osal_db_find_final_t().
+ * @file_initialize: (**optional**) Initialize NVM storage file system, see
+ *                 smw_osal_file_initialize_t().
+ * @file_write: (**optional**) Write data chunk to NVM storage, see
+ *              smw_osal_file_write_t().
+ * @file_read: (**optional**) Read data chunk from NVM storage, see
+ *             smw_osal_file_read_t().
+ * @dcache_invalidate: (**optional**) Invalidate data cache for a memory range, see
+ *		   smw_osal_dcache_invalidate_t().
+ * @dcache_clean: (**optional**) Clean data cache for a memory range, see
+ *		   smw_osal_dcache_clean_t().
+ * @shared_memory_init: (**optional**) Initialize shared memory for ELE, see
+ *		     smw_osal_shared_memory_init_t().
+ * @shared_memory_deinit: (**optional**) Deinitialize shared memory for ELE, see
+ *		       smw_osal_shared_memory_deinit_t().
+ * @shared_memory_alloc: (**optional**) Allocate shared buffer for ELE, see
+ *		       smw_osal_shared_memory_alloc_t().
+ * @shared_memory_free: (**optional**) Free shared buffer allocated for ELE, see
+ *		      smw_osal_shared_memory_free_t().
+ * @get_mu_base: (**optional**) Get ELE MU base address , see
+ *		       smw_osal_get_mu_base_t().
  *
  * This structure defines the SMW OSAL operations interface using function
  * pointers that are implemented in the OSAL module.
@@ -456,6 +588,20 @@ struct smw_ops {
 	smw_osal_db_find_init_t find_obj_init;
 	smw_osal_db_find_next_t find_obj_next;
 	smw_osal_db_find_final_t find_obj_final;
+
+	smw_osal_file_initialize_t file_initialize;
+	smw_osal_file_write_t file_write;
+	smw_osal_file_read_t file_read;
+
+	smw_osal_dcache_invalidate_t dcache_invalidate;
+	smw_osal_dcache_clean_t dcache_clean;
+
+	smw_osal_shared_memory_init_t shared_memory_init;
+	smw_osal_shared_memory_deinit_t shared_memory_deinit;
+	smw_osal_shared_memory_alloc_t shared_memory_alloc;
+	smw_osal_shared_memory_free_t shared_memory_free;
+
+	smw_osal_get_mu_base_t get_mu_base;
 };
 
 /**

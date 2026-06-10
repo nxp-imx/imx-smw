@@ -39,7 +39,7 @@
     {
       "SPDXID": "SPDXRef-package-73072a28-a9c2-42e4-9c34-3a3077154603",
       "name": "PSA Certified API Specifications",
-      "versionInfo": "crypto-1.2.1",
+      "versionInfo": "crypto-1.3.2",
       "licenseConcluded": "Apache-2.0",
       "licenseDeclared": "Apache-2.0",
       "downloadLocation": "NOASSERTION",

@@ -4,7 +4,6 @@
  */
 
 #include <zephyr/kernel.h>
-#include <zephyr/logging/log.h>
 
 #include "smw_status.h"
 #include "internal.h"

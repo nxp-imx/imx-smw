@@ -4,9 +4,11 @@
  */
 
 #include <zephyr/kernel.h>
-#include <zephyr/logging/log.h>
+
 #include <stdarg.h>
 #include <stdio.h>
+
+#include "fsl_common.h"
 
 #include "osal.h"
 #include "internal.h"
@@ -149,6 +151,78 @@ end:
 	return status;
 }
 
+__weak int osal_zephyr_file_initialize(void)
+{
+	return -1;
+}
+
+__weak int osal_zephyr_file_write(uint32_t blob_id_msb, uint32_t blob_id_lsb,
+				  uint32_t blob_ext, uint32_t *chunk,
+				  size_t chunk_sz)
+{
+	(void)blob_id_msb;
+	(void)blob_id_lsb;
+	(void)blob_ext;
+	(void)chunk;
+	(void)chunk_sz;
+
+	return -1;
+}
+
+__weak int osal_zephyr_file_read(uint32_t blob_id_msb, uint32_t blob_id_lsb,
+				 uint32_t blob_id_ext, uint32_t *chunk,
+				 size_t *sz)
+{
+	(void)blob_id_msb;
+	(void)blob_id_lsb;
+	(void)blob_id_ext;
+	(void)chunk;
+	(void)sz;
+
+	return -1;
+}
+
+void osal_zephyr_dcache_invalidate(void *addr, size_t size)
+{
+	DCACHE_INVALIDATE(addr, size);
+}
+
+void osal_zephyr_dcache_clean(void *addr, size_t size)
+{
+	DCACHE_CLEAN(addr, size);
+}
+
+__weak void osal_shared_memory_init(void)
+{
+	/* Default implementation does nothing, as shared memory is useless for non-MMU systems */
+}
+
+__weak void osal_shared_memory_deinit(void)
+{
+	/* Default implementation does nothing, as shared memory is useless for non-MMU systems */
+}
+
+__weak void *osal_shared_memory_alloc(void *buf, size_t size,
+				      uintptr_t *phys_addr)
+{
+	(void)size;
+
+	*phys_addr = (uintptr_t)buf;
+
+	return buf;
+}
+
+__weak void osal_shared_memory_free(void *buf, size_t size, void *original_buf)
+{
+	(void)buf;
+	(void)size;
+}
+
+__weak void *osal_get_mu_base(void)
+{
+	return (void *)MU_RT__S3MUA_BASE;
+}
+
 enum smw_status_code smw_osal_lib_init(void)
 {
 	enum smw_status_code status = SMW_STATUS_OK;
@@ -174,6 +248,16 @@ enum smw_status_code smw_osal_lib_init(void)
 		.find_obj_init = osal_zephyr_find_obj_init,
 		.find_obj_next = osal_zephyr_find_obj_next,
 		.find_obj_final = osal_zephyr_find_obj_final,
+		.file_initialize = osal_zephyr_file_initialize,
+		.file_write = osal_zephyr_file_write,
+		.file_read = osal_zephyr_file_read,
+		.dcache_invalidate = osal_zephyr_dcache_invalidate,
+		.dcache_clean = osal_zephyr_dcache_clean,
+		.shared_memory_init = osal_shared_memory_init,
+		.shared_memory_deinit = osal_shared_memory_deinit,
+		.shared_memory_alloc = osal_shared_memory_alloc,
+		.shared_memory_free = osal_shared_memory_free,
+		.get_mu_base = osal_get_mu_base,
 	};
 	static struct se_info default_ele_info = {
 		.storage_id = 0x50534154,  /* PSAT */

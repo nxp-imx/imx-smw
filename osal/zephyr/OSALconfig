@@ -26,4 +26,10 @@ config SMW_LOG_LEVEL
         Set the log level for SMW OSAL
         0 = OFF, 1 = ERROR, 2 = INFO, 3 = DEBUG, 4 = VERBOSE, 5 = TRACE
 
+config SMW_NVM_MANAGER
+    select FILE_SYSTEM
+    select FAT_FILESYSTEM_ELM
+    bool "ele_nvm_manager"
+    default n
+
 endif # SMW_OSAL_ZEPHYR

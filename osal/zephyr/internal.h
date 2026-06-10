@@ -6,7 +6,35 @@
 #ifndef __OSAL_ZEPHYR_INTERNAL_H__
 #define __OSAL_ZEPHYR_INTERNAL_H__
 
+#include <zephyr/logging/log.h>
+
 #include "osal.h"
+
+/*******************************************************************************
+ * CACHE Handling Definitions
+ ******************************************************************************/
+#if defined(CACHE_MODE_WRITE_THROUGH) && (CACHE_MODE_WRITE_THROUGH > 0u)
+#define DCACHE_INVALIDATE(addr, size)                                          \
+	DCACHE_InvalidateByRange((uint32_t)(addr), (size))
+#define DCACHE_CLEAN(addr, size) DCACHE_CleanByRange((uint32_t)(addr), (size))
+/* Note: CACHE handling on ELE Crypto level work only with cache policy set to write-trough,
+ *       because ELE doesn't own the buffers. If write-back is required,
+ *       user needs to handle it on system/application level.
+ */
+#include "fsl_cache.h"
+#else /* !CACHE_MODE_WRITE_THROUGH */
+#define DCACHE_INVALIDATE(addr, size)                                          \
+	{                                                                      \
+		(void)addr;                                                    \
+		(void)size;                                                    \
+	}
+#define DCACHE_CLEAN(addr, size)                                               \
+	{                                                                      \
+		(void)addr;                                                    \
+		(void)size;                                                    \
+	}
+
+#endif /* CACHE_MODE_WRITE_THROUGH */
 
 #define TRACE_FUNCTION_CALL LOG_DBG("Executing %s\n", __func__)
 
@@ -55,6 +83,9 @@ struct osal_ctx {
 	int lib_initialized;
 	struct lib_config_args config;
 	smw_subsystem_t active_subsystem_name;
+	struct k_heap heap;
+	void *heap_buf;
+	size_t heap_size;
 };
 
 /**
@@ -89,5 +120,24 @@ int osal_zephyr_find_obj_init(void **find_ctx,
 int osal_zephyr_find_obj_next(void *find_ctx,
 			      struct smw_osal_object *descriptor);
 int osal_zephyr_find_obj_final(void *find_ctx);
+
+/* File operations */
+int osal_zephyr_file_write(uint32_t blob_id_msb, uint32_t blob_id_lsb,
+			   uint32_t blob_ext, uint32_t *chunk, size_t chunk_sz);
+int osal_zephyr_file_read(uint32_t blob_id_msb, uint32_t blob_id_lsb,
+			  uint32_t blob_id_ext, uint32_t *chunk, size_t *sz);
+int osal_zephyr_file_initialize(void);
+
+/* Cache operations */
+void osal_zephyr_dcache_invalidate(void *addr, size_t size);
+void osal_zephyr_dcache_clean(void *addr, size_t size);
+
+/* Shared memory operations */
+void osal_shared_memory_init(void);
+void osal_shared_memory_deinit(void);
+void *osal_shared_memory_alloc(void *buf, size_t size, uintptr_t *phys_addr);
+void osal_shared_memory_free(void *buf, size_t size, void *original_buf);
+
+void *osal_get_mu_base(void);
 
 #endif /* __OSAL_ZEPHYR_INTERNAL_H__ */

@@ -8,6 +8,9 @@ add_private_sources(config
         entry.c
         database_operation.c)
 
+if(ENABLE_RNG)
+        add_supported_operation(OPERATION_ID_RNG)
+endif()
 
 get_filename_component(CMAKE_PARENT_LIST_DIR ${CMAKE_PARENT_LIST_FILE} DIRECTORY)
 get_filename_component(CMAKE_PARENT_LIST_DIR ${CMAKE_PARENT_LIST_DIR} DIRECTORY)

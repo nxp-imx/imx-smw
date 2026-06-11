@@ -29,6 +29,7 @@ opt_jsonc=""
 opt_psaarchtests=""
 opt_libsqlite=""
 opt_libtss2=""
+opt_doc_only="-DDOC_ONLY=No"
 
 #
 # Get script name and path
@@ -357,6 +358,7 @@ function configure()
     cmd_script="${cmd_script} ${opt_jsonc} ${opt_psaarchtests}"
     cmd_script="${cmd_script} ${opt_libsqlite}"
     cmd_script="${cmd_script} ${opt_libtss2}"
+    cmd_script="${cmd_script} ${opt_doc_only}"
 
     if [[ -n ${opt_feature_flags} ]]; then
         cmd_script="${cmd_script} ${opt_feature_flags}"
@@ -537,7 +539,10 @@ function jsonc()
 function usage_toolchain()
 {
     printf "\n"
-    printf "To install the toolchain aarch32 or aarch64\n"
+    printf "===============================================\n"
+    printf "= To install the toolchain aarch32 or aarch64 =\n"
+    printf "===============================================\n"
+    printf "\n"
     printf "  %s toolchain arch=[arch] toolpath=[dir] " "${script_name}"
     printf "toolname=[name]\n"
     printf "    arch     = Toolchain architecture (aarch32|aarch64)\n"
@@ -549,7 +554,10 @@ function usage_toolchain()
 function usage_libuuid_config()
 {
     printf "\n"
-    printf "To build and install the LIBUUID Library\n"
+    printf "===============================================\n"
+    printf "= To build and install the UUID Library       =\n"
+    printf "===============================================\n"
+    printf "\n"
     printf "  %s libuuid_config export=[dir] src=[dir] arch=[arch] " "${script_name}"
     printf "toolpath=[dir] toolname=[name]\n"
     printf "    export   = Export directory\n"
@@ -563,7 +571,10 @@ function usage_libuuid_config()
 function usage_libsqlite()
 {
     printf "\n"
-    printf "To build and install the LIBSQLite3 Library\n"
+    printf "===============================================\n"
+    printf "= To build and install the SQLite3 Library    =\n"
+    printf "===============================================\n"
+    printf "\n"
     printf "  %s libsqlite export=[dir] src=[dir] arch=[arch] " "${script_name}"
     printf "toolpath=[dir] toolname=[name]\n"
     printf "    export   = Export directory\n"
@@ -577,7 +588,10 @@ function usage_libsqlite()
 function usage_libtss2()
 {
     printf "\n"
-    printf "To build and install the LIBTSS2 Library\n"
+    printf "===============================================\n"
+    printf "= To build and install the TSS2 Library       =\n"
+    printf "===============================================\n"
+    printf "\n"
     printf "  %s libtss2 export=[dir] src=[dir] arch=[arch] " "${script_name}"
     printf "toolpath=[dir] toolname=[name]\n"
     printf "    export   = Export directory\n"
@@ -591,7 +605,10 @@ function usage_libtss2()
 function usage_seco()
 {
     printf "\n"
-    printf "To build and install the SECO libraries\n"
+    printf "===============================================\n"
+    printf "= To build and install the SECO libraries     =\n"
+    printf "===============================================\n"
+    printf "\n"
     printf "  %s seco export=[dir] src=[dir] " "${script_name}"
     printf "arch=[arch] toolpath=[dir] toolname=[name]\n"
     printf "    export   = Export directory\n"
@@ -605,7 +622,11 @@ function usage_seco()
 function usage_ele()
 {
     printf "\n"
-    printf "To build and install the EdgeLock Enclave libraries\n"
+    printf "===============================================\n"
+    printf "= To build and install the EdgeLock Enclave   =\n"
+    printf "= libraries                                   =\n"
+    printf "===============================================\n"
+    printf "\n"
     printf "  %s ele export=[dir] src=[dir] " "${script_name}"
     printf "arch=[arch] toolpath=[dir] toolname=[name]\n"
     printf "    export   = Export directory\n"
@@ -620,7 +641,11 @@ function usage_ele()
 function usage_teec()
 {
     printf "\n"
-    printf "To build and install the OPTEE Client libraries\n"
+    printf "===============================================\n"
+    printf "= To build and install the OPTEE Client       =\n"
+    printf "= libraries                                   =\n"
+    printf "===============================================\n"
+    printf "\n"
     printf "  %s teec export=[dir] src=[dir] out=[dir] " "${script_name}"
     printf "libuuid_config=[dir] pkg_config=[dir]"
     printf "arch=[arch] toolpath=[dir] toolname=[name]\n"
@@ -638,7 +663,11 @@ function usage_teec()
 function usage_tadevkit()
 {
     printf "\n"
-    printf "To build and install the OPTEE TA Development Kit\n"
+    printf "===============================================\n"
+    printf "= To build and install the OPTEE TA           =\n"
+    printf "= Development Kit                             =\n"
+    printf "===============================================\n"
+    printf "\n"
     printf "  %s tadevkit export=[dir] src=[dir] out=[dir] " "${script_name}"
     printf "platform=[platforn] arch=[arch] toolpath=[dir] toolname=[name]\n"
     printf "    export   = Export directory\n"
@@ -654,17 +683,38 @@ function usage_tadevkit()
 function usage_psaarchtests()
 {
     printf "\n"
-    printf "To fetch the PSA Architecture Tests repo\n"
+    printf "===============================================\n"
+    printf "= To fetch the PSA Architecture Tests repo    =\n"
+    printf "===============================================\n"
+    printf "\n"
     printf "  %s psaarchtests src=[dir] " "${script_name}"
     printf "    src = Source directory\n"
+    printf "\n"
+}
+
+function usage_configure_doc_only()
+{
+    printf "\n"
+    printf "===============================================\n"
+    printf "= To configure the Secure Middleware          =\n"
+    printf "= (Documentation Only)                        =\n"
+    printf "===============================================\n"
+    printf "  - Note: with this configuration option, the library is not built"
+    printf " and other configuration parameter useless.\n"
+    printf "\n"
+    printf "  %s configure out=[dir] doc_only doc_format=[name]\n " "${script_name}"
+    printf "    doc_format = [optional] Documentation format\n"
     printf "\n"
 }
 
 function usage_configure()
 {
     printf "\n"
-    printf "To configure the Secure Middleware\n"
-    printf " - Note: all dependencies must be present\n"
+    printf "===============================================\n"
+    printf "= To configure the Secure Middleware          =\n"
+    printf "===============================================\n"
+    printf "  - Note: all dependencies must be present\n"
+    printf "\n"
     printf "  %s configure out=[dir] debug " "${script_name}"
     printf "verbose=[lvl] seco=[dir] "
     printf "ele=[dir] "
@@ -673,13 +723,13 @@ function usage_configure()
     printf "psaarchtests=[dir] "
     printf "config=[name] "
     printf "enable_<feature>=<on|off> "
-    printf "format=[name] ...\n"
-    printf "    out      = Build directory\n"
-    printf "    debug    = [optional] Set build type to debug\n"
-    printf "    arch     = [optional] Toolchain architecture (aarch32|aarch64)\n"
-    printf "    toolpath = [optional] Toolchain path where installed\n"
-    printf "    toolname = [optional] Toolchain name\n"
-    printf "    format   = [optional] Documentation format\n"
+    printf "doc_format=[name] ...\n"
+    printf "    out        = Build directory\n"
+    printf "    debug      = [optional] Set build type to debug\n"
+    printf "    arch       = [optional] Toolchain architecture (aarch32|aarch64)\n"
+    printf "    toolpath   = [optional] Toolchain path where installed\n"
+    printf "    toolname   = [optional] Toolchain name\n"
+    printf "    doc_format = [optional] Documentation format\n"
     printf "  To enable SECO subsystem [optional]\n"
     printf "    seco     = SECO export directory\n"
     printf "  To enable ELE subsystem [optional]\n"
@@ -703,15 +753,17 @@ function usage_configure()
 function usage_build()
 {
     printf "\n"
-    printf "To build the Secure Middleware\n"
+    printf "===============================================\n"
+    printf "= To build the Secure Middleware              =\n"
+    printf "===============================================\n"
     printf " - Note: Project must have been configure first\n"
     printf " (ref. %s configure)\n" "${script_name}"
     printf "\n"
     printf "  %s build [option] out=[dir] jsonc=[dir] " "${script_name}"
-    printf "format=[name]\n"
-    printf "    out    = Build directory\n"
-    printf "    jsonc  = [optional] JSON-C export directory (tests build)\n"
-    printf "    format = [optional] Documentation format (default is HTML) (docs)\n"
+    printf "doc_format=[name]\n"
+    printf "    out        = Build directory\n"
+    printf "    jsonc      = [optional] JSON-C export directory (tests build)\n"
+    printf "    doc_format = [optional] Documentation format (default is ALL) (docs)\n"
     printf "\n"
     printf "Note:\n"
     printf "  - If no [option] specified, build all SMW component\n"
@@ -730,7 +782,10 @@ function usage_build()
 function usage_jsonc()
 {
     printf "\n"
-    printf "To build and install the JSON-C Library\n"
+    printf "===============================================\n"
+    printf "= To build and install the JSON-C Library     =\n"
+    printf "===============================================\n"
+    printf "\n"
     printf "  %s jsonc export=[dir] src=[dir] arch=[arch] " "${script_name}"
     printf "toolpath=[dir] toolname=[name]\n"
     printf "    export   = Export directory\n"
@@ -746,7 +801,10 @@ function usage_jsonc()
 function usage_install()
 {
     printf "\n"
-    printf "To install the Security Middleware objects\n"
+    printf "===============================================\n"
+    printf "= To install the Security Middleware objects  =\n"
+    printf "===============================================\n"
+    printf "\n"
     printf "  %s install out=[dir] dest=[dir]\n" "${script_name}"
     printf "    out      = Build directory\n"
     printf "    dest     = [optional] Installation directory\n"
@@ -756,7 +814,10 @@ function usage_install()
 function usage_package()
 {
     printf "\n"
-    printf "To package the Security Middleware objects\n"
+    printf "===============================================\n"
+    printf "= To package the Security Middleware objects  =\n"
+    printf "===============================================\n"
+    printf "\n"
     printf "  %s package out=[dir] dest=[dir] package_name=[name]\n" "${script_name}"
     printf "    out          = Build directory\n"
     printf "    dest         = [optional] Installation directory\n"
@@ -769,9 +830,9 @@ function usage_package()
 function usage()
 {
     printf "\n"
-    printf "*******************************************\n"
-    printf " Usage of Security Middleware build script \n"
-    printf "*******************************************\n"
+    printf "*********************************************\n"
+    printf "* Usage of Security Middleware build script *\n"
+    printf "*********************************************\n"
     usage_toolchain
     usage_seco
     usage_ele
@@ -782,6 +843,7 @@ function usage()
     usage_psaarchtests
     usage_jsonc
     usage_configure
+    usage_configure_doc_only
     usage_libtss2
     usage_build
     usage_install
@@ -924,8 +986,14 @@ do
             ;;
 
         format=*)
+            printf "Warning: 'format' option is deprecated, use 'doc_format' instead\n"
             opt_format="${arg#*=}"
-            opt_format="-DFORMAT=${opt_format}"
+            opt_format="-DDOC_FORMAT=${opt_format}"
+            ;;
+
+        doc_format=*)
+            opt_format="${arg#*=}"
+            opt_format="-DDOC_FORMAT=${opt_format}"
             ;;
 
         psaarchtests=*)
@@ -962,6 +1030,10 @@ do
             ;;
         docs)
             opt_build="docs"
+            ;;
+
+        doc_only)
+            opt_doc_only="-DDOC_ONLY=Yes"
             ;;
 
         *)

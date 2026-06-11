@@ -32,6 +32,14 @@ set(CMAKE_MODULE_PATH ${CMAKE_LOCAL_MODULE_PATH} ${CMAKE_MODULE_PATH})
 set(CMAKE_INSTALL_PREFIX /usr)
 include(GNUInstallDirs)
 
+# Include SMW Documentations
+add_subdirectory(Documentations)
+
+# If objective is to build documentation only
+if (DOC_ONLY)
+    return()
+endif()
+
 if(VERBOSE)
     if(NOT VERBOSE MATCHES "^[0-9]$")
         message(FATAL_ERROR "VERBOSE must be an integer")
@@ -135,9 +143,6 @@ add_subdirectory(tests)
 
 # Include PKCS#11 project
 add_subdirectory(pkcs11)
-
-# Include SMW Documentations
-add_subdirectory(Documentations)
 
 # Include TPM2 project
 add_subdirectory(tpm2)

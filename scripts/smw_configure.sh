@@ -52,6 +52,7 @@ function usage()
           tee,seco       : SECO + TEE
           tee,ele        : ELE + TEE
           coverity       : Coverity analysis
+          doc            : Documentation Only
 
     ═══════════════════════════════════════════════════════════════
     Optional Configuration Parameters: [OPTIONS]
@@ -121,6 +122,7 @@ opt_tee=0
 opt_seco=0
 opt_ele=0
 opt_tss2=0
+opt_doc_only=0
 
 if [[ "${subsystems}" == "coverity" ]]; then
     opt_tee=1
@@ -150,6 +152,9 @@ else
                 opt_ele=1
                 opt_tss2=1
                 ;;
+            doc)
+                opt_doc_only=1
+                ;;
             *)
                 echo "ERROR: Unknown subsystem: \"${subsystem}\""
                 usage
@@ -158,7 +163,7 @@ else
     done
 
     # Validate at least one subsystem is enabled
-    if [[ ${opt_tee} -eq 0 && ${opt_seco} -eq 0 && ${opt_ele} -eq 0 ]]; then
+    if [[ ${opt_tee} -eq 0 && ${opt_seco} -eq 0 && ${opt_ele} -eq 0 && ${opt_doc_only} -eq 0 ]]; then
         echo "ERROR: At least one subsystem must be specified"
         usage
     fi
@@ -239,41 +244,15 @@ do
     shift
 done
 
+if [[ ${opt_doc_only} -eq 1 ]]; then
+    eval "./scripts/smw_build.sh configure out=${out} doc_only"
+    exit 0
+fi
+
 #
 # Build/Prepare external dependencies
 #
 eval "./scripts/smw_build.sh toolchain ${arch} ${opt_toolpath}"
-
-if [[ ${opt_seco} -eq 1 ]]; then
-    eval "./scripts/smw_build.sh seco export=${seco_export} \
-        src=../secure_enclave ${arch} ${opt_toolpath}"
-fi
-
-if [[ ${opt_ele} -eq 1 ]]; then
-    eval "./scripts/smw_build.sh ele export=${ele_export} \
-        src=../secure_enclave ${arch} ${opt_toolpath}"
-fi
-
-if [[ ${opt_tss2} -eq 1 ]]; then
-eval "./scripts/smw_build.sh libtss2 export=${export}/usr \
-      src=../libtss2 ${arch} ${opt_toolpath}"
-fi
-
-eval "./scripts/smw_build.sh jsonc export=${export} \
-      src=../jsonc ${arch} ${opt_toolpath}"
-eval "./scripts/smw_build.sh libsqlite export=${export}/usr \
-      src=../libsqlite ${arch} ${opt_toolpath}"
-
-if [[ ${opt_tee} -eq 1 ]]; then
-    eval "./scripts/smw_build.sh libuuid_config export=${export}/usr \
-          src=../libuuid ${arch} ${opt_toolpath}"
-    eval "./scripts/smw_build.sh teec export=${export} \
-          src=../optee-client libuuid_config=${export}/usr out=${tee_build} ${arch} ${opt_toolpath}"
-    eval "./scripts/smw_build.sh tadevkit export=${ta_export} \
-          src=../optee-os out=${tee_build} ${arch} ${optee_plat} ${opt_toolpath}"
-fi
-
-eval "./scripts/smw_build.sh psaarchtests src=${psaarchtests_src_path}"
 
 #
 # Define common configuration option
@@ -282,30 +261,56 @@ conf_opts="${arch} ${opt_toolpath}"
 
 # Enable SECO if supported
 if [[ ${opt_seco} -eq 1 ]]; then
+    eval "./scripts/smw_build.sh seco export=${seco_export} \
+        src=../secure_enclave ${arch} ${opt_toolpath}"
+
     conf_opts="${conf_opts} seco=${seco_export}"
 fi
 
 # Enable ELE if supported
 if [[ ${opt_ele} -eq 1 ]]; then
-    conf_opts="${conf_opts} ele=${ele_export}"
-fi
+    eval "./scripts/smw_build.sh ele export=${ele_export} \
+        src=../secure_enclave ${arch} ${opt_toolpath}"
 
-# Enable optee if supported
-if [[ ${opt_tee} -eq 1 ]]; then
-    conf_opts="${conf_opts} libuuid_config=${export}/usr teec=${export} tadevkit=${ta_export}"
+    conf_opts="${conf_opts} ele=${ele_export}"
 fi
 
 # Enable TSS2 if supported
 if [[ ${opt_tss2} -eq 1 ]]; then
+    eval "./scripts/smw_build.sh libtss2 export=${export}/usr \
+          src=../libtss2 ${arch} ${opt_toolpath}"
+
     conf_opts="${conf_opts} libtss2=${export}/usr"
 fi
 
+eval "./scripts/smw_build.sh jsonc export=${export} \
+      src=../jsonc ${arch} ${opt_toolpath}"
+
 # Enable tests
 conf_opts="${conf_opts} jsonc=${export}"
-# Enable PSA Architecture tests
-conf_opts="${conf_opts} psaarchtests=${psaarchtests_src_path}"
+
+eval "./scripts/smw_build.sh libsqlite export=${export}/usr \
+      src=../libsqlite ${arch} ${opt_toolpath}"
+
 # Enable SQLite
 conf_opts="${conf_opts} libsqlite=${export}/usr"
+
+# Enable optee if supported
+if [[ ${opt_tee} -eq 1 ]]; then
+    eval "./scripts/smw_build.sh libuuid_config export=${export}/usr \
+          src=../libuuid ${arch} ${opt_toolpath}"
+    eval "./scripts/smw_build.sh teec export=${export} \
+          src=../optee-client libuuid_config=${export}/usr out=${tee_build} ${arch} ${opt_toolpath}"
+    eval "./scripts/smw_build.sh tadevkit export=${ta_export} \
+          src=../optee-os out=${tee_build} ${arch} ${optee_plat} ${opt_toolpath}"
+
+    conf_opts="${conf_opts} libuuid_config=${export}/usr teec=${export} tadevkit=${ta_export}"
+fi
+
+eval "./scripts/smw_build.sh psaarchtests src=${psaarchtests_src_path}"
+
+# Enable PSA Architecture tests
+conf_opts="${conf_opts} psaarchtests=${psaarchtests_src_path}"
 
 # Add config option to configuration (applied first)
 if [[ -n ${opt_config} ]]; then

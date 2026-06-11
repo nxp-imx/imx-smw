@@ -27,7 +27,8 @@
   - [4.5. Libraries options](#45-libraries-options)
     - [4.5.1. SMW Library options](#451-smw-library-options)
     - [4.5.2. PKCS#11 Library options](#452-pkcs11-library-options)
-  - [4.6. Enabling test suites](#46-enabling-test-suites)
+  - [4.6. Building the User Manual documentation](#46-building-the-user-manual-documentation)
+  - [4.7. Enabling test suites](#47-enabling-test-suites)
 - [5. Libraries installation](#5-libraries-installation)
   - [5.1. Install command](#51-install-command)
   - [5.2. Install result (full install)](#52-install-result-full-install)
@@ -477,16 +478,38 @@ user manual documentation generation.
 	</td>
 </tr>
 <tr>
-  <td>FORMAT</td>
-  <td>-DFORMAT=[all|html|xml]</td>
+  <td>DOC_ONLY</td>
+  <td>-DDOC_ONLY=[Yes/<b>No</b>]</td>
+  <td>Configure the project to build only the user manual documentation without
+      building the project libraries. In this case, other options are not
+      required. See the <a href="#building-the-user-manual-documentation">Building the User Manual documentation</a>
+  </td>
+</tr>
+<tr>
+  <td>DOC_FORMAT</td>
+  <td>-DDOC_FORMAT=[<b>all</b>|html|xml]</td>
   <td>Configure the user manual documentation format to generate:
 	<ul>
-	<li>all  &rarr; Build XML and HTML</li>
+	<li>all  &rarr; Build XML and HTML (default).</li>
 	<li>html &rarr; Build only HTML</li>
-	<li>pdf  &rarr; Build only XML</li>
+	<li>xml  &rarr; Build only XML</li>
 	</ul>
 	By default, documentation is not generated.</td>
 </tr>
+<tr>
+  <td>FORMAT</td>
+  <td>-DFORMAT=[<b>all</b>|html|xml]</td>
+  <td>
+  <p>  ⚠️ <b>Deprecated</b> </p>
+  Configure the user manual documentation format to generate:
+	<ul>
+	<li>all  &rarr; Build XML and HTML (default).</li>
+	<li>html &rarr; Build only HTML</li>
+	<li>xml  &rarr; Build only XML</li>
+	</ul>
+	By default, documentation is not generated.</td>
+</tr>
+
 <tr>
   <td>CMAKE_INSTALL_PREFIX</td>
   <td>-DCMAKE_INSTALL_PREFIX=[/path/to/install]</td>
@@ -722,7 +745,25 @@ The default option value is in **bold**.
 </tbody>
 </table>
 
-## 4.6. Enabling test suites
+## 4.6. Building the User Manual documentation
+The project includes a user manual documentation that can be built in HTML or
+XML format. The PDF format is not supported but the PDF user manual is present
+[here](./Documentations/user_manual/SMW_UserManual_UM12513.pdf).
+
+To configure the project to build only the documentation, use the following CMake option:
+```
+-DDOC_ONLY=Yes
+```
+
+The documentation format can be selected using the CMake option:
+```
+-DDOC_FORMAT=[ALL|HTML|XML]
+```
+The default documentation format is ALL meaning HTML and XML.
+
+When building only the documentation with `-DDOC_ONLY=Yes`, the build system will generate the user manual in the specified format(s) without compiling the libraries themselves.
+
+## 4.7. Enabling test suites
 The SMW and PKCS#11 libraries are validated using in-house test suites or
 reference test suite.
 

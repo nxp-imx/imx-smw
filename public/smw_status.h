@@ -82,6 +82,8 @@
  * file is not recognized by SMW.
  * @SMW_STATUS_UNKNOWN_LOAD_METHOD_NAME: String value of the load/unload method
  * set in the configuration file is not recognized by SMW.
+ * @SMW_STATUS_KEY_RANGE_NOT_CONFIGURABLE: The key range can not be set for this
+ * type of key.
  *
  * @SMW_STATUS_SIGNATURE_INVALID: The Signature is not valid.
  * @SMW_STATUS_SIGNATURE_LEN_INVALID: The Signature length is not valid.
@@ -177,6 +179,7 @@
  *	- SMW_STATUS_LOAD_METHOD_DUPLICATE
  *	- SMW_STATUS_UNKNOWN_CONFIG_OP_NAME
  *	- SMW_STATUS_UNKNOWN_LOAD_METHOD_NAME
+ *	- SMW_STATUS_KEY_RANGE_NOT_CONFIGURABLE
  *
  ** Specific return codes - Signature
  *
@@ -286,7 +289,8 @@ enum smw_status_code {
 	SMW_STATUS_KEY_ID_ALREADY_EXIST, /* 70 */
 	SMW_STATUS_PERMITTED_ALGO_INVALID,
 	SMW_STATUS_OPERATION_ALREADY_INIT,
-	SMW_STATUS_INPUT_TOO_LARGE
+	SMW_STATUS_INPUT_TOO_LARGE,
+	SMW_STATUS_KEY_RANGE_NOT_CONFIGURABLE
 };
 
 #endif /* __SMW_STATUS_H__ */

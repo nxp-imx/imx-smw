@@ -182,5 +182,10 @@
 		"command": "CONFIG_LOAD",
 		"filepath": "config_psa_alt_invalid.txt",
 		"result": "SMW_STATUS_INVALID_TAG"
+	},
+	"subtest 38": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_key_size_range_defined_fixed_key.txt",
+		"result": "SMW_STATUS_KEY_RANGE_NOT_CONFIGURABLE"
 	}
 }

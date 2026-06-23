@@ -252,8 +252,12 @@ static int unload(void)
 		if (tmp_status == SMW_STATUS_OK &&
 		    smw_utils_mutex_destroy(&ele_ctx.info.mutex))
 			tmp_status = SMW_STATUS_MUTEX_DESTROY_FAILURE;
+
+		if (status == SMW_STATUS_OK)
+			status = tmp_status;
 	}
 
+	tmp_status = ela_cleanup();
 	if (status == SMW_STATUS_OK)
 		status = tmp_status;
 
@@ -285,8 +289,12 @@ static int load(void)
 		goto end;
 	}
 
-	if (smw_utils_mutex_init(&ele_ctx.info.mutex))
+	if (smw_utils_mutex_init(&ele_ctx.info.mutex)) {
 		status = SMW_STATUS_MUTEX_INIT_FAILURE;
+		goto end;
+	}
+
+	status = ela_init_mutex();
 
 end:
 	if (status != SMW_STATUS_OK)
@@ -418,6 +426,27 @@ __weak void *ele_get_ctx_ops(void)
 	return NULL;
 }
 
+__weak bool ela_execute(struct subsystem_context *ele_ctx,
+			enum operation_id operation_id, void *args, int *status)
+{
+	(void)ele_ctx;
+	(void)operation_id;
+	(void)args;
+	(void)status;
+
+	return false;
+}
+
+__weak int ela_init_mutex(void)
+{
+	return SMW_STATUS_OK;
+}
+
+__weak int ela_cleanup(void)
+{
+	return SMW_STATUS_OK;
+}
+
 static int execute(enum operation_id operation_id, void *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
@@ -425,6 +454,10 @@ static int execute(enum operation_id operation_id, void *args)
 	struct hdl *hdl = &ele_ctx.hdl;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	/* Try ELA first if enabled */
+	if (ela_execute(&ele_ctx, operation_id, args, &status))
+		goto end;
 
 	if (ele_key_handle(&ele_ctx, operation_id, args, &status))
 		goto end;

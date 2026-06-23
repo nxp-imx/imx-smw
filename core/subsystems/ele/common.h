@@ -48,6 +48,7 @@ struct hdl {
  * @sign_verif_opaque_key: True if the signature verification support opaque key
  * @edwards_be: True if the Edwards key and signature are big endian in ELE
  * @aead_multipart: True if the firmware supports AEAD multi-part operations
+ * @ela: True if ELA (EdgeLock Accelerator) is supported
  *
  * This structure stores some useful ELE information.
  */
@@ -65,6 +66,7 @@ struct ele_info {
 	bool edwards_be;
 	bool aead_multipart;
 	bool cipher_multipart;
+	bool ela;
 };
 
 /**
@@ -409,6 +411,47 @@ int ele_derive_key(struct subsystem_context *ele_ctx,
 bool ele_asymmetric_encryption_handle(struct subsystem_context *ele_ctx,
 				      enum operation_id operation_id,
 				      void *args, int *status);
+
+/**
+ * ela_execute() - Execute operation using ELA if applicable
+ * @ele_ctx: Pointer to the ELE subsystem context structure.
+ * @operation_id: Operation ID
+ * @args: Operation arguments
+ * @status: Output status code
+ *
+ * This function checks if the operation should be handled by ELA
+ * and executes it if applicable. @status is set only if the function returns
+ * true.
+ *
+ * Return:
+ * true  - Operation was handled by ELA (check status for result)
+ * false - Operation not handled by ELA (use standard ELE path)
+ */
+bool ela_execute(struct subsystem_context *ele_ctx,
+		 enum operation_id operation_id, void *args, int *status);
+
+/**
+ * ela_init_mutex() - Initialize ELA mutex for thread-safe operations
+ *
+ * Return:
+ * SMW_STATUS_OK                 - Success
+ * SMW_STATUS_MUTEX_INIT_FAILURE - Mutex initialization failed
+ */
+int ela_init_mutex(void);
+
+/**
+ * ela_cleanup() - Cleanup ELA resources and destroy mutex
+ *
+ * Should be called during subsystem unload.
+ * Closes any open ELA service and destroys the mutex.
+ *
+ * Return:
+ * SMW_STATUS_OK - Success
+ * SMW_STATUS_MUTEX_LOCK_FAILURE - Failed to lock mutex
+ * SMW_STATUS_MUTEX_UNLOCK_FAILURE - Failed to unlock mutex
+ * SMW_STATUS_MUTEX_DESTROY_FAILURE - Failed to destroy mutex
+ */
+int ela_cleanup(void);
 
 /**
  * ele_convert_err() - Convert ELE error into SMW status.

@@ -49,6 +49,10 @@ if (ENABLE_DEVMGR_MODULE)
     add_subdirectory(devmgr)
 endif()
 
+if (ENABLE_ELA)
+    add_subdirectory(ela)
+endif()
+
 target_sources(ele PRIVATE ${ele_srcs})
 
 target_include_directories(ele PRIVATE

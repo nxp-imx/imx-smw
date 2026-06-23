@@ -2527,6 +2527,7 @@
 /**
  * PSA_KEY_TYPE_AES - Key for a cipher, AEAD or MAC algorithm based on the AES
  *                    block cipher.
+ * .. [[symmetric, cipher, aead, mac]]
  *
  * The size of the key is related to the AES algorithm variant. For algorithms
  * except the XTS block cipher mode, the following key sizes are used\:
@@ -2660,6 +2661,7 @@
 /**
  * PSA_KEY_TYPE_CHACHA20 - Key for the ChaCha20 stream cipher or the
  *                         ChaCha20-Poly1305 AEAD algorithm.
+ * .. [[symmetric, cipher, aead]]
  *
  * The ChaCha20 key size is 256 bits (32 bytes).
  *
@@ -2683,6 +2685,7 @@
 /**
  * PSA_KEY_TYPE_XCHACHA20 - Key for the XChaCha20 stream cipher or the
  *                          XChaCha20-Poly1305 AEAD algorithm.
+ * .. [[symmetric, cipher, aead]]
  *
  * The XChaCha20 key size is 256 bits (32 bytes)\:
  *
@@ -2732,6 +2735,7 @@
 /**
  * PSA_KEY_TYPE_DES - Key for a cipher or MAC algorithm based on DES or 3DES
  *                    (Triple-DES).
+ * .. [[symmetric, cipher, mac]]
  *
  * The size of the key determines which DES algorithm is used\:
  *
@@ -2834,6 +2838,7 @@
 
 /**
  * PSA_KEY_TYPE_HMAC - HMAC key.
+ * .. [[symmetric, mac]]
  *
  * The key policy determines which underlying hash algorithm the key can be used
  * for.
@@ -3201,6 +3206,7 @@
 /**
  * PSA_KEY_TYPE_SM4 - Key for a cipher, AEAD or MAC algorithm based on the SM4
  *                   block cipher.
+ * .. [[symmetric, cipher, aead]]
  *
  * For algorithms except the XTS block cipher mode, the SM4 key size is 128
  * bits (16 bytes).

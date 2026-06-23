@@ -164,14 +164,14 @@ typedef uint32_t smw_attr_storage_id_t;
  * - SMW_ATTR_ALGO_HASH: Hash.
  */
 #define SMW_ATTR_ALGO_NONE	   0x00
-#define SMW_ATTR_ALGO_AES	   0x01
-#define SMW_ATTR_ALGO_DES	   0x02
-#define SMW_ATTR_ALGO_DES3	   0x03
+#define SMW_ATTR_ALGO_AES	   0x01 /* [symmetric, cipher, aead] */
+#define SMW_ATTR_ALGO_DES	   0x02 /* [symmetric, cipher] */
+#define SMW_ATTR_ALGO_DES3	   0x03 /* [symmetric, cipher] */
 #define SMW_ATTR_ALGO_CHACHA20	   0x04
-#define SMW_ATTR_ALGO_SM4	   0x05
+#define SMW_ATTR_ALGO_SM4	   0x05 /* [symmetric, cipher, aead] */
 #define SMW_ATTR_ALGO_RSA	   0x06
 #define SMW_ATTR_ALGO_SM2	   0x07
-#define SMW_ATTR_ALGO_HMAC	   0x08
+#define SMW_ATTR_ALGO_HMAC	   0x08 /* [symmetric, mac] */
 #define SMW_ATTR_ALGO_DSA	   0x09
 #define SMW_ATTR_ALGO_ECDSA	   0x0A
 #define SMW_ATTR_ALGO_EDDSA	   0x0B
@@ -210,21 +210,21 @@ typedef uint32_t smw_attr_storage_id_t;
  * - SMW_ATTR_MODE_ANY: Any mode.
  */
 #define SMW_ATTR_MODE_NONE	 0x00
-#define SMW_ATTR_MODE_ECB_NO_PAD 0x01
-#define SMW_ATTR_MODE_CBC_NO_PAD 0x02
-#define SMW_ATTR_MODE_CFB	 0x03
-#define SMW_ATTR_MODE_CTR	 0x04
-#define SMW_ATTR_MODE_CTS	 0x05
-#define SMW_ATTR_MODE_OFB	 0x06
-#define SMW_ATTR_MODE_XTS	 0x07
-#define SMW_ATTR_MODE_CCM	 0x08
-#define SMW_ATTR_MODE_GCM	 0x09
+#define SMW_ATTR_MODE_ECB_NO_PAD 0x01 /* [cipher] */
+#define SMW_ATTR_MODE_CBC_NO_PAD 0x02 /* [cipher] */
+#define SMW_ATTR_MODE_CFB	 0x03 /* [cipher] */
+#define SMW_ATTR_MODE_CTR	 0x04 /* [cipher] */
+#define SMW_ATTR_MODE_CTS	 0x05 /* [cipher] */
+#define SMW_ATTR_MODE_OFB	 0x06 /* [cipher] */
+#define SMW_ATTR_MODE_XTS	 0x07 /* [cipher] */
+#define SMW_ATTR_MODE_CCM	 0x08 /* [aead] */
+#define SMW_ATTR_MODE_GCM	 0x09 /* [aead] */
 #define SMW_ATTR_MODE_PKCS1_1_5	 0x0A
 #define SMW_ATTR_MODE_OAEP	 0x0B
 #define SMW_ATTR_MODE_PSS	 0x0C
 #define SMW_ATTR_MODE_PKCS5	 0x0D
-#define SMW_ATTR_MODE_CMAC	 0x0E
-#define SMW_ATTR_MODE_POLY1305	 0x0F
+#define SMW_ATTR_MODE_CMAC	 0x0E /* [mac] */
+#define SMW_ATTR_MODE_POLY1305	 0x0F /* [aead] */
 #define SMW_ATTR_MODE_CLIENT	 0x10
 #define SMW_ATTR_MODE_SERVER	 0x11
 #define SMW_ATTR_MODE_NO_PAD	 0x12

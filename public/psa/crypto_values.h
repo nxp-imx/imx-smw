@@ -35,7 +35,9 @@
 #define PSA_ALG_ECDH			((psa_algorithm_t)0x09020000)
 #define PSA_ALG_ECDSA_ANY		((psa_algorithm_t)0x06000600)
 #define PSA_ALG_ED25519PH		((psa_algorithm_t)0x0600090B)
-#define PSA_ALG_ED448PH			((psa_algorithm_t)0x06000915)
+/* .. [[asymmetric_signature, eddsa]] */
+#define PSA_ALG_ED448PH ((psa_algorithm_t)0x06000915)
+/* .. [[asymmetric_signature, eddsa]] */
 #define PSA_ALG_FFDH			((psa_algorithm_t)0x09010000)
 #define PSA_ALG_GCM			((psa_algorithm_t)0x05500200)
 #define PSA_ALG_MD2			((psa_algorithm_t)0x02000001)
@@ -45,6 +47,7 @@
 #define PSA_ALG_OFB			((psa_algorithm_t)0x04c01200)
 #define PSA_ALG_PBKDF2_AES_CMAC_PRF_128 ((psa_algorithm_t)0x08800200)
 #define PSA_ALG_PURE_EDDSA		((psa_algorithm_t)0x06000800)
+/* .. [[asymmetric_signature, eddsa, pure]] */
 #define PSA_ALG_RIPEMD160		((psa_algorithm_t)0x02000004)
 #define PSA_ALG_RSA_PKCS1V15_CRYPT	((psa_algorithm_t)0x07000200)
 #define PSA_ALG_RSA_PKCS1V15_SIGN_RAW	((psa_algorithm_t)0x06000200)
@@ -258,6 +261,7 @@
 /**
  * PSA_ALG_DETERMINISTIC_ECDSA() - Deterministic ECDSA signature scheme, with
  *                                 hashing.
+ *
  * @hash_alg: [in] A hash algorithm such that :c:macro:`PSA_ALG_IS_HASH` is
  *                 true. This includes PSA_ALG_ANY_HASH when specifying the
  *                 algorithm in a key policy.
@@ -295,6 +299,7 @@
 
 /**
  * PSA_ALG_ECDSA() - The randomized ECDSA signature scheme, with hashing.
+ *
  * @hash_alg: [in] A hash algorithm such that :c:macro:`PSA_ALG_IS_HASH` is
  *                 true. This includes PSA_ALG_ANY_HASH when specifying the
  *                algorithm in a key policy.
@@ -545,6 +550,7 @@
 
 /**
  * PSA_ALG_VENDOR_TLS13() - Macro to build a TLS1.3 algorithm.
+ * .. [[tls]]
  * @hash_alg: [in] A hash algorithm such that :c:macro:`PSA_ALG_IS_HASH` is
  *                 true.
  *
@@ -1421,6 +1427,7 @@
 
 /**
  * PSA_ALG_RSA_OAEP() - The RSA OAEP asymmetric encryption algorithm.
+ * .. [[asymmetric_encryption, hash_based]]
  * @hash_alg: The hash algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_HASH(hash_alg) is true) to
  *            use for MGF1.
  *
@@ -1439,6 +1446,7 @@
 /**
  * PSA_ALG_RSA_PKCS1V15_SIGN() - The RSA PKCS#1 v1.5 message signature scheme,
  *                               with hashing.
+ * .. [[asymmetric_signature, hash_based]]
  * @hash_alg: [in] A hash algorithm such that :c:macro:`PSA_ALG_IS_HASH` is true.
  *                 This includes PSA_ALG_ANY_HASH when specifying the algorithm
  *                 in a key policy.
@@ -1465,6 +1473,7 @@
 
 /**
  * PSA_ALG_RSA_PSS() - The RSA PSS message signature scheme, with hashing.
+* .. [[asymmetric_signature, hash_based]]
  * @hash_alg: [in] A hash algorithm such that :c:macro:`PSA_ALG_IS_HASH`is true.
  *                 This includes PSA_ALG_ANY_HASH when specifying the algorithm
  *                 in a key policy.
@@ -1496,6 +1505,7 @@
  * PSA_ALG_RSA_PSS_ANY_SALT() - The RSA PSS message signature scheme, with
  *                              hashing. This variant permits any salt length
  *                              for signature verification.
+ * .. [[asymmetric_signature, hash_based]]
  * @hash_alg: [in] A hash algorithm such that :c:macro:`PSA_ALG_IS_HASH` is
  *                 true. This includes PSA_ALG_ANY_HASH when specifying the
  *                 algorithm in a key policy.
@@ -1706,6 +1716,7 @@
 
 /**
  * PSA_ALG_TLS12_PRF() - Macro to build a TLS-1.2 PRF algorithm.
+ * .. [[tls]]
  * @hash_alg: [in] A hash algorithm such that :c:macro:`PSA_ALG_IS_HASH` is
  *                 true.
  *
@@ -2134,6 +2145,7 @@
 
 /**
  * PSA_ECC_FAMILY_BRAINPOOL_P_R1 - Brainpool P random curves.
+ * .. [[ecdsa]]
  *
  * This family comprises the following curves\:
  *
@@ -2162,6 +2174,7 @@
 
 /**
  * PSA_ECC_FAMILY_MONTGOMERY - Montgomery curves.
+ * .. [[key_ex, size:255,448]]
  *
  * This family comprises the following Montgomery curves\:
  *
@@ -2186,6 +2199,7 @@
 
 /**
  * PSA_ECC_FAMILY_SECP_R1 - SEC random curves over prime fields.
+ * .. [[ecdsa, key_ex]]
  *
  * This family comprises the following curves\:
  *
@@ -2259,6 +2273,7 @@
 
 /**
  * PSA_ECC_FAMILY_TWISTED_EDWARDS - Twisted Edwards curves.
+ * .. [[eddsa, key_ex, size:255,448]]
  *
  * This family comprises the following twisted Edwards curves\:
  *
@@ -3171,6 +3186,7 @@
 
 /**
  *  PSA_KEY_TYPE_RSA_KEY_PAIR - RSA key pair: both the private and public key.
+ * .. [[asymmetric, signature, encryption]]
  *
  * The size of an RSA key is the bit size of the modulus.
  *

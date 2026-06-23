@@ -172,19 +172,19 @@ typedef uint32_t smw_attr_storage_id_t;
 #define SMW_ATTR_ALGO_DES3	   0x03 /* [symmetric, cipher] */
 #define SMW_ATTR_ALGO_CHACHA20	   0x04
 #define SMW_ATTR_ALGO_SM4	   0x05 /* [symmetric, cipher, aead] */
-#define SMW_ATTR_ALGO_RSA	   0x06
+#define SMW_ATTR_ALGO_RSA	   0x06 /* [asymmetric, signature, encryption] */
 #define SMW_ATTR_ALGO_SM2	   0x07
 #define SMW_ATTR_ALGO_HMAC	   0x08 /* [symmetric, mac] */
 #define SMW_ATTR_ALGO_DSA	   0x09
-#define SMW_ATTR_ALGO_ECDSA	   0x0A
-#define SMW_ATTR_ALGO_EDDSA	   0x0B
+#define SMW_ATTR_ALGO_ECDSA	   0x0A /* [asymmetric, signature] */
+#define SMW_ATTR_ALGO_EDDSA	   0x0B /* [asymmetric, signature] */
 #define SMW_ATTR_ALGO_DH	   0x0C
 #define SMW_ATTR_ALGO_ECDH	   0x0D
 #define SMW_ATTR_ALGO_HKDF	   0x0E
 #define SMW_ATTR_ALGO_HKDF_EXTRACT 0x0F
 #define SMW_ATTR_ALGO_HKDF_EXPAND  0x10
-#define SMW_ATTR_ALGO_TLS_1_2	   0x11
-#define SMW_ATTR_ALGO_TLS_1_3	   0x12
+#define SMW_ATTR_ALGO_TLS_1_2	   0x11 /* [tls] */
+#define SMW_ATTR_ALGO_TLS_1_3	   0x12 /* [tls] */
 #define SMW_ATTR_ALGO_CKDF	   0x80
 #define SMW_ATTR_ALGO_HASH	   0xFF
 
@@ -222,15 +222,15 @@ typedef uint32_t smw_attr_storage_id_t;
 #define SMW_ATTR_MODE_XTS	 0x07 /* [cipher] */
 #define SMW_ATTR_MODE_CCM	 0x08 /* [aead] */
 #define SMW_ATTR_MODE_GCM	 0x09 /* [aead] */
-#define SMW_ATTR_MODE_PKCS1_1_5	 0x0A
-#define SMW_ATTR_MODE_OAEP	 0x0B
-#define SMW_ATTR_MODE_PSS	 0x0C
+#define SMW_ATTR_MODE_PKCS1_1_5	 0x0A /* [asym_encr, asym_sign] */
+#define SMW_ATTR_MODE_OAEP	 0x0B /* [asym_encr] */
+#define SMW_ATTR_MODE_PSS	 0x0C /* [asym_sign] */
 #define SMW_ATTR_MODE_PKCS5	 0x0D
 #define SMW_ATTR_MODE_CMAC	 0x0E /* [mac] */
 #define SMW_ATTR_MODE_POLY1305	 0x0F /* [aead] */
 #define SMW_ATTR_MODE_CLIENT	 0x10
 #define SMW_ATTR_MODE_SERVER	 0x11
-#define SMW_ATTR_MODE_NO_PAD	 0x12
+#define SMW_ATTR_MODE_NO_PAD	 0x12 /* [asym_encr] */
 #define SMW_ATTR_MODE_ANY	 0xFF
 
 /*
@@ -269,7 +269,7 @@ typedef uint32_t smw_attr_storage_id_t;
  * - SMW_ATTR_HASH_SHA3_512: Secure Hash Algorithm 3, 512 bits.
  * - SMW_ATTR_HASH_SM3: ShangMi 3.
  * - SMW_ATTR_HASH_SHAKE128: Shake128.
- * - SMW_ATTR_HASH_SHAKE256: Shake1256.
+ * - SMW_ATTR_HASH_SHAKE256: Shake256.
  * - SMW_ATTR_HASH_ANY: Any hash algorithm.
  */
 #define SMW_ATTR_HASH_NONE     0x00

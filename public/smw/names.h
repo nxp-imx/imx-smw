@@ -137,7 +137,7 @@ typedef enum {
  * * SMW_KEY_TYPE_NAME_DES: DES key
  * * SMW_KEY_TYPE_NAME_DES3: Triple DES key
  * * SMW_KEY_TYPE_NAME_DSA_SM2_FP: DSA SM2 key
- * * SMW_KEY_TYPE_NAME_SM4:  SM4 key
+ * * SMW_KEY_TYPE_NAME_SM4: SM4 key
  * * SMW_KEY_TYPE_NAME_HMAC: HMAC key
  * * SMW_KEY_TYPE_NAME_RSA: RSA key
  * * SMW_KEY_TYPE_NAME_DH: DH key
@@ -153,26 +153,26 @@ typedef enum {
  */
 typedef enum {
 	SMW_KEY_TYPE_NAME_NONE,
-	SMW_KEY_TYPE_NAME_SECP_R1,
-	SMW_KEY_TYPE_NAME_BRAINPOOL_R1,
+	SMW_KEY_TYPE_NAME_SECP_R1, /* [asymmetric, signature, key_ex, ecdsa] */
+	SMW_KEY_TYPE_NAME_BRAINPOOL_R1, /* [asymmetric, signature, ecdsa] */
 	SMW_KEY_TYPE_NAME_BRAINPOOL_T1,
-	SMW_KEY_TYPE_NAME_ED25519,
-	SMW_KEY_TYPE_NAME_AES,	/* [symmetric] */
-	SMW_KEY_TYPE_NAME_DES,	/* [symmetric] */
-	SMW_KEY_TYPE_NAME_DES3, /* [symmetric] */
+	SMW_KEY_TYPE_NAME_ED25519, /* [asymmetric, signature, eddsa, size:255] */
+	SMW_KEY_TYPE_NAME_AES,	   /* [symmetric] */
+	SMW_KEY_TYPE_NAME_DES,	   /* [symmetric] */
+	SMW_KEY_TYPE_NAME_DES3,	   /* [symmetric] */
 	SMW_KEY_TYPE_NAME_DSA_SM2_FP,
 	SMW_KEY_TYPE_NAME_SM4,	/* [symmetric] */
 	SMW_KEY_TYPE_NAME_HMAC, /* [symmetric] */
-	SMW_KEY_TYPE_NAME_RSA,
+	SMW_KEY_TYPE_NAME_RSA,	/* [asymmetric, signature, encryption] */
 	SMW_KEY_TYPE_NAME_DH,
 	SMW_KEY_TYPE_NAME_TLS_MASTER,
 	SMW_KEY_TYPE_NAME_RAW,
 	SMW_KEY_TYPE_NAME_DERIVE,
 	SMW_KEY_TYPE_NAME_HKDF_IKM,
-	SMW_KEY_TYPE_NAME_X25519,
+	SMW_KEY_TYPE_NAME_X25519, /* [asymmetric, key_ex, size:255] */
 	SMW_KEY_TYPE_NAME_EL2GO_PROV_OEM_KEY,
-	SMW_KEY_TYPE_NAME_ED448,
-	SMW_KEY_TYPE_NAME_X448,
+	SMW_KEY_TYPE_NAME_ED448, /* [asymmetric, signature, eddsa, size:448] */
+	SMW_KEY_TYPE_NAME_X448,	 /* [asymmetric, key_ex, size:448] */
 	SMW_KEY_TYPE_NAME_NB
 } smw_key_type_t;
 

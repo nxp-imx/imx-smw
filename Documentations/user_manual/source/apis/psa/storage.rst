@@ -10,7 +10,7 @@ Structure and Typedefs
 .. kdoc-extension:: /public/psa/storage_common.h
    :typedefs: psa_storage_create_flags_t
 
-The following :numref:`table_psa_data_creation_flags` lists all data creation
+The following :ref:`table_psa_data_creation_flags` table lists all data creation
 flags supported.
 
 .. table:: PSA data creation flags

@@ -692,7 +692,8 @@ OEM import WRAP and CMAC keys derivation parameters:
   - The key derivation algorithm is imposed by EdgeLock Secure Enclave
     Firmware as HKDF_SHA256.
 
-The EdgeLock Enclave blob is encoded as described in :numref:`ele_import_blob`.
+The EdgeLock Enclave blob is encoded as described in :ref:`ele_import_blob`
+table.
 
 .. table:: EdgeLock Enclave blob
    :name: ele_import_blob
@@ -1190,7 +1191,7 @@ In this example:
 #. **On host**, build the EdgeLock Enclave blob to import the key:
 
    The blob must be builf by yourself and encoded as described
-   in :numref:`ele_import_blob`.
+   in :ref:`ele_import_blob` table.
 
    Third party crypto service (MbedTLS library) is used to wrap the
    imported key and signed the blob.
@@ -1518,7 +1519,7 @@ The command used to sign is `nxpimage <https://spsdk.readthedocs.io/en/latest/ap
 
 
 The OEM Master key attributes are almost pre-defined, the following
-:numref:`oem_mk_attributes` lists the value to set in the signed payload
+:ref:`oem_mk_attributes` table lists the value to set in the signed payload
 and the SMW key attributes.
 
 The signed payload defined also a ``derived key group`` field where the key

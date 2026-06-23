@@ -155,9 +155,9 @@ Typedef
 .. kdoc-extension:: /public/psa/keymgr.h
    :typedefs: psa_custom_key_parameters_t
 
-The :numref:`table_custom_key_parameters` shows the custom production parameters
-for each type of key. See the key type definitions for details of the valid
-parameter values.
+The :ref:`table_custom_key_parameters` table shows the custom production
+parameters for each type of key. See the key type definitions for details of the
+valid parameter values.
 
 .. table:: Custom key parameters
    :name: table_custom_key_parameters

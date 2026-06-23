@@ -48,7 +48,7 @@ this usage.
 .. kdoc-extension:: /public/psa/crypto_types.h
    :typedefs: psa_pake_primitive_type_t psa_pake_family_t
 
-The following :numref:`table_psa_pake_primitive_type_family` lists all PAKE
+The following :ref:`table_psa_pake_primitive_type_family` table lists all PAKE
 primitive type and associated family.
 
 .. table:: PAKE primitive type and family

@@ -69,9 +69,9 @@ The following rules apply to the global configuration:
     operation.
     If present after the first occurrence of **[SECURE_SUBSYSTEM]**, it is
     ignored. The possible values are the Secure Subsystems names listed in
-    :numref:`secure_subsystems`. Adding option **ALT** (":ALT") after the Secure
-    Subsystem name allows the selection of another Secure Subsystem if the
-    default one doesn't support the requested Security Operation.
+    :ref:`secure_subsystems` table. Adding option **ALT** (":ALT") after the
+    Secure Subsystem name allows the selection of another Secure Subsystem if
+    the default one doesn't support the requested Security Operation.
 
 
 Secure Subsystems definition
@@ -105,11 +105,11 @@ The following rules apply to the Secure Subsystem definition:
     block.
   - Each **[SECURE_SUBSYSTEM]** block must start with the subsystem name
     identifier matching the names defined in the Secure Subsystems
-    name :numref:`secure_subsystems`.
+    name :ref:`secure_subsystems` table.
   - An optional load/unload method can be specified within the block after the
     subsystem name using the format **<string: load/unload method>**. The
-    supported methods are listed in :numref:`subsystem_load_methods`. This method
-    must be defined only once per **[SECURE_SUBSYSTEM]** block.
+    supported methods are listed in :ref:`subsystem_load_methods` table. This
+    method must be defined only once per **[SECURE_SUBSYSTEM]** block.
   - A **[SECURE_SUBSYSTEM]** configuration can be split into multiple parts.
     Each part must start with the same subsystem name identifier.
   - A **[SECURE_SUBSYSTEM]** block can contain one or more secure operation
@@ -168,8 +168,8 @@ Naming Convention
 Secure Subsystems
 """""""""""""""""
 
-The :numref:`secure_subsystems` below lists all Secure Subsystems supported by
-the Security Middleware library.
+The :ref:`secure_subsystems` table below lists all Secure Subsystems supported
+by the Security Middleware library.
 
 .. table:: Secure Subsystems
    :name: secure_subsystems
@@ -196,7 +196,7 @@ the Security Middleware library.
 Subsystem load/unload methods
 """""""""""""""""""""""""""""
 
-The following :numref:`subsystem_load_methods` defines the
+The following :ref:`subsystem_load_methods` table defines the
 possible string value of the load/unload method.
 
 .. table:: Secure Subsystem - load/unload methods
@@ -244,8 +244,8 @@ This section defines the Security Operations organized by functional category:
 Key management
 ~~~~~~~~~~~~~~
 
-Following :numref:`security_op_key_mgt` below lists all key management security
-operations.
+Following :ref:`security_op_key_mgt` table  below lists all key management
+security operations.
 
 .. table:: Security Operations - key management
    :name: security_op_key_mgt
@@ -278,7 +278,7 @@ operations.
 Cryptographic operations
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Following :numref:`security_op_crypto` below lists all cryptographic security
+Following :ref:`security_op_crypto` table below lists all cryptographic security
 operations.
 
 .. table:: Security Operations - Cryptographic operations
@@ -368,7 +368,7 @@ operations.
 Data management
 ~~~~~~~~~~~~~~~
 
-Following :numref:`security_op_data_mgt` below lists all data management
+Following :ref:`security_op_data_mgt` table below lists all data management
 security operations.
 
 .. table:: Security Operations - Data management
@@ -398,7 +398,7 @@ security operations.
 Device management
 ~~~~~~~~~~~~~~~~~
 
-Following :numref:`security_op_device_mgt` below lists all device management
+Following :ref:`security_op_device_mgt` table below lists all device management
 security operations.
 
 .. table:: Security Operations - Device management
@@ -425,7 +425,7 @@ Capabilities tags
 KEY_TYPE_VALUES
 ***************
 
-Following :numref:`security_op_key_type_values` below lists all supported key
+Following :ref:`security_op_key_type_values` table below lists all supported key
 type values.
 
 To each key type value, a range tag is associated as shown in the table below.
@@ -498,7 +498,7 @@ for key derivation and cryptographic operations.
 
 **Key derivation operation type**
 
-Following :numref:`security_op_derive_op_type_values` below lists all key
+Following :ref:`security_op_derive_op_type_values` table below lists all key
 derivation operation type values.
 
 .. table:: Security Operation - Key derivation operation type values
@@ -535,7 +535,7 @@ derivation operation type values.
 
 **Cryptographic operation type**
 
-Following :numref:`security_op_crypto_op_type_values` below lists all
+Following :ref:`security_op_crypto_op_type_values` table below lists all
 cryptographic operation type values.
 
 .. table:: Security Operation - Cryptographic operation type values
@@ -557,7 +557,7 @@ cryptographic operation type values.
 HASH_ALGO_VALUES
 ****************
 
-Following :numref:`security_op_hash_algo_values` below lists all hash
+Following :ref:`security_op_hash_algo_values` table below lists all hash
 algorithm values.
 
 .. table:: Security Operation - Hash algorithm values
@@ -599,7 +599,7 @@ algorithm values.
 MAC_ALGO_VALUES
 ***************
 
-Following :numref:`security_op_mac_algo_values` below lists all MAC
+Following :ref:`security_op_mac_algo_values` table below lists all MAC
 algorithm values.
 
 .. table:: Security Operation - MAC algorithm values
@@ -627,11 +627,11 @@ algorithm values.
 SIGN_ALGO_VALUES
 ****************
 
-Following :numref:`security_op_sign_algo_values` below lists all asymmetric
+Following :ref:`security_op_sign_algo_values` table below lists all asymmetric
 signature algorithm values.
 
 The column **SIGN_TYPE_VALUES** in the following table
-:numref:`security_op_sign_algo_values` defines the possible signature type
+:ref:`security_op_sign_algo_values` table defines the possible signature type
 value that could be defined if the signature algorithm is used. If the type
 of signature is not defined, all signature type values are supported.
 
@@ -677,7 +677,7 @@ of signature is not defined, all signature type values are supported.
 ENC_ALGO_VALUES
 ***************
 
-The following :numref:`security_op_asym_enc_values` below lists all asymmetric
+The following :ref:`security_op_asym_enc_values` table below lists all asymmetric
 encryption algorithm values for the asymmetric encryption algorithm operations.
 
 .. table:: Security Operation - Asymmetric encryption algorithm values
@@ -705,7 +705,7 @@ type.
 
 **Symmetric encryption algorithm mode values**
 
-Following :numref:`security_op_sym_mode_values` below lists all mode
+Following :ref:`security_op_sym_mode_values` table below lists all mode
 values for the symmetric algorithm operations.
 
 .. table:: Security Operation - Symmetric encryption algorithm mode values
@@ -736,7 +736,7 @@ values for the symmetric algorithm operations.
 
 **Authentication Encryption algorithm mode values**
 
-Following :numref:`security_op_aead_mode_values` below lists all mode values
+Following :ref:`security_op_aead_mode_values` table below lists all mode values
 for the authentication encryption algorithm operations.
 
 .. table:: Security Operation - AEAD algorithm mode values
@@ -759,7 +759,7 @@ for the authentication encryption algorithm operations.
 
 **Asymmetric Encryption algorithm mode values**
 
-Following :numref:`security_op_asym_mode_values` below lists all mode values
+Following :ref:`security_op_asym_mode_values` table below lists all mode values
 for the asymmetric encryption algorithm operations.
 
 

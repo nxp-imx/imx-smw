@@ -1,7 +1,7 @@
 Introduction
 ============
 
-The Security Middleware library provides an application’s generic API
+The Security Middleware library provides an application's generic API
 to perform Security operations supported by the Secure Subsystems present
 in the system.
 
@@ -11,9 +11,9 @@ The SMW Library is designed to be OS-agnostic through the use of the
 The library configuration and Secure Subsystems configuration are detailed
 in the :ref:`Configuration <library-configuration>` chapter.
 
-The :ref:`Secure Subsystems Capabilities <subsystems-capabilities>`
+The :ref:`Secure Subsystems Features and Capabilities <subsystems-capabilities>`
 chapter describes the operations supported by each Secure Subsystem and their
-specific capabilities and constraints.
+specific features, capabilities and limitations.
 
 The :ref:`APIs Reference <apis-reference>` chapter provides the complete APIs
 documentation.

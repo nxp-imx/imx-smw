@@ -187,14 +187,14 @@ Permitted Algorithm
 The following table outlines the HMAC permitted algorithms.
 
 Depending of the subsystem, the HMAC generated can be truncated (refer to the
-:numref:`table_mac_operations_subsystem`). In this case, the key permitted
+:ref:`table_mac_operations_subsystem` table). In this case, the key permitted
 algorithm can be set to limit key usage when HMAC generated is truncated.
 
-The :numref:`table_permitted_key_algorithms_full_hmac` details the key
+The :ref:`table_permitted_key_algorithms_full_hmac` table details the key
 permitted algorithms for full HMAC operations across different APIs and hash.
 The Truncated HMAC is supported with this permitted algorithm.
 
-The :numref:`table_permitted_key_algorithms_truncated_hmac` details the key
+The :ref:`table_permitted_key_algorithms_truncated_hmac` table details the key
 permitted algorithms for Truncated HMAC operations.
 
 .. table:: Permitted Algorithms for Full HMAC
@@ -212,7 +212,7 @@ permitted algorithms for Truncated HMAC operations.
    |                 |         | Where:\                                                            |
    |                 |         |                                                                    |
    |                 |         |  - ``hash`` is one of SMW Attribute Hash algorithm define in       |
-   |                 |         |    the :numref:`table_algorithm_hash`.                             |
+   |                 |         |    the :ref:`table_algorithm_hash` table.                          |
    |                 |         |  - ``mac`` is 0                                                    |
    |                 |         |                                                                    |
    +                 +---------+--------------------------------------------------------------------+
@@ -236,52 +236,52 @@ permitted algorithms for Truncated HMAC operations.
    :width: 100%
    :class: wrap-table
 
-   +-----------------+---------+----------------------------------------------------------------------+
-   | **MAC**         | **API** | **Permitted Algorithm**                                              |
-   +=================+=========+======================================================================+
-   | HMAC fix        | SMW     | SMW_ATTR_ALGO_MAC_HMAC(hash, mac)                                    |
-   | truncated       |         |                                                                      |
-   | length          |         | Where:\                                                              |
-   |                 |         |                                                                      |
-   |                 |         |   - ``hash`` is one of SMW Attribute Hash algorithm define in        |
-   |                 |         |     the :numref:`table_algorithm_hash`.                              |
-   |                 |         |   - ``mac`` is output MAC length that can't exceed the full MAC      |
-   |                 |         |     length as detailed in the :numref:`table_hmac_support_details`.  |
-   |                 |         |                                                                      |
-   +                 +---------+----------------------------------------------------------------------+
-   |                 | PSA     | PSA_ALG_TRUNCATED_MAC(PSA_ALG_HMAC(hash), mac_length)                |
-   |                 |         |                                                                      |
-   |                 |         | Where: \                                                             |
-   |                 |         |                                                                      |
-   |                 |         |   - ``hash`` is one of PSA Hash algorithm (`PSA_ALG_xxx`) such       |
-   |                 |         |     as :c:macro:`PSA_ALG_IS_HASH` is true.                           |
-   |                 |         |   - ``mac_length`` is output MAC length that can't exceed the full   |
-   |                 |         |     MAC length as detailed in the                                    |
-   |                 |         |     :numref:`table_hmac_support_details`.                            |
-   |                 |         |                                                                      |
-   +-----------------+---------+----------------------------------------------------------------------+
-   | HMAC minimum    | SMW     | SMW_ATTR_SET_MIN_MAC_LENGTH(SMW_ATTR_ALGO_MAC_HMAC(hash, 0), length) |
-   | truncated       |         |                                                                      |
-   | length          |         | Where:\                                                              |
-   |                 |         |                                                                      |
-   |                 |         |   - ``hash`` is one of SMW Attribute Hash algorithm define in        |
-   |                 |         |     the :numref:`table_algorithm_hash`.                              |
-   |                 |         |   - ``length`` is minimum output MAC length, can't exceed the full   |
-   |                 |         |     MAC length as detailed in the                                    |
-   |                 |         |     :numref:`table_hmac_support_details`.                            |
-   |                 |         |                                                                      |
-   +                 +---------+----------------------------------------------------------------------+
-   |                 | PSA     | PSA_ALG_AT_LEAST_THIS_LENGTH_MAC(PSA_ALG_HMAC(hash), min_mac_length) |
-   |                 |         |                                                                      |
-   |                 |         | Where: \                                                             |
-   |                 |         |                                                                      |
-   |                 |         |   - ``hash`` is one of PSA Hash algorithm (`PSA_ALG_xxx`) such       |
-   |                 |         |     as :c:macro:`PSA_ALG_IS_HASH` is true.                           |
-   |                 |         |   - ``min_mac_length`` is minimum output MAC length that can't       |
-   |                 |         |     exceed the full MAC length as detailed in the                    |
-   |                 |         |     :numref:`table_hmac_support_details`.                            |
-   |                 |         |                                                                      |
-   +-----------------+---------+----------------------------------------------------------------------+
+   +-----------------+---------+------------------------------------------------------------------------+
+   | **MAC**         | **API** | **Permitted Algorithm**                                                |
+   +=================+=========+========================================================================+
+   | HMAC fix        | SMW     | SMW_ATTR_ALGO_MAC_HMAC(hash, mac)                                      |
+   | truncated       |         |                                                                        |
+   | length          |         | Where:\                                                                |
+   |                 |         |                                                                        |
+   |                 |         |   - ``hash`` is one of SMW Attribute Hash algorithm define in          |
+   |                 |         |     the :ref:`table_algorithm_hash` table.                             |
+   |                 |         |   - ``mac`` is output MAC length that can't exceed the full MAC        |
+   |                 |         |     length as detailed in the :ref:`table_hmac_support_details` table. |
+   |                 |         |                                                                        |
+   +                 +---------+------------------------------------------------------------------------+
+   |                 | PSA     | PSA_ALG_TRUNCATED_MAC(PSA_ALG_HMAC(hash), mac_length)                  |
+   |                 |         |                                                                        |
+   |                 |         | Where: \                                                               |
+   |                 |         |                                                                        |
+   |                 |         |   - ``hash`` is one of PSA Hash algorithm (`PSA_ALG_xxx`) such         |
+   |                 |         |     as :c:macro:`PSA_ALG_IS_HASH` is true.                             |
+   |                 |         |   - ``mac_length`` is output MAC length that can't exceed the full     |
+   |                 |         |     MAC length as detailed in the                                      |
+   |                 |         |     :ref:`table_hmac_support_details` table.                           |
+   |                 |         |                                                                        |
+   +-----------------+---------+------------------------------------------------------------------------+
+   | HMAC minimum    | SMW     | SMW_ATTR_SET_MIN_MAC_LENGTH(SMW_ATTR_ALGO_MAC_HMAC(hash, 0), length)   |
+   | truncated       |         |                                                                        |
+   | length          |         | Where:\                                                                |
+   |                 |         |                                                                        |
+   |                 |         |   - ``hash`` is one of SMW Attribute Hash algorithm define in          |
+   |                 |         |     the :ref:`table_algorithm_hash` table.                             |
+   |                 |         |   - ``length`` is minimum output MAC length, can't exceed the full     |
+   |                 |         |     MAC length as detailed in the                                      |
+   |                 |         |     :ref:`table_hmac_support_details` table.                           |
+   |                 |         |                                                                        |
+   +                 +---------+------------------------------------------------------------------------+
+   |                 | PSA     | PSA_ALG_AT_LEAST_THIS_LENGTH_MAC(PSA_ALG_HMAC(hash), min_mac_length)   |
+   |                 |         |                                                                        |
+   |                 |         | Where: \                                                               |
+   |                 |         |                                                                        |
+   |                 |         |   - ``hash`` is one of PSA Hash algorithm (`PSA_ALG_xxx`) such         |
+   |                 |         |     as :c:macro:`PSA_ALG_IS_HASH` is true.                             |
+   |                 |         |   - ``min_mac_length`` is minimum output MAC length that can't         |
+   |                 |         |     exceed the full MAC length as detailed in the                      |
+   |                 |         |     :ref:`table_hmac_support_details` table.                           |
+   |                 |         |                                                                        |
+   +-----------------+---------+------------------------------------------------------------------------+
 
 CMAC
 ^^^^
@@ -360,14 +360,14 @@ The following table outlines the CMAC permitted algorithms.
    +-----------------+---------+--------------------------------------------------------------------+
 
 Depending of the subsystem, the CMAC generated can be truncated (refer to the
-:numref:`table_mac_operations_subsystem`). In this case, the key permitted
+:ref:`table_mac_operations_subsystem` table). In this case, the key permitted
 algorithm can be set to limit key usage when CMAC generated is truncated.
 
-The :numref:`table_permitted_key_algorithms_full_cmac` details the key
+The :ref:`table_permitted_key_algorithms_full_cmac` table details the key
 permitted algorithms for full CMAC operations across different APIs and hash.
 The Truncated HMAC is supported with this permitted algorithm.
 
-The :numref:`table_permitted_key_algorithms_truncated_cmac` details the key
+The :ref:`table_permitted_key_algorithms_truncated_cmac` table details the key
 permitted algorithms for Truncated CMAC operations.
 
 .. table:: Permitted Algorithms for Full CMAC
@@ -413,7 +413,7 @@ permitted algorithms for Truncated CMAC operations.
    |                 |         |   - ``algo`` is SMW_ATTR_ALGO_AES.                                        |
    |                 |         |   - ``mode`` is SMW_ATTR_MODE_CMAC.                                       |
    |                 |         |   - ``mac`` is output MAC length that can't exceed the full MAC           |
-   |                 |         |     length as detailed in the :numref:`table_cmac_support_details`.       |
+   |                 |         |     length as detailed in the :ref:`table_cmac_support_details` table.    |
    |                 |         |                                                                           |
    +                 +---------+---------------------------------------------------------------------------+
    |                 | PSA     | PSA_ALG_TRUNCATED_MAC(PSA_ALG_CMAC, mac_length)                           |
@@ -422,7 +422,7 @@ permitted algorithms for Truncated CMAC operations.
    |                 |         |                                                                           |
    |                 |         |   - ``mac_length`` is output MAC length that can't exceed the full        |
    |                 |         |     MAC length as detailed in the                                         |
-   |                 |         |     :numref:`table_cmac_support_details`.                                 |
+   |                 |         |     :ref:`table_cmac_support_details` table.                              |
    |                 |         |                                                                           |
    +-----------------+---------+---------------------------------------------------------------------------+
    | CMAC minimum    | SMW     | SMW_ATTR_SET_MIN_MAC_LENGTH(SMW_ATTR_ALGO_MAC(algo, mode, 0), length)     |
@@ -433,7 +433,7 @@ permitted algorithms for Truncated CMAC operations.
    |                 |         |   - ``mode`` is SMW_ATTR_MODE_CMAC.                                       |
    |                 |         |   - ``length`` is minimum output MAC length, can't exceed the full        |
    |                 |         |     MAC length as detailed in the                                         |
-   |                 |         |     :numref:`table_cmac_support_details`.                                 |
+   |                 |         |     :ref:`table_cmac_support_details` table.                              |
    |                 |         |                                                                           |
    +                 +---------+---------------------------------------------------------------------------+
    |                 | PSA     | PSA_ALG_AT_LEAST_THIS_LENGTH_MAC(PSA_ALG_CMAC, min_mac_length)            |
@@ -442,6 +442,6 @@ permitted algorithms for Truncated CMAC operations.
    |                 |         |                                                                           |
    |                 |         |   - ``min_mac_length`` is minimum output MAC length that can't            |
    |                 |         |     exceed the full MAC length as detailed in the                         |
-   |                 |         |     :numref:`table_cmac_support_details`.                                 |
+   |                 |         |     :ref:`table_cmac_support_details` table.                              |
    |                 |         |                                                                           |
    +-----------------+---------+---------------------------------------------------------------------------+

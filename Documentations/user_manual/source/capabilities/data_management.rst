@@ -156,13 +156,13 @@ CMAC (Cipher-based Message Authentication Code) only as defined in the
 Data blob format
 ~~~~~~~~~~~~~~~~
 The encrypted and signed data is retrieved through a TLV (Tag-Length-Value)
-blob format. The following :numref:`table_encrypted_signed_data_tlv` describes
+blob format. The following :ref:`table_encrypted_signed_data_tlv` table describes
 the structure of the encrypted and signed data blob including metadata tags
 for device identification, initialization vectors, encrypted payload and
 blob signature.
 
 The encrypted and signed data is stored in a TLV blob format as detailed in the
-:numref:`table_encrypted_signed_data_tlv` below.
+:ref:`table_encrypted_signed_data_tlv` table below.
 
 .. table:: Encrypted and Signed Data - TLV Format
    :name: table_encrypted_signed_data_tlv

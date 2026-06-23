@@ -111,14 +111,14 @@ Algorithm Category
 
 Hash Algorithms
 """""""""""""""
-The table :numref:`table_psa_hash_algorithms` lists the hash algorithm
+The table :ref:`table_psa_hash_algorithms` lists the hash algorithm
 identifiers supported in the context of the Security Middleware library and
 Secure Subsystems.
 
 The Hash algorithm encoding follows the algorithm encoding format described in
-:numref:`table_psa_algorithm_encoding`, where the category is set to 0x02
+:ref:`table_psa_algorithm_encoding` table, where the category is set to 0x02
 (Hash) and the HASH-TYPE field [7:0] contains the hash algorithm sub-type
-identifier details in the :numref:`table_psa_hash_algorithms` table below.
+identifier details in the :ref:`table_psa_hash_algorithms` table below.
 
 .. table:: Hash Algorithm identifiers
    :name: table_psa_hash_algorithms
@@ -163,8 +163,8 @@ identifier details in the :numref:`table_psa_hash_algorithms` table below.
 MAC Algorithms
 """"""""""""""
 The MAC algorithm encoding follows the algorithm encoding format described in
-:numref:`table_psa_algorithm_encoding`, as detailed in the following
-:numref:`table_psa_mac_algorithm_encoding`.
+:ref:`table_psa_algorithm_encoding` table, as detailed in the following
+:ref:`table_psa_mac_algorithm_encoding` table.
 
 .. table:: MAC Algorithm encoding
    :name: table_psa_mac_algorithm_encoding
@@ -172,31 +172,31 @@ The MAC algorithm encoding follows the algorithm encoding format described in
    :widths: 15 10 60
    :class: wrap-table
 
-   +------------+----------+-----------------------------------------------------------------+
-   | **Field**  | **Bits** | **Description**                                                 |
-   +============+==========+=================================================================+
-   | V          | [31]     | =0                                                              |
-   +------------+----------+-----------------------------------------------------------------+
-   | CAT        | [30:24]  | =0x03 (MAC)                                                     |
-   +------------+----------+-----------------------------------------------------------------+
-   | S          | [23]     | =1                                                              |
-   +------------+----------+-----------------------------------------------------------------+
-   | B          | [22]     | See :numref:`table_psa_mac_algorithms`.                         |
-   +------------+----------+-----------------------------------------------------------------+
-   | LEN        | [21:16]  | Truncated MAC length if not 0.                                  |
-   +------------+----------+-----------------------------------------------------------------+
-   | W          | [15]     | Wildcard permitted algorithm policy:\                           |
-   |            |          |                                                                 |
-   |            |          |  - =0 indicates a specific MAC algorithm and MAC length.        |
-   |            |          |  - =1 indicates a wildcard key usage policy, which              |
-   |            |          |    permits the MAC algorithm with a MAC length at least         |
-   |            |          |    equal to `LEN`. `LEN` can't be 0.                            |
-   +------------+----------+-----------------------------------------------------------------+
-   | MAC-TYPE   | [14:8]   | The MAC algorithm type. See :numref:`table_psa_mac_algorithms`. |
-   +------------+----------+-----------------------------------------------------------------+
-   | HASH-TYPE  | [7:0]    | Hash algorithm for HMAC (:numref:`table_psa_hash_algorithms`),  |
-   |            |          | 0 for CMAC.                                                     |
-   +------------+----------+-----------------------------------------------------------------+
+   +------------+----------+--------------------------------------------------------------------+
+   | **Field**  | **Bits** | **Description**                                                    |
+   +============+==========+====================================================================+
+   | V          | [31]     | =0                                                                 |
+   +------------+----------+--------------------------------------------------------------------+
+   | CAT        | [30:24]  | =0x03 (MAC)                                                        |
+   +------------+----------+--------------------------------------------------------------------+
+   | S          | [23]     | =1                                                                 |
+   +------------+----------+--------------------------------------------------------------------+
+   | B          | [22]     | See :ref:`table_psa_mac_algorithms` table.                         |
+   +------------+----------+--------------------------------------------------------------------+
+   | LEN        | [21:16]  | Truncated MAC length if not 0.                                     |
+   +------------+----------+--------------------------------------------------------------------+
+   | W          | [15]     | Wildcard permitted algorithm policy:\                              |
+   |            |          |                                                                    |
+   |            |          |  - =0 indicates a specific MAC algorithm and MAC length.           |
+   |            |          |  - =1 indicates a wildcard key usage policy, which                 |
+   |            |          |    permits the MAC algorithm with a MAC length at least            |
+   |            |          |    equal to `LEN`. `LEN` can't be 0.                               |
+   +------------+----------+--------------------------------------------------------------------+
+   | MAC-TYPE   | [14:8]   | The MAC algorithm type. See :ref:`table_psa_mac_algorithms` table. |
+   +------------+----------+--------------------------------------------------------------------+
+   | HASH-TYPE  | [7:0]    | Hash algorithm for HMAC (Table :ref:`table_psa_hash_algorithms`),  |
+   |            |          | 0 for CMAC.                                                        |
+   +------------+----------+--------------------------------------------------------------------+
 
 
 .. table:: MAC Algorithm identifiers
@@ -216,9 +216,9 @@ The MAC algorithm encoding follows the algorithm encoding format described in
    +----------------+-------+--------------+-------------------------+-------------------------------------------+
 
 (1) hh is the hash algorithm identifier as defined in the
-    :numref:`table_psa_hash_algorithms`.
+    :ref:`table_psa_hash_algorithms` table.
 
-The above :numref:`table_psa_mac_algorithms` defines the default algorithm
+The above :ref:`table_psa_mac_algorithms` table defines the default algorithm
 identifier, specifying a standard length tag.
 
 PSA_ALG_TRUNCATED_MAC() generates identifiers with non-default LEN values.
@@ -229,8 +229,8 @@ W = 1.
 Cipher Algorithms
 """""""""""""""""
 The Cipher algorithm encoding follows the algorithm encoding format described in
-:numref:`table_psa_algorithm_encoding`, as detailed in the following
-:numref:`table_psa_cipher_algorithm_encoding`.
+:ref:`table_psa_algorithm_encoding` table, as detailed in the following
+:ref:`table_psa_cipher_algorithm_encoding` table.
 
 .. table:: Cipher Algorithm encoding
    :name: table_psa_cipher_algorithm_encoding
@@ -238,23 +238,23 @@ The Cipher algorithm encoding follows the algorithm encoding format described in
    :widths: 15 10 60
    :class: wrap-table
 
-   +-------------+----------+-----------------------------------------------------------------------+
-   | **Field**   | **Bits** | **Description**                                                       |
-   +=============+==========+=======================================================================+
-   | V           | [31]     | =0                                                                    |
-   +-------------+----------+-----------------------------------------------------------------------+
-   | CAT         | [30:24]  | =0x04 (Cipher)                                                        |
-   +-------------+----------+-----------------------------------------------------------------------+
-   | S           | [23]     | See :numref:`table_psa_cipher_algorithms`.                            |
-   +-------------+----------+-----------------------------------------------------------------------+
-   | B           | [22]     | See :numref:`table_psa_cipher_algorithms`.                            |
-   +-------------+----------+-----------------------------------------------------------------------+
-   | LEN         | [21:16]  | =0                                                                    |
-   +-------------+----------+-----------------------------------------------------------------------+
-   | C-TYPE      | [15:8]   | The Cipher algorithm type. See :numref:`table_psa_cipher_algorithms`. |
-   +-------------+----------+-----------------------------------------------------------------------+
-   | HASH-TYPE   | [7:0]    | =0                                                                    |
-   +-------------+----------+-----------------------------------------------------------------------+
+   +-------------+----------+--------------------------------------------------------------------------+
+   | **Field**   | **Bits** | **Description**                                                          |
+   +=============+==========+==========================================================================+
+   | V           | [31]     | =0                                                                       |
+   +-------------+----------+--------------------------------------------------------------------------+
+   | CAT         | [30:24]  | =0x04 (Cipher)                                                           |
+   +-------------+----------+--------------------------------------------------------------------------+
+   | S           | [23]     | See :ref:`table_psa_cipher_algorithms` table.                            |
+   +-------------+----------+--------------------------------------------------------------------------+
+   | B           | [22]     | See :ref:`table_psa_cipher_algorithms` table.                            |
+   +-------------+----------+--------------------------------------------------------------------------+
+   | LEN         | [21:16]  | =0                                                                       |
+   +-------------+----------+--------------------------------------------------------------------------+
+   | C-TYPE      | [15:8]   | The Cipher algorithm type. See :ref:`table_psa_cipher_algorithms` table. |
+   +-------------+----------+--------------------------------------------------------------------------+
+   | HASH-TYPE   | [7:0]    | =0                                                                       |
+   +-------------+----------+--------------------------------------------------------------------------+
 
 .. table:: Cipher Algorithm identifiers
    :name: table_psa_cipher_algorithms
@@ -294,8 +294,8 @@ The Cipher algorithm encoding follows the algorithm encoding format described in
 AEAD Algorithms
 """""""""""""""
 The AEAD algorithm encoding follows the algorithm encoding format described in
-:numref:`table_psa_algorithm_encoding`, as detailed in the following
-:numref:`table_psa_aead_algorithm_encoding`.
+:ref:`table_psa_algorithm_encoding` table, as detailed in the following
+:ref:`table_psa_aead_algorithm_encoding` table.
 
 .. table:: AEAD Algorithm encoding
    :name: table_psa_aead_algorithm_encoding
@@ -303,30 +303,30 @@ The AEAD algorithm encoding follows the algorithm encoding format described in
    :widths: 15 10 60
    :class: wrap-table
 
-   +------------+----------+-------------------------------------------------------------------+
-   | **Field**  | **Bits** | **Description**                                                   |
-   +============+==========+===================================================================+
-   | V          | [31]     | =0                                                                |
-   +------------+----------+-------------------------------------------------------------------+
-   | CAT        | [30:24]  | =0x05 (AEAD)                                                      |
-   +------------+----------+-------------------------------------------------------------------+
-   | S          | [23]     | =0                                                                |
-   +------------+----------+-------------------------------------------------------------------+
-   | B          | [22]     | See :numref:`table_psa_aead_algorithms`.                          |
-   +------------+----------+-------------------------------------------------------------------+
-   | LEN        | [21:16]  | Specfies the output tag length from 1 to 31 bytes.                |
-   +------------+----------+-------------------------------------------------------------------+
-   | W          | [15]     | Wildcard permitted algorithm policy:\                             |
-   |            |          |                                                                   |
-   |            |          |  - =0 indicates a specific AEAD algorithm and tag length.         |
-   |            |          |  - =1 indicates a wildcard key usage policy, which                |
-   |            |          |    permits the AEAD algorithm with a tag length at least          |
-   |            |          |    equal to `LEN`. `LEN` can't be 0.                              |
-   +------------+----------+-------------------------------------------------------------------+
-   | AEAD-TYPE  | [14:8]   | The AEAD algorithm type. See :numref:`table_psa_aead_algorithms`. |
-   +------------+----------+-------------------------------------------------------------------+
-   | HASH-TYPE  | [7:0]    | =0                                                                |
-   +------------+----------+-------------------------------------------------------------------+
+   +------------+----------+----------------------------------------------------------------------+
+   | **Field**  | **Bits** | **Description**                                                      |
+   +============+==========+======================================================================+
+   | V          | [31]     | =0                                                                   |
+   +------------+----------+----------------------------------------------------------------------+
+   | CAT        | [30:24]  | =0x05 (AEAD)                                                         |
+   +------------+----------+----------------------------------------------------------------------+
+   | S          | [23]     | =0                                                                   |
+   +------------+----------+----------------------------------------------------------------------+
+   | B          | [22]     | See :ref:`table_psa_aead_algorithms` table.                          |
+   +------------+----------+----------------------------------------------------------------------+
+   | LEN        | [21:16]  | Specfies the output tag length from 1 to 31 bytes.                   |
+   +------------+----------+----------------------------------------------------------------------+
+   | W          | [15]     | Wildcard permitted algorithm policy:\                                |
+   |            |          |                                                                      |
+   |            |          |  - =0 indicates a specific AEAD algorithm and tag length.            |
+   |            |          |  - =1 indicates a wildcard key usage policy, which                   |
+   |            |          |    permits the AEAD algorithm with a tag length at least             |
+   |            |          |    equal to `LEN`. `LEN` can't be 0.                                 |
+   +------------+----------+----------------------------------------------------------------------+
+   | AEAD-TYPE  | [14:8]   | The AEAD algorithm type. See :ref:`table_psa_aead_algorithms` table. |
+   +------------+----------+----------------------------------------------------------------------+
+   | HASH-TYPE  | [7:0]    | =0                                                                   |
+   +------------+----------+----------------------------------------------------------------------+
 
 
 .. table:: AEAD Algorithm identifiers
@@ -349,7 +349,7 @@ The AEAD algorithm encoding follows the algorithm encoding format described in
    | 0x05100600 |   0   | 0x06          | PSA_ALG_XCHACHA20_POLY1305 | XChaCha20-Poly1305                                     |
    +------------+-------+---------------+----------------------------+--------------------------------------------------------+
 
-The above :numref:`table_psa_aead_algorithms` defines the default algorithm
+The above :ref:`table_psa_aead_algorithms` tabledefines the default algorithm
 identifier, specifying the default tag length for the algorithm.
 
 PSA_ALG_AEAD_WITH_SHORTENED_TAG() generates identifiers with alternative LEN
@@ -361,8 +361,8 @@ permitted-algorithm policies with W = 1.
 Asymmetric Signature Algorithms
 """""""""""""""""""""""""""""""
 The Asymmetric Signature algorithm encoding follows the algorithm encoding
-format described in the :numref:`table_psa_algorithm_encoding`, as detailed in
-the following :numref:`table_psa_asym_sign_algorithm_encoding`.
+format described in the :ref:`table_psa_algorithm_encoding` table, as detailed
+in the following :ref:`table_psa_asym_sign_algorithm_encoding` table.
 
 .. table:: Asymmetric Signature Algorithm encoding
    :name: table_psa_asym_sign_algorithm_encoding
@@ -370,25 +370,25 @@ the following :numref:`table_psa_asym_sign_algorithm_encoding`.
    :widths: 15 10 60
    :class: wrap-table
 
-   +------------+----------+------------------------------------------+
-   | **Field**  | **Bits** | **Description**                          |
-   +============+==========+==========================================+
-   | V          | [31]     | =0                                       |
-   +------------+----------+------------------------------------------+
-   | CAT        | [30:24]  | =0x06 (Asymmetric Signature)             |
-   +------------+----------+------------------------------------------+
-   | S          | [23]     | =0                                       |
-   +------------+----------+------------------------------------------+
-   | B          | [22]     | =0                                       |
-   +------------+----------+------------------------------------------+
-   | LEN        | [21:16]  | =0                                       |
-   +------------+----------+------------------------------------------+
-   | SIGN-TYPE  | [15:8]   | The Asymmetric Signature algorithm type. |
-   |            |          | See :numref:`table_psa_sign_algorithms`. |
-   +------------+----------+------------------------------------------+
-   | HASH-TYPE  | [7:0]    | =0 or HASH-TYPE as defined in the        |
-   |            |          | :numref:`table_psa_hash_algorithms`.     |
-   +------------+----------+------------------------------------------+
+   +------------+----------+---------------------------------------------+
+   | **Field**  | **Bits** | **Description**                             |
+   +============+==========+=============================================+
+   | V          | [31]     | =0                                          |
+   +------------+----------+---------------------------------------------+
+   | CAT        | [30:24]  | =0x06 (Asymmetric Signature)                |
+   +------------+----------+---------------------------------------------+
+   | S          | [23]     | =0                                          |
+   +------------+----------+---------------------------------------------+
+   | B          | [22]     | =0                                          |
+   +------------+----------+---------------------------------------------+
+   | LEN        | [21:16]  | =0                                          |
+   +------------+----------+---------------------------------------------+
+   | SIGN-TYPE  | [15:8]   | The Asymmetric Signature algorithm type.    |
+   |            |          | See :ref:`table_psa_sign_algorithms` table. |
+   +------------+----------+---------------------------------------------+
+   | HASH-TYPE  | [7:0]    | =0 or HASH-TYPE as defined in the           |
+   |            |          | :ref:`table_psa_hash_algorithms` table.     |
+   +------------+----------+---------------------------------------------+
 
 .. table:: Signature Algorithm identifiers
    :name: table_psa_sign_algorithms
@@ -421,13 +421,13 @@ the following :numref:`table_psa_asym_sign_algorithm_encoding`.
    +----------------+---------------+----------------------------------+--------------------------------------------+
 
 (1) hh is the hash algorithm identifier as defined in the
-    :numref:`table_psa_hash_algorithms`.
+    :ref:`table_psa_hash_algorithms` table.
 
 Asymmetric Encryption Algorithms
 """"""""""""""""""""""""""""""""
 The Asymmetric Encryption algorithm encoding follows the algorithm encoding
-format described in the :numref:`table_psa_algorithm_encoding`, as detailed in
-the following :numref:`table_psa_asym_enc_algorithm_encoding`.
+format described in the :ref:`table_psa_algorithm_encoding` table, as detailed
+in the following :ref:`table_psa_asym_enc_algorithm_encoding` table.
 
 .. table:: Asymmetric Encryption Algorithm encoding
    :name: table_psa_asym_enc_algorithm_encoding
@@ -435,25 +435,25 @@ the following :numref:`table_psa_asym_enc_algorithm_encoding`.
    :widths: 15 10 60
    :class: wrap-table
 
-   +------------+----------+----------------------------------------------+
-   | **Field**  | **Bits** | **Description**                              |
-   +============+==========+==============================================+
-   | V          | [31]     | =0                                           |
-   +------------+----------+----------------------------------------------+
-   | CAT        | [30:24]  | =0x07 (Asymmetric Encryption)                |
-   +------------+----------+----------------------------------------------+
-   | S          | [23]     | =0                                           |
-   +------------+----------+----------------------------------------------+
-   | B          | [22]     | =0                                           |
-   +------------+----------+----------------------------------------------+
-   | LEN        | [21:16]  | =0                                           |
-   +------------+----------+----------------------------------------------+
-   | ENC-TYPE   | [15:8]   | The Asymmetric Encryption algorithm type.    |
-   |            |          | See :numref:`table_psa_asym_enc_algorithms`. |
-   +------------+----------+----------------------------------------------+
-   | HASH-TYPE  | [7:0]    | =0 or HASH-TYPE as defined in the            |
-   |            |          | :numref:`table_psa_hash_algorithms`.         |
-   +------------+----------+----------------------------------------------+
+   +------------+----------+-------------------------------------------------+
+   | **Field**  | **Bits** | **Description**                                 |
+   +============+==========+=================================================+
+   | V          | [31]     | =0                                              |
+   +------------+----------+-------------------------------------------------+
+   | CAT        | [30:24]  | =0x07 (Asymmetric Encryption)                   |
+   +------------+----------+-------------------------------------------------+
+   | S          | [23]     | =0                                              |
+   +------------+----------+-------------------------------------------------+
+   | B          | [22]     | =0                                              |
+   +------------+----------+-------------------------------------------------+
+   | LEN        | [21:16]  | =0                                              |
+   +------------+----------+-------------------------------------------------+
+   | ENC-TYPE   | [15:8]   | The Asymmetric Encryption algorithm type.       |
+   |            |          | See :ref:`table_psa_asym_enc_algorithms` table. |
+   +------------+----------+-------------------------------------------------+
+   | HASH-TYPE  | [7:0]    | =0 or HASH-TYPE as defined in the               |
+   |            |          | :ref:`table_psa_hash_algorithms` table.         |
+   +------------+----------+-------------------------------------------------+
 
 .. table:: Asymmetric Encryption Algorithm identifiers
    :name: table_psa_asym_enc_algorithms
@@ -470,20 +470,20 @@ the following :numref:`table_psa_asym_enc_algorithm_encoding`.
    +----------------+--------------+----------------------------+--------------------------------+
 
 (1) hh is the hash algorithm identifier as defined in the
-    :numref:`table_psa_hash_algorithms`.
+    :ref:`table_psa_hash_algorithms` table.
 
 Key Derivation Algorithms
 """""""""""""""""""""""""
 The Key Derivation algorithm encoding follows the algorithm encoding
-format described in the :numref:`table_psa_algorithm_encoding`, as detailed in
-the following :numref:`table_psa_key_derive_algorithm_encoding`.
+format described in the :ref:`table_psa_algorithm_encoding` table, as detailed
+in the following :ref:`table_psa_key_derive_algorithm_encoding` table.
 
 
 The key derivation algorithm identifiers have been extended with a specific
 identifier to manage TLS 1.3 key derivation and agreement targeting the
-ELE subsystem. The :numref:`table_psa_key_derivation_algorithms` defines the
+ELE subsystem. The :ref:`table_psa_key_derivation_algorithms` table defines the
 PSA standard identifiers and the extended identifier is defined in the
-:numref:`table_psa_key_derivation_vendor_algorithms`.
+:ref:`table_psa_key_derivation_vendor_algorithms` table.
 
 .. table:: Key Derivation Algorithm encoding
    :name: table_psa_key_derive_algorithm_encoding
@@ -491,28 +491,28 @@ PSA standard identifiers and the extended identifier is defined in the
    :widths: 15 10 60
    :class: wrap-table
 
-   +------------+----------+-------------------------------------------------------------+
-   | **Field**  | **Bits** | **Description**                                             |
-   +============+==========+=============================================================+
-   | V          | [31]     | Can be 0 or 1:\                                             |
-   |            |          |                                                             |
-   |            |          |  - =0, :numref:`table_psa_key_derivation_algorithms`        |
-   |            |          |  - =1, :numref:`table_psa_key_derivation_vendor_algorithms` |
-   +------------+----------+-------------------------------------------------------------+
-   | CAT        | [30:24]  | =0x08 (Key Derivation)                                      |
-   +------------+----------+-------------------------------------------------------------+
-   | S          | [23]     | See :numref:`table_psa_key_derivation_algorithms`.          |
-   +------------+----------+-------------------------------------------------------------+
-   | B          | [22]     | =0                                                          |
-   +------------+----------+-------------------------------------------------------------+
-   | LEN        | [21:16]  | =0                                                          |
-   +------------+----------+-------------------------------------------------------------+
-   | KDF-TYPE   | [15:8]   | The Key Derivation algorithm type.                          |
-   |            |          | See :numref:`table_psa_key_derivation_algorithms`.          |
-   +------------+----------+-------------------------------------------------------------+
-   | HASH-TYPE  | [7:0]    | =0 or HASH-TYPE as defined in the                           |
-   |            |          | :numref:`table_psa_hash_algorithms`.                        |
-   +------------+----------+-------------------------------------------------------------+
+   +------------+----------+-----------------------------------------------------------------+
+   | **Field**  | **Bits** | **Description**                                                 |
+   +============+==========+=================================================================+
+   | V          | [31]     | Can be 0 or 1:\                                                 |
+   |            |          |                                                                 |
+   |            |          |  - =0, :ref:`table_psa_key_derivation_algorithms` table.        |
+   |            |          |  - =1, :ref:`table_psa_key_derivation_vendor_algorithms` table. |
+   +------------+----------+-----------------------------------------------------------------+
+   | CAT        | [30:24]  | =0x08 (Key Derivation)                                          |
+   +------------+----------+-----------------------------------------------------------------+
+   | S          | [23]     | See :ref:`table_psa_key_derivation_algorithms` table.           |
+   +------------+----------+-----------------------------------------------------------------+
+   | B          | [22]     | =0                                                              |
+   +------------+----------+-----------------------------------------------------------------+
+   | LEN        | [21:16]  | =0                                                              |
+   +------------+----------+-----------------------------------------------------------------+
+   | KDF-TYPE   | [15:8]   | The Key Derivation algorithm type.                              |
+   |            |          | See :ref:`table_psa_key_derivation_algorithms` table.           |
+   +------------+----------+-----------------------------------------------------------------+
+   | HASH-TYPE  | [7:0]    | =0 or HASH-TYPE as defined in the                               |
+   |            |          | :ref:`table_psa_hash_algorithms` table.                         |
+   +------------+----------+-----------------------------------------------------------------+
 
 .. table:: Key Derivation Algorithm identifiers (V=0)
    :name: table_psa_key_derivation_algorithms
@@ -541,7 +541,7 @@ PSA standard identifiers and the extended identifier is defined in the
    +----------------+-------+--------------+---------------------------------+--------------------------------------------+
 
 (1) hh is the hash algorithm identifier as defined in the
-    :numref:`table_psa_hash_algorithms`.
+    :ref:`table_psa_hash_algorithms` table.
 
 .. table:: Key Derivation Vendor Algorithm identifiers (V=1)
    :name: table_psa_key_derivation_vendor_algorithms
@@ -556,13 +556,13 @@ PSA standard identifiers and the extended identifier is defined in the
    +----------------+-------+--------------+---------------------------------+--------------------------------------------+
 
 (1) hh is the hash algorithm identifier as defined in the
-    :numref:`table_psa_hash_algorithms`.
+    :ref:`table_psa_hash_algorithms` table.
 
 Key Agreement Algorithms
 """"""""""""""""""""""""
 The Key Agreement algorithm encoding follows the algorithm encoding
-format described in the :numref:`table_psa_algorithm_encoding`, as detailed in
-the following :numref:`table_psa_key_agree_algorithm_encoding`.
+format described in the :ref:`table_psa_algorithm_encoding` table, as detailed
+in the following :ref:`table_psa_key_agree_algorithm_encoding` table.
 
 .. table:: Key Agreement Algorithm encoding
    :name: table_psa_key_agree_algorithm_encoding
@@ -584,7 +584,7 @@ the following :numref:`table_psa_key_agree_algorithm_encoding`.
    | LEN        | [21:16]  | =0                                                 |
    +------------+----------+----------------------------------------------------+
    | KA-TYPE    | [15:8]   | The Key Agreement algorithm type.                  |
-   |            |          | See :numref:`table_psa_key_agree_algorithms`.      |
+   |            |          | See :ref:`table_psa_key_agree_algorithms` table.   |
    +------------+----------+----------------------------------------------------+
    | HASH-TYPE  | [7:0]    | =0                                                 |
    +------------+----------+----------------------------------------------------+
@@ -606,8 +606,8 @@ the following :numref:`table_psa_key_agree_algorithm_encoding`.
 Password-authenticated key exchange (PAKE) Algorithm
 """"""""""""""""""""""""""""""""""""""""""""""""""""
 The PAKE algorithm encoding follows the algorithm encoding
-format described in the :numref:`table_psa_algorithm_encoding`, as detailed in
-the following :numref:`table_psa_pake_algorithm_encoding`.
+format described in the :ref:`table_psa_algorithm_encoding` table, as detailed
+in the following :ref:`table_psa_pake_algorithm_encoding` table.
 
 .. table:: PAKE Algorithm encoding
    :name: table_psa_pake_algorithm_encoding
@@ -615,24 +615,24 @@ the following :numref:`table_psa_pake_algorithm_encoding`.
    :widths: 15 10 60
    :class: wrap-table
 
-   +------------+----------+------------------------------------------+
-   | **Field**  | **Bits** | **Description**                          |
-   +============+==========+==========================================+
-   | V          | [31]     | =0                                       |
-   +------------+----------+------------------------------------------+
-   | CAT        | [30:24]  | =0x0A (PAKE)                             |
-   +------------+----------+------------------------------------------+
-   | S          | [23]     | =0                                       |
-   +------------+----------+------------------------------------------+
-   | B          | [22]     | =0                                       |
-   +------------+----------+------------------------------------------+
-   | LEN        | [21:16]  | =0                                       |
-   +------------+----------+------------------------------------------+
-   | PAKE-TYPE  | [15:8]   | The PAKE algorithm type.                 |
-   |            |          | See :numref:`table_psa_pake_algorithms`. |
-   +------------+----------+------------------------------------------+
-   | HASH-TYPE  | [7:0]    | =0                                       |
-   +------------+----------+------------------------------------------+
+   +------------+----------+---------------------------------------------+
+   | **Field**  | **Bits** | **Description**                             |
+   +============+==========+=============================================+
+   | V          | [31]     | =0                                          |
+   +------------+----------+---------------------------------------------+
+   | CAT        | [30:24]  | =0x0A (PAKE)                                |
+   +------------+----------+---------------------------------------------+
+   | S          | [23]     | =0                                          |
+   +------------+----------+---------------------------------------------+
+   | B          | [22]     | =0                                          |
+   +------------+----------+---------------------------------------------+
+   | LEN        | [21:16]  | =0                                          |
+   +------------+----------+---------------------------------------------+
+   | PAKE-TYPE  | [15:8]   | The PAKE algorithm type.                    |
+   |            |          | See :ref:`table_psa_pake_algorithms` table. |
+   +------------+----------+---------------------------------------------+
+   | HASH-TYPE  | [7:0]    | =0                                          |
+   +------------+----------+---------------------------------------------+
 
 .. table:: PAKE Algorithm identifiers
    :name: table_psa_pake_algorithms
@@ -653,7 +653,7 @@ the following :numref:`table_psa_pake_algorithm_encoding`.
    +----------------+---------------+-----------------------------+---------------------+
 
 (1) hh is the hash algorithm identifier as defined in the
-    :numref:`table_psa_hash_algorithms`.
+    :ref:`table_psa_hash_algorithms` table.
 
 Algorithm Properties
 """"""""""""""""""""

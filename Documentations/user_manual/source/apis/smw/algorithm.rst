@@ -35,24 +35,24 @@ Typedef
    +-------------+-----------------------------------------------------------------------------+
    | **[39:32]** | Additional Algorithm Parameters:                                            |
    |             |                                                                             |
-   |             |  - RSA Salt Length :numref:`table_add_params_salt_length`                   |
-   |             |  - MAC Output Length :numref:`table_add_params_mac_length`                  |
-   |             |  - AEAD Tag Length :numref:`table_add_params_tag_length`                    |
-   |             |  - Signature Message :numref:`table_add_params_signature_message`           |
-   |             |  - EdDSA Signature :numref:`table_add_params_eddsa_signature`               |
+   |             |  - RSA Salt Length :ref:`table_add_params_salt_length` table                |
+   |             |  - MAC Output Length :ref:`table_add_params_mac_length` table               |
+   |             |  - AEAD Tag Length :ref:`table_add_params_tag_length` table                 |
+   |             |  - Signature Message :ref:`table_add_params_signature_message` table        |
+   |             |  - EdDSA Signature :ref:`table_add_params_eddsa_signature` table            |
    +-------------+-----------------------------------------------------------------------------+
-   | **[31:24]** | Operation Class :numref:`table_algorithm_operation`                         |
+   | **[31:24]** | Operation Class :ref:`table_algorithm_operation` table                      |
    +-------------+-----------------------------------------------------------------------------+
-   | **[23:16]** | Hash :numref:`table_algorithm_hash`                                         |
+   | **[23:16]** | Hash :ref:`table_algorithm_hash` table                                      |
    +-------------+-----------------------------------------------------------------------------+
    | **[15:8]**  | Define either the algorithm:\                                               |
    |             |                                                                             |
-   |             |  - Mode :numref:`table_algorithm_mode`                                      |
-   |             |  - Curve :numref:`table_algorithm_curve`                                    |
-   |             |  - KDF :numref:`table_algorithm_kdf`                                        |
+   |             |  - Mode :ref:`table_algorithm_mode` table                                   |
+   |             |  - Curve :ref:`table_algorithm_curve` table                                 |
+   |             |  - KDF :ref:`table_algorithm_kdf` table                                     |
    |             |                                                                             |
    +-------------+-----------------------------------------------------------------------------+
-   | **[7:0]**   | Main Algorithm :numref:`table_main_algorithm`                               |
+   | **[7:0]**   | Main Algorithm :ref:`table_main_algorithm` table                            |
    +-------------+-----------------------------------------------------------------------------+
 
 Main algorithm

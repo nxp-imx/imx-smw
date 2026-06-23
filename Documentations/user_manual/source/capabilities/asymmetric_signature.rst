@@ -249,7 +249,7 @@ The following table outlines the ECDSA permitted signature algorithms.
    |                 |         |                                                                    |
    |                 |         |  - ``curve`` is SMW_ATTR_CURVE_ANY.                                |
    |                 |         |  - ``hash`` is one of SMW Attribute Hash algorithm define in the   |
-   |                 |         |    :numref:`table_algorithm_hash`.                                 |
+   |                 |         |    :ref:`table_algorithm_hash` table.                              |
    |                 |         |                                                                    |
    |                 |         | Defining a hash algorithm as SMW_ATTR_HASH_ANY, allow to use the   |
    |                 |         | key for any hash algorithm.                                        |
@@ -491,7 +491,7 @@ The following table outlines the RSA PKCS#1 v1.5 permitted signature algorithm.
    |                 |         |                                                                    |
    |                 |         |  - ``mode`` is SMW_ATTR_MODE_PKCS1_1_5                             |
    |                 |         |  - ``hash`` is one of SMW Attribute Hash algorithm define in the   |
-   |                 |         |    :numref:`table_algorithm_hash`.                                 |
+   |                 |         |    :ref:`table_algorithm_hash` table.                              |
    |                 |         |  - ``salt`` is 0                                                   |
    |                 |         |                                                                    |
    |                 |         | Defining a hash algorithm as SMW_ATTR_HASH_ANY, allow to use the   |
@@ -606,7 +606,7 @@ The following table outlines the RSA PSS permitted signature algorithms.
    |                 |         |                                                                    |
    |                 |         |  - ``mode`` is SMW_ATTR_MODE_PSS                                   |
    |                 |         |  - ``hash`` is one of SMW Attribute Hash algorithm define in the   |
-   |                 |         |    :numref:`table_algorithm_hash`.                                 |
+   |                 |         |    :ref:`table_algorithm_hash` table.                              |
    |                 |         |  - ``salt`` is 0                                                   |
    |                 |         |                                                                    |
    |                 |         | Defining a hash algorithm as SMW_ATTR_HASH_ANY, allow to use the   |

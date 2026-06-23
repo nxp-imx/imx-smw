@@ -232,10 +232,10 @@ Encryption algorithms.
    |                 |         |                                                                    |
    |                 |         |  - ``mode`` is SMW_ATTR_ALGO_RSA_OAEP.                             |
    |                 |         |  - ``hash`` is one of SMW Attribute Hash algorithm define in the   |
-   |                 |         |    :numref:`table_algorithm_hash`.                                 |
+   |                 |         |    :ref:`table_algorithm_hash` table.                              |
    |                 |         |                                                                    |
    |                 |         | Supported hash are listed in the                                   |
-   |                 |         | :numref:`table_rsa_oaep_asym_enc_support_details`.                 |
+   |                 |         | :ref:`table_rsa_oaep_asym_enc_support_details` table.              |
    |                 |         |                                                                    |
    |                 |         | Defining a hash algorithm as SMW_ATTR_HASH_ANY, allow to use the   |
    |                 |         | key for any hash algorithm.                                        |
@@ -246,7 +246,7 @@ Encryption algorithms.
    |                 |         | as :c:macro:`PSA_ALG_IS_HASH` is true.                             |
    |                 |         |                                                                    |
    |                 |         | Supported hash are listed in the                                   |
-   |                 |         | :numref:`table_rsa_oaep_asym_enc_support_details`.                 |
+   |                 |         | :ref:`table_rsa_oaep_asym_enc_support_details` table.              |
    |                 |         |                                                                    |
    |                 |         | Defining a ``hash`` algorithm as PSA_ALG_ANY_HASH, allow to use    |
    |                 |         | the key for any hash algorithm.                                    |

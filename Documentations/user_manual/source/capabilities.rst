@@ -1,11 +1,11 @@
 .. _subsystems-capabilities:
 
-Secure Subsystems Capabilities
-==============================
+Secure Subsystems Features and Capabilities
+===========================================
 
-The Secure Subsystems Capabilities section provides detailed documentation of
-the cryptographic and security operations supported by various subsystems
-including TEE (Trusted Execution Environment), ELE (EdgeLock Enclave) and
+The Secure Subsystems Features and Capabilities section provides detailed
+documentation of the cryptographic and security operations supported by various
+subsystems including TEE (Trusted Execution Environment), ELE (EdgeLock Enclave) and
 SECO (Security Controller - First MPU Secure Enclave) subsystems.
 
 .. table:: Subsystems vs. i.MX NPIs

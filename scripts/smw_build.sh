@@ -30,6 +30,7 @@ opt_psaarchtests=""
 opt_libsqlite=""
 opt_libtss2=""
 opt_doc_only="-DDOC_ONLY=No"
+opt_dest=""
 
 #
 # Get script name and path
@@ -89,7 +90,7 @@ function check_cmake_version()
 function get_cmakecache()
 {
     local pattern="$2"
-
+    local split_line=()
     while read -r line
     do
         case $line in

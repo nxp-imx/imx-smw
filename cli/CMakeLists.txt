@@ -10,6 +10,22 @@ add_compile_definitions(
 # Generate SMW error table (runs at CMake configure time)
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
+# Generate backend.h for each executable (no USE_*_BACKEND in source code)
+
+set(BACKEND_H_IN ${CMAKE_CURRENT_SOURCE_DIR}/inc/backend.h.in)
+
+# SMW backend header
+set(SMW_BACKEND_H_DIR ${CMAKE_CURRENT_BINARY_DIR}/smw_backend)
+set(CLI_BACKEND_NAME  "SMW API")
+set(CLI_BACKEND_NOTE  "")
+set(CLI_HAS_BACKEND_NOTE 0)
+configure_file(${BACKEND_H_IN} ${SMW_BACKEND_H_DIR}/backend.h @ONLY)
+
+# PSA backend header
+set(PSA_BACKEND_H_DIR ${CMAKE_CURRENT_BINARY_DIR}/psa_backend)
+set(CLI_BACKEND_NAME  "PSA API")
+configure_file(${BACKEND_H_IN} ${PSA_BACKEND_H_DIR}/backend.h @ONLY)
+
 # Generate PSA error table at build time (in binary dir)
 set(PSA_ERROR_HANDLER_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/psa_error_handler.c)
 set(PSA_ERROR_HEADER ${CMAKE_SOURCE_DIR}/public/psa/error.h)
@@ -99,6 +115,37 @@ add_custom_command(
     COMMENT "Generating lifecycle table from smw/names.h"
 )
 
+# Generate symmetric key type table and mappings at build time (in binary dir)
+set(SMW_SYM_KEY_MAPPINGS_HEADER ${CMAKE_CURRENT_BINARY_DIR}/smw_sym_key_mappings_generated.h)
+set(SMW_SYM_KEY_MAPPINGS_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/smw_sym_key_mappings_generated.c)
+set(SMW_ATTR_HEADER ${CMAKE_SOURCE_DIR}/public/smw/attr.h)
+set(SMW_SYM_KEY_GENERATOR ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_smw_key_sym_table.py)
+
+add_custom_command(
+    OUTPUT
+        ${SMW_SYM_KEY_MAPPINGS_HEADER}
+        ${SMW_SYM_KEY_MAPPINGS_SOURCE}
+    COMMAND ${Python3_EXECUTABLE} ${SMW_SYM_KEY_GENERATOR} ${CMAKE_CURRENT_BINARY_DIR}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    DEPENDS ${SMW_NAMES_HEADER} ${SMW_ATTR_HEADER} ${SMW_SYM_KEY_GENERATOR}
+    COMMENT "Generating SMW key type information table and mappings"
+)
+
+# Generate PSA key type mappings at build time (in binary dir)
+set(PSA_SYM_KEY_MAPPINGS_HEADER ${CMAKE_CURRENT_BINARY_DIR}/psa_sym_key_mappings_generated.h)
+set(PSA_SYM_KEY_MAPPINGS_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/psa_sym_key_mappings_generated.c)
+set(PSA_SYM_KEY_GENERATOR ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_psa_key_sym_table.py)
+
+add_custom_command(
+    OUTPUT
+        ${PSA_SYM_KEY_MAPPINGS_HEADER}
+        ${PSA_SYM_KEY_MAPPINGS_SOURCE}
+    COMMAND ${Python3_EXECUTABLE} ${PSA_SYM_KEY_GENERATOR} ${CMAKE_CURRENT_BINARY_DIR}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    DEPENDS ${PSA_CRYPTO_VALUES_HEADER} ${PSA_SYM_KEY_GENERATOR}
+    COMMENT "Generating PSA key type and algorithm mappings"
+)
+
 # Include subdirectories - each sets its own source variables
 add_subdirectory(core)
 add_subdirectory(psa)
@@ -123,14 +170,18 @@ add_executable(nxp_smw
 	${SMW_ERROR_HANDLER_SOURCE} 	# Error Table Generated file
 	${SMW_HASH_TABLE_SOURCE}	# Hash Table Generated file
 	${HASH_TABLE_SOURCE}		# Common Hash Table Generated file
-    ${LIFECYCLE_TABLE_SOURCE}	# Lifecycle Table Generated file
+	${LIFECYCLE_TABLE_SOURCE}	# Lifecycle Table Generated file
+	${SMW_SYM_KEY_MAPPINGS_SOURCE}	# SMW Key Mappings Generated file
 )
 
 target_include_directories(nxp_smw PRIVATE
 	${CLI_INCLUDE_DIRS}
+    ${SMW_BACKEND_H_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}/core
 	${CMAKE_CURRENT_SOURCE_DIR}/smw
 )
+
+target_compile_definitions(nxp_smw PRIVATE USE_SMW_BACKEND)
 
 target_link_libraries(nxp_smw PRIVATE smw)
 
@@ -145,13 +196,17 @@ add_executable(nxp_psa
 	${PSA_HASH_TABLE_SOURCE}	# Hash Table Generated file
 	${HASH_TABLE_SOURCE}		# Common Hash Table Generated file
 	${LIFECYCLE_TABLE_SOURCE}	# Lifecycle Table Generated file
+    ${PSA_SYM_KEY_MAPPINGS_SOURCE}	# PSA Key Mappings Generated file
 )
 
 target_include_directories(nxp_psa PRIVATE
 	${CLI_INCLUDE_DIRS}
+    ${PSA_BACKEND_H_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}/core
 	${CMAKE_CURRENT_SOURCE_DIR}/psa
 )
+
+target_compile_definitions(nxp_psa PRIVATE USE_PSA_BACKEND)
 
 target_link_libraries(nxp_psa PRIVATE smw)
 
@@ -173,6 +228,13 @@ install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/scripts/nxp_psa_completion.bash
         RENAME nxp_psa
         COMPONENT cli-tools
         OPTIONAL)
+
+# Install CLI test scripts
+file(GLOB CLI_TEST_SCRIPTS ${CMAKE_CURRENT_SOURCE_DIR}/tests/*.sh)
+
+install(PROGRAMS ${CLI_TEST_SCRIPTS}
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/smw-cli/tests
+        COMPONENT cli-tools)
 
 # Custom targets
 

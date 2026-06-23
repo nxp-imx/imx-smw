@@ -20,6 +20,7 @@ enum operation {
 	OP_DEV_GET_LIFECYCLE,
 	OP_DEV_SET_LIFECYCLE,
 	OP_DEV_GET_ATTESTATION,
+	OP_KEYGEN_SYM
 };
 
 /* RNG-specific options */
@@ -41,6 +42,17 @@ struct dev_att {
 /* Device set lifecycle-specific options */
 struct dev_set_lc {
 	const char *lifecycle_name;
+};
+
+/* Symmetric key generation-specific options */
+struct keygen {
+	char *key_type;
+	unsigned int key_size;
+	unsigned int key_id;
+	char *permitted_algo;
+	char *usage;
+	bool transient;
+	bool non_sensitive;
 };
 
 /* Parsed options structure */
@@ -66,6 +78,7 @@ struct parsed_options {
 		struct hash hash;
 		struct dev_att dev_att;
 		struct dev_set_lc dev_set_lc;
+		struct keygen keygen;
 	} op;
 };
 

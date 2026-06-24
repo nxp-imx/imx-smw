@@ -137,6 +137,7 @@ Security Operations definition
        <string: name of operation>;
        /* A combination of the lines below describes */
        /* the Secure Subsystem capabilities for this Security Operation. */
+       USE_ELA;  /* Optional: Enable ELA */
        <param1>_VALUES=<value1>:<value2>:<value3>;
        <param2>_SIZE_RANGE=<integer: min>:<integer: max>;
        <param3>_SIZE_RANGE=:<integer: max>; /* threshold lower than */
@@ -153,6 +154,9 @@ The following rules apply to the Security Operation definition:
   - A Security Operation name must not be duplicated within the same Secure
     Subsystem configuration, even if Subsystem configuration is split across
     multiple **[SECURE_SUBSYSTEM]** blocks.
+  - The **USE_ELA** flag is optional and enables hardware EdgeLock Accelerator 
+    (ELA) for cryptographic operations (cipher, AEAD, hash and HMAC) when using
+    plaintext keys. See `USE_ELA`_ for details.
   - The Security Operation can define its capabilities values (e.g. key types,
     hash algorithms...) using tags **<param#>_VALUES** (as describes in
     `Capabilities tags`_). Each value is a non-quoted string
@@ -291,11 +295,15 @@ operations.
    +------------------------+--------------------------------------------------+----------------------+
    | **Name**               | **Description**                                  | **Capabilities Tags**|
    +========================+==================================================+======================+
-   | HASH                   | Oneshot message digest.                          | `HASH_ALGO_VALUES`_  |
+   | HASH                   | Oneshot message digest.                          | `USE_ELA`_           |
+   +                        +                                                  +                      +
+   |                        |                                                  | `HASH_ALGO_VALUES`_  |
    +------------------------+--------------------------------------------------+----------------------+
    | HASH_MULTI_PART        | Multipart message digest.                        | `HASH_ALGO_VALUES`_  |
    +------------------------+--------------------------------------------------+----------------------+
-   | MAC                    | Message Authentication Code.                     | `KEY_TYPE_VALUES`_   |
+   | MAC                    | Message Authentication Code.                     | `USE_ELA`_           |
+   +                        +                                                  +                      +
+   |                        |                                                  | `MAC_ALGO_VALUES`_   |
    +                        +                                                  +                      +
    |                        |                                                  | `MAC_ALGO_VALUES`_   |
    +                        +                                                  +                      +
@@ -325,7 +333,9 @@ operations.
    +                        +                                                  +                      +
    |                        |                                                  | `HASH_ALGO_VALUES`_  |
    +------------------------+--------------------------------------------------+----------------------+
-   | CIPHER                 | Oneshot cipher encryption and decryption.        | `KEY_TYPE_VALUES`_   |
+   | CIPHER                 | Oneshot cipher encryption and decryption.        | `USE_ELA`_           |
+   +                        +                                                  +                      +
+   |                        |                                                  | `KEY_TYPE_VALUES`_   |
    +                        +                                                  +                      +
    |                        |                                                  | `MODE_VALUES`_       |
    +                        +                                                  +                      +
@@ -337,7 +347,9 @@ operations.
    +                        +                                                  +                      +
    |                        |                                                  | `OP_TYPE_VALUES`_    |
    +------------------------+--------------------------------------------------+----------------------+
-   | AEAD                   | Oneshot authentication encryption.               | `KEY_TYPE_VALUES`_   |
+   | AEAD                   | Oneshot authentication encryption.               | `USE_ELA`_           |
+   +                        +                                                  +                      +
+   |                        |                                                  | `KEY_TYPE_VALUES`_   |
    +                        +                                                  +                      +
    |                        |                                                  | `MODE_VALUES`_       |
    +                        +                                                  +                      +
@@ -785,6 +797,44 @@ for the asymmetric encryption algorithm operations.
    | NO_PAD               | No padding mode.                        |
    +----------------------+-----------------------------------------+
 
+.. _use_ela:
+
+USE_ELA
+*******
+
+The EdgeLock Accelerator (ELA) is a Cryptographic Accelerator accessible in the 
+ELE allowing to perform cryptographic operations with a hardware accelerator.
+
+The tag **USE_ELA** enables use of ELA hardware for cryptographic operations
+in an ELE subsystem when all the below mentioned conditions are met:
+
+  - Platform supports ELA hardware (e.g. i.MX943)
+  - Key is plaintext
+  - Cryptography operation (algorithm/mode) is supported by ELA
+
+If all conditions are not met or if **USE_ELA** is not specified, operations
+use the standard ELE subsystem implementation.
+
+**Syntax**:
+
+.. code-block:: text
+
+   [SECURITY_OPERATION]
+       <operation_name>;
+       USE_ELA;
+       <other_capabilities>;
+
+**Example Usage**:
+
+.. code-block:: text
+
+   [SECURE_SUBSYSTEM]
+       ELE;
+       [SECURITY_OPERATION]
+           CIPHER;
+           USE_ELA;
+           KEY_TYPE_VALUES=AES;
+           MODE_VALUES=CBC:CTR:ECB;
 
 Example
 ^^^^^^^

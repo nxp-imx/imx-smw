@@ -21,15 +21,15 @@ Supported Operations versus Subsystems
    +              +                        +                +---------+---------+----------+
    |              |                        |                | **ELE** | **TEE** | **SECO** |
    +==============+========================+================+=========+=========+==========+
-   | AES          | Electronic Codebook    | Single-Part    |    Y    |    Y    |    Y     |
+   | AES          | Electronic Codebook    | Single-Part    |  Y (2)  |    Y    |    Y     |
    +              +                        +----------------+---------+---------+----------+
    |              | (ECB) with no padding  | Multi-Part     |  Y (1)  |    Y    |    N     |
    +              +------------------------+----------------+---------+---------+----------+
-   |              | Cipher Block Chaining  | Single-Part    |    Y    |    Y    |    Y     |
+   |              | Cipher Block Chaining  | Single-Part    |  Y (2)  |    Y    |    Y     |
    +              +                        +----------------+---------+---------+----------+
    |              | (CBC) with no padding  | Multi-Part     |  Y (1)  |    Y    |    N     |
    +              +------------------------+----------------+---------+---------+----------+
-   |              | Counter (CTR)          | Single-Part    |    Y    |    Y    |    N     |
+   |              | Counter (CTR)          | Single-Part    |  Y (2)  |    Y    |    N     |
    +              +                        +----------------+---------+---------+----------+
    |              |                        | Multi-Part     |  Y (1)  |    Y    |    N     |
    +              +------------------------+----------------+---------+---------+----------+
@@ -79,7 +79,7 @@ Supported Operations versus Subsystems
    +--------------+------------------------+----------------+---------+---------+----------+
 
 (1) ELE multi-part encryption and decryption operations not supported on the i.MX8ULP, i.MX93 and i.MX91 platforms.
-
+(2) ELA hardware acceleration is supported on i.MX943 and i.MX952 platforms when using plaintext key buffers.
 
 .. table:: Symmetric Encryption APIs
    :name: table_sym_enc_apis

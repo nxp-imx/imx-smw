@@ -67,10 +67,14 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Remove unused SMW_SIGNATURE_TYPE_NAME_CMAC.
 * Free the context associated with the `TLS12_OP_KEY_EXCHANGE` operation after
   executing the key expansion operation.
+* Add support for `USE_ELA` tag in configuration file to enable runtime selection
+  of EdgeLock Accelerator (ELA) for AEAD, CIPHER, HASH, and MAC operations.
 
 ##### 2. Subsystems
 
 * TEE: Add support for SM2.
+* ELE: Add support for ELA for AES cipher one-shot operations (CBC, CTR,
+  ECB modes) using plaintext key buffers.
 
 ##### 3. ARM PSA APIs
 
@@ -83,6 +87,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add shared memory API.
 * Add get mu base address API.
 * Add a dedicated configuration file for i.MX952.
+* Update the i.MX943 and i.MX952 configuration files to enable ELA support for
+  AES cipher one-shot operations.
 
 #### SMW Tests
 
@@ -91,6 +97,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Updated TLS tests to verify that calling `smw_cancel_operation()` returns
   `SMW_STATUS_INVALID_PARAM` after key expansion (since the context is now
   freed internally).
+* Add tests for ELA cipher one-shot operations (CBC, CTR, ECB modes with
+  plaintext keys).
 
 #### PKCS#11 Library
 

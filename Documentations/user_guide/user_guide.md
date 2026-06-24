@@ -500,7 +500,8 @@ The file is divided into sections:
 [setup-<device>]
 # Device specific SMW library configuration.
 # Overwrite the general SMW library configuration define.
-# <device> is the platform hostname or beginning of the hostname (e.g. imx8ulp).
+# <device> is the platform hostname or beginning of the hostname (until SOC ID)
+# e.g. imx8ulp, imx952, imx95.
 
 [TEE]
 # OPTEE TA UUID to be loaded if subsystem used.

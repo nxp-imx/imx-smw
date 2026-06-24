@@ -15,8 +15,9 @@
   - [3.3. ELE subsystem](#33-ele-subsystem)
     - [3.3.1. ELE Library](#331-ele-library)
     - [3.3.2. NVM Daemon](#332-nvm-daemon)
+    - [3.3.3. ELA Library](#333-ela-library)
   - [3.4. JSON-C Library](#34-json-c-library)
-  - [3.5. 5 ARM PSA Test Suite](#35-5-arm-psa-test-suite)
+  - [3.5. ARM PSA Test Suite](#35-arm-psa-test-suite)
   - [3.6. SQLite3 Library](#36-sqlite3-library)
   - [3.7. TPM2-TSS Library](#37-tpm2-tss-library)
 - [4. Project configuration and compilation](#4-project-configuration-and-compilation)
@@ -159,13 +160,17 @@ this section to build external dependencies using provided cmake scripts.
 	<td>Makefile module ta_dev_kit.mk and tee_internal_api.h, tee_api_defines.h headers</td>
 </tr>
 <tr>
-  <td rowspan="2">ELE subsystem</td>
+  <td rowspan="3">ELE subsystem</td>
 	<td>ELE Library</td>
 	<td>Shared library libele_hsm.so and hsm_api.h header</td>
 </tr>
 <tr>
   <td>ELE NVM Manager</td>
 	<td>Daemon service to be started before using SMW Library</td>
+</tr>
+<tr>
+  <td>ELA Library</td>
+	<td>Shared library libprime.so and prime.h header</td>
 </tr>
 <tr>
   <td>SMW test suite</td>
@@ -311,6 +316,22 @@ used on the host platform.
 systemctl start nvm_daemon
 ```
 
+### 3.3.3. ELA Library
+
+The ELA (EdgeLock Accelerator) library provides hardware-accelerated
+cryptographic operations on supported NXP i.MX platforms.
+
+The following cmake script builds the ELA library pointed by the `ELE_SRC_PATH` using
+the default compiler. Installation of the ARM 32 or 64 bits cross-compiler is
+described in [Toolchains](#2-toolchains).
+
+The built libraries and corresponding interface headers are installed in the `ELE_ROOT`
+directory.
+
+```sh
+$ cmake -DCMAKE_TOOLCHAIN_FILE=./scripts/aarch[XX]_toolchain.cmake -DELE_ROOT=[export path] -DELE_SRC_PATH=[source path] -P ./scripts/build_ela.cmake
+```
+
 ## 3.4. JSON-C Library
 The JSON-C Library is required only if the SMW test suite is wanted.
 
@@ -328,7 +349,7 @@ $ cmake -DCMAKE_TOOLCHAIN_FILE=./scripts/aarch[XX]_toolchain.cmake -DJSONC_ROOT=
 > The option `JSONC_VERSION` can be defined to build a specific JSON-C library.
 If not define, the version 0.15 is built.
 
-## 3.5. 5 ARM PSA Test Suite
+## 3.5. ARM PSA Test Suite
 The SMW Library refers to the ARM PSA Test Suite to validate the implementation
 of the ARM PSA API standard compliancy. If the SMW Tests are enabled and the
 ARM PSA tests must be executed, the cmake project option `PSA_ARCH_TESTS_SRC_PATH`
@@ -701,6 +722,14 @@ The default option value is in **bold**.
   are satisfied, and OFF (disabled) when dependencies are not met.
   For all other subsystems, always defaults to OFF.</td>
 	<td>ENABLE_KEYMGR_MODULE<br>ENABLE_SIGN_VERIFY<br>ENABLE_MAC<br>ENABLE_HASH<br>ENABLE_CIPHER<br>ENABLE_AEAD</td>
+</tr>
+<tr>
+  <td>-DENABLE_ELA=[ON|<b>OFF</b>]</td>
+  <td>Enable/disable EdgeLock Accelerator (ELA) support. Default is OFF (disabled).
+  To enable ELA support, ELE subsystem must be enabled and all the dependicies must be
+  satisfied. Only available with ELE subsystem. Disabled for all other subsystems.
+  </td>
+  <td>ENABLE_KEYMGR_MODULE <br>ENABLE_CIPHER</td>
 </tr>
 <tr>
   <td>-DENABLE_PSA_DEFAULT_ALT=[ON|<b>OFF</b>]</td>

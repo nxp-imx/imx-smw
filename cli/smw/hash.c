@@ -108,31 +108,9 @@ enum cli_exit_code cli_hash_operation(struct parsed_options *args)
 		goto cleanup;
 	}
 
-	/* Read input file */
-	fp = fopen(args->input_filename, "rb");
-	if (!fp) {
-		LOG_ERROR("Failed to open input file: %s",
-			  args->input_filename);
+	/* Read input file using shared utility */
+	if (util_read_file(args->input_filename, &input, &input_size))
 		goto cleanup;
-	}
-
-	/* Get file size */
-	if (util_get_file_size(fp, &input_size, args->input_filename))
-		goto cleanup;
-
-	/* Allocate input buffer */
-	input = util_alloc_buffer(input_size, "hash input");
-	if (!input)
-		goto cleanup;
-
-	/* Read input data */
-	if (fread(input, 1, input_size, fp) != input_size) {
-		LOG_ERROR("Failed to read input file");
-		goto cleanup;
-	}
-
-	FCLOSE(fp);
-	fp = NULL;
 
 	/* Determine output size */
 	if (args->op.hash.output_length > 0) {

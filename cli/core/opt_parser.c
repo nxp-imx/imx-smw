@@ -21,6 +21,7 @@
 #include "parser_key_delete.h"
 #include "parser_keygen_sym.h"
 #include "parser_keygen_asym.h"
+#include "parser_mac.h"
 #include "parser_rng.h"
 
 /**
@@ -119,6 +120,14 @@ static const struct operation_parser operation_parsers[] = {
 	{ .name = "key-delete",
 	  .op = OP_KEY_DELETE,
 	  .parse_func = parse_key_delete_options,
+	  .special_func = NULL },
+	{ .name = "mac",
+	  .op = OP_MAC,
+	  .parse_func = parse_mac_options,
+	  .special_func = NULL },
+	{ .name = "mac-verify",
+	  .op = OP_MAC_VERIFY,
+	  .parse_func = parse_mac_verify_options,
 	  .special_func = NULL },
 	/* Add more operations here */
 	{ NULL, OP_NONE, NULL, NULL } /* Sentinel */
@@ -357,6 +366,17 @@ void opt_parser_cleanup(struct parsed_options *opts)
 		if (opts->op.key_export.key_file) {
 			free(opts->op.key_export.key_file);
 			opts->op.key_export.key_file = NULL;
+		}
+	}
+
+	if (opts->operation == OP_MAC || opts->operation == OP_MAC_VERIFY) {
+		if (opts->op.mac.algo) {
+			free(opts->op.mac.algo);
+			opts->op.mac.algo = NULL;
+		}
+		if (opts->op.mac.mac_filename) {
+			free(opts->op.mac.mac_filename);
+			opts->op.mac.mac_filename = NULL;
 		}
 	}
 }

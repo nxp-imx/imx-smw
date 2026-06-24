@@ -129,32 +129,40 @@ add_custom_command(
     COMMENT "Generating lifecycle table from smw/names.h"
 )
 
-# Generate symmetric key type table and mappings at build time (in binary dir)
-set(SMW_SYM_KEY_MAPPINGS_HEADER ${CMAKE_CURRENT_BINARY_DIR}/smw_sym_key_mappings_generated.h)
-set(SMW_SYM_KEY_MAPPINGS_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/smw_sym_key_mappings_generated.c)
+# Generate SMW symmetric key type table and mappings at build time
+set(SMW_SYM_KEY_MAPPINGS_HEADER
+    ${CMAKE_CURRENT_BINARY_DIR}/smw_sym_key_mappings_generated.h)
+set(SMW_SYM_KEY_MAPPINGS_SOURCE
+    ${CMAKE_CURRENT_BINARY_DIR}/smw_sym_key_mappings_generated.c)
 set(SMW_ATTR_HEADER ${CMAKE_SOURCE_DIR}/public/smw/attr.h)
-set(SMW_SYM_KEY_GENERATOR ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_smw_key_sym_table.py)
+set(SMW_SYM_KEY_GENERATOR
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_smw_key_sym_table.py)
 
 add_custom_command(
     OUTPUT
         ${SMW_SYM_KEY_MAPPINGS_HEADER}
         ${SMW_SYM_KEY_MAPPINGS_SOURCE}
-    COMMAND ${Python3_EXECUTABLE} ${SMW_SYM_KEY_GENERATOR} ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${Python3_EXECUTABLE} ${SMW_SYM_KEY_GENERATOR}
+        ${CMAKE_CURRENT_BINARY_DIR}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     DEPENDS ${SMW_NAMES_HEADER} ${SMW_ATTR_HEADER} ${SMW_SYM_KEY_GENERATOR}
     COMMENT "Generating SMW key type information table and mappings"
 )
 
-# Generate PSA key type mappings at build time (in binary dir)
-set(PSA_SYM_KEY_MAPPINGS_HEADER ${CMAKE_CURRENT_BINARY_DIR}/psa_sym_key_mappings_generated.h)
-set(PSA_SYM_KEY_MAPPINGS_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/psa_sym_key_mappings_generated.c)
-set(PSA_SYM_KEY_GENERATOR ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_psa_key_sym_table.py)
+# Generate PSA key type mappings at build time
+set(PSA_SYM_KEY_MAPPINGS_HEADER
+    ${CMAKE_CURRENT_BINARY_DIR}/psa_sym_key_mappings_generated.h)
+set(PSA_SYM_KEY_MAPPINGS_SOURCE
+    ${CMAKE_CURRENT_BINARY_DIR}/psa_sym_key_mappings_generated.c)
+set(PSA_SYM_KEY_GENERATOR
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_psa_key_sym_table.py)
 
 add_custom_command(
     OUTPUT
         ${PSA_SYM_KEY_MAPPINGS_HEADER}
         ${PSA_SYM_KEY_MAPPINGS_SOURCE}
-    COMMAND ${Python3_EXECUTABLE} ${PSA_SYM_KEY_GENERATOR} ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${Python3_EXECUTABLE} ${PSA_SYM_KEY_GENERATOR}
+        ${CMAKE_CURRENT_BINARY_DIR}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     DEPENDS ${PSA_CRYPTO_VALUES_HEADER} ${PSA_SYM_KEY_GENERATOR}
     COMMENT "Generating PSA key type and algorithm mappings"
@@ -193,12 +201,58 @@ add_custom_command(
 )
 
 # Include subdirectories - each sets its own source variables
+# Generate SMW MAC algo table at build time
+set(SMW_MAC_ALGO_TABLE_HEADER
+    ${CMAKE_CURRENT_BINARY_DIR}/smw_mac_algo_table_generated.h)
+set(SMW_MAC_ALGO_TABLE_SOURCE
+    ${CMAKE_CURRENT_BINARY_DIR}/smw_mac_algo_table_generated.c)
+set(SMW_MAC_ALGO_GENERATOR
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_smw_mac_algo_table.py)
+
+add_custom_command(
+    OUTPUT
+        ${SMW_MAC_ALGO_TABLE_HEADER}
+        ${SMW_MAC_ALGO_TABLE_SOURCE}
+    COMMAND ${Python3_EXECUTABLE} ${SMW_MAC_ALGO_GENERATOR}
+        ${SMW_SYM_KEY_MAPPINGS_SOURCE}
+        ${CMAKE_CURRENT_BINARY_DIR}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    DEPENDS
+        ${SMW_SYM_KEY_MAPPINGS_SOURCE}
+        ${SMW_MAC_ALGO_GENERATOR}
+    COMMENT
+        "Generating SMW MAC algorithm table from smw_sym_key_mappings_generated.c"
+)
+
+# Generate PSA MAC algo table at build time
+set(PSA_MAC_ALGO_TABLE_HEADER
+    ${CMAKE_CURRENT_BINARY_DIR}/psa_mac_algo_table_generated.h)
+set(PSA_MAC_ALGO_TABLE_SOURCE
+    ${CMAKE_CURRENT_BINARY_DIR}/psa_mac_algo_table_generated.c)
+set(PSA_MAC_ALGO_GENERATOR
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_psa_mac_algo_table.py)
+
+add_custom_command(
+    OUTPUT
+        ${PSA_MAC_ALGO_TABLE_HEADER}
+        ${PSA_MAC_ALGO_TABLE_SOURCE}
+    COMMAND ${Python3_EXECUTABLE} ${PSA_MAC_ALGO_GENERATOR}
+        ${PSA_SYM_KEY_MAPPINGS_SOURCE}
+        ${CMAKE_CURRENT_BINARY_DIR}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    DEPENDS
+        ${PSA_SYM_KEY_MAPPINGS_SOURCE}
+        ${PSA_MAC_ALGO_GENERATOR}
+    COMMENT
+        "Generating PSA MAC algorithm table from psa_sym_key_mappings_generated.c"
+)
+
+# Include subdirectories
 add_subdirectory(core)
 add_subdirectory(psa)
 add_subdirectory(smw)
 
 # Include directories for CLI tools
-
 set(CLI_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/inc    # CLI public headers
     ${CMAKE_SOURCE_DIR}/inc            # SMW library headers
@@ -207,7 +261,6 @@ set(CLI_INCLUDE_DIRS
 )
 
 # Executable 1: nxp_smw (SMW API backend)
-
 message(STATUS "Building nxp_smw (SMW API)")
 
 add_executable(nxp_smw
@@ -219,6 +272,7 @@ add_executable(nxp_smw
 	${LIFECYCLE_TABLE_SOURCE}	# Lifecycle Table Generated file
 	${SMW_SYM_KEY_MAPPINGS_SOURCE}	# SMW Key Mappings Generated file
     ${SMW_ASYM_KEY_MAPPINGS_SOURCE}	# SMW Asymmetric Key Mappings Generated file
+    ${SMW_MAC_ALGO_TABLE_SOURCE}        # SMW MAC tables + accessors
 )
 
 target_include_directories(nxp_smw PRIVATE
@@ -229,11 +283,9 @@ target_include_directories(nxp_smw PRIVATE
 )
 
 target_compile_definitions(nxp_smw PRIVATE USE_SMW_BACKEND)
-
 target_link_libraries(nxp_smw PRIVATE smw)
 
 # Executable 2: nxp_psa (PSA API backend)
-
 message(STATUS "Building nxp_psa (PSA API)")
 
 add_executable(nxp_psa
@@ -245,6 +297,7 @@ add_executable(nxp_psa
 	${LIFECYCLE_TABLE_SOURCE}	# Lifecycle Table Generated file
     ${PSA_SYM_KEY_MAPPINGS_SOURCE}	# PSA Key Mappings Generated file
     ${PSA_ASYM_KEY_MAPPINGS_SOURCE}
+    ${PSA_MAC_ALGO_TABLE_SOURCE}        # PSA MAC tables + accessors
 )
 
 target_include_directories(nxp_psa PRIVATE
@@ -254,11 +307,9 @@ target_include_directories(nxp_psa PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/psa
 )
 target_compile_definitions(nxp_psa PRIVATE USE_PSA_BACKEND)
-
 target_link_libraries(nxp_psa PRIVATE smw)
 
 # Installation
-
 install(TARGETS nxp_smw nxp_psa
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         COMPONENT cli-tools)

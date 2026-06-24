@@ -66,6 +66,7 @@ cli/
 │   ├── parser_key_export.c             # Key export option parsing
 │   ├── parser_keygen_asym.c            # Asymmetric key generation option parsing
 │   ├── parser_keygen_sym.c             # Symmetric key generation option parsing
+│   ├── parser_mac.c                    # MAC option parsing
 │   ├── parser_rng.c                    # RNG-specific option parsing
 │   ├── pubkey_encode.c                 # Public key encoding (DER/PEM via Python script)
 │   ├── utils.c                         # Utility functions (hex dump, program info)
@@ -97,6 +98,7 @@ cli/
 │   ├── parser_key_export.h             # Key export parser API
 │   ├── parser_keygen_asym.h            # Asymmetric key generation parser API
 │   ├── parser_keygen_sym.h             # Symmetric key generation parser API
+│   ├── parser_mac.h                    # MAC parser API
 │   ├── parser_rng.h                    # RNG parser API
 │   ├── pubkey_encode.h                 # Public key encoding API (DER/PEM wrapper)
 │   └── utils.h                         # Utility function declarations
@@ -113,6 +115,7 @@ cli/
 │   ├── keygen_common.c                 # PSA common key generation utilities
 │   ├── keygen_common.h                 # PSA common key generation header
 │   ├── keygen_sym.c                    # PSA symmetric key generation operation
+│   ├── mac.c                           # PSA MAC operation
 │   └── rng.c                           # PSA RNG operation
 │
 ├── scripts/                            # Build-time code generation scripts
@@ -126,6 +129,8 @@ cli/
 │   ├── generate_smw_hash_table.py      # Generate SMW hash algorithm mapping table
 │   ├── generate_smw_key_asym_table.py  # Generate SMW asymmetric key type mapping table
 │   ├── generate_smw_key_sym_table.py   # Generate SMW symmetric key mapping table
+│   ├── generate_psa_mac_algo_table.py  # Generate PSA MAC algorithm mapping table
+│   ├── generate_smw_mac_algo_table.py  # Generate SMW MAC algorithm mapping table
 │   ├── nxp_psa_completion.bash         # Bash completion for nxp_psa CLI
 │   ├── nxp_smw_completion.bash         # Bash completion for nxp_smw CLI
 │   └── pubkey_convert.py               # Runtime public key format conversion (DER/PEM)
@@ -146,6 +151,7 @@ cli/
 │   ├── keygen_common.c                 # SMW common key generation utilities
 │   ├── keygen_common.h                 # SMW common key generation header
 │   ├── keygen_sym.c                    # SMW symmetric key generation operation
+│   ├── mac.c                           # SMW MAC operation
 │   └── rng.c                           # SMW RNG operation
 │
 ├── CMakeLists.txt                      # Main build configuration

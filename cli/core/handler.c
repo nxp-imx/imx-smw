@@ -19,6 +19,7 @@
 #include "parser_key_delete.h"
 #include "parser_keygen_asym.h"
 #include "parser_keygen_sym.h"
+#include "parser_mac.h"
 #include "parser_rng.h"
 #include "utils.h"
 
@@ -82,6 +83,14 @@ static const struct operation_entry operation_table[] = {
 	  .opt_func = cli_key_delete_operation,
 	  .help_func = cli_key_delete_help,
 	  .inline_desc_func = cli_key_delete_inline_desc },
+	{ .operation_name = "mac",
+	  .opt_func = cli_mac_operation,
+	  .help_func = cli_mac_help,
+	  .inline_desc_func = cli_mac_inline_desc },
+	{ .operation_name = "mac-verify",
+	  .opt_func = cli_mac_verify_operation,
+	  .help_func = cli_mac_verify_help,
+	  .inline_desc_func = cli_mac_verify_inline_desc },
 	/* Add more operations here as we implement them */
 	{ NULL, NULL, NULL, NULL } /* Sentinel */
 };

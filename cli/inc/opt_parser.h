@@ -23,7 +23,9 @@ enum operation {
 	OP_KEYGEN_SYM,
 	OP_KEYGEN_ASYM,
 	OP_KEY_EXPORT,
-	OP_KEY_DELETE
+	OP_KEY_DELETE,
+	OP_MAC,
+	OP_MAC_VERIFY
 };
 
 /* RNG-specific options */
@@ -71,6 +73,13 @@ struct key_delete {
 	unsigned int key_id;
 };
 
+/* MAC-specific options */
+struct mac {
+	unsigned int key_id;
+	char *algo;
+	char *mac_filename;
+};
+
 /* Parsed options structure */
 struct parsed_options {
 	enum operation operation;
@@ -97,6 +106,7 @@ struct parsed_options {
 		struct keygen keygen;
 		struct key_export key_export;
 		struct key_delete key_delete;
+		struct mac mac;
 	} op;
 };
 

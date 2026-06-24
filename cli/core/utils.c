@@ -242,3 +242,48 @@ size_t util_get_file_size_by_path(const char *path)
 	FCLOSE(fp);
 	return size;
 }
+
+/**
+ * @brief Write data to file or stdout.
+ *
+ * @param data buffer to write
+ * @param size of data in bytes
+ * @param filename Output filename, or NULL to write hex to stdout
+ * @param text_format true and filename is NULL, write as hex text
+ */
+int util_read_file(const char *filename, unsigned char **buf, size_t *size)
+{
+	FILE *fp = NULL;
+	int ret = -1;
+
+	if (!filename || !buf || !size) {
+		LOG_ERROR("Invalid arguments to %s", __func__);
+		return -1;
+	}
+
+	fp = fopen(filename, "rb");
+	if (!fp) {
+		LOG_ERROR("Failed to open file: %s", filename);
+		return -1;
+	}
+
+	if (util_get_file_size(fp, size, filename))
+		goto cleanup;
+
+	*buf = util_alloc_buffer(*size, filename);
+	if (!*buf)
+		goto cleanup;
+
+	if (fread(*buf, 1, *size, fp) != *size) {
+		LOG_ERROR("Failed to read file: %s", filename);
+		free(*buf);
+		*buf = NULL;
+		goto cleanup;
+	}
+
+	ret = 0;
+
+cleanup:
+	FCLOSE(fp);
+	return ret;
+}

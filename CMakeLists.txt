@@ -92,6 +92,10 @@ include(enable_TLS)
 enable_tls_option()
 option(ENABLE_TLS "Enable TLS features" ${ENABLE_TLS})
 
+include(enable_ELA)
+enable_ela_option()
+option(ENABLE_ELA "Enable ELA" ${ENABLE_ELA})
+
 option(ENABLE_CLI "Enable CLI tools" ON)
 
 #
@@ -127,7 +131,7 @@ file(TO_NATIVE_PATH ${TEE_TA_DESTDIR} TEE_TA_DESTDIR)
 add_custom_target(build_tests)
 add_custom_target(install_tests)
 
-# Include OS Abstration layer
+# Include OS Abstraction layer
 set(OS linux)
 add_subdirectory(osal/${OS})
 

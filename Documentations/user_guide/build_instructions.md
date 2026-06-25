@@ -28,6 +28,8 @@
     - [4.5.1. SMW Library options](#451-smw-library-options)
     - [4.5.2. PKCS#11 Library options](#452-pkcs11-library-options)
   - [4.6. Building the User Manual documentation](#46-building-the-user-manual-documentation)
+    - [4.6.1. Building documentation only](#461-building-documentation-only)
+    - [4.6.2. Building documentation with the full project](#462-building-documentation-with-the-full-project)
   - [4.7. Enabling test suites](#47-enabling-test-suites)
 - [5. Libraries installation](#5-libraries-installation)
   - [5.1. Install command](#51-install-command)
@@ -487,7 +489,7 @@ user manual documentation generation.
 </tr>
 <tr>
   <td>DOC_FORMAT</td>
-  <td>-DDOC_FORMAT=[<b>all</b>|html|xml]</td>
+  <td>-DDOC_FORMAT=[all|html|xml]</td>
   <td>Configure the user manual documentation format to generate:
 	<ul>
 	<li>all  &rarr; Build XML and HTML (default).</li>
@@ -498,7 +500,7 @@ user manual documentation generation.
 </tr>
 <tr>
   <td>FORMAT</td>
-  <td>-DFORMAT=[<b>all</b>|html|xml]</td>
+  <td>-DFORMAT=[all|html|xml]</td>
   <td>
   <p>  ⚠️ <b>Deprecated</b> </p>
   Configure the user manual documentation format to generate:
@@ -750,7 +752,33 @@ The project includes a user manual documentation that can be built in HTML or
 XML format. The PDF format is not supported but the PDF user manual is present
 [here](./Documentations/user_manual/SMW_UserManual_UM12513.pdf).
 
-To configure the project to build only the documentation, use the following CMake option:
+By default, the project is not configured to build the documentation.
+
+Two methods are possible to configure the documentation build by setting the
+following CMake options\:
+
+  - ``BUILD_DOC`` (plus optionally ``DOC_FORMAT``)
+    Configure the project to build only the documenation.
+  - ``DOC_FORMAT``
+    Configure the project to build documentation, libraries, tests, cli, ...
+
+The configuration will create a python virtual environment and install the
+tools required to generate the documentation.
+
+The documentation is built by using the ``docs`` build target, e.g. from the
+project build directory:
+
+```
+make docs
+```
+
+.. note::
+   The PDF format can not be generated.
+
+### 4.6.1. Building documentation only
+To configure the project to build only the documentation, use the following
+CMake option:
+
 ```
 -DDOC_ONLY=Yes
 ```
@@ -759,9 +787,18 @@ The documentation format can be selected using the CMake option:
 ```
 -DDOC_FORMAT=[ALL|HTML|XML]
 ```
-The default documentation format is ALL meaning HTML and XML.
+By default documentation format is ALL meaning HTML and XML.
 
-When building only the documentation with `-DDOC_ONLY=Yes`, the build system will generate the user manual in the specified format(s) without compiling the libraries themselves.
+When building only the documentation with `-DDOC_ONLY=Yes`, the build system will
+generate the user manual in the specified format(s) without compiling the
+libraries themselves.
+
+### 4.6.2. Building documentation with the full project
+To configure the project to build the documentation when the entire project,
+the CMake option must be defined with one of the values:
+```
+-DDOC_FORMAT=[ALL|HTML|XML]
+```
 
 ## 4.7. Enabling test suites
 The SMW and PKCS#11 libraries are validated using in-house test suites or

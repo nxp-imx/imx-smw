@@ -85,8 +85,14 @@ if(DEFINED FORMAT)
    set(DOC_FORMAT ${FORMAT})
 endif()
 
+if(DEFINED DOC_ONLY)
+    if(${DOC_ONLY} AND NOT DEFINED DOC_FORMAT)
+        set(DOC_FORMAT "all")
+    endif()
+endif()
+
 if(NOT DEFINED DOC_FORMAT)
-    set(DOC_FORMAT "all")
+    return()
 endif()
 
 message(STATUS "Documentations")

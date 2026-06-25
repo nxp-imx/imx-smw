@@ -9,7 +9,6 @@ endif()
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 find_package(Sphinx REQUIRED)
-find_package(Kerneldoc REQUIRED)
 set(ENV{srctree} ${BUILD_DOC_PRJ_DIR})
 set(ENV{PYTHONDONTWRITEBYTECODE} 1)
 
@@ -19,7 +18,7 @@ foreach(BUILDER ${BUILD_DOC_BUILDER})
     message(STATUS "BUILDER: ${BUILDER}")
     execute_process(COMMAND
                     ${SPHINX_EXECUTABLE} -M ${BUILDER}
-                    ${BUILD_DOC_SOURCE_DIR} ${BUILD_DOC_OUTPUT_DIR} -T 
+                    ${BUILD_DOC_SOURCE_DIR} ${BUILD_DOC_OUTPUT_DIR} -T
                     COMMAND_ECHO STDOUT)
 
 endforeach()

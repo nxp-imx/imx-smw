@@ -1,5 +1,5 @@
 # =============================================================================
-# TLS Feature Configuration: 
+# TLS Feature Configuration:
 # - Auto-enables when ELE subsystem (ELE_ROOT) is detected
 # - Requires dependencies: ENABLE_KEYMGR_MODULE, ENABLE_SIGN_VERIFY, ENABLE_MAC,
 #                          ENABLE_HASH, ENABLE_CIPHER and ENABLE_AEAD
@@ -33,7 +33,7 @@ function(enable_tls_option)
     endif()
 
     # Check if dependencies are satisfied
-    set(TLS_DEPS_OK ON)
+    set(TLS_DEPS_OK OFF)
     if(ENABLE_KEYMGR_MODULE AND ENABLE_SIGN_VERIFY AND ENABLE_MAC AND ENABLE_HASH  AND ENABLE_CIPHER AND ENABLE_AEAD)
         set(TLS_DEPS_OK ON)
     endif()

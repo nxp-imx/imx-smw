@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright 2026 NXP
 #
@@ -6,19 +6,12 @@
 
 PASS=0
 FAIL=0
-
-FAIL_DESCS=()
-FAIL_CMDS=()
-FAIL_ERRS=()
-FAIL_CODES=()
+FAIL_COUNT=0
 
 reset_counters() {
     PASS=0
     FAIL=0
-    FAIL_DESCS=()
-    FAIL_CMDS=()
-    FAIL_ERRS=()
-    FAIL_CODES=()
+    FAIL_COUNT=0
 }
 
 key_sizes_for_type() {
@@ -28,25 +21,25 @@ key_sizes_for_type() {
         DES3)      echo "112" ;;
         SM4)       echo "128" ;;
         HMAC)      echo "128 256" ;;
-        CHACHA20)  echo "256" ;;
-        XCHACHA20) echo "256" ;;
         *)         echo "128" ;;
     esac
 }
 
 _extract_error_code() {
-    local code
     code=$(echo "$1" | grep -oE 'SMW_STATUS_[A-Z_]+|PSA_ERROR_[A-Z_]+' | head -1)
     echo "${code:-UNKNOWN}"
 }
 
 _record_fail() {
-    local code
     code=$(_extract_error_code "$3")
-    FAIL_DESCS+=("$1")
-    FAIL_CMDS+=("$2")
-    FAIL_ERRS+=("$3")
-    FAIL_CODES+=("$code")
+    idx=$FAIL_COUNT
+
+    eval "FAIL_DESC_${idx}=\"\$1\""
+    eval "FAIL_CMD_${idx}=\"\$2\""
+    eval "FAIL_ERR_${idx}=\"\$3\""
+    eval "FAIL_CODE_${idx}=\"\$code\""
+
+    FAIL_COUNT=$((FAIL_COUNT + 1))
     FAIL=$((FAIL + 1))
 }
 
@@ -55,13 +48,16 @@ _print_row() {
 }
 
 run_keygen_test() {
-    local desc="$1" key_type="$2" key_size="$3"
-    local algo="$4" usage="$5" extra="${6:-}"
-    local cmd="$CLI keygen-sym -t $key_type -s $key_size -a $algo -u $usage $extra"
+    desc="$1"
+    key_type="$2"
+    key_size="$3"
+    algo="$4"
+    usage="$5"
+    extra="${6:-}"
+    cmd="$CLI keygen-sym -t $key_type -s $key_size -a $algo -u $usage $extra"
 
     _print_row "$desc"
 
-    local out rc
     out=$(eval "$cmd" 2>&1)
     rc=$?
 
@@ -75,12 +71,11 @@ run_keygen_test() {
 }
 
 run_negative_test() {
-    local desc="$1"
-    local cmd="$2"
+    desc="$1"
+    cmd="$2"
 
     _print_row "$desc"
 
-    local out rc
     out=$(eval "$cmd" 2>&1)
     rc=$?
 
@@ -94,13 +89,12 @@ run_negative_test() {
 }
 
 section_header() { echo ""; echo "┌── $1"; }
-section_footer() { echo "└$(printf '─%.0s' {1..75})┘"; }
+section_footer() { echo "└─────────────────────────────────────────────────────────────────────────┘"; }
 
 discover_and_test() {
     echo ""
     echo "Discovering available types/algos via '$CLI keygen-sym --list' ..."
 
-    local list
     list=$($CLI keygen-sym --list 2>/dev/null)
 
     if [ -z "$list" ]; then
@@ -108,97 +102,104 @@ discover_and_test() {
         return 1
     fi
 
-    # ── Cipher ───────────────────────────────────────────────────────────────
-    local cipher_kt cipher_modes
+    OLDIFS="$IFS"
+
+    # ── Cipher (Symmetric Encryption) ────────────────────────────────────────
     cipher_kt=$(echo "$list" | awk \
-        '/Cipher \(encrypt\/decrypt\)/{f=1} f && /Key types:/{
+        '/Keys supporting Symmetric Encryption/{f=1} f && /Key types:/{
             sub(/.*Key types: */,""); gsub(/ /,""); print; exit}')
     cipher_modes=$(echo "$list" | awk \
-        '/Cipher \(encrypt\/decrypt\)/{f=1} f && /Modes:/{
+        '/Keys supporting Symmetric Encryption/{f=1} f && /Modes:/{
             sub(/.*Modes: */,""); gsub(/ /,""); print; exit}')
 
     if [ -n "$cipher_kt" ] && [ -n "$cipher_modes" ]; then
         section_header "Cipher (encrypt/decrypt) ─────────────────────────────────────────────┐"
-        IFS=',' read -ra KTS   <<< "$cipher_kt"
-        IFS=',' read -ra MODES <<< "$cipher_modes"
-        for kt in "${KTS[@]}"; do
-            for mode in "${MODES[@]}"; do
+        IFS=','
+        for kt in $cipher_kt; do
+            for mode in $cipher_modes; do
+                IFS="$OLDIFS"
                 for sz in $(key_sizes_for_type "$kt"); do
                     run_keygen_test \
                         "$kt ${sz}-bit  $mode  encrypt,decrypt  transient" \
                         "$kt" "$sz" "$mode" "encrypt,decrypt" "--transient"
                 done
+                IFS=','
             done
         done
+        IFS="$OLDIFS"
         section_footer
     fi
 
     # ── AEAD ─────────────────────────────────────────────────────────────────
-    local aead_kt aead_modes
     aead_kt=$(echo "$list" | awk \
-        '/^AEAD:/{f=1} f && /Key types:/{
+        '/Keys supporting AEAD/{f=1} f && /Key types:/{
             sub(/.*Key types: */,""); gsub(/ /,""); print; exit}')
     aead_modes=$(echo "$list" | awk \
-        '/^AEAD:/{f=1} f && /Modes:/{
+        '/Keys supporting AEAD/{f=1} f && /Modes:/{
             sub(/.*Modes: */,""); gsub(/ /,""); print; exit}')
 
     if [ -n "$aead_kt" ] && [ -n "$aead_modes" ]; then
         section_header "AEAD (encrypt/decrypt) ───────────────────────────────────────────────┐"
-        IFS=',' read -ra KTS   <<< "$aead_kt"
-        IFS=',' read -ra MODES <<< "$aead_modes"
-        for kt in "${KTS[@]}"; do
-            for mode in "${MODES[@]}"; do
+        IFS=','
+        for kt in $aead_kt; do
+            for mode in $aead_modes; do
+                IFS="$OLDIFS"
                 for sz in $(key_sizes_for_type "$kt"); do
                     run_keygen_test \
                         "$kt ${sz}-bit  $mode  encrypt,decrypt  transient" \
                         "$kt" "$sz" "$mode" "encrypt,decrypt" "--transient"
                 done
+                IFS=','
             done
         done
+        IFS="$OLDIFS"
         section_footer
     fi
 
     # ── CMAC ─────────────────────────────────────────────────────────────────
-    local cmac_kt cmac_modes
     cmac_kt=$(echo "$list" | awk \
-        '/  CMAC:/{f=1} f && /Key types:/{
+        '/CMAC:/{f=1} f && /Key types:/{
             sub(/.*Key types: */,""); gsub(/ /,""); print; exit}')
     cmac_modes=$(echo "$list" | awk \
-        '/  CMAC:/{f=1} f && /Modes:/{
+        '/CMAC:/{f=1} f && /Modes:/{
             sub(/.*Modes: */,""); gsub(/ /,""); print; exit}')
 
     if [ -n "$cmac_kt" ] && [ -n "$cmac_modes" ]; then
         section_header "CMAC (sign/verify) ───────────────────────────────────────────────────┐"
-        IFS=',' read -ra KTS   <<< "$cmac_kt"
-        IFS=',' read -ra MODES <<< "$cmac_modes"
-        for kt in "${KTS[@]}"; do
-            for mode in "${MODES[@]}"; do
+        IFS=','
+        for kt in $cmac_kt; do
+            for mode in $cmac_modes; do
+                IFS="$OLDIFS"
                 for sz in $(key_sizes_for_type "$kt"); do
                     run_keygen_test \
                         "$kt ${sz}-bit  $mode  sign,verify  transient" \
                         "$kt" "$sz" "$mode" "sign,verify" "--transient"
                 done
+                IFS=','
             done
         done
+        IFS="$OLDIFS"
         section_footer
     fi
 
     # ── HMAC ─────────────────────────────────────────────────────────────────
-    local hmac_hashes
     hmac_hashes=$(echo "$list" | awk \
-        '/  HMAC:/{f=1} f && /Hash:/{
+        '/HMAC:/{f=1} f && /Hash:/{
             sub(/.*Hash: */,""); gsub(/ /,""); print; exit}')
 
     if [ -n "$hmac_hashes" ]; then
         section_header "HMAC (sign/verify) ───────────────────────────────────────────────────┐"
-        IFS=',' read -ra HASHES <<< "$hmac_hashes"
-        for hash in "${HASHES[@]}"; do
+        IFS=','
+        for hash in $hmac_hashes; do
+            IFS="$OLDIFS"
             for sz in $(key_sizes_for_type "HMAC"); do
                 run_keygen_test \
                     "HMAC ${sz}-bit  $hash  sign,verify  transient" \
                     "HMAC" "$sz" "$hash" "sign,verify" "--transient"
             done
+            IFS=','
         done
+        IFS="$OLDIFS"
         section_footer
     fi
 }
@@ -245,71 +246,73 @@ test_negative_cases() {
     section_footer
 }
 
-# ─── generic grouped report ──────────────────────────────────────────────────
+# ─── report ──────────────────────────────────────────────────────────────────
+_sep_line() {
+    i=0; out=""
+    while [ $i -lt $1 ]; do out="${out}─"; i=$((i+1)); done
+    echo "$out"
+}
+
 _print_grouped_report() {
-    local title="$1"
-    local -n _descs="$2"
-    local -n _cmds="$3"
-    local -n _errs="$4"
-    local -n _codes="$5"
-    local show_commands="$6"   # "yes" → print full commands/output per item
+    title="$1"
+    show_commands="$2"
 
     echo ""
     echo "╔══════════════════════════════════════════════════════════════════════════╗"
     printf "║  %-72s║\n" "  $title"
     echo "╚══════════════════════════════════════════════════════════════════════════╝"
 
-    # ── grouped summary table ────────────────────────────────────────────────
     echo ""
     printf "  %-52s  %6s\n" "Error Code" "Count"
-    printf "  %-52s  %6s\n" "$(printf '─%.0s' {1..52})" "$(printf '─%.0s' {1..6})"
+    printf "  %-52s  %6s\n" "$(_sep_line 52)" "$(_sep_line 6)"
 
-    declare -A _cnt
-    declare -A _ex
-
-    local i
-    for i in "${!_codes[@]}"; do
-        local code="${_codes[$i]}"
-        _cnt["$code"]=$(( ${_cnt["$code"]:-0} + 1 ))
+    tmp_codes=$(mktemp)
+    i=0
+    while [ $i -lt $FAIL_COUNT ]; do
+        eval "printf '%s\n' \"\$FAIL_CODE_${i}\"" >> "$tmp_codes"
+        i=$((i + 1))
     done
 
-    # sort by count descending
-    local sorted_codes
-    sorted_codes=$(for k in "${!_cnt[@]}"; do
-                       echo "${_cnt[$k]} $k"
-                   done | sort -rn | awk '{print $2}')
+    sorted_codes=$(sort "$tmp_codes" | uniq -c | sort -rn | awk '{print $2}')
+    rm -f "$tmp_codes"
 
-    local total=0
     for code in $sorted_codes; do
-        printf "  %-52s  %6d\n" "$code" "${_cnt[$code]}"
-        echo ""
-        total=$(( total + _cnt[$code] ))
+        cnt=0
+        i=0
+        while [ $i -lt $FAIL_COUNT ]; do
+            eval "v=\"\$FAIL_CODE_${i}\""
+            [ "$v" = "$code" ] && cnt=$((cnt + 1))
+            i=$((i + 1))
+        done
+        printf "  %-52s  %6d\n" "$code" "$cnt"
     done
 
-    printf "  %-52s  %6s\n" "$(printf '─%.0s' {1..52})" "$(printf '─%.0s' {1..6})"
-    printf "  %-52s  %6d\n" "TOTAL" "${#_codes[@]}"
+    printf "  %-52s  %6s\n" "$(_sep_line 52)" "$(_sep_line 6)"
+    printf "  %-52s  %6d\n" "TOTAL" "$FAIL_COUNT"
 
-    # ── detailed list (only for FAIL) ────────────────────────────────────────
-    if [ "$show_commands" = "yes" ] && [ ${#_cmds[@]} -gt 0 ]; then
+    if [ "$show_commands" = "yes" ] && [ "$FAIL_COUNT" -gt 0 ]; then
         echo ""
         echo "  Detailed list:"
-        echo "  $(printf '─%.0s' {1..72})"
-        for i in "${!_cmds[@]}"; do
-            printf "\n  [%d] %s\n" "$((i + 1))" "${_descs[$i]}"
-            printf "      Code    : %s\n" "${_codes[$i]}"
-            printf "      Command : %s\n" "${_cmds[$i]}"
-            echo   "      Output  :"
-            echo "${_errs[$i]}" | sed 's/^/               /'
+        printf "  %s\n" "$(_sep_line 72)"
+        i=0
+        while [ $i -lt $FAIL_COUNT ]; do
+            eval "desc_i=\"\$FAIL_DESC_${i}\""
+            eval "cmd_i=\"\$FAIL_CMD_${i}\""
+            eval "err_i=\"\$FAIL_ERR_${i}\""
+            eval "code_i=\"\$FAIL_CODE_${i}\""
+            printf "\n  [%d] %s\n"        "$((i + 1))" "$desc_i"
+            printf "      Code    : %s\n" "$code_i"
+            printf "      Command : %s\n" "$cmd_i"
+            printf "      Output  :\n"
+            echo "$err_i" | sed 's/^/               /'
+            i=$((i + 1))
         done
     fi
 }
 
 print_failure_report() {
-    if [ ${#FAIL_CODES[@]} -gt 0 ]; then
-        _print_grouped_report \
-            "FAILURE REPORT" \
-            FAIL_DESCS FAIL_CMDS FAIL_ERRS FAIL_CODES \
-            "yes"
+    if [ "$FAIL_COUNT" -gt 0 ]; then
+        _print_grouped_report "FAILURE REPORT" "yes"
     fi
 }
 

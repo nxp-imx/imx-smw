@@ -1,22 +1,20 @@
-#!/bin/bash
+#!/bin/sh
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright 2026 NXP
 #
 # Symmetric key generation test suite - SMW backend (nxp_smw)
 #
 # Usage:
-#   ./test_keygen_sym_smw.sh [--subsystem ELE|TEE|SECO]
+#   ./smw_keygen_sym.sh [--subsystem ELE|TEE|SECO]
 #
 # Requires: nxp_smw in PATH
 
-set -o pipefail
-
 CLI="nxp_smw"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SUBSYSTEM=""
 
 # Parse optional --subsystem argument
-while [[ $# -gt 0 ]]; do
+while [ $# -gt 0 ]; do
     case "$1" in
         --subsystem|-S)
             SUBSYSTEM="$2"; shift 2 ;;
@@ -25,11 +23,11 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-source "$SCRIPT_DIR/lib_keygen_sym.sh"
+. "$SCRIPT_DIR/lib_keygen_sym.sh"
 
-# SMW extra flags: subsystem + non-sensitive variants
+# SMW extra flags: subsystem
 _smw_extra() {
-    local flags="${1:-}"
+    flags="${1:-}"
     [ -n "$SUBSYSTEM" ] && flags="$flags -S $SUBSYSTEM"
     echo "$flags"
 }
@@ -40,7 +38,6 @@ _smw_extra() {
 test_sensitive_flags() {
     section_header "Sensitive / non-sensitive flag tests (SMW) ──────────────────────────┐"
 
-    local extra_s
     extra_s=$(_smw_extra "--transient")
 
     run_keygen_test \
@@ -63,12 +60,11 @@ test_sensitive_flags() {
 }
 
 # ---------------------------------------------------------------------------
-# SMW-specific: multi-algo permitted algorithms (SMW supports comma-separated)
+# SMW-specific: multi-algo permitted algorithms
 # ---------------------------------------------------------------------------
 test_multi_algo() {
     section_header "Multi permitted-algo tests (SMW only) ───────────────────────────────┐"
 
-    local extra
     extra=$(_smw_extra "--transient")
 
     run_keygen_test \
@@ -90,72 +86,152 @@ test_multi_algo() {
 # SMW-specific: persistent key tests
 # ---------------------------------------------------------------------------
 test_persistent_keys_smw() {
-    local base_id=7000
+    base_id=7000
 
     section_header "Persistent key tests (SMW) ───────────────────────────────────────────┐"
 
-    local extra_base
     extra_base=$(_smw_extra "")
 
-    local cases=(
-        # desc                                    type  size  algo        usage           id
-        "AES-256 CBC  encrypt,decrypt  persist"   "AES"  256  "CBC"       "encrypt,decrypt" $((base_id+1))
-        "AES-128 GCM  encrypt,decrypt  persist"   "AES"  128  "GCM"       "encrypt,decrypt" $((base_id+2))
-        "HMAC-256 SHA256  sign,verify  persist"   "HMAC" 256  "SHA256"    "sign,verify"     $((base_id+3))
-        "AES-256 CBC,CTR  multi-algo  persist"    "AES"  256  "CBC,CTR"   "encrypt,decrypt" $((base_id+4))
-    )
+    tmp_cases=$(mktemp)
+    cat > "$tmp_cases" << EOF
+AES-256 CBC  encrypt,decrypt  persist|AES|256|CBC|encrypt,decrypt|$((base_id+1))
+AES-128 GCM  encrypt,decrypt  persist|AES|128|GCM|encrypt,decrypt|$((base_id+2))
+HMAC-256 SHA256  sign,verify  persist|HMAC|256|SHA256|sign,verify|$((base_id+3))
+AES-256 CBC,CTR  multi-algo  persist|AES|256|CBC,CTR|encrypt,decrypt|$((base_id+4))
+EOF
 
-    local i=0
-    while [ $i -lt ${#cases[@]} ]; do
-        local desc="${cases[$i]}"
-        local kt="${cases[$((i+1))]}"
-        local sz="${cases[$((i+2))]}"
-        local algo="${cases[$((i+3))]}"
-        local usage="${cases[$((i+4))]}"
-        local kid="${cases[$((i+5))]}"
-
+    while IFS='|' read -r desc kt sz algo usage kid; do
+        [ -z "$desc" ] && continue
+        # Delete any leftover key before testing (subsystem-aware)
+        $CLI key-delete -i "$kid" $extra_base 2>/dev/null
         run_keygen_test "$desc" "$kt" "$sz" "$algo" "$usage" "-i $kid $extra_base"
+        # Cleanup after test (subsystem-aware)
+        $CLI key-delete -i "$kid" $extra_base 2>/dev/null
+    done < "$tmp_cases"
 
-        $CLI key-delete -i "$kid" 2>/dev/null
-
-        i=$((i+6))
-    done
+    rm -f "$tmp_cases"
 
     section_footer
 }
 
 # ---------------------------------------------------------------------------
-# Override discover_and_test to inject subsystem flag
+# discover_and_test with subsystem injection
 # ---------------------------------------------------------------------------
-_orig_discover_and_test=$(declare -f discover_and_test)
-
 discover_and_test() {
-    # Temporarily wrap run_keygen_test to inject subsystem
-    local _saved
-    _saved=$(declare -f run_keygen_test)
+    echo ""
+    echo "Discovering available types/algos via '$CLI keygen-sym --list' ..."
 
-    run_keygen_test() {
-        local desc="$1" key_type="$2" key_size="$3"
-        local algo="$4" usage="$5" extra="${6:-}"
-        [ -n "$SUBSYSTEM" ] && extra="$extra -S $SUBSYSTEM"
-        # Call the original via the lib variable
-        local cmd="$CLI keygen-sym -t $key_type -s $key_size -a $algo -u $usage $extra"
-        _print_row "$desc"
-        local out rc
-        out=$(eval "$cmd" 2>&1); rc=$?
-        if [ $rc -eq 0 ]; then
-            echo "PASS"; PASS=$((PASS + 1))
-        else
-            echo "FAIL"; _record_fail "$desc" "$cmd" "$out"
-        fi
-    }
+    list=$($CLI keygen-sym --list 2>/dev/null)
 
-    # Call the library implementation
-    eval "$_orig_discover_and_test"
-    discover_and_test
+    if [ -z "$list" ]; then
+        echo "  ERROR: empty output – is '$CLI' in PATH?"
+        return 1
+    fi
 
-    # Restore original
-    eval "$_saved"
+    OLDIFS="$IFS"
+
+    # ── Cipher (Symmetric Encryption) ────────────────────────────────────────
+    cipher_kt=$(echo "$list" | awk \
+        '/Keys supporting Symmetric Encryption/{f=1} f && /Key types:/{
+            sub(/.*Key types: */,""); gsub(/ /,""); print; exit}')
+    cipher_modes=$(echo "$list" | awk \
+        '/Keys supporting Symmetric Encryption/{f=1} f && /Modes:/{
+            sub(/.*Modes: */,""); gsub(/ /,""); print; exit}')
+
+    if [ -n "$cipher_kt" ] && [ -n "$cipher_modes" ]; then
+        section_header "Cipher (encrypt/decrypt) ─────────────────────────────────────────────┐"
+        IFS=','
+        for kt in $cipher_kt; do
+            for mode in $cipher_modes; do
+                IFS="$OLDIFS"
+                for sz in $(key_sizes_for_type "$kt"); do
+                    extra=$(_smw_extra "--transient")
+                    run_keygen_test \
+                        "$kt ${sz}-bit  $mode  encrypt,decrypt  transient" \
+                        "$kt" "$sz" "$mode" "encrypt,decrypt" "$extra"
+                done
+                IFS=','
+            done
+        done
+        IFS="$OLDIFS"
+        section_footer
+    fi
+
+    # ── AEAD ─────────────────────────────────────────────────────────────────
+    aead_kt=$(echo "$list" | awk \
+        '/Keys supporting AEAD/{f=1} f && /Key types:/{
+            sub(/.*Key types: */,""); gsub(/ /,""); print; exit}')
+    aead_modes=$(echo "$list" | awk \
+        '/Keys supporting AEAD/{f=1} f && /Modes:/{
+            sub(/.*Modes: */,""); gsub(/ /,""); print; exit}')
+
+    if [ -n "$aead_kt" ] && [ -n "$aead_modes" ]; then
+        section_header "AEAD (encrypt/decrypt) ───────────────────────────────────────────────┐"
+        IFS=','
+        for kt in $aead_kt; do
+            for mode in $aead_modes; do
+                IFS="$OLDIFS"
+                for sz in $(key_sizes_for_type "$kt"); do
+                    extra=$(_smw_extra "--transient")
+                    run_keygen_test \
+                        "$kt ${sz}-bit  $mode  encrypt,decrypt  transient" \
+                        "$kt" "$sz" "$mode" "encrypt,decrypt" "$extra"
+                done
+                IFS=','
+            done
+        done
+        IFS="$OLDIFS"
+        section_footer
+    fi
+
+    # ── CMAC ─────────────────────────────────────────────────────────────────
+    cmac_kt=$(echo "$list" | awk \
+        '/CMAC:/{f=1} f && /Key types:/{
+            sub(/.*Key types: */,""); gsub(/ /,""); print; exit}')
+    cmac_modes=$(echo "$list" | awk \
+        '/CMAC:/{f=1} f && /Modes:/{
+            sub(/.*Modes: */,""); gsub(/ /,""); print; exit}')
+
+    if [ -n "$cmac_kt" ] && [ -n "$cmac_modes" ]; then
+        section_header "CMAC (sign/verify) ───────────────────────────────────────────────────┐"
+        IFS=','
+        for kt in $cmac_kt; do
+            for mode in $cmac_modes; do
+                IFS="$OLDIFS"
+                for sz in $(key_sizes_for_type "$kt"); do
+                    extra=$(_smw_extra "--transient")
+                    run_keygen_test \
+                        "$kt ${sz}-bit  $mode  sign,verify  transient" \
+                        "$kt" "$sz" "$mode" "sign,verify" "$extra"
+                done
+                IFS=','
+            done
+        done
+        IFS="$OLDIFS"
+        section_footer
+    fi
+
+    # ── HMAC ─────────────────────────────────────────────────────────────────
+    hmac_hashes=$(echo "$list" | awk \
+        '/HMAC:/{f=1} f && /Hash:/{
+            sub(/.*Hash: */,""); gsub(/ /,""); print; exit}')
+
+    if [ -n "$hmac_hashes" ]; then
+        section_header "HMAC (sign/verify) ───────────────────────────────────────────────────┐"
+        IFS=','
+        for hash in $hmac_hashes; do
+            IFS="$OLDIFS"
+            for sz in $(key_sizes_for_type "HMAC"); do
+                extra=$(_smw_extra "--transient")
+                run_keygen_test \
+                    "HMAC ${sz}-bit  $hash  sign,verify  transient" \
+                    "HMAC" "$sz" "$hash" "sign,verify" "$extra"
+            done
+            IFS=','
+        done
+        IFS="$OLDIFS"
+        section_footer
+    fi
 }
 
 # ---------------------------------------------------------------------------
@@ -165,21 +241,20 @@ echo "╔═══════════════════════�
 echo "║       NXP SMW CLI — Symmetric Key Generation Test Suite                  ║"
 echo "╚══════════════════════════════════════════════════════════════════════════╝"
 
-if ! command -v "$CLI" &>/dev/null; then
+if ! command -v "$CLI" >/dev/null 2>&1; then
     echo "ERROR: '$CLI' not found in PATH. Aborting."
     exit 1
 fi
 
-# If --subsystem was given test only that one, otherwise test all
 if [ -n "$SUBSYSTEM" ]; then
-    SUBSYSTEMS=("$SUBSYSTEM")
+    subsystems="$SUBSYSTEM"
 else
-    SUBSYSTEMS=("ELE" "TEE")
+    subsystems="ELE TEE"
 fi
 
 GLOBAL_FAIL=0
 
-for SUBSYSTEM in "${SUBSYSTEMS[@]}"; do
+for SUBSYSTEM in $subsystems; do
     echo ""
     echo "╔══════════════════════════════════════════════════════════════════════════╗"
     printf "║  Subsystem: %-61s║\n" "$SUBSYSTEM"
@@ -198,7 +273,7 @@ for SUBSYSTEM in "${SUBSYSTEMS[@]}"; do
     GLOBAL_FAIL=$(( GLOBAL_FAIL + FAIL ))
 done
 
-# Negative cases are subsystem-agnostic — run once at the end
+# Negative cases — subsystem-agnostic, run once
 echo ""
 echo "╔══════════════════════════════════════════════════════════════════════════╗"
 echo "║  CLI Argument Validation (subsystem-independent)                         ║"
@@ -214,7 +289,7 @@ GLOBAL_FAIL=$(( GLOBAL_FAIL + FAIL ))
 
 echo ""
 echo "╔══════════════════════════════════════════════════════════════════════════╗"
-printf "║  Overall result: %s%54s║\n" \
+printf "║  Overall result: %s%43s║\n" \
     "$([ $GLOBAL_FAIL -eq 0 ] && echo "ALL PASSED" || echo "$GLOBAL_FAIL FAILURE(S)")" " "
 echo "╚══════════════════════════════════════════════════════════════════════════╝"
 

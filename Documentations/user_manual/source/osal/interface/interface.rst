@@ -39,6 +39,13 @@ This database objectives are:
    will not be supported like database search operation, user metadata like
    label and identifier.
 
+.. note::
+   The Linux OSAL reference supports importing public keys in the database as a
+   helper for subsystems that cannot import public keys. During cryptographic
+   operations (e.g. verifying a signature), subsystems may retrieve the public
+   key from the database. To enable such scenario, the database must support
+   this capability, and code in the SMW Library checks for the
+   `SMW_OSAL_DB_CAPABILITY_PUBLIC_KEY_IMPORT` flag at runtime.
 
 OSAL APIs
 ^^^^^^^^^

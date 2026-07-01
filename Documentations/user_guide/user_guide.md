@@ -8,6 +8,10 @@
 	- [4.2. Linux OS](#42-linux-os)
 		- [4.2.1. Use of system configuration file](#421-use-of-system-configuration-file)
 		- [4.2.2. Use of OSAL APIs and system environment](#422-use-of-osal-apis-and-system-environment)
+	- [4.3. Object database](#43-object-database)
+		- [4.3.1. Retrieve the database version](#431-retrieve-the-database-version)
+		- [4.3.2. Object database version 1](#432-object-database-version-1)
+		- [4.3.3. Object database version 2](#433-object-database-version-2)
 - [5. PKCS11](#5-pkcs11)
 - [6. TPM2](#6-tpm2)
 - [7. Files Organization](#7-files-organization)
@@ -599,6 +603,62 @@ additional information is printed in the specified debug file.
 
 ```sh
 $ export SMW_LOG_LEVEL=[0-5]
+```
+
+## 4.3. Object database
+
+The SMW object database stores necessary information to manage objects
+(key and data) present in the different subsystems. It is an SQLite database
+that holds a table with the relevant metadata for each object.
+
+> 📝 **Note:**
+> When the database structure is changed, SMW will attempt to migrate
+> the database automatically. This is done by checking the version
+> information stored in the database and comparing it with the version defined
+> in the SMW library. During initialization, the SMW library will check
+> these two values and:
+> - if they are equal: no action.
+> - if the stored version is higher: return an error.
+> - if the defined version is higher: run migration functions to bring the
+>   database version up to date.
+
+### 4.3.1. Retrieve the database version
+
+The database version is stored in the SQLite `user_version` pragma. It can be
+retrieved, for example, using the `smw_database.sh` script installed by the
+SMW Library.
+
+```sh
+$ ./smw_database.sh --get-version
+Using database: /usr/share/smw/smw_objects_database.dat
+2
+```
+
+> 📝 **Note:**
+> You can pass the `--database|-d filename` parameters to the script to use
+> a different database file. Run the script with `--help` to see more options.
+
+### 4.3.2. Object database version 1
+
+Version 1 of the database was introduced in SMW Library version 5.0.
+
+### 4.3.3. Object database version 2
+
+Version 2 of the database was introduced in SMW Library version 5.5. It adds
+a new column that is used to store some objects as plaintext (e.g. public
+keys).
+
+The database can be manually migrated from version 1 using the `smw_database.sh`
+that is provided with the SMW Library. The SMW Library can perform this step
+automatically, so this should not be necessary. 
+
+```sh
+$ ./smw_database.sh --migrate
+Using database: /usr/share/smw/smw_objects_database.dat
+Migrating database - the database will be modified.
+Continue? [y/N] y
+Migrating database
+Migrating to version 2, adding new column
 ```
 
 # 5. PKCS11

@@ -121,6 +121,56 @@ Debug purpose
 .. kdoc-extension:: /public/smw_osal.h
   :functions: smw_osal_latest_subsystem_name
 
+Check capability flags
+""""""""""""""""""""""
+
+.. kdoc-extension:: /public/smw_osal.h
+  :functions: smw_osal_obj_db_has_capability
+
+
+Linux object database implementation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The SMW Linux OSAL reference distributed with the SMW Library manages
+the object database by using the SQLite3 library. Thus, the database is
+actually an SQLite3 table where each known object occupies a row. An
+object could be a key or data object that is associated with a subsystem.
+
+Since the database was introduced in SMW Library version 5.0, the database
+has been versioned, and version 1 was introduced. The metadata corresponding
+to each object are as follows:
+
+- the identifier of the object in the database
+- the identifier of the object as assigned by the subsystem
+- the identifier as defined by the user
+- the subsystem associated with the object
+- object type (e.g. key or data)
+- object size
+- object attributes
+- key type (if object is a key)
+- storage identifier (if assigned by the subsystem)
+- key group (if assigned by the subsystem)
+- label (if assigned by the PKCS#11 API)
+- key permitted algorithm (if object is a key)
+- key usage (if object is a key)
+
+SMW Library version 5.5 has modified the schema so the database version
+has been increased to 2. In this version, a new column was added:
+
+- key public data (only if object is a public key)
+
+This column has the purpose of storing public keys for subsystems that
+cannot import them, but could use them for cryptographic operations if
+they are provided as plain bytes. 
+
+.. note::
+   The reference code automatically updates the database when it detects
+   that the existing database version is behind the version supported by
+   the SMW Library. The SMW Library distribution also includes a script
+   that can be used to perform database upgrades manually. The SMW User
+   Guide, section 4.3, contains examples of how the script can be used.
+
+
 Example
 ^^^^^^^
 

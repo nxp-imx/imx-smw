@@ -25,6 +25,15 @@ if(NOT TEE_TESTS_ENABLED)
   endif()
 endif()
 
+# .json.in tests need to be configured then added to the TESTS list
+file(GLOB INPUT_TESTS ${TEST_DEF_SRC_DIR}/*_${GROUP}*.json.in)
+foreach(INPUT_TEST IN ITEMS ${INPUT_TESTS})
+  cmake_path(GET INPUT_TEST STEM LAST_ONLY OUTPUT_TEST)
+  cmake_path(APPEND CMAKE_CURRENT_BINARY_DIR ${OUTPUT_TEST} OUTPUT_VARIABLE OUTPUT_TEST)
+  configure_file(${INPUT_TEST} ${OUTPUT_TEST})
+  list(APPEND TESTS ${OUTPUT_TEST})
+endforeach()
+
 add_and_install_tests("${TESTS}" "${CMD}")
 
 # Install the test configuration files

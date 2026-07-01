@@ -1,0 +1,45 @@
+{
+	"obj_db": {
+		"filepath": "@SMW_TESTS_TARGET_FILES_DIR_FULL_PATH@/database_version_1.dat"
+	},
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 128,
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"usage": [
+				"ENCRYPT"
+			],
+			"permitted_algo": [
+				"ECB_NO_PADDING"
+			]
+		}
+	},
+	"subtest 1": {
+		"description": "Check an unknown capability and the expected result",
+		"command": "DB_HAS_CAPABILITY",
+		"input": "UNKNOWN_CAPABILITY",
+		"result": "SMW_STATUS_OBJ_DB_CAPABILITY_NOT_SUPPORTED"
+	},
+	"subtest 2": {
+		"description": [
+			"Check that the database was successfully opened and migrated",
+			"The database should support public key import"
+		],
+		"command": "DB_HAS_CAPABILITY",
+		"input": "PUBLIC_KEY_IMPORT"
+	},
+	"subtest 3": {
+		"description": "Generate a key to exercise the migrated database",
+		"command": "GENERATE",
+		"key_name": "key 1",
+		"depends": 2
+	},
+	"subtest 4": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 3
+	}
+}

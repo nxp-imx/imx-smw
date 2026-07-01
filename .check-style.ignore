@@ -4,3 +4,4 @@
 *pkcs11.h
 *pkcs11f.h
 *pkcs11t.h
+*.json.in

@@ -157,6 +157,7 @@
 #define CONFIG		      "CONFIG"
 #define CONFIG_LOAD	      "CONFIG_LOAD"
 #define CONFIG_UNLOAD	      "CONFIG_UNLOAD"
+#define DB_HAS_CAPABILITY     "DB_HAS_CAPABILITY"
 #define DELETE		      "DELETE"
 #define DERIVE		      "DERIVE"
 #define DEVICE		      "DEVICE"

@@ -21,6 +21,31 @@
 #include "exec_smw.h"
 #include "exec_psa.h"
 
+#define DB_CAPABILITY(_name)                                                   \
+	{                                                                      \
+		.name = SMW_OSAL_DB_CAPABILITY_##_name, .string = #_name       \
+	}
+
+static struct {
+	smw_osal_db_capability_t name;
+	const char *string;
+} db_caps_names[] = { DB_CAPABILITY(NONE), DB_CAPABILITY(PUBLIC_KEY_IMPORT) };
+
+static int capability_get_value(const char *string)
+{
+	size_t i = 0;
+
+	if (!string)
+		return SMW_OSAL_DB_CAPABILITY_NONE;
+
+	for (; i < ARRAY_SIZE(db_caps_names); i++) {
+		if (!strcmp(db_caps_names[i].string, string))
+			return db_caps_names[i].name;
+	}
+
+	return SMW_OSAL_DB_CAPABILITY_NONE;
+}
+
 /**
  * execute_save_keys_cmd() - Execute backup keys in a file
  * @cmd: Command name.
@@ -87,6 +112,33 @@ static int execute_suspend_cmd(char *cmd, struct subtest_data *subtest)
 	return res;
 }
 
+int db_has_capability(char *cmd, struct subtest_data *subtest)
+{
+	(void)cmd;
+
+	smw_osal_db_capability_t cap = 0;
+	char *cap_string = NULL;
+	int res;
+
+	res = util_read_json_type(&cap_string, INPUT_OBJ, t_string,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED))
+		goto end;
+
+	cap = capability_get_value(cap_string);
+
+	subtest->api_status = smw_osal_obj_db_has_capability(cap);
+	if (subtest->api_status != SMW_STATUS_OK) {
+		res = ERR_CODE(API_STATUS_NOK);
+		goto end;
+	}
+
+	res = ERR_CODE(PASSED);
+
+end:
+	return res;
+}
+
 __weak int execute_command_smw(char *cmd, struct subtest_data *subtest)
 {
 	(void)cmd;
@@ -122,6 +174,7 @@ static int execute_command(char *cmd, struct subtest_data *subtest)
 		{ SAVE_KEY_IDS, &execute_save_keys_cmd },
 		{ RESTORE_KEY_IDS, &execute_restore_keys_cmd },
 		{ SUSPEND, &execute_suspend_cmd },
+		{ DB_HAS_CAPABILITY, &db_has_capability },
 	};
 
 	for (size_t idx = 0; idx < ARRAY_SIZE(cmd_list); idx++) {

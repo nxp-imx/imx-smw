@@ -441,7 +441,13 @@ enum cli_exit_code cli_keygen_sym_operation(struct parsed_options *args)
 	if (!is_psa_api_success("psa_generate_key", status))
 		goto cleanup;
 
-	/* Print result */
+	/* Retrieve actual attributes from subsystem */
+	psa_reset_key_attributes(&attributes);
+	status = psa_get_key_attributes(key_id, &attributes);
+	if (!is_psa_api_success("psa_get_key_attributes", status))
+		goto cleanup;
+
+	/* Print result using actual subsystem attributes */
 	print_key_result(key_id, &attributes, args->op.keygen.transient);
 
 	ret = CLI_EXIT_SUCCESS;

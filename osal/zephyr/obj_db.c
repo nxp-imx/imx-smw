@@ -154,3 +154,9 @@ int osal_zephyr_find_obj_final(void *find_ctx)
 	(void)find_ctx;
 	return 0;
 }
+
+int osal_zephyr_db_has_capability(smw_osal_db_capability_t flag)
+{
+	(void)flag;
+	return -1;
+}

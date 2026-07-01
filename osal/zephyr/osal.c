@@ -289,6 +289,7 @@ enum smw_status_code smw_osal_lib_init(void)
 		.shared_memory_alloc = osal_shared_memory_alloc,
 		.shared_memory_free = osal_shared_memory_free,
 		.get_mu_base = osal_get_mu_base,
+		.db_has_capability = osal_zephyr_db_has_capability,
 	};
 	static struct se_info default_ele_info = {
 		.storage_id = 0x50534154,  /* PSAT */

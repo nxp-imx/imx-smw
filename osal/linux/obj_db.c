@@ -2217,3 +2217,11 @@ end:
 
 	return ret;
 }
+
+int obj_db_has_capability(smw_osal_db_capability_t flag)
+{
+	if (flag == SMW_OSAL_DB_CAPABILITY_PUBLIC_KEY_IMPORT)
+		return 0;
+
+	return -1;
+}

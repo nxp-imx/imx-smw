@@ -390,6 +390,14 @@ typedef int (*smw_osal_db_find_next_t)(void *context,
  */
 typedef int (*smw_osal_db_find_final_t)(void *context);
 
+/** typedef smw_osal_db_has_capability_t - Check the database capability flag.
+ * @flag: [in] Capability flag to check.
+ * Return:
+ *  - 0 on success.
+ *  - negative value on failure or unsupported flag.
+ */
+typedef int (*smw_osal_db_has_capability_t)(smw_osal_db_capability_t flag);
+
 /**
  * typedef smw_osal_file_initialize_t - Initialize NVM storage file system
  *
@@ -568,6 +576,8 @@ typedef void (*smw_osal_wait_t)(uint32_t usec_to_wait);
  *		      smw_osal_shared_memory_free_t().
  * @get_mu_base: (**optional**) Get ELE MU base address , see
  *		       smw_osal_get_mu_base_t().
+ * @db_has_capability: (**mandatory**) Check if the object database supports the
+ *		       specified capability.
  *
  * This structure defines the SMW OSAL operations interface using function
  * pointers that are implemented in the OSAL module.
@@ -620,6 +630,7 @@ struct smw_ops {
 	smw_osal_shared_memory_free_t shared_memory_free;
 
 	smw_osal_get_mu_base_t get_mu_base;
+	smw_osal_db_has_capability_t db_has_capability;
 };
 
 /**

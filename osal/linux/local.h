@@ -190,6 +190,15 @@ int obj_db_open(const char *db);
 void obj_db_close(void);
 
 /**
+ * obj_db_has_capability() - Check the object database capability flag.
+ * @flag: Capability flag to check.
+ *
+ * Return:
+ * 0 if success, -1 otherwise
+ */
+int obj_db_has_capability(smw_osal_db_capability_t flag);
+
+/**
  * obj_db_get_info() - Get an object information from DB
  * @obj: Object
  *

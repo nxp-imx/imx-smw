@@ -140,4 +140,22 @@ enum smw_status_code smw_osal_set_subsystem_info(smw_subsystem_t subsystem,
  */
 enum smw_status_code smw_osal_open_obj_db(const char *file, size_t len);
 
+/**
+ * smw_osal_obj_db_has_capability() - Check the object database capability flag.
+ * @flag: [in] Capability flag to check.
+ *
+ * Check the object database capability flag. The database must
+ * already be opened.
+ *
+ * Return:
+ *  - SMW_STATUS_OK
+ *      Success and flag is supported.
+ *  - SMW_STATUS_INVALID_LIBRARY_CONTEXT
+ *      Library is not initialized.
+ *  - SMW_STATUS_OBJ_DB_CAPABILITY_NOT_SUPPORTED
+ *      Capability flag is not supported.
+ */
+enum smw_status_code
+smw_osal_obj_db_has_capability(smw_osal_db_capability_t flag);
+
 #endif /* __SMW_OSAL_H__ */

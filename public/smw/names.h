@@ -500,4 +500,18 @@ typedef enum {
 	SMW_ASYMMETRIC_ENCRYPTION_MODE_NAME_NB
 } smw_asymmetric_encryption_mode_t;
 
+/**
+ * typedef smw_osal_db_capability_t - OSAL database capability names
+ *
+ * Values:
+ * * SMW_OSAL_DB_CAPABILITY_NONE: No capability specified
+ * * SMW_OSAL_DB_CAPABILITY_PUBLIC_KEY_IMPORT: Public key import capability
+ * * SMW_OSAL_DB_CAPABILITY_NB: Number of database capabilities
+ */
+typedef enum {
+	SMW_OSAL_DB_CAPABILITY_NONE,
+	SMW_OSAL_DB_CAPABILITY_PUBLIC_KEY_IMPORT,
+	SMW_OSAL_DB_CAPABILITY_NB
+} smw_osal_db_capability_t;
+
 #endif /* __SMW_NAMES_H__ */

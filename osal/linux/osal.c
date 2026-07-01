@@ -573,6 +573,22 @@ void osal_wait(uint32_t usec_to_wait)
 	usleep(usec_to_wait);
 }
 
+__export enum smw_status_code
+smw_osal_obj_db_has_capability(smw_osal_db_capability_t flag)
+{
+	int ret = 0;
+	struct osal_ctx *ctx = get_osal_ctx();
+
+	if (!ctx || !ctx->lib_initialized)
+		return SMW_STATUS_INVALID_LIBRARY_CONTEXT;
+
+	ret = obj_db_has_capability(flag);
+	if (ret != 0)
+		return SMW_STATUS_OBJ_DB_CAPABILITY_NOT_SUPPORTED;
+
+	return SMW_STATUS_OK;
+}
+
 __export enum smw_status_code smw_osal_lib_init(void)
 {
 	enum smw_status_code status = SMW_STATUS_OK;
@@ -618,6 +634,7 @@ __export enum smw_status_code smw_osal_lib_init(void)
 	ops.find_obj_init = obj_db_find_init;
 	ops.find_obj_next = obj_db_find_next;
 	ops.find_obj_final = obj_db_find_finalize;
+	ops.db_has_capability = obj_db_has_capability;
 
 	ops.dcache_invalidate = dcache_invalidate;
 	ops.dcache_clean = dcache_clean;

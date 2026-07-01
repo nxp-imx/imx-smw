@@ -121,6 +121,7 @@ int osal_zephyr_find_obj_init(void **find_ctx,
 int osal_zephyr_find_obj_next(void *find_ctx,
 			      struct smw_osal_object *descriptor);
 int osal_zephyr_find_obj_final(void *find_ctx);
+int osal_zephyr_db_has_capability(int *capabilities);
 
 /* File operations */
 int osal_zephyr_file_write(uint32_t blob_id_msb, uint32_t blob_id_lsb,

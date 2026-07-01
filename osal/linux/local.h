@@ -65,7 +65,7 @@
 #define CONFIG_SECO	       BIT(3)
 #define CONFIG_ELE	       BIT(4)
 
-#define CONFIG_SMW_DATABASE_VERSION 1
+#define CONFIG_SMW_DATABASE_VERSION 2
 
 /*
  * Data cache maintenance macros required by ELA:

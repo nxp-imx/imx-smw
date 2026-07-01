@@ -35,6 +35,7 @@
  * @TAG_LABEL: PKCS11 storage object label
  * @TAG_KEY_PERMITTED_ALGO: SMW key permitted algo
  * @TAG_KEY_USAGE: SMW key usage flag
+ * @TAG_KEY_PUBLIC_DATA: Public key data
  */
 /* Attribute tag */
 enum obj_attribute_tag {
@@ -53,6 +54,7 @@ enum obj_attribute_tag {
 	TAG_LABEL,
 	TAG_KEY_PERMITTED_ALGO,
 	TAG_KEY_USAGE,
+	TAG_KEY_PUBLIC_DATA /* 15 */
 };
 
 #define OBJECT_DB_TABLE_NAME "OBJECTS"
@@ -109,6 +111,11 @@ struct obj_db {
 	void *mutex;
 	unsigned int nb_ranges;
 	struct range_ids *range;
+};
+
+struct sqlite_callback_data {
+	void *user_data;
+	sqlite3_stmt *stmt;
 };
 
 static int lock_db(struct obj_db *db)
@@ -276,6 +283,349 @@ static int sql_print_create(char *name, uint32_t start_id,
 
 end:
 	return ret;
+}
+
+static bool obj_db_can_store_key_data(struct smw_object_descriptor *descriptor)
+{
+	if (descriptor->type != SMW_OBJECT_TYPE_NAME_PUBLIC_KEY)
+		return false;
+
+	if (!descriptor->key.buffer)
+		return false;
+
+	if (descriptor->key.type_name == SMW_KEY_TYPE_NAME_RSA) {
+		if (!descriptor->key.buffer->rsa.public_data ||
+		    !descriptor->key.buffer->rsa.modulus)
+			return false;
+	} else {
+		if (!descriptor->key.buffer->gen.public_data)
+			return false;
+	}
+
+	return true;
+}
+
+static size_t obj_db_blob_get_size(struct smw_osal_object *obj)
+{
+	struct smw_object_descriptor *descriptor = obj->obj_desc;
+	struct smw_keypair_rsa *rsa = NULL;
+	struct smw_keypair_gen *gen = NULL;
+	size_t size = 0;
+
+	if (!obj_db_can_store_key_data(descriptor))
+		return 0;
+
+	if (!descriptor->key.buffer)
+		return 0;
+
+	if (descriptor->key.type_name == SMW_KEY_TYPE_NAME_RSA) {
+		rsa = &descriptor->key.buffer->rsa;
+
+		if (INC_OVERFLOW(size, sizeof(rsa->public_length)))
+			return 0;
+
+		if (INC_OVERFLOW(size, sizeof(rsa->modulus_length)))
+			return 0;
+
+		if (INC_OVERFLOW(size, sizeof(rsa->public_exponent_length)))
+			return 0;
+
+		if (INC_OVERFLOW(size, rsa->public_length))
+			return 0;
+
+		if (INC_OVERFLOW(size, rsa->modulus_length))
+			return 0;
+
+		if (INC_OVERFLOW(size, rsa->public_exponent_length))
+			return 0;
+	} else {
+		gen = &descriptor->key.buffer->gen;
+
+		if (INC_OVERFLOW(size, sizeof(gen->public_length)))
+			return 0;
+
+		if (INC_OVERFLOW(size, gen->public_length))
+			return 0;
+	}
+
+	return size;
+}
+
+static int blob_write_upd_offset(sqlite3_blob *blob, const void *ptr,
+				 size_t size, int *offset)
+{
+	int result = 0;
+	int len = 0;
+
+	if (size > INT_MAX)
+		return -1;
+
+	len = (int)size;
+
+	result = sqlite3_blob_write(blob, ptr, len, *offset);
+	if (result != SQLITE_OK)
+		return result;
+
+	if (INC_OVERFLOW(*offset, len))
+		result = -1;
+
+	return result;
+}
+
+static int blob_read_upd_offset(sqlite3_blob *blob, void *ptr, size_t size,
+				int *offset)
+{
+	int result = 0;
+	int len = 0;
+
+	if (size > INT_MAX)
+		return -1;
+
+	len = (int)size;
+
+	result = sqlite3_blob_read(blob, ptr, len, *offset);
+	if (result != SQLITE_OK)
+		return result;
+
+	if (INC_OVERFLOW(*offset, len))
+		result = -1;
+
+	return result;
+}
+
+static int obj_db_blob_update(struct smw_osal_object *obj)
+{
+	struct smw_object_descriptor *descriptor = obj->obj_desc;
+	struct obj_db *db = NULL;
+	sqlite3_blob *blob = NULL;
+
+	struct smw_keypair_rsa *rsa = NULL;
+	struct smw_keypair_gen *gen = NULL;
+
+	int result = 0;
+	int offset = 0;
+
+	if (!obj_db_can_store_key_data(descriptor))
+		return -1;
+
+	db = get_database_obj(obj->obj_desc->persistency, obj->obj_desc->id,
+			      true);
+	if (!db)
+		goto exit;
+
+	if (!db->handle) {
+		DBG_PRINTF(ERROR, "Object database not open");
+		goto exit;
+	}
+
+	if (lock_db(db))
+		goto exit;
+
+	result = sqlite3_blob_open(db->handle, "main", OBJECT_DB_TABLE_NAME,
+				   "0xF", obj->obj_desc->id, 1, &blob);
+	if (result != SQLITE_OK || !blob)
+		goto exit;
+
+	gen = &obj->obj_desc->key.buffer->gen;
+
+	if (descriptor->key.type_name == SMW_KEY_TYPE_NAME_RSA) {
+		rsa = &obj->obj_desc->key.buffer->rsa;
+
+		if (blob_write_upd_offset(blob, &rsa->public_length,
+					  sizeof(rsa->public_length), &offset))
+			goto exit;
+
+		if (blob_write_upd_offset(blob, &rsa->modulus_length,
+					  sizeof(rsa->modulus_length), &offset))
+			goto exit;
+
+		if (blob_write_upd_offset(blob, &rsa->public_exponent_length,
+					  sizeof(rsa->public_exponent_length),
+					  &offset))
+			goto exit;
+
+		if (blob_write_upd_offset(blob, rsa->public_data,
+					  rsa->public_length, &offset))
+			goto exit;
+
+		if (blob_write_upd_offset(blob, rsa->modulus,
+					  rsa->modulus_length, &offset))
+			goto exit;
+
+		if (blob_write_upd_offset(blob, rsa->public_exponent,
+					  rsa->public_exponent_length, &offset))
+			goto exit;
+
+	} else {
+		gen = &obj->obj_desc->key.buffer->gen;
+
+		if (blob_write_upd_offset(blob, &gen->public_length,
+					  sizeof(gen->public_length), &offset))
+			goto exit;
+
+		if (blob_write_upd_offset(blob, gen->public_data,
+					  gen->public_length, &offset))
+			goto exit;
+	}
+
+	if (offset != sqlite3_blob_bytes(blob)) {
+		/* The blob has been pre-allocated to a calculated length,
+		 * so if the written data length is different, then maybe the object
+		 * has been modified (key type, public length, ...). SQLite can
+		 * detect overwrites, but not underwrites.
+		 */
+		DBG_PRINTF(ERROR, "Blob size and written size mismatch!");
+		result = -1;
+	}
+
+exit:
+	if (blob)
+		sqlite3_blob_close(blob);
+
+	(void)unlock_db(db);
+
+	return result;
+}
+
+static struct smw_keypair_buffer *
+obj_db_blob_get_key(struct smw_osal_object *obj)
+{
+	struct obj_db *db = NULL;
+	sqlite3_blob *blob = NULL;
+
+	struct smw_keypair_buffer *buffer = NULL;
+	struct smw_keypair_rsa *rsa = NULL;
+	struct smw_keypair_gen *gen = NULL;
+
+	int result = 0;
+	int offset = 0;
+
+	db = get_database_obj(obj->obj_desc->persistency, obj->obj_desc->id,
+			      true);
+	if (!db)
+		goto exit;
+
+	if (!db->handle) {
+		DBG_PRINTF(ERROR, "Object database not open");
+		goto exit;
+	}
+
+	/* This functions is called indirectly by obj_db_get_info() so
+	 * the database mutex is already locked. No need to call lock_db() here.
+	 */
+
+	result = sqlite3_blob_open(db->handle, "main", OBJECT_DB_TABLE_NAME,
+				   "0xF", obj->obj_desc->id, 0, &blob);
+	if (result != SQLITE_OK || !blob)
+		goto exit;
+
+	if (sqlite3_blob_bytes(blob) == 0) {
+		result = -1;
+		goto exit;
+	}
+
+	buffer = calloc(1, sizeof(*buffer));
+	if (!buffer) {
+		result = -1;
+		goto exit;
+	}
+
+	buffer->format_name = SMW_KEY_FORMAT_NAME_HEX;
+
+	if (obj->obj_desc->key.type_name == SMW_KEY_TYPE_NAME_RSA) {
+		rsa = &buffer->rsa;
+
+		if (blob_read_upd_offset(blob, &rsa->public_length,
+					 sizeof(rsa->public_length), &offset))
+			goto exit;
+
+		if (blob_read_upd_offset(blob, &rsa->modulus_length,
+					 sizeof(rsa->modulus_length), &offset))
+			goto exit;
+
+		if (blob_read_upd_offset(blob, &rsa->public_exponent_length,
+					 sizeof(rsa->public_exponent_length),
+					 &offset))
+			goto exit;
+
+		rsa->public_data = malloc(rsa->public_length);
+		if (!rsa->public_data) {
+			result = -1;
+			goto exit;
+		}
+		if (blob_read_upd_offset(blob, rsa->public_data,
+					 rsa->public_length, &offset))
+			goto exit;
+
+		rsa->modulus = malloc(rsa->modulus_length);
+		if (!rsa->modulus) {
+			result = -1;
+			goto exit;
+		}
+		if (blob_read_upd_offset(blob, rsa->modulus,
+					 rsa->modulus_length, &offset))
+			goto exit;
+
+		rsa->public_exponent = malloc(rsa->public_exponent_length);
+		if (!rsa->public_exponent) {
+			result = -1;
+			goto exit;
+		}
+		if (blob_read_upd_offset(blob, rsa->public_exponent,
+					 rsa->public_exponent_length, &offset))
+			goto exit;
+
+	} else {
+		gen = &buffer->gen;
+
+		if (blob_read_upd_offset(blob, &gen->public_length,
+					 sizeof(gen->public_length), &offset))
+			goto exit;
+
+		gen->public_data = malloc(gen->public_length);
+		if (!gen->public_data) {
+			result = -1;
+			goto exit;
+		}
+		if (blob_read_upd_offset(blob, gen->public_data,
+					 gen->public_length, &offset))
+			goto exit;
+	}
+
+	if (offset != sqlite3_blob_bytes(blob)) {
+		/* The blob has been pre-allocated to a calculated length,
+		 * so if the read data length is different, then maybe the object
+		 * has been modified (key type, public length, ...). SQLite can
+		 * detect overwrites, but not underwrites.
+		 */
+		DBG_PRINTF(ERROR, "Blob size and read size mismatch!");
+		result = -1;
+	}
+
+exit:
+	if (blob)
+		sqlite3_blob_close(blob);
+
+	if (result != SQLITE_OK && buffer) {
+		if (rsa) {
+			if (rsa->public_data)
+				free(buffer->rsa.public_data);
+
+			if (rsa->modulus)
+				free(rsa->modulus);
+
+			if (rsa->public_exponent)
+				free(rsa->public_exponent);
+		} else if (gen) {
+			if (gen->public_data)
+				free(gen->public_data);
+		}
+
+		free(buffer);
+		buffer = NULL;
+	}
+
+	return buffer;
 }
 
 static int sql_print_insert(struct smw_osal_object *obj, char *sql,
@@ -458,6 +808,7 @@ static int sql_print_update(struct smw_osal_object *obj, char *sql,
 	int ret = -1;
 	struct smw_object_descriptor *descriptor = obj->obj_desc;
 	smw_attr_attributes_t obj_attributes = 0;
+	size_t blob_size = 0;
 	static const char *update = "UPDATE %s SET ";
 
 	if (sql_print(sql, length, update, OBJECT_DB_TABLE_NAME))
@@ -470,7 +821,7 @@ static int sql_print_update(struct smw_osal_object *obj, char *sql,
 	/*
 	 * Update fields after object creation
 	 */
-	if (obj->obj_id_subsystem) {
+	if (obj->obj_id_subsystem || obj_db_can_store_key_data(descriptor)) {
 		switch (descriptor->type) {
 		case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
 		case SMW_OBJECT_TYPE_NAME_PUBLIC_KEY:
@@ -530,6 +881,13 @@ static int sql_print_update(struct smw_osal_object *obj, char *sql,
 			if (sql_print(sql, length, "\"0x%X\" = %d, ",
 				      TAG_KEY_USAGE,
 				      descriptor->key.attributes.usage_flags))
+				goto end;
+
+			blob_size = obj_db_blob_get_size(obj);
+
+			/* field: TAG_KEY_PUBLIC_DATA */
+			if (sql_print(sql, length, "\"0x%X\" = ZEROBLOB(%ld), ",
+				      TAG_KEY_PUBLIC_DATA, blob_size))
 				goto end;
 
 			/* field: TAG_STORAGE_ID */
@@ -858,6 +1216,112 @@ end:
 }
 
 /**
+ * obj_db_migrate_1_to_2() - Migrate database from version 1 to version 2.
+ * @db: Object database
+ *
+ * Subsystems may disallow importing public keys, but could still execute
+ * operations if the public keys are instead provided in plaintext. For
+ * this scenario, the version 2 of the database adds a new column to store
+ * the public data as plaintext.
+ *
+ * This function executes a migration from version 1 to version 2 by adding
+ * the new column.
+ *
+ * Return:
+ * 0 (SQLITE_OK) if successful, or Sqlite error code otherwise
+ */
+static int obj_db_migrate_1_to_2(struct obj_db *db)
+{
+	char *sql = NULL;
+	size_t sqllen = 0;
+	const char *stmt = "BEGIN TRANSACTION;\n"
+			   " ALTER TABLE OBJECTS ADD COLUMN \"0x%X\" BLOB;\n"
+			   " PRAGMA user_version = 2;\n"
+			   "COMMIT;";
+	char *messageError = NULL;
+	int result = SQLITE_ERROR;
+
+	if (sql_print(NULL, &sqllen, stmt, TAG_KEY_PUBLIC_DATA))
+		goto end;
+
+	sql = calloc(1, sqllen + 1);
+	if (!sql)
+		goto end;
+
+	sqllen = 0;
+
+	if (sql_print(sql, &sqllen, stmt, TAG_KEY_PUBLIC_DATA))
+		goto end;
+
+	if (lock_db(db))
+		goto end;
+
+	result = sqlite3_exec(db->handle, sql, NULL, NULL, &messageError);
+	if (result != SQLITE_OK) {
+		DBG_PRINTF(ERROR, "SQL Error: %s\n", messageError);
+		DBG_PRINTF(ERROR, "SQL Request: %s\n", sql);
+		sqlite3_free(messageError);
+	}
+
+	(void)unlock_db(db);
+
+end:
+	if (sql)
+		free(sql);
+
+	return result;
+}
+
+/**
+ * obj_db_migrate_object_table() - Executes migrations on the database.
+ * @db: Object database
+ * @version: Old version of the database
+ *
+ * This function updates an exising database from an older version to
+ * the current version. It can execute multiple migration functions in
+ * sequence until the version is brought up to date with
+ * CONFIG_SMW_DATABASE_VERSION.
+ *
+ * Return:
+ * 0 (SQLITE_OK) if success, 1 (SQLITE_ERROR) otherwise
+ */
+static int obj_db_migrate_object_table(struct obj_db *db, int version)
+{
+	static int (*migrations[])(struct obj_db *) = {
+		NULL, /* 0 to 1, no migration */
+		obj_db_migrate_1_to_2,
+	};
+	size_t i;
+
+	if (ARRAY_SIZE(migrations) != CONFIG_SMW_DATABASE_VERSION) {
+		DBG_PRINTF(ERROR,
+			   "Missing migration for upgrading to version %d\n",
+			   CONFIG_SMW_DATABASE_VERSION);
+		return SQLITE_ERROR;
+	}
+
+	if (version == CONFIG_SMW_DATABASE_VERSION)
+		return SQLITE_OK;
+
+	if (version > CONFIG_SMW_DATABASE_VERSION) {
+		DBG_PRINTF(ERROR,
+			   "Invalid database version %d, expected at most %d\n",
+			   version, CONFIG_SMW_DATABASE_VERSION);
+		return SQLITE_ERROR;
+	}
+
+	for (i = version; i < CONFIG_SMW_DATABASE_VERSION; i++) {
+		if (!migrations[i])
+			continue;
+
+		if (migrations[i](db) != SQLITE_OK)
+			return SQLITE_ERROR;
+	}
+
+	return SQLITE_OK;
+}
+
+/**
  * obj_db_create_object_table() - Create the objects tables.
  * @db: Object database
  *
@@ -881,6 +1345,7 @@ static int obj_db_create_object_table(struct obj_db *db)
 		ATTRIBUTE(TEXT, NOT_NULL, LABEL),
 		ATTRIBUTE(INTEGER, NONE, KEY_PERMITTED_ALGO),
 		ATTRIBUTE(INTEGER, NONE, KEY_USAGE),
+		ATTRIBUTE(BLOB, NONE, KEY_PUBLIC_DATA)
 	};
 	unsigned int nb_attributes = ARRAY_SIZE(attributes);
 
@@ -968,13 +1433,15 @@ end:
  * @obj: Reference to the object
  * @attribute_tag_str: Tag id in string format
  * @value_str: Value in string format
+ * @value_size: @value_str length in bytes
  *
  * Return:
  * 0 if success, -1 otherwise
  */
 static int osal_obj_set_specific_attribute(struct smw_osal_object *obj,
 					   const char *attribute_tag_str,
-					   const unsigned char *value_str)
+					   const unsigned char *value_str,
+					   int value_size)
 {
 	int ret = -1;
 	struct smw_object_descriptor *descriptor = NULL;
@@ -1070,6 +1537,11 @@ static int osal_obj_set_specific_attribute(struct smw_osal_object *obj,
 			descriptor->data.length = attribute_value;
 		break;
 
+	case TAG_KEY_PUBLIC_DATA:
+		if (value_size != 0 &&
+		    descriptor->type == SMW_OBJECT_TYPE_NAME_PUBLIC_KEY)
+			descriptor->key.buffer = obj_db_blob_get_key(obj);
+
 	default:
 		break;
 	}
@@ -1092,16 +1564,21 @@ static int obj_db_to_osal_obj(void *data, int argc, char **argv,
 {
 	int ret = -1;
 	int i = 0;
+	int sz;
+	struct sqlite_callback_data *cbdata;
 
 	if (!data)
 		goto end;
+
+	cbdata = data;
 
 	/* Get common attributes */
 	for (; i < argc; i++) {
 		if (!argv[i])
 			continue;
 
-		if (osal_obj_set_common_attribute(data, azColName[i],
+		if (osal_obj_set_common_attribute(cbdata->user_data,
+						  azColName[i],
 						  (unsigned char *)argv[i]))
 			goto end;
 	}
@@ -1110,8 +1587,12 @@ static int obj_db_to_osal_obj(void *data, int argc, char **argv,
 		if (!argv[i])
 			continue;
 
-		if (osal_obj_set_specific_attribute(data, azColName[i],
-						    (unsigned char *)argv[i]))
+		sz = sqlite3_column_bytes(cbdata->stmt, i);
+
+		if (osal_obj_set_specific_attribute(cbdata->user_data,
+						    azColName[i],
+						    (unsigned char *)argv[i],
+						    sz))
 			goto end;
 	}
 
@@ -1141,6 +1622,7 @@ static int obj_db_exec(struct smw_osal_object *obj, char *sql, void *data,
 	sqlite3_int64 rowid = 0;
 	char *messageError = NULL;
 	int result = SQLITE_OK;
+	struct sqlite_callback_data cbdata = { 0 };
 
 	if (!ctx)
 		goto exit;
@@ -1177,7 +1659,11 @@ static int obj_db_exec(struct smw_osal_object *obj, char *sql, void *data,
 		}
 	}
 
-	result = sqlite3_exec(db->handle, sql, callback, data, &messageError);
+	cbdata.user_data = data;
+	cbdata.stmt = stmt;
+
+	result =
+		sqlite3_exec(db->handle, sql, callback, &cbdata, &messageError);
 	if (result != SQLITE_OK) {
 		DBG_PRINTF(ERROR, "SQL Error: %s\n", messageError);
 		DBG_PRINTF(ERROR, "SQL Request: %s\n", sql);
@@ -1346,15 +1832,7 @@ static int open_db(struct obj_db *db, const char *filename)
 		version = sqlite3_column_int(stmt, 0);
 		sqlite3_finalize(stmt);
 
-		if (version != CONFIG_SMW_DATABASE_VERSION) {
-			DBG_PRINTF(ERROR,
-				   "Invalid data base version %d, expected %d\n",
-				   version, CONFIG_SMW_DATABASE_VERSION);
-			ret = SQLITE_ERROR;
-			goto end;
-		}
-
-		ret = SQLITE_OK;
+		ret = obj_db_migrate_object_table(db, version);
 	} else {
 		ret = obj_db_create_object_table(db);
 	}
@@ -1500,6 +1978,11 @@ int obj_db_update(struct smw_osal_object *obj)
 		goto end;
 
 	ret = obj_db_exec(obj, sql, NULL, NULL);
+	if (ret != 0)
+		goto end;
+
+	if (obj->obj_desc->key.buffer)
+		ret = obj_db_blob_update(obj);
 
 end:
 	if (sql)
@@ -1658,6 +2141,7 @@ int obj_db_find_next(void *find_ctx, struct smw_osal_object *obj)
 	sqlite3_stmt *stmt = NULL;
 	const char *column_name = NULL;
 	const unsigned char *column_value = NULL;
+	int column_size = 0;
 
 	if (!op_ctx || !op_ctx->stmt || !obj)
 		return ret;
@@ -1686,11 +2170,12 @@ int obj_db_find_next(void *find_ctx, struct smw_osal_object *obj)
 	for (i = 0; i < num_cols; i++) {
 		column_name = sqlite3_column_name(stmt, i);
 		column_value = sqlite3_column_text(stmt, i);
+		column_size = sqlite3_column_bytes(stmt, i);
 		if (!column_value)
 			continue;
 
 		if (osal_obj_set_specific_attribute(obj, column_name,
-						    column_value))
+						    column_value, column_size))
 			goto end;
 	}
 

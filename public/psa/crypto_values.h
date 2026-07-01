@@ -2661,7 +2661,6 @@
 /**
  * PSA_KEY_TYPE_CHACHA20 - Key for the ChaCha20 stream cipher or the
  *                         ChaCha20-Poly1305 AEAD algorithm.
- * .. [[symmetric, cipher, aead]]
  *
  * The ChaCha20 key size is 256 bits (32 bytes).
  *
@@ -2685,7 +2684,6 @@
 /**
  * PSA_KEY_TYPE_XCHACHA20 - Key for the XChaCha20 stream cipher or the
  *                          XChaCha20-Poly1305 AEAD algorithm.
- * .. [[symmetric, cipher, aead]]
  *
  * The XChaCha20 key size is 256 bits (32 bytes)\:
  *

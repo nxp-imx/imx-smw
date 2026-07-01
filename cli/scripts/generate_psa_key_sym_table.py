@@ -159,7 +159,8 @@ def parse_psa_algorithms(header_path, constants, validations):
         skip_patterns = [
             'BASE', 'FLAG', 'MASK', 'OFFSET', 'NONE', 'VENDOR', 'CATEGORY',
             'ANY_HASH', 'HASH_EDDSA', 'DETERMINISTIC_ECDSA', 'ECDSA',
-            'HMAC', 'HKDF', 'RSA_', 'PBKDF2', 'TLS12', 'PURE_EDDSA',
+            'HMAC', 'HKDF', 'RSA_', 'PBKDF2', 'TLS12', 'PURE_EDDSA', 'STREAM_CIPHER',
+            'STAR', 'PKCS7', 'XCHACHA20'
         ]
         if any(x in name for x in skip_patterns):
             continue

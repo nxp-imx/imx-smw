@@ -95,14 +95,6 @@ static psa_algorithm_t parse_psa_single_algorithm(const char *algo_str,
 		return PSA_ALG_NONE;
 	}
 
-	/* Special handling for POLY1305 - depends on key type */
-	if (!strcasecmp(algo_str, "POLY1305")) {
-		if (key_type && !strcasecmp(key_type, "CHACHA20"))
-			return PSA_ALG_CHACHA20_POLY1305;
-		if (key_type && !strcasecmp(key_type, "XCHACHA20"))
-			return PSA_ALG_XCHACHA20_POLY1305;
-	}
-
 	/* Try CMAC modes */
 	cmac_algos = get_cmac_algo_mappings();
 	cmac_count = get_cmac_algo_mappings_count();

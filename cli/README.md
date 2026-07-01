@@ -103,10 +103,10 @@ cli/
 │   ├── generate_lifecycle_table.py     # Generate lifecycle enum and table
 │   ├── generate_psa_error_table.py     # Generate PSA error handler
 │   ├── generate_psa_hash_table.py      # Generate PSA hash algorithm mapping table
-│   ├── generate_psa_key_type_table.py  # Generate PSA key type/algorithm mapping table
+│   ├── generate_psa_key_sym_table.py   # Generate PSA key type/algorithm mapping table
 │   ├── generate_smw_error_table.py     # Generate SMW error handler
 │   ├── generate_smw_hash_table.py      # Generate SMW hash algorithm mapping table
-│   ├── generate_smw_key_type_table.py  # Generate SMW key type/algorithm mapping table
+│   ├── generate_smw_key_sym_table.py   # Generate SMW key type/algorithm mapping table
 │   ├── nxp_psa_completion.bash         # Bash completion for nxp_psa CLI
 │   └── nxp_smw_completion.bash         # Bash completion for nxp_smw CLI
 │
@@ -245,8 +245,8 @@ To add a new operation (e.g., `cipher`):
 | `dev-get-uuid` | Get device UUID | ✅ | ❌ |
 | `dev-set-lifecycle` | Set device lifecycle | ✅ | ❌ |
 | `hash` | Compute cryptographic hash | ✅ | ✅ |
-| `rng` | Generate random numbers | ✅ | ✅ |
 | `keygen-sym` | Generate symmeric key | ✅ | ✅ |
+| `rng` | Generate random numbers | ✅ | ✅ |
 *(More operations coming soon: cipher, sign, verify, etc.)*
 
 ### Dependencies

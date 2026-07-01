@@ -158,6 +158,9 @@ void cli_keygen_sym_print_list(void)
 	printf("Available Symmetric Key Types (%s)\n", CLI_BACKEND_NAME);
 	printf("=======================================\n\n");
 
+	printf("Usage Flags: encrypt, decrypt, sign, verify,");
+	printf(" sign_hash, verify_hash.\n\n");
+
 	printf("Key Types: ");
 	for (i = 0; i < key_count; i++) {
 		if (i > 0)
@@ -167,7 +170,7 @@ void cli_keygen_sym_print_list(void)
 	printf("\n\n");
 
 	if (cipher_count > 0) {
-		printf("Cipher (encrypt/decrypt):\n");
+		printf("Keys supporting Symmetric Encryption (encrypt/decrypt):\n");
 		printf("  Key types: ");
 		print_list(cipher_key_types, cipher_kt_count);
 		printf("\n  Modes:     ");
@@ -178,7 +181,7 @@ void cli_keygen_sym_print_list(void)
 	}
 
 	if (aead_count > 0) {
-		printf("AEAD:\n");
+		printf("Keys supporting AEAD:\n");
 		printf("  Key types: ");
 		print_list(aead_key_types, aead_kt_count);
 		printf("\n  Modes:     ");
@@ -189,7 +192,7 @@ void cli_keygen_sym_print_list(void)
 	}
 
 	if (cmac_count > 0 || hash_count > 0) {
-		printf("MAC (sign/verify):\n\n");
+		printf("Keys supporting MAC (sign/verify):\n\n");
 
 		if (cmac_count > 0) {
 			printf("  CMAC:\n");
@@ -212,9 +215,6 @@ void cli_keygen_sym_print_list(void)
 			printf(" -a SHA256 -u sign,verify --transient\n\n");
 		}
 	}
-
-	printf("Usage Flags: encrypt, decrypt, sign, verify,");
-	printf(" sign_hash, verify_hash.\n\n");
 }
 
 /**

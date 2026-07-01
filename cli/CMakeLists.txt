@@ -154,10 +154,10 @@ add_subdirectory(smw)
 # Include directories for CLI tools
 
 set(CLI_INCLUDE_DIRS
-	${CMAKE_CURRENT_SOURCE_DIR}/inc    # CLI public headers
-	${CMAKE_SOURCE_DIR}/inc            # SMW library headers
-	${CMAKE_SOURCE_DIR}/public         # SMW public API headers
-	${CMAKE_CURRENT_BINARY_DIR}        # For ALL generated files (including headers!)
+    ${CMAKE_CURRENT_SOURCE_DIR}/inc    # CLI public headers
+    ${CMAKE_SOURCE_DIR}/inc            # SMW library headers
+    ${CMAKE_SOURCE_DIR}/public         # SMW public API headers
+    ${CMAKE_CURRENT_BINARY_DIR}        # For ALL generated files (including headers!)
 )
 
 # Executable 1: nxp_smw (SMW API backend)
@@ -165,20 +165,20 @@ set(CLI_INCLUDE_DIRS
 message(STATUS "Building nxp_smw (SMW API)")
 
 add_executable(nxp_smw
-	${CLI_CORE_SOURCES}
-	${CLI_SMW_SOURCES}		# SMW-specific implementation
-	${SMW_ERROR_HANDLER_SOURCE} 	# Error Table Generated file
-	${SMW_HASH_TABLE_SOURCE}	# Hash Table Generated file
-	${HASH_TABLE_SOURCE}		# Common Hash Table Generated file
-	${LIFECYCLE_TABLE_SOURCE}	# Lifecycle Table Generated file
-	${SMW_SYM_KEY_MAPPINGS_SOURCE}	# SMW Key Mappings Generated file
+    ${CLI_CORE_SOURCES}
+    ${CLI_SMW_SOURCES}        # SMW-specific implementation
+    ${SMW_ERROR_HANDLER_SOURCE}     # Error Table Generated file
+    ${SMW_HASH_TABLE_SOURCE}    # Hash Table Generated file
+    ${HASH_TABLE_SOURCE}        # Common Hash Table Generated file
+    ${LIFECYCLE_TABLE_SOURCE}    # Lifecycle Table Generated file
+    ${SMW_SYM_KEY_MAPPINGS_SOURCE}    # SMW Key Mappings Generated file
 )
 
 target_include_directories(nxp_smw PRIVATE
-	${CLI_INCLUDE_DIRS}
+    ${CLI_INCLUDE_DIRS}
     ${SMW_BACKEND_H_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}/core
-	${CMAKE_CURRENT_SOURCE_DIR}/smw
+    ${CMAKE_CURRENT_SOURCE_DIR}/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/smw
 )
 
 target_compile_definitions(nxp_smw PRIVATE USE_SMW_BACKEND)
@@ -190,20 +190,20 @@ target_link_libraries(nxp_smw PRIVATE smw)
 message(STATUS "Building nxp_psa (PSA API)")
 
 add_executable(nxp_psa
-	${CLI_CORE_SOURCES}
-	${CLI_PSA_SOURCES}		# PSA-specific implementation
-	${PSA_ERROR_HANDLER_SOURCE} 	# Error Table Generated file
-	${PSA_HASH_TABLE_SOURCE}	# Hash Table Generated file
-	${HASH_TABLE_SOURCE}		# Common Hash Table Generated file
-	${LIFECYCLE_TABLE_SOURCE}	# Lifecycle Table Generated file
-    ${PSA_SYM_KEY_MAPPINGS_SOURCE}	# PSA Key Mappings Generated file
+    ${CLI_CORE_SOURCES}
+    ${CLI_PSA_SOURCES}        # PSA-specific implementation
+    ${PSA_ERROR_HANDLER_SOURCE}     # Error Table Generated file
+    ${PSA_HASH_TABLE_SOURCE}    # Hash Table Generated file
+    ${HASH_TABLE_SOURCE}        # Common Hash Table Generated file
+    ${LIFECYCLE_TABLE_SOURCE}    # Lifecycle Table Generated file
+    ${PSA_SYM_KEY_MAPPINGS_SOURCE}    # PSA Key Mappings Generated file
 )
 
 target_include_directories(nxp_psa PRIVATE
-	${CLI_INCLUDE_DIRS}
+    ${CLI_INCLUDE_DIRS}
     ${PSA_BACKEND_H_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}/core
-	${CMAKE_CURRENT_SOURCE_DIR}/psa
+    ${CMAKE_CURRENT_SOURCE_DIR}/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/psa
 )
 
 target_compile_definitions(nxp_psa PRIVATE USE_PSA_BACKEND)
@@ -213,8 +213,8 @@ target_link_libraries(nxp_psa PRIVATE smw)
 # Installation
 
 install(TARGETS nxp_smw nxp_psa
-		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-		COMPONENT cli-tools)
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        COMPONENT cli-tools)
 
 # Install bash completion script
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/scripts/nxp_smw_completion.bash
@@ -235,21 +235,3 @@ file(GLOB CLI_TEST_SCRIPTS ${CMAKE_CURRENT_SOURCE_DIR}/tests/*.sh)
 install(PROGRAMS ${CLI_TEST_SCRIPTS}
         DESTINATION ${CMAKE_INSTALL_DATADIR}/smw-cli/tests
         COMPONENT cli-tools)
-
-# Custom targets
-
-add_custom_target(install_cli-tools
-		COMMAND "${CMAKE_COMMAND}" --install "${CMAKE_BINARY_DIR}" --component cli-tools
-		DEPENDS nxp_smw nxp_psa
-		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-		VERBATIM)
-
-add_custom_target(build_cli-tools DEPENDS nxp_smw nxp_psa)
-
-if(TARGET build_all)
-	add_dependencies(build_all build_cli-tools)
-endif()
-
-if(TARGET install_all)
-	add_dependencies(install_all install_cli-tools)
-endif()

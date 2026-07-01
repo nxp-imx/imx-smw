@@ -547,6 +547,7 @@ static int export_key_operation(struct subsystem_context *ele_ctx,
 	op_pub_key_recovery_args_t op_args = { 0 };
 
 	struct smw_keymgr_identifier *key_identifier = &key_desc->identifier;
+	struct smw_keypair_buffer *stored_key = NULL;
 	enum smw_config_key_type_id key_type_id = key_identifier->type_id;
 	unsigned char *public_data = NULL;
 	unsigned char *modulus_data = NULL;
@@ -559,6 +560,30 @@ static int export_key_operation(struct subsystem_context *ele_ctx,
 	status = check_export_key_config(key_desc);
 	if (status != SMW_STATUS_OK)
 		goto end;
+
+	if (key_identifier->s_id == INVALID_KEY_ID) {
+		status = get_database_public_buffer(key_desc, &stored_key);
+		if (status != SMW_STATUS_OK)
+			goto end;
+
+		if (key_type_id != SMW_CONFIG_KEY_TYPE_ID_RSA) {
+			public_data = stored_key->gen.public_data;
+			public_length = stored_key->gen.public_length;
+
+			status = smw_keymgr_update_public_buffer(key_desc,
+								 public_data,
+								 public_length);
+		} else {
+			modulus_data = stored_key->rsa.modulus;
+			modulus_length = stored_key->rsa.modulus_length;
+
+			status = update_export_rsa_key_data(key_desc,
+							    modulus_data,
+							    modulus_length);
+		}
+
+		goto end;
+	}
 
 	if (key_type_id != SMW_CONFIG_KEY_TYPE_ID_RSA) {
 		/* Set the operation output with user public key arguments */
@@ -663,6 +688,19 @@ static int export_key_operation(struct subsystem_context *ele_ctx,
 	}
 
 end:
+	if (stored_key) {
+		if (stored_key->gen.public_data)
+			SMW_UTILS_FREE(stored_key->gen.public_data);
+
+		if (stored_key->rsa.modulus)
+			SMW_UTILS_FREE(stored_key->rsa.modulus);
+
+		if (stored_key->rsa.public_exponent)
+			SMW_UTILS_FREE(stored_key->rsa.public_exponent);
+
+		SMW_UTILS_FREE(stored_key);
+	}
+
 	if (tmp_key)
 		SMW_UTILS_FREE(tmp_key);
 
@@ -917,6 +955,16 @@ end:
 	return status;
 }
 
+static int import_public_key(struct smw_keymgr_descriptor *key_desc)
+{
+	key_desc->identifier.subsystem_id = SUBSYSTEM_ID_ELE;
+	key_desc->identifier.group = ELE_UNDEFINED_KEY_GROUP;
+
+	key_desc->identifier.s_id = INVALID_KEY_ID;
+
+	return SMW_STATUS_OK;
+}
+
 static int import_key(struct hdl *hdl, void *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
@@ -930,32 +978,41 @@ static int import_key(struct hdl *hdl, void *args)
 	hsm_hdl_t key_mgt_hdl = 0;
 	op_import_key_args_t op_args = { 0 };
 
-	unsigned char *priv_key = NULL;
-	unsigned int priv_key_len = 0;
-	unsigned char *hex_priv_key = NULL;
-	unsigned int hex_priv_key_len = 0;
+	unsigned char *key = NULL;
+	unsigned int key_len = 0;
+	unsigned char *hex_key = NULL;
+	unsigned int hex_key_len = 0;
+	bool public_key = false;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	key_desc = &key_args->key_descriptor;
 	storage_id = key_desc->identifier.key_attributes.storage_id;
 
-	priv_key = smw_keymgr_get_private_data(key_desc);
-	priv_key_len = smw_keymgr_get_private_length(key_desc);
-
-	if (!priv_key || !priv_key_len) {
-		SMW_DBG_PRINTF(ERROR, "Missing import key buffer or length");
-		goto end;
+	if (smw_keymgr_get_private_data(key_desc)) {
+		key = smw_keymgr_get_private_data(key_desc);
+		key_len = smw_keymgr_get_private_length(key_desc);
+	} else if (smw_keymgr_get_public_data(key_desc)) {
+		key = smw_keymgr_get_public_data(key_desc);
+		key_len = smw_keymgr_get_public_length(key_desc);
+		public_key = true;
 	}
 
-	status = smw_utils_key_set_hex_buffer(key_desc->format_id, priv_key,
-					      priv_key_len, &hex_priv_key,
-					      &hex_priv_key_len);
+	if (!key || key_len == 0)
+		goto end;
+
+	status = smw_utils_key_set_hex_buffer(key_desc->format_id, key, key_len,
+					      &hex_key, &hex_key_len);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	op_args.input_lsb_addr = hex_priv_key;
-	op_args.input_size = hex_priv_key_len;
+	if (public_key) {
+		status = import_public_key(key_desc);
+		goto end;
+	}
+
+	op_args.input_lsb_addr = hex_key;
+	op_args.input_size = hex_key_len;
 
 	if (NXP_IS_EL2GO_OBJECT(storage_id))
 		op_args.flags = HSM_OP_IMPORT_KEY_INPUT_E2GO_TLV |
@@ -1003,8 +1060,8 @@ end:
 			status = tmp_status;
 	}
 
-	if (key_desc->format_id == SMW_KEYMGR_FORMAT_ID_BASE64 && hex_priv_key)
-		SMW_UTILS_FREE(hex_priv_key);
+	if (key_desc->format_id == SMW_KEYMGR_FORMAT_ID_BASE64 && hex_key)
+		SMW_UTILS_FREE(hex_key);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	// coverity[missing_unlock]
@@ -1038,6 +1095,9 @@ static int delete_key(struct subsystem_context *ele_ctx, void *args)
 	bool is_transient = false;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (key_desc->identifier.s_id == INVALID_KEY_ID)
+		return SMW_STATUS_OK;
 
 	status = open_key_mgmt_service(&ele_ctx->hdl, &key_mgt_hdl);
 	if (status != SMW_STATUS_OK)
@@ -1267,6 +1327,9 @@ int ele_get_key_attributes(struct hdl *hdl,
 
 	key_identifier = &key_args->key_descriptor.identifier;
 	key_attributes = &key_identifier->key_attributes;
+
+	if (key_identifier->s_id == INVALID_KEY_ID)
+		goto end;
 
 	op_key_attrs.key_identifier = key_identifier->s_id;
 

@@ -537,6 +537,8 @@ static int verify(struct subsystem_context *ele_ctx, void *args)
 	unsigned char *identifier = NULL;
 	unsigned int identifier_length = 0;
 
+	struct smw_keypair_buffer *stored_key = NULL;
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	format_id = key_desc->format_id;
@@ -606,6 +608,19 @@ static int verify(struct subsystem_context *ele_ctx, void *args)
 		/* Verify signature using plaintext key buffer */
 		security_size = key_desc->identifier.security_size;
 		key_type_id = key_desc->identifier.type_id;
+
+		/*
+		 * Key buffer was not provided as input, but this may be a public
+		 * key that is stored in the database - try to fetch it.
+		 */
+		if (!smw_keymgr_get_api_buffer(key_desc)) {
+			status = get_database_public_buffer(key_desc,
+							    &stored_key);
+			if (status != SMW_STATUS_OK)
+				goto end;
+
+			smw_keymgr_set_api_buffer(key_desc, stored_key);
+		}
 
 		if (key_type_id == SMW_CONFIG_KEY_TYPE_ID_RSA) {
 			status = is_rsa_pub_expo_default(key_desc);
@@ -756,6 +771,13 @@ static int verify(struct subsystem_context *ele_ctx, void *args)
 		status = SMW_STATUS_SIGNATURE_INVALID;
 
 end:
+	if (stored_key) {
+		smw_keymgr_set_api_buffer(key_desc, NULL);
+
+		smw_utils_free_keypair_buffer(key_type_id, stored_key);
+		stored_key = NULL;
+	}
+
 	if (temp_pub_key)
 		SMW_UTILS_FREE(temp_pub_key);
 

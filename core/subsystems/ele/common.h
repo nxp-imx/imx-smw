@@ -976,4 +976,26 @@ bool ele_aead_is_operation_supported(enum operation_id operation_id,
 bool ele_device_manager_is_operation_supported(enum operation_id operation_id,
 					       int *status);
 
+/**
+ * get_database_public_buffer() - Retrieve a key's public buffer from the database
+ * @key_desc: Pointer to the key descriptor structure.
+ * @key_buffer: Address of the pointer to store the retrieved key pair buffer.
+ *
+ * This function queries the key database for the public key data associated
+ * with the key identified by @key_desc. On success, @key_buffer is set to
+ * the allocated buffer containing the public key data and the format ID field
+ * of @key_desc is updated to reflect the key format stored in the database.
+ *
+ * On failure, any partially allocated buffers (public data, RSA modulus, RSA
+ * public exponent) and the key buffer itself are freed before returning.
+ *
+ * Return:
+ * SMW_STATUS_OK            - Success
+ * SMW_STATUS_INVALID_PARAM - Invalid parameters
+ * Other SMW status error from smw_keymgr_db_get_buffer() or
+ * smw_utils_key_get_format_id().
+ */
+int get_database_public_buffer(struct smw_keymgr_descriptor *key_desc,
+			       struct smw_keypair_buffer **key_buffer);
+
 #endif /* __COMMON_H__ */

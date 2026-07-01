@@ -11,6 +11,8 @@
 #include "endian.h"
 #include "utils.h"
 
+#include "keymgr_db.h"
+
 #include "common.h"
 
 #define HASH_ALGO(_id, _ele_id, _length)                                       \
@@ -411,6 +413,34 @@ int close_cipher_service(hsm_hdl_t cipher_hdl)
 	SMW_DBG_PRINTF(VERBOSE, "hsm_close_cipher_service returned %d\n", err);
 
 	return ele_convert_err(err);
+}
+
+int get_database_public_buffer(struct smw_keymgr_descriptor *key_desc,
+			       struct smw_keypair_buffer **key_buffer)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!key_desc)
+		return status;
+
+	status = smw_keymgr_db_get_buffer(smw_keymgr_get_api_key_id(key_desc),
+					  &key_desc->identifier, key_buffer);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	status = smw_utils_key_get_format_id((*key_buffer)->format_name,
+					     &key_desc->format_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+end:
+	if (status != SMW_STATUS_OK && *key_buffer)
+		smw_utils_free_keypair_buffer(key_desc->identifier.type_id,
+					      *key_buffer);
+
+	return status;
 }
 
 __weak void ele_free_hash_context(struct smw_op_context *ctx)

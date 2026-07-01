@@ -24,8 +24,9 @@
 #define KEY_ALGO_LENGTH		64
 #define USAGE_STR_MAX_LEN	256
 #define ALGO_STR_MAX_LEN	512
-#define SMW_SYM_ALGO(key, mode) SMW_ATTR_ALGO_SYMMETRIC_ENCRYPTION(key, mode)
+#define SMW_SYM_ENCR(key, mode)	     SMW_ATTR_ALGO_SYMMETRIC_ENCRYPTION(key, mode)
 #define SMW_SYM_HMAC(hash, mac) SMW_ATTR_ALGO_MAC_HMAC(hash, mac)
+#define SMW_SYM_MAC(algo, mode, mac) SMW_ATTR_ALGO_MAC(algo, mode, mac)
 
 /**
  * @brief Parse usage flags from comma-separated string
@@ -88,9 +89,12 @@ static smw_attr_algo_t parse_single_mode(const char *mode_str,
 	uint32_t key_type_value = 0;
 	smw_attr_algo_t key_algo = SMW_ATTR_ALGO_NONE;
 	const struct algo_mapping *aead_algos = NULL;
+	const struct algo_mapping *cmac_algos = NULL;
 	size_t aead_count = 0;
+	size_t cmac_count = 0;
 	size_t i = 0;
 	bool is_aead = false;
+	bool is_mac = false;
 
 	if (!mode_str || !key_type)
 		return SMW_ATTR_ALGO_NONE;
@@ -123,7 +127,22 @@ static smw_attr_algo_t parse_single_mode(const char *mode_str,
 		return SMW_ATTR_ALGO_AEAD(key_algo, (smw_attr_algo_t)mode_value,
 					  0);
 
-	return SMW_SYM_ALGO(key_algo, (smw_attr_algo_t)mode_value);
+	/* Determine whether mode is MAC (CMAC) */
+	cmac_algos = get_cmac_algo_mappings();
+	cmac_count = get_cmac_algo_mappings_count();
+
+	for (i = 0; i < cmac_count; i++) {
+		if (cmac_algos[i].name &&
+		    !strcasecmp(mode_str, cmac_algos[i].name)) {
+			is_mac = true;
+			break;
+		}
+	}
+
+	if (is_mac)
+		return SMW_SYM_MAC(key_algo, (smw_attr_algo_t)mode_value, 0);
+
+	return SMW_SYM_ENCR(key_algo, (smw_attr_algo_t)mode_value);
 }
 
 /**
@@ -217,6 +236,32 @@ static void log_smw_keygen_params(const struct smw_generate_key_args *args)
 }
 
 /**
+ * @brief Append a matched algorithm name to output buffer
+ *
+ * @param buffer Output buffer
+ * @param buffer_size Size of output buffer
+ * @param written Pointer to number of bytes already written
+ * @param first Pointer to flag indicating first entry
+ * @param name Algorithm name to append
+ */
+static void append_algo_str(char *buffer, size_t buffer_size, size_t *written,
+			    bool *first, const char *name)
+{
+	int ret = 0;
+
+	if (!name || *written >= buffer_size)
+		return;
+
+	ret = snprintf(buffer + *written, buffer_size - *written, "%s%s",
+		       *first ? "" : ", ", name);
+
+	if (ret > 0 && (size_t)ret < buffer_size - *written)
+		*written += ret;
+
+	*first = false;
+}
+
+/**
  * @brief Convert permitted algorithm to string representation
  *
  * @param permitted_algo Permitted algorithm from key attributes
@@ -231,10 +276,10 @@ static void permitted_algo_to_string(smw_attr_algo_t permitted_algo,
 	const struct algo_mapping *cipher_algos = NULL;
 	const struct algo_mapping *aead_algos = NULL;
 	const struct algo_mapping *hash_algos = NULL;
+	const struct algo_mapping *cmac_algos = NULL;
 	size_t count = 0;
 	size_t i = 0;
 	size_t written = 0;
-	int ret = 0;
 	bool first = true;
 	smw_attr_algo_t test_algo = 0;
 
@@ -250,22 +295,24 @@ static void permitted_algo_to_string(smw_attr_algo_t permitted_algo,
 
 		for (i = 0; i < count; i++) {
 			test_algo = SMW_SYM_HMAC(hash_algos[i].value, 0);
-
-			if ((permitted_algo & test_algo) == test_algo) {
-				if (written < buffer_size) {
-					ret = snprintf(buffer + written,
-						       buffer_size - written,
-						       "%s%s",
-						       first ? "" : ", ",
-						       hash_algos[i].name);
-					if (ret > 0 &&
-					    (size_t)ret < buffer_size - written)
-						written += ret;
-					first = false;
-				}
-			}
+			if ((permitted_algo & test_algo) == test_algo)
+				append_algo_str(buffer, buffer_size, &written,
+						&first, hash_algos[i].name);
 		}
 		return;
+	}
+
+	/* Check MAC modes (CMAC) */
+	cmac_algos = get_cmac_algo_mappings();
+	count = get_cmac_algo_mappings_count();
+
+	for (i = 0; i < count; i++) {
+		test_algo =
+			SMW_SYM_MAC(key_algo,
+				    (smw_attr_algo_t)cmac_algos[i].value, 0);
+		if ((permitted_algo & test_algo) == test_algo)
+			append_algo_str(buffer, buffer_size, &written, &first,
+					cmac_algos[i].name);
 	}
 
 	/* Check AEAD modes */
@@ -275,21 +322,9 @@ static void permitted_algo_to_string(smw_attr_algo_t permitted_algo,
 	for (i = 0; i < count; i++) {
 		test_algo =
 			SMW_ATTR_ALGO_AEAD(key_algo, aead_algos[i].value, 0);
-
-		if ((permitted_algo & test_algo) == test_algo) {
-			if (written < buffer_size) {
-				ret = snprintf(buffer + written,
-					       buffer_size - written, "%s%s",
-					       first ? "" : ", ",
-					       aead_algos[i].name ?
-						       aead_algos[i].name :
-						       "");
-				if (ret > 0 &&
-				    (size_t)ret < buffer_size - written)
-					written += ret;
-				first = false;
-			}
-		}
+		if ((permitted_algo & test_algo) == test_algo)
+			append_algo_str(buffer, buffer_size, &written, &first,
+					aead_algos[i].name);
 	}
 
 	/* Check cipher modes */
@@ -297,20 +332,10 @@ static void permitted_algo_to_string(smw_attr_algo_t permitted_algo,
 	count = get_cipher_algo_mappings_count();
 
 	for (i = 0; i < count; i++) {
-		test_algo = SMW_SYM_ALGO(key_algo, cipher_algos[i].value);
-
-		if ((permitted_algo & test_algo) == test_algo) {
-			if (written < buffer_size) {
-				ret = snprintf(buffer + written,
-					       buffer_size - written, "%s%s",
-					       first ? "" : ", ",
-					       cipher_algos[i].name);
-				if (ret > 0 &&
-				    (size_t)ret < buffer_size - written)
-					written += ret;
-				first = false;
-			}
-		}
+		test_algo = SMW_SYM_ENCR(key_algo, cipher_algos[i].value);
+		if ((permitted_algo & test_algo) == test_algo)
+			append_algo_str(buffer, buffer_size, &written, &first,
+					cipher_algos[i].name);
 	}
 
 	if (!written && buffer_size > 0)

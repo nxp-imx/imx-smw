@@ -226,6 +226,27 @@ static const struct CK_INTERFACE pkcs11smw_interfaces[] = {
 	{ 0 }
 };
 
+/**
+ * C_GetInfo() - Obtain general information about the library.
+ * @pInfo: [out] Pointer to a CK_INFO structure to receive the library
+ *               information.
+ *
+ * This function returns general information about the library,
+ * including the version supported, manufacturer ID, library
+ * description, and library version. The information is copied into the
+ * structure pointed to by @pInfo.
+ *
+ * The manufacturerID and libraryDescription fields are padded with blank
+ * spaces to their full length as defined in the PKCS#11 specification.
+ *
+ * This function can be called before C_Initialize().
+ *
+ * Return:
+ *  - CKR_OK:
+ *      Success. Library information has been copied to @pInfo.
+ *  - CKR_ARGUMENTS_BAD:
+ *      The @pInfo is :c:macro:`NULL_PTR`.
+ */
 CK_RV C_GetInfo(CK_INFO_PTR pInfo)
 {
 	size_t len = 0;
@@ -255,6 +276,22 @@ CK_RV C_GetInfo(CK_INFO_PTR pInfo)
 	return CKR_OK;
 }
 
+/**
+ * C_GetFunctionList() - Obtain a pointer to the library's function list.
+ * @ppFunctionList: [out] Pointer to a location that receives a pointer to the
+ *                        library's CK_FUNCTION_LIST structure.
+ *
+ * This function returns a pointer to the library's list of Cryptoki function
+ * pointers. The returned function list corresponds to PKCS#11 v2.40.
+ *
+ * This function can be called before C_Initialize().
+ *
+ * Return:
+ *  - CKR_OK:
+ *      Success. @ppFunctionList points to the function list.
+ *  - CKR_ARGUMENTS_BAD:
+ *      The @ppFunctionList is :c:macro:`NULL_PTR`.
+ */
 CK_RV C_GetFunctionList(CK_FUNCTION_LIST_PTR_PTR ppFunctionList)
 {
 	if (!ppFunctionList)
@@ -265,6 +302,39 @@ CK_RV C_GetFunctionList(CK_FUNCTION_LIST_PTR_PTR ppFunctionList)
 	return CKR_OK;
 }
 
+/**
+ * C_GetInterfaceList() - Obtain the list of interfaces supported by the library.
+ * @pInterfacesList: [out] Pointer to an array of CK_INTERFACE structures, or
+ *                         :c:macro:`NULL_PTR` to query the number of interfaces.
+ * @pulCount: [in/out] Pointer to a location that gives the number element in
+ *                     @pInterfacesList, or receives the number of interfaces.
+ *
+ * This function returns information about all interfaces supported by
+ * the library.
+ *
+ * If @pInterfacesList is :c:macro:`NULL_PTR`, the function returns
+ * the total number of supported interfaces in @pulCount.
+ *
+ * If the @pInterfacesList is not :c:macro:`NULL_PTR`, the @pulCount contains
+ * the number of element in @pInterfacesList on input, and receives the number
+ * of interfaces actually copied on output. If the buffer is too small to hold
+ * all interface structures, the function returns CKR_BUFFER_TOO_SMALL,
+ * otherwise the function copies all interface structures into the
+ * @pInterfaceList.
+ *
+ * The library supports both PKCS#11 v2.40 and v3.2 interfaces.
+ *
+ * This function can be called before C_Initialize().
+ *
+ *
+ * Return:
+ *  - CKR_OK:
+ *      Success. Interface list has been returned or count has been set.
+ *  - CKR_ARGUMENTS_BAD:
+ *      The @pulCount is :c:macro:`NULL_PTR`.
+ *  - CKR_BUFFER_TOO_SMALL:
+ *      The buffer provided is too small to hold all interface structures.
+ */
 CK_RV C_GetInterfaceList(CK_INTERFACE_PTR pInterfacesList,
 			 CK_ULONG_PTR pulCount)
 {
@@ -288,6 +358,41 @@ CK_RV C_GetInterfaceList(CK_INTERFACE_PTR pInterfacesList,
 	return CKR_OK;
 }
 
+/**
+ * C_GetInterface() - Obtain a specific interface.
+ * @pInterfaceName: [in] Pointer to a UTF-8 string specifying the interface
+ *                       name, or :c:macro:`NULL_PTR` to match any name.
+ * @pVersion: [in] Pointer to a version structure specifying the desired
+ *                 interface version, or :c:macro:`NULL_PTR` to match any
+ *                 version.
+ * @ppInterface: [out] Pointer to a location that receives a pointer to the
+ *                     requested &typedef CK_INTERFACE structure.
+ * @flags: [in] Flags that must be present in the interface, or 0 to match any
+ *              flags, refer to &typedef CK_INTERFACE.
+ *
+ * This function returns a pointer to a specific interface based on
+ * the provided search criteria. The interface is selected by matching the
+ * interface name, version, and flags. If no criteria are specified (all
+ * parameters are :c:macro:`NULL_PTR` or 0), the default interface (PKCS#11
+ * v2.40) is returned.
+ *
+ * The search criteria are applied as follows:
+ *   - If @pInterfaceName is provided, only interfaces with matching names
+ *     are considered.
+ *   - If @pVersion is provided, only interfaces with matching major and minor
+ *     versions are considered.
+ *   - If @flags is non-zero, only interfaces that have all specified flags
+ *     set are considered.
+ *
+ * This function can be called before C_Initialize().
+ *
+ * Return:
+ *  - CKR_OK:
+ *      Success. @ppInterface points to the requested interface.
+ *  - CKR_ARGUMENTS_BAD:
+ *      The @ppInterface is :c:macro:`NULL_PTR`, or no interface matches the
+ *      criteria.
+ */
 CK_RV C_GetInterface(CK_UTF8CHAR_PTR pInterfaceName, CK_VERSION_PTR pVersion,
 		     CK_INTERFACE_PTR_PTR ppInterface, CK_FLAGS flags)
 {

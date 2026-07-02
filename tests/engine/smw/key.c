@@ -552,12 +552,10 @@ static int read_descriptor(struct llist *keys, struct keypair_ops *key_test,
 	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
 		return ret;
 
-	if (ret == ERR_CODE(PASSED)) {
-		if (desc->type_name != SMW_KEY_TYPE_NAME_NONE)
-			key_free_key_buffers(key_test);
+	key_free_key_buffers(key_test);
 
+	if (ret == ERR_CODE(PASSED))
 		desc->type_name = key_get_type_name(type_string);
-	}
 
 	/* Read 'security_size' parameter if defined */
 	ret = util_read_json_type(&desc->security_size, SEC_SIZE_OBJ, t_int,

@@ -1,0 +1,229 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "SECP_R1",
+			"security_size": 256,
+			"usage": [
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA256"
+			],
+			"pub_key": [
+				"1ccbe91c075fc7f4f033bfa248db8fcc",
+				"d3565de94bbfb12f3c59ff46c271bf83",
+				"ce4014c68811f9a21a1fdb2c0e6113e0",
+				"6db7ca93b7404e78dc7ccd5ca89a4ca9"
+			]
+		},
+		"key 2": {
+			"type": "SECP_R1",
+			"security_size": 384,
+			"usage": [
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA384"
+			],
+			"pub_key": [
+				"c2b47944fb5de342d03285880177ca5f",
+				"7d0f2fcad7678cce4229d6e1932fcac1",
+				"1bfc3c3e97d942a3c56bf34123013dbf",
+				"37257906a8223866eda0743c519616a7",
+				"6a758ae58aee81c5fd35fbf3a855b775",
+				"4a36d4a0672df95d6c44a81cf7620c2d"
+			]
+		},
+		"key 3": {
+			"type": "SECP_R1",
+			"security_size": 521,
+			"usage": [
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA512"
+			],
+			"pub_key": [
+				"0061387fd6b95914e885f912edfbb5fb",
+				"274655027f216c4091ca83e19336740f",
+				"d81aedfe047f51b42bdf68161121013e",
+				"0d55b117a14e4303f926c8debb77a7fd",
+				"aad100e7d0c75c38626e895ca21526b9",
+				"f9fdf84dcecb93f2b233390550d2b146",
+				"3b7ee3f58df7346435ff0434199583c9",
+				"7c665a97f12f706f2357da4b40288def",
+				"888e59e6"
+			]
+		},
+		"key 4": {
+			"type": "RSA",
+			"security_size": 2048,
+			"usage": [
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"RSA_PSS",
+				"HASH=SHA256"
+			],
+			"pub_key": [
+				"010001"
+			],
+			"modulus": [
+				"b758e96e8528369a4155a99cfa703ecc",
+				"48e58e7fe03db4450afcaf79177c62bd",
+				"29f32d669668ca5dc4255dc1cf54ce13",
+				"a298055ea0f29081d7c49c4b579eb2b1",
+				"be0a5067b49f1a66844b28e591948240",
+				"c82281f4340400b12f2b4b667334970b",
+				"acb1ab318e8346016c6be1ba8760ef33",
+				"08259ec5fef9af05226ed5bbe3999df5",
+				"a90c4ba1254e1346d1d5be225262414c",
+				"724c98041e3c935314fb46f8a5ecc772",
+				"89d998c122b011456f06ab36fa307f68",
+				"bfb511127b79b22977e226c659d94cdd",
+				"13716ac9c4a0c35b71f2a57f67c9b2a3",
+				"3516ba2848770f1319b6ec26111e545c",
+				"5010ffc35730ba1c70c8dc4569af68cf",
+				"61e204eb486167033b8d4990b1c2dead"
+			]
+		},
+		"key 5": {
+			"type": "RSA",
+			"security_size": 4096,
+			"usage": [
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"RSA_PSS",
+				"HASH=SHA512"
+			],
+			"pub_key": [
+				"010001"
+			],
+			"modulus": [
+				"d04885e45cd474f83335791af51b0e4f",
+				"42154e834e899102936a4668b3ae246a",
+				"9ba398e07b7777bd415e883afc8064a8",
+				"09d9e3f5c9438d06e2c5436f9da4d75a",
+				"0fbdf27f179a5cfba52a3c12fe406cd8",
+				"1a4268b9b02a5c5a48ea8c34a9ac8535",
+				"02efd13f68e328744103a81af8029aff",
+				"75aa68ad2eb64d5eee14f52efa1be0e2",
+				"1924fe4323243318fe56c191b11441b9",
+				"f575bab727bc55a353a436f9caf6729d",
+				"263001bde8d4f222c918889f2f2f4dd6",
+				"cf80d7e2494ee17e3b7cf9839d4fce32",
+				"7e126ef319f3dea3d4bd09d384beb954",
+				"e14e4c5059c15ca97857e6a33c933723",
+				"2549b26c595b7f5e748f75a2b9c5b8f0",
+				"afe3edf274c7dab7894a381af6b47284",
+				"9c825256720a3f0410b0143c3c3556da",
+				"ee7a71491322692dea4efd1d1057119e",
+				"f07273eee1c86c7195675313db478ac5",
+				"08d5e65593d3fdce2a8d3992ac718f19",
+				"5f5fbf0b833d5faf58ec0f08ef817974",
+				"edbb211c9c1203ab4a8db3d4d85f4b06",
+				"ea26bf5ad9306d46c1629e7f2b8ca048",
+				"ccd9f4139a7d8ced568f1b647231df5d",
+				"7a4b37c14532fa1823d97f2be6560e6f",
+				"6c6e8685f23ae0a3349cd34e0015e980",
+				"1fbf6698219544a5e7d6f0c0a380cb0b",
+				"aa773620456107186d6f55f9b7860fab",
+				"2bb05eb126db98fd4c2d3d138b592cee",
+				"082ad9ff80659a936c4747a120516fcc",
+				"42a35faad1db2a7760a960b836cc04c2",
+				"8ca5f486c40170719ece89ac51db4507"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "IMPORT",
+		"subsystem": "ELE",
+		"key_name": "key 1"
+	},
+	"subtest 2": {
+		"command": "IMPORT",
+		"subsystem": "ELE",
+		"key_name": "key 2"
+	},
+	"subtest 3": {
+		"command": "IMPORT",
+		"subsystem": "ELE",
+		"key_name": "key 3"
+	},
+	"subtest 4": {
+		"command": "IMPORT",
+		"subsystem": "ELE",
+		"key_name": "key 4",
+		"restriction_list": "imx8ulp"
+	},
+	"subtest 5": {
+		"command": "IMPORT",
+		"subsystem": "ELE",
+		"key_name": "key 5",
+		"restriction_list": "imx8ulp"
+	},
+	"subtest 6": {
+		"command": "EXPORT_PUBLIC",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 7": {
+		"command": "EXPORT_PUBLIC",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"depends": 2
+	},
+	"subtest 8": {
+		"command": "EXPORT_PUBLIC",
+		"subsystem": "ELE",
+		"key_name": "key 3",
+		"depends": 3
+	},
+	"subtest 9": {
+		"command": "EXPORT_PUBLIC",
+		"subsystem": "ELE",
+		"key_name": "key 4",
+		"depends": 4
+	},
+	"subtest 10": {
+		"command": "EXPORT_PUBLIC",
+		"subsystem": "ELE",
+		"key_name": "key 5",
+		"depends": 5
+	},
+	"subtest 11": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 12": {
+		"command": "DELETE",
+		"key_name": "key 2",
+		"depends": 2
+	},
+	"subtest 13": {
+		"command": "DELETE",
+		"key_name": "key 3",
+		"depends": 3
+	},
+	"subtest 14": {
+		"command": "DELETE",
+		"key_name": "key 4",
+		"depends": 4
+	},
+	"subtest 15": {
+		"command": "DELETE",
+		"key_name": "key 5",
+		"depends": 5
+	}
+}

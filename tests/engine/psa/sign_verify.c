@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2025 NXP
+ * Copyright 2023-2026 NXP
  */
 
 #include <stdlib.h>
@@ -88,6 +88,16 @@ int sign_verify_psa(struct subtest_data *subtest, int operation)
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
 
+	/* Read expected signature buffer if any */
+	res = util_read_hex_buffer(&exp_sign, &exp_sign_length, subtest->params,
+				   SIGN_OBJ);
+	if (res != ERR_CODE(PASSED)) {
+		if (res != ERR_CODE(MISSING_PARAMS))
+			goto exit;
+
+		res = ERR_CODE(PASSED);
+	}
+
 	if (sign_id != INT_MAX) {
 		res = util_sign_find_node(list_signatures(subtest), sign_id,
 					  &list_sign, &list_sign_length);
@@ -122,16 +132,11 @@ int sign_verify_psa(struct subtest_data *subtest, int operation)
 			signature = list_sign;
 			signature_size = list_sign_length;
 		}
-	}
-
-	/* Read expected signature buffer if any */
-	res = util_read_hex_buffer(&exp_sign, &exp_sign_length, subtest->params,
-				   SIGN_OBJ);
-	if (res != ERR_CODE(PASSED)) {
-		if (res != ERR_CODE(MISSING_PARAMS))
-			goto exit;
-
-		res = ERR_CODE(PASSED);
+	} else {
+		if (operation == VERIFY_OPERATION) {
+			signature = exp_sign;
+			signature_size = exp_sign_length;
+		}
 	}
 
 	/* Call operation function and compare result with expected one */

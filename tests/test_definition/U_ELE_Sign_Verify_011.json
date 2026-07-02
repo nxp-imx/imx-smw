@@ -1,0 +1,830 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "RSA",
+			"security_size": 2048,
+			"usage": [
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"RSA_PSS",
+				"HASH=SHA256"
+			],
+			"pub_key": [
+				"010001"
+			],
+			"modulus": [
+				"b758e96e8528369a4155a99cfa703ecc",
+				"48e58e7fe03db4450afcaf79177c62bd",
+				"29f32d669668ca5dc4255dc1cf54ce13",
+				"a298055ea0f29081d7c49c4b579eb2b1",
+				"be0a5067b49f1a66844b28e591948240",
+				"c82281f4340400b12f2b4b667334970b",
+				"acb1ab318e8346016c6be1ba8760ef33",
+				"08259ec5fef9af05226ed5bbe3999df5",
+				"a90c4ba1254e1346d1d5be225262414c",
+				"724c98041e3c935314fb46f8a5ecc772",
+				"89d998c122b011456f06ab36fa307f68",
+				"bfb511127b79b22977e226c659d94cdd",
+				"13716ac9c4a0c35b71f2a57f67c9b2a3",
+				"3516ba2848770f1319b6ec26111e545c",
+				"5010ffc35730ba1c70c8dc4569af68cf",
+				"61e204eb486167033b8d4990b1c2dead"
+			]
+		},
+		"key 2": {
+			"type": "RSA",
+			"security_size": 4096,
+			"usage": [
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"RSA_PSS",
+				"HASH=SHA512"
+			],
+			"pub_key": [
+				"010001"
+			],
+			"modulus": [
+				"d04885e45cd474f83335791af51b0e4f",
+				"42154e834e899102936a4668b3ae246a",
+				"9ba398e07b7777bd415e883afc8064a8",
+				"09d9e3f5c9438d06e2c5436f9da4d75a",
+				"0fbdf27f179a5cfba52a3c12fe406cd8",
+				"1a4268b9b02a5c5a48ea8c34a9ac8535",
+				"02efd13f68e328744103a81af8029aff",
+				"75aa68ad2eb64d5eee14f52efa1be0e2",
+				"1924fe4323243318fe56c191b11441b9",
+				"f575bab727bc55a353a436f9caf6729d",
+				"263001bde8d4f222c918889f2f2f4dd6",
+				"cf80d7e2494ee17e3b7cf9839d4fce32",
+				"7e126ef319f3dea3d4bd09d384beb954",
+				"e14e4c5059c15ca97857e6a33c933723",
+				"2549b26c595b7f5e748f75a2b9c5b8f0",
+				"afe3edf274c7dab7894a381af6b47284",
+				"9c825256720a3f0410b0143c3c3556da",
+				"ee7a71491322692dea4efd1d1057119e",
+				"f07273eee1c86c7195675313db478ac5",
+				"08d5e65593d3fdce2a8d3992ac718f19",
+				"5f5fbf0b833d5faf58ec0f08ef817974",
+				"edbb211c9c1203ab4a8db3d4d85f4b06",
+				"ea26bf5ad9306d46c1629e7f2b8ca048",
+				"ccd9f4139a7d8ced568f1b647231df5d",
+				"7a4b37c14532fa1823d97f2be6560e6f",
+				"6c6e8685f23ae0a3349cd34e0015e980",
+				"1fbf6698219544a5e7d6f0c0a380cb0b",
+				"aa773620456107186d6f55f9b7860fab",
+				"2bb05eb126db98fd4c2d3d138b592cee",
+				"082ad9ff80659a936c4747a120516fcc",
+				"42a35faad1db2a7760a960b836cc04c2",
+				"8ca5f486c40170719ece89ac51db4507"
+			]
+		},
+		"key 3": {
+			"type": "RSA",
+			"security_size": 2048,
+			"usage": [
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"RSA_PSS",
+				"HASH=SHA256"
+			],
+			"format": "BASE64",
+			"pub_key": [
+				"AQAB"
+			],
+			"modulus": [
+				"t1jpboUoNppBVamc+nA+zEjljn/gPbRF",
+				"CvyveRd8Yr0p8y1mlmjKXcQlXcHPVM4T",
+				"opgFXqDykIHXxJxLV56ysb4KUGe0nxpm",
+				"hEso5ZGUgkDIIoH0NAQAsS8rS2ZzNJcL",
+				"rLGrMY6DRgFsa+G6h2DvMwglnsX++a8F",
+				"Im7Vu+OZnfWpDEuhJU4TRtHVviJSYkFM",
+				"ckyYBB48k1MU+0b4pezHconZmMEisBFF",
+				"bwarNvowf2i/tRESe3myKXfiJsZZ2Uzd",
+				"E3FqycSgw1tx8qV/Z8myozUWuihIdw8T",
+				"GbbsJhEeVFxQEP/DVzC6HHDI3EVpr2jP",
+				"YeIE60hhZwM7jUmQscLerQ=="
+			]
+		},
+		"key 4": {
+			"type": "RSA",
+			"security_size": 4096,
+			"usage": [
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"RSA_PSS",
+				"HASH=SHA512"
+			],
+			"format": "BASE64",
+			"pub_key": [
+				"AQAB"
+			],
+			"modulus": [
+				"0EiF5FzUdPgzNXka9RsOT0IVToNOiZEC",
+				"k2pGaLOuJGqbo5jge3d3vUFeiDr8gGSo",
+				"Cdnj9clDjQbixUNvnaTXWg+98n8Xmlz7",
+				"pSo8Ev5AbNgaQmi5sCpcWkjqjDSprIU1",
+				"Au/RP2jjKHRBA6ga+AKa/3WqaK0utk1e",
+				"7hT1Lvob4OIZJP5DIyQzGP5WwZGxFEG5",
+				"9XW6tye8VaNTpDb5yvZynSYwAb3o1PIi",
+				"yRiIny8vTdbPgNfiSU7hfjt8+YOdT84y",
+				"fhJu8xnz3qPUvQnThL65VOFOTFBZwVyp",
+				"eFfmozyTNyMlSbJsWVt/XnSPdaK5xbjw",
+				"r+Pt8nTH2reJSjga9rRyhJyCUlZyCj8E",
+				"ELAUPDw1VtruenFJEyJpLepO/R0QVxGe",
+				"8HJz7uHIbHGVZ1MT20eKxQjV5lWT0/3O",
+				"Ko05kqxxjxlfX78Lgz1fr1jsDwjvgXl0",
+				"7bshHJwSA6tKjbPU2F9LBuomv1rZMG1G",
+				"wWKefyuMoEjM2fQTmn2M7VaPG2RyMd9d",
+				"eks3wUUy+hgj2X8r5lYOb2xuhoXyOuCj",
+				"NJzTTgAV6YAfv2aYIZVEpefW8MCjgMsL",
+				"qnc2IEVhBxhtb1X5t4YPqyuwXrEm25j9",
+				"TC09E4tZLO4IKtn/gGWak2xHR6EgUW/M",
+				"QqNfqtHbKndgqWC4NswEwoyl9IbEAXBx",
+				"ns6JrFHbRQc="
+			]
+		},
+		"key 5": {
+			"type": "RSA",
+			"security_size": 2048,
+			"usage": [
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"RSA_PKCS1V15",
+				"HASH=SHA256"
+			],
+			"pub_key": [
+				"010001"
+			],
+			"modulus": [
+				"e0b14b99cd61cd3db9c2076668841324",
+				"fa3174f33ce66ffd514394d34178d29a",
+				"49493276b6777233e7d46a3e68bc7ca7",
+				"e899e901d54f6dee0749c3e48ddf6868",
+				"5867ee2ae66df88eb563f6db137a9f6b",
+				"175a112e0eda8368e88e45efe1ce14bc",
+				"6016d52639627066af1872c72f60b916",
+				"1c1d237eeb34b0f841b3f0896f9fe0e1",
+				"6b0f74352d101292cc464a7e7861bbeb",
+				"86f6df6151cb265417c66c565ed8974b",
+				"d8fc984d5ddfd4eb91a3d5234ce1b546",
+				"7f3ade375f802ec07293f1236efa3068",
+				"bc91b158551c875c5dc0a9d6fa321bf9",
+				"421f08deac910e35c1c28549ee8eed83",
+				"30cf70595ff70b94b49907e27698a9d9",
+				"11f7ac0706afcb1a4a39feb38b0a8049"
+			]
+		},
+		"key 6": {
+			"type": "RSA",
+			"security_size": 4096,
+			"usage": [
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"RSA_PKCS1V15",
+				"HASH=SHA512"
+			],
+			"pub_key": [
+				"010001"
+			],
+			"modulus": [
+				"d25c8f8c97b7e5a6a98de78f19ef1807",
+				"7cf952e64622e4142e6ba5c8ee265ea9",
+				"b34b9e5cb2c1ac0307547faa70126229",
+				"b32085988c0974a03198c89f8305be4b",
+				"dc445ee577c60b7a7fdfd5cf7283f0a1",
+				"d0f2d65b1ba2fbfb76c5039ee06a944d",
+				"40ae3843c9a4d60571db4cd16e28ce5b",
+				"9fb9fa83fa3cf8cfc1e87103612568ec",
+				"db1a5c50fbd0911b645983b629ba72bc",
+				"2d228207b49e00bdae1b906aa15ea2d2",
+				"3f8c0e124c9e7de1b3cd3b9bc6a017c4",
+				"de3f1d6548dacad6d4abd5f4e179a2a5",
+				"e782fb8f818cf8f307f84f7f3bcd8105",
+				"9e73192036aca02f805070eded8b5de0",
+				"1037f2b34b41e86bb8c44760492cde4b",
+				"c3b080d5b0624bfa1002bd6a75d0513b",
+				"07c354e8edf8a6f57dc14290eb885065",
+				"9788098b9971fc0492c3ced7c3478689",
+				"444e771c9434fb624eb4243f740c3ef9",
+				"c3f3f084bfb59f44a46a1d3b1438e661",
+				"ba3ba08d525255224816348b4d696475",
+				"ccac3871fc7836385f7078412cc58e36",
+				"747d248bb1ab123fa33256c10d1102f7",
+				"7a60643f4247ac1cdfdf4d8d51deea80",
+				"795964f801f97c4f955eb181136bb39a",
+				"becd3549541ccc9d29e34a63241a4548",
+				"e836c4d2159968596130a222608ae0b0",
+				"9d9ed30cbf04d83083457f60e8a686a4",
+				"52baa2b08c177ade1a3cbe7bc0d6ed84",
+				"6c24c4ad5bcaff3817fdf3381e64c39c",
+				"18dd4f54eb82fc23d313984322848939",
+				"9c156565df75f3808cbdfaa53594bac5"
+			]
+		},
+		"key 7": {
+			"type": "RSA",
+			"security_size": 2048,
+			"usage": [
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"RSA_PKCS1V15",
+				"HASH=SHA256"
+			],
+			"format": "BASE64",
+			"pub_key": [
+				"AQAB"
+			],
+			"modulus": [
+				"4LFLmc1hzT25wgdmaIQTJPoxdPM85m/9",
+				"UUOU00F40ppJSTJ2tndyM+fUaj5ovHyn",
+				"6JnpAdVPbe4HScPkjd9oaFhn7irmbfiO",
+				"tWP22xN6n2sXWhEuDtqDaOiORe/hzhS8",
+				"YBbVJjlicGavGHLHL2C5FhwdI37rNLD4",
+				"QbPwiW+f4OFrD3Q1LRASksxGSn54Ybvr",
+				"hvbfYVHLJlQXxmxWXtiXS9j8mE1d39Tr",
+				"kaPVI0zhtUZ/Ot43X4AuwHKT8SNu+jBo",
+				"vJGxWFUch1xdwKnW+jIb+UIfCN6skQ41",
+				"wcKFSe6O7YMwz3BZX/cLlLSZB+J2mKnZ",
+				"EfesBwavyxpKOf6ziwqASQ=="
+			]
+		},
+		"key 8": {
+			"type": "RSA",
+			"security_size": 4096,
+			"usage": [
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"RSA_PKCS1V15",
+				"HASH=SHA512"
+			],
+			"format": "BASE64",
+			"pub_key": [
+				"AQAB"
+			],
+			"modulus": [
+				"0lyPjJe35aapjeePGe8YB3z5UuZGIuQU",
+				"LmulyO4mXqmzS55cssGsAwdUf6pwEmIp",
+				"syCFmIwJdKAxmMifgwW+S9xEXuV3xgt6",
+				"f9/Vz3KD8KHQ8tZbG6L7+3bFA57gapRN",
+				"QK44Q8mk1gVx20zRbijOW5+5+oP6PPjP",
+				"wehxA2ElaOzbGlxQ+9CRG2RZg7YpunK8",
+				"LSKCB7SeAL2uG5BqoV6i0j+MDhJMnn3h",
+				"s807m8agF8TePx1lSNrK1tSr1fTheaKl",
+				"54L7j4GM+PMH+E9/O82BBZ5zGSA2rKAv",
+				"gFBw7e2LXeAQN/KzS0Hoa7jER2BJLN5L",
+				"w7CA1bBiS/oQAr1qddBROwfDVOjt+Kb1",
+				"fcFCkOuIUGWXiAmLmXH8BJLDztfDR4aJ",
+				"RE53HJQ0+2JOtCQ/dAw++cPz8IS/tZ9E",
+				"pGodOxQ45mG6O6CNUlJVIkgWNItNaWR1",
+				"zKw4cfx4NjhfcHhBLMWONnR9JIuxqxI/",
+				"ozJWwQ0RAvd6YGQ/QkesHN/fTY1R3uqA",
+				"eVlk+AH5fE+VXrGBE2uzmr7NNUlUHMyd",
+				"KeNKYyQaRUjoNsTSFZloWWEwoiJgiuCw",
+				"nZ7TDL8E2DCDRX9g6KaGpFK6orCMF3re",
+				"Gjy+e8DW7YRsJMStW8r/OBf98zgeZMOc",
+				"GN1PVOuC/CPTE5hDIoSJOZwVZWXfdfOA",
+				"jL36pTWUusU="
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "IMPORT",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"restriction_list": "imx8ulp"
+	},
+	"subtest 2": {
+		"command": "IMPORT",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"restriction_list": "imx8ulp"
+	},
+	"subtest 3": {
+		"command": "IMPORT",
+		"subsystem": "ELE",
+		"key_name": "key 3",
+		"restriction_list": "imx8ulp"
+	},
+	"subtest 4": {
+		"command": "IMPORT",
+		"subsystem": "ELE",
+		"key_name": "key 4",
+		"restriction_list": "imx8ulp"
+	},
+	"subtest 5": {
+		"command": "IMPORT",
+		"subsystem": "ELE",
+		"key_name": "key 5",
+		"restriction_list": "imx8ulp"
+	},
+	"subtest 6": {
+		"command": "IMPORT",
+		"subsystem": "ELE",
+		"key_name": "key 6",
+		"restriction_list": "imx8ulp"
+	},
+	"subtest 7": {
+		"command": "IMPORT",
+		"subsystem": "ELE",
+		"key_name": "key 7",
+		"restriction_list": "imx8ulp"
+	},
+	"subtest 8": {
+		"command": "IMPORT",
+		"subsystem": "ELE",
+		"key_name": "key 8",
+		"restriction_list": "imx8ulp"
+	},
+	"subtest 9": {
+		"description": [
+			"Use a known key from the Python Cryptography project that has",
+			"public exponent = 65537:",
+			"/vectors/cryptography_vectors/asymmetric/PKCS8/rsa_pss_2048.pem"
+		],
+		"command": "VERIFY",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"RSA_PSS",
+			"HASH=SHA256"
+		],
+		"message": [
+			"19f62efd88b3d5ec17256610af0b7185",
+			"191e2bbfbd9f746d70df81c291cac589",
+			"63b0e7b9bee36878ba5c0a69349f8afb",
+			"9de7107bbc1b60c08844ccbd77b3f200",
+			"638aa8e13e23c95a843b0c8091dd6a23",
+			"6ae52336130ed04750025922008ec2e2",
+			"199c40360b04d62c3ac91434e9475841",
+			"d578ca38cefcbb99dac7c67525c7f3a2",
+			"96ad4ff872aa88fe419ec41aefdfc6e8",
+			"47f2fa9a4b3ba5a73fa85516a7235123",
+			"3f36c4a9d78f61ee40d7bfb787705ede",
+			"8c0b81713f8d45acfcb3b2c46e52fe21",
+			"3dd7038a52188606789abb93892d1856",
+			"530691177c1ce7f2829e56be39744b77",
+			"5b63b82ea59cf2f15d8c30930a35cbe2",
+			"380f77cdd2c2c785a9b73d30e818d762"
+		],
+		"signature": [
+			"10f110057f8d8b87b79b9788ab199c33",
+			"adeda79d7297a8e153363c4e0b54234c",
+			"c0eea1987cbb5b63e3494f7b8102dd14",
+			"63dd5e1f9919d1eda0ea8361d494172b",
+			"93a899532bc53cbc692848a2e71b9b37",
+			"58622c8a97c481fb4f00c16c01f25931",
+			"83d48c4eba4b520c41dcdf0623810330",
+			"ccd918f415f7f753621ff86a1ce6e134",
+			"67caa16334aeaee4c3f2f259c331ec35",
+			"d3adc2a8ce6491872b399167a04dac1d",
+			"5ee0f597fc07908740ba68f11ba05dab",
+			"d0035e8e3b789f709775d5bd0be70d75",
+			"557a3cb686d4f6f511ef4159580881d4",
+			"7955ae4403c0dff22db5af5454805299",
+			"dbe1f3248c63c5e143e70fd9855c6164",
+			"c1e2aa5210095851d4806e2ef2d40344"
+		],
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 10": {
+		"description": [
+			"Use a known key from the Python Cryptography project that has",
+			"public exponent = 65537:",
+			"/vectors/cryptography_vectors/x509/custom/ca/rsa_key.pem"
+		],
+		"command": "VERIFY",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"RSA_PSS",
+			"HASH=SHA512"
+		],
+		"message": [
+			"bddf552d629669463055557db09ad93d",
+			"b6d048bfadc78147596d1800e5e2fea6",
+			"1f9c04236aaec663292b4d344c93fac7",
+			"defc14771517965715528dcc65b3a233",
+			"89b078525ab3434925ae6656d566d0d1",
+			"70f61ee4ac639747179481abd0977f83",
+			"03f445d877cbd3f2371b2552786d1765",
+			"dea1b4ea4278967f65c80b0f70084e06",
+			"d7895592132a9d0a16d79b62a6d999f0",
+			"96d2cff296da34e6abd420321ab190cc",
+			"d15e3d63d17c1ce3028b02b6aa61d746",
+			"233c5846edbdfe03d1051120685f2e53",
+			"06f288a277bf74349faab47b3c0b5177",
+			"a466abb38ab14198de2e869a138d2662",
+			"5947c798f3ea1974b661d059b32013c0",
+			"9e65fccc1c4d2450c119d994f58fc369"
+		],
+		"signature": [
+			"50fae6234132cb7a14c68ef12f478a52",
+			"d5879662cab8ba7c5c574ba4b4899e71",
+			"4587652146bf33ef4fbcd7cc76346e7e",
+			"ecaa5fea34d34d88911fd6f09afa2424",
+			"5647f1108c81461a9ed0caa6ed084c9d",
+			"137732dbf901825a6ccfd5db156984ef",
+			"b6e3167165915a171c65be124c2b6647",
+			"5291f5d403995b3e6a35f75fa27f9f9d",
+			"31432932a75899a4ea52e274a7437ff9",
+			"0f864cf0f3f4d55a60cf4490dbe4d845",
+			"79462dfe16f31111dd83e88ce4a972ec",
+			"3c0c35f1855abb02bea908565246d092",
+			"45a5f5576291548b314efcd02591de8e",
+			"66d4752b874b4712a737f4433510c11f",
+			"489f4122928c551057c7e11f05604f67",
+			"c1faf38a11e6dbe3c5f5df448b3938b6",
+			"debe155b2155cb700543606cc20c5041",
+			"3978e6c62ee6a5fff21980e105da3095",
+			"1b979cf1c76272a6be6a7d844266549a",
+			"46e98a538513996483d3d1ea11118eaf",
+			"2af66f49bc4155d5451913b1774a7c49",
+			"14ae4b35d9cbe2affc05fa2f5885ec6b",
+			"118fb3e07436e13424e1fe62fdac3d94",
+			"d8a5996c6e0ac619d12bbef7ca691278",
+			"bbfb3eca3379f3745247a4738dbf7626",
+			"cc2d0e3fea9f7881f76581cdcfc2248f",
+			"0c7e7aa8be45c50fa8a0854fc713966c",
+			"8fa173689c24715a0bc3336387572f4b",
+			"b5ae32a502723118621e369effd71a34",
+			"a2c92d1c38d1b148cda144fe7142cbd4",
+			"016b22111310c58545de99e43eff29ba",
+			"78c0971e61339aa2326c6f0bfe88161d"
+		],
+		"key_name": "key 2",
+		"depends": 2
+	},
+	"subtest 11": {
+		"description": [
+			"Use a known key from the Python Cryptography project that has",
+			"public exponent = 65537:",
+			"/vectors/cryptography_vectors/asymmetric/PKCS8/rsa_pss_2048.pem"
+		],
+		"command": "VERIFY",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"RSA_PSS",
+			"HASH=SHA256"
+		],
+		"message": [
+			"239d6bbaa24fa70693525f9b7c518e05",
+			"326349bc5032f93f1b7d51f84835847a",
+			"526557e02552657c906277d52eea7c0b",
+			"4e546ab9c9f26d8fbf819b290f4e4ae9",
+			"bf54be3685975d54172bf76ed8d708af",
+			"55d1e07226614e5419277724658deb21",
+			"ad83d05d34268578b31eaf343c1c677e",
+			"f98efda13cdaf6386520b2424d287a5e",
+			"8858e759ae7e61b6fc824e617f5f00c3",
+			"252c48d5749cea982d3da90ebdd8e68e",
+			"12d99e90dad28dda417c8f5b0729a38d",
+			"b7bd2b4879bbe6549e576d57164a0aa9",
+			"b411ecf18ad7a80caa71baad8aa7572d",
+			"afab12b4e97e4c5e9c975001c0c1c263",
+			"3acb36ec6d4c2a7705a6852dc66d3f6d",
+			"070d556ae0b68daa5bf7f5e5f98106e7"
+		],
+		"signature": [
+			"ae2b1325b3deeb32ab70c5ebcab9171a",
+			"4b05fb9825c8a663716b36e097a76ef8",
+			"22e8e41fdb45f010acae84a203d1e4d2",
+			"f3abf81c90b1bc5c89e1b64ecbc66631",
+			"51edc05898ff488defa87358a1654950",
+			"099809b15adb9d61f2399af166c09247",
+			"cb3b08d33ed4dbae629d715b97e63cf4",
+			"f5507250eb24a669cf80c03cddd63c09",
+			"7ec0af8a378cfcfe4a7e744cb6bb45da",
+			"64e2e3634c5b3e9a9b6801b8694b6a4d",
+			"12d894a26b9035bb7ea06539142ff34c",
+			"8bc4c0db0d156927c93a026d6eb6c5e1",
+			"4900f979fe9c0577218db4139da928f7",
+			"8ffcea96eefc5c00b3fd7a2f87ee79d8",
+			"824544f2187e1c04c4cf639a09279cd3",
+			"64d089d6e8fab725597095540b82b785"
+		],
+		"key_name": "key 3",
+		"depends": 3
+	},
+	"subtest 12": {
+		"description": [
+			"Use a known key from the Python Cryptography project that has",
+			"public exponent = 65537:",
+			"/vectors/cryptography_vectors/x509/custom/ca/rsa_key.pem"
+		],
+		"command": "VERIFY",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"RSA_PSS",
+			"HASH=SHA512"
+		],
+		"message": [
+			"d274f643e51976cdef5469f7999a5fbd",
+			"957bff9463d29d5c292e0fa063fa6351",
+			"4d1a4bdf0258387b1ac2fc0929d9fdf1",
+			"a38099b2bcce80f78848950e1ef4e7b2",
+			"cf029c9157cb46bbdd4b80bd6aec5a28",
+			"d918cdf8e801f497c00d033e6ac83a59",
+			"8c93f77b01d39b661805f61d136409f9",
+			"f12bcb9146645425e0c1722d7f208023",
+			"69693356d8e63e51fcf80743b96c05ab",
+			"c778bcc7e81a391c30cd30fe788a8502",
+			"e8ffecd80a2546441a0454e1b63f257e",
+			"1d75b184ae772e28c5a93a6acf0adbb7",
+			"8363daa9b9c6f6f6d9b2b85be73d416a",
+			"11d05fe6b88808d9eeaf7c337bf94bf8",
+			"d3b16634452c85c314f430f2deee05ca",
+			"07d52186805699533225bb15f8e0c567"
+		],
+		"signature": [
+			"78becf475bec857371f3f4cc00438fa3",
+			"0bd650f6b58431dd73dd50125d165dc4",
+			"81be1e1697274b54b0ece4aaf8962ce6",
+			"c8b72887ab7bfe57424d8a0a8cfbbc0d",
+			"cfe000521d71876adddb36a5ae1776bf",
+			"7095eb853dea4b3009505a6bdc7cec69",
+			"44675edc9c70cce48e3a71a72b6c97d0",
+			"7fa3b33accf85eee2271b571646b86e3",
+			"388e82a68b1616cbb45c53a461e0e19b",
+			"6f9192917c9f53d88ec2b9fc0c2692aa",
+			"f94522cd6a0aecfcbdeb8a168d026134",
+			"967df1ca4b9b1c471b3e66752df316f2",
+			"f23c58394d020a44b90eba6d349b5bda",
+			"bc4f39952cb965e6b5d05ad857049461",
+			"2c853f0bb908de954341e09ee44de1b5",
+			"41e8715df28ac80082d491625750983f",
+			"9fbc2e94b32348c7c92fcd39dc83e2c6",
+			"3f021225fa0c0d6375e5ecc3b3cbb6d4",
+			"dec181c40d225af913b7b2c17a705ac0",
+			"a0784e059a602bc5b7ee7c548eff89b4",
+			"389aa3af81843e6b0693442272b562e3",
+			"19eeb1604840951909b9233a9afb835d",
+			"111b0f9c67f77cd366ffb700fbc2d123",
+			"1abc0c66824ec6afeb94847f9a4a6850",
+			"e3e547ddc8a0bcfb81214b0bac2bb6af",
+			"8d1d1e433d3008e1d114b4ba41031d92",
+			"f483d481d422b1a13d55e9acf64bd085",
+			"99b79f34c4cac7bee061e52dfbcb4bec",
+			"d7f6420adb281c486cc95f5740ea38a4",
+			"c1665f66d4799b27cd9080736b7d6c8b",
+			"6519af5f2aeea6b88f361acc2213b24e",
+			"d670f8eb3629e12231d67d1b578d418c"
+		],
+		"key_name": "key 4",
+		"depends": 4
+	},
+	"subtest 13": {
+		"description": [
+			"Verify data using NIST CAVP RSA FIPS-186-2 test vectors, SigGen15_186-2.txt",
+			"mod = 2048, SHAAlg = SHA256, case #1"
+		],
+		"command": "VERIFY",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"RSA_PKCS1V15",
+			"HASH=SHA256"
+		],
+		"message": [
+			"6504921a97cd57aa8f3863dc32e1f2d0",
+			"b57aff63106e59f6afc3f9726b459388",
+			"bae16b3e224f6aa7f4f471f13606eda6",
+			"e1f1ac2b4df9ef8de921c07c2f4c8598",
+			"d7a3d6ec4b368cb85ce61a7433822111",
+			"8a303e821c0f277b591af6795f50c402",
+			"26127a2efacce4662fd7076c109eb59b",
+			"18005e7165f6294a6976436ee397774e"
+		],
+		"signature": [
+			"335ffadc0b1b8bd2b1eb670dd246e76d",
+			"cccdc955a1687a15f74aa3e1596ebd43",
+			"e607c640525f89dda95809cfd065f1be",
+			"4e4a249477d24f400d4d4c9438a0af95",
+			"b26b28b416e42aa950e2a52851b52132",
+			"048f1b1ce944322fc99c1aabb49b7fae",
+			"4c2f0fef674b50adee3bbb5c6c33822b",
+			"608e4b9577275ca20c710af9fc41b1c0",
+			"1d9c0ff6f0d8324dc08e1a76e232d8fe",
+			"aa06c73bbf64053bea35f1c528b27227",
+			"64822ef1ff06246e75a9a22a10da4ea8",
+			"4fc2441bea24b35506f8447fcf69093c",
+			"5d21ab0305cce2c7ea9ffac357c664b4",
+			"91fc55f2919ec490c38accbab378c252",
+			"ac2df3845acff575ec7524cd2f586cca",
+			"1497c74f24b299d6d6254c8cdb1d227d"
+		],
+		"key_name": "key 5",
+		"depends": 5
+	},
+	"subtest 14": {
+		"description": [
+			"Verify data using NIST CAVP RSA FIPS-186-2 test vectors, SigGen15_186-2.txt",
+			"mod = 4096, SHAAlg = SHA512, case #1"
+		],
+		"command": "VERIFY",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"RSA_PKCS1V15",
+			"HASH=SHA512"
+		],
+		"message": [
+			"0aa7729d265c746f66b75246cff95b07",
+			"3cdf630253c85d2eb7192db67fe1b7b5",
+			"e8b93c3e46efe6a041e3a1e83db02da7",
+			"1a0f71f51e7913b52f8c451b46b0e26c",
+			"20fab9053751299ff0cfeed116693ad6",
+			"87d307912d9eacce30a4afcb6aa5dbf7",
+			"1c3292f9dfca64f4dd44e00a406ca91f",
+			"ebf1cddf687f5302222813ced508cbde"
+		],
+		"signature": [
+			"b47ae7224429db36d6253878be84087f",
+			"af59b5ff8896649afb2aeda0e02bf843",
+			"b5c591945bf7d4dba0aa2b09a4a52ba3",
+			"58f4d80b5d6f97d8f636e03fe986f37b",
+			"38a2e8297a48bca4ff3759d21ea6958a",
+			"f1ea7a08efbd61c0b82fde2def426474",
+			"4b86cacf2603f5fc4828d2db7da947ba",
+			"91058f704212bc6d1075112cf0dd9d89",
+			"11f8dfc6f0cf5ad31987095b5d09e520",
+			"b562af6223cb35dac8c0a6a302ba9e28",
+			"f797b55299f36f82fe41692857ec7d73",
+			"bc24604db0ace106a2e68f6d1f9f274c",
+			"d5f56cd802a4f2683a013d2d3f6992bf",
+			"f578310d81fc1aae7a01a61b8a9df77b",
+			"020ebfd191ab749c2e3b853f284bb76c",
+			"83b86ad0978f760266ec5e497f2dbbfd",
+			"73ebc693140406a0516765b83e4ca7a8",
+			"20fa44b9057af4b702c0069142e2933b",
+			"7e9699ac099101c2c509b7825d8aef59",
+			"a6432f38a4cc80e0b3c4034bb992ecce",
+			"690d2e809627ac13a078b4f1a0855d6e",
+			"63b2abdfe307653244aa9b23934ec898",
+			"cffec904645407cae728fa6cd36f3f4a",
+			"27a01be502df5f5ebd8a7f4d0d21a490",
+			"86fcc2e44c62ad5441ad9fc73a15d575",
+			"9eeb13483998792f126f40abbf9b775a",
+			"e24545a11cdc842edd0f23955dfe7524",
+			"81fca340dbd75bb8902d3a73314ba112",
+			"e0d4b0ffab3fa9a51697b5efe12e53f7",
+			"e6ba7322f5194146ae2da2691d148844",
+			"70a07ef37bd90cb2082c2ecdb1d92062",
+			"fe2b1c808ec5c07dda12f66d9ab85983"
+		],
+		"key_name": "key 6",
+		"depends": 6
+	},
+	"subtest 15": {
+		"description": [
+			"Verify data using NIST CAVP RSA FIPS-186-2 test vectors, SigGen15_186-2.txt",
+			"mod = 2048, SHAAlg = SHA256, case #2"
+		],
+		"command": "VERIFY",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"RSA_PKCS1V15",
+			"HASH=SHA256"
+		],
+		"message": [
+			"1a53a9d6312918f3db6bd5766da98185",
+			"4166ddf2b613ebc8793f50230308fd45",
+			"63d50ee73e47f2cd146ccd9dc4361af1",
+			"532c95abe96058891ca144f971f1a22e",
+			"203a0a73183c84bf43caee8a0b369ee0",
+			"1d0a48b46df821767a1444e8d341552d",
+			"dae96522c8f216f2f1ed00e54a905379",
+			"2866bdb44ac58eb81a011a9830df5e6a"
+		],
+		"signature": [
+			"7b17b13a5ce4485ca3b979be3b14d775",
+			"32fcbac14e460a54515a6aa7d213ef14",
+			"10cadd009ce60bfec45bf49451433891",
+			"3a2792bb6086a4cc21dbe852c2b57a3f",
+			"f5931039973cdacbba96e2ee77fb8ec6",
+			"c87c14ea10762e2aa9279ae5192ca1c8",
+			"7ededbedfb305fb006a51602e6bf4dc4",
+			"3b994f419c979b4f30719827a3489482",
+			"14ee71565361f668dbf81ef6e94297a3",
+			"ccd68357fccca6dda237911c938d6e71",
+			"787b3d4085c66c7ca2aad2db16274df2",
+			"3ad19211aa6380be75cf0b19257af4df",
+			"5af1e62010dffd23b9742f5369e00822",
+			"4ee40331f2387422095f6e5afe0e125f",
+			"855de220648a845cbde542ff7f99d926",
+			"868819aad924b3919654483bbc6d8dd8"
+		],
+		"key_name": "key 7",
+		"depends": 7
+	},
+	"subtest 16": {
+		"description": [
+			"Verify data using NIST CAVP RSA FIPS-186-2 test vectors, SigGen15_186-2.txt",
+			"mod = 4096, SHAAlg = SHA512, case #2"
+		],
+		"command": "VERIFY",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"RSA_PKCS1V15",
+			"HASH=SHA512"
+		],
+		"message": [
+			"e853030dcd5fe68b1c59844a548f85a1",
+			"84a8801a182d6f1af34860c5becb6d1c",
+			"7f73ed686d6fecdc031cd97653137f26",
+			"9d65373220255bd93027fd378908d968",
+			"e36e89f0c691f85aa0fb1920158cd9cb",
+			"96c0525b353541e9b767ba8bebbe1a78",
+			"3bcc3e6d81cff24f1c7eac1142027bd8",
+			"97423a5dff630993b18ffe8b8ef61794"
+		],
+		"signature": [
+			"9c1be5e857dda58ac54ad9a148038407",
+			"ebea778650fb48b9345fcac30ac5d17b",
+			"dda862bf384c2eacc957a20b5250769a",
+			"3fe3d32f0f1e3e27574b657d3593c510",
+			"00ed3633f7fc6e2c0ec7b4b148cf34b2",
+			"f01c80fee1bfb23664ed5e5678ebbb29",
+			"37921e9f976473325585ba49a7d4af05",
+			"5fb58e350a4d98a2b9e4e03f561b0939",
+			"0358df758fcd3af7aaaccdbeee96a755",
+			"2877c0890ae435934d47cda981ada606",
+			"bbe767c7f6a3904d7132ec5906edbb3d",
+			"2f766f963aac2ff6dbd49986d3a55076",
+			"66110392fc84bb82b40ad0df6b936059",
+			"b9045eb2c4a0cd4bbac71e35b0f7994c",
+			"1def664b7af84ba5e6ccfac1424be310",
+			"2e15d985890ae44fb06b1b7f45ca18f2",
+			"00c8acb9d98ba114a050912b703f3cf9",
+			"9ed1655b5f631b26fb75d8db6dcbe145",
+			"d9aadb7903217ef2bd97fab5a0948fec",
+			"d8fcd22b36ff8ac0d04d8ff17d518bc2",
+			"286a80e362bfdecc41ae4054ed9b694a",
+			"f8313a2ff8d909d50cf140942da5e77f",
+			"851e988ea5eeb65bfe6bd793edaa6add",
+			"6362dd4a62f6395af888085144efa253",
+			"dd2ac4382972ed40b81f06aa994e4d02",
+			"000d558e3993b28d77aa66141b7bbbbe",
+			"4a162bb4f49dd5d3827d750ca79a2bb9",
+			"fc350c757890d3e80b6d3db102ffa201",
+			"d79006c5c75aa83b710ec321a2ee2711",
+			"451195248d5c3e7d3b3aac26a67199a4",
+			"e85952b5905958377a88b20da16fda98",
+			"6d50be8623491e32a07bd18ad89de4c6"
+		],
+		"key_name": "key 8",
+		"depends": 8
+	},
+	"subtest 17": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 18": {
+		"command": "DELETE",
+		"key_name": "key 2",
+		"depends": 2
+	},
+	"subtest 19": {
+		"command": "DELETE",
+		"key_name": "key 3",
+		"depends": 3
+	},
+	"subtest 20": {
+		"command": "DELETE",
+		"key_name": "key 4",
+		"depends": 4
+	},
+	"subtest 21": {
+		"command": "DELETE",
+		"key_name": "key 5",
+		"depends": 5
+	},
+	"subtest 22": {
+		"command": "DELETE",
+		"key_name": "key 6",
+		"depends": 7
+	},
+	"subtest 23": {
+		"command": "DELETE",
+		"key_name": "key 7",
+		"depends": 7
+	},
+	"subtest 24": {
+		"command": "DELETE",
+		"key_name": "key 8",
+		"depends": 8
+	}
+}

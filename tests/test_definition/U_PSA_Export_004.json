@@ -1,0 +1,142 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "SECP_R1",
+			"privacy": "PUBLIC_KEY",
+			"security_size": 256,
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA256"
+			],
+			"key_data": [
+				"041ccbe91c075fc7f4f033bfa248db8f",
+				"ccd3565de94bbfb12f3c59ff46c271bf",
+				"83ce4014c68811f9a21a1fdb2c0e6113",
+				"e06db7ca93b7404e78dc7ccd5ca89a4c",
+				"a9"
+			]
+		},
+		"key 2": {
+			"type": "SECP_R1",
+			"privacy": "PUBLIC_KEY",
+			"security_size": 384,
+			"usage": [
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA384"
+			],
+			"key_data": [
+				"04c2b47944fb5de342d03285880177ca",
+				"5f7d0f2fcad7678cce4229d6e1932fca",
+				"c11bfc3c3e97d942a3c56bf34123013d",
+				"bf37257906a8223866eda0743c519616",
+				"a76a758ae58aee81c5fd35fbf3a855b7",
+				"754a36d4a0672df95d6c44a81cf7620c",
+				"2d"
+			]
+		},
+		"key 3": {
+			"type": "SECP_R1",
+			"privacy": "PUBLIC_KEY",
+			"security_size": 521,
+			"usage": [
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA512"
+			],
+			"key_data": [
+				"040061387fd6b95914e885f912edfbb5",
+				"fb274655027f216c4091ca83e1933674",
+				"0fd81aedfe047f51b42bdf6816112101",
+				"3e0d55b117a14e4303f926c8debb77a7",
+				"fdaad100e7d0c75c38626e895ca21526",
+				"b9f9fdf84dcecb93f2b233390550d2b1",
+				"463b7ee3f58df7346435ff0434199583",
+				"c97c665a97f12f706f2357da4b40288d",
+				"ef888e59e6"
+			]
+		},
+		"key 6": {
+			"key_name": "key 1",
+			"key_data": [
+				65,
+				""
+			]
+		},
+		"key 7": {
+			"key_name": "key 2",
+			"key_data": [
+				65,
+				""
+			]
+		},
+		"key 8": {
+			"key_name": "key 3",
+			"key_data": [
+				65,
+				""
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "IMPORT",
+		"api": "PSA",
+		"key_name": "key 1"
+	},
+	"subtest 2": {
+		"command": "IMPORT",
+		"api": "PSA",
+		"key_name": "key 2"
+	},
+	"subtest 3": {
+		"command": "IMPORT",
+		"api": "PSA",
+		"key_name": "key 3"
+	},
+	"subtest 4": {
+		"command": "EXPORT_PUBLIC",
+		"api": "PSA",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 5": {
+		"command": "EXPORT_PUBLIC",
+		"api": "PSA",
+		"key_name": "key 2",
+		"depends": 2
+	},
+	"subtest 6": {
+		"command": "EXPORT_PUBLIC",
+		"api": "PSA",
+		"key_name": "key 3",
+		"depends": 3
+	},
+	"subtest 7": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 8": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 2",
+		"depends": 2
+	},
+	"subtest 9": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 3",
+		"depends": 3
+	}
+}

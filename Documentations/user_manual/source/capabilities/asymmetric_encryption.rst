@@ -44,25 +44,25 @@ Supported Operations versus Subsystems
    +                +                +---------+------------------------------------+
    |                |                | PSA     | :c:func:`psa_asymmetric_encrypt`   |
    +                +                +---------+------------------------------------+
-   |                |                | PKCS11  | C_EncryptInit()                    |
+   |                |                | PKCS11  | :c:func:`C_EncryptInit`            |
    +                +                +         +                                    +
-   |                |                |         | C_Encrypt()                        |
+   |                |                |         | :c:func:`C_Encrypt`                |
    +                +                +         +------------------------------------+
-   |                |                |         | C_MessageEncryptInit()             |
+   |                |                |         | :c:func:`C_MessageEncryptInit`     |
    +                +                +         +                                    +
-   |                |                |         | C_EncryptMessage()                 |
+   |                |                |         | :c:func:`C_EncryptMessage`         |
    +----------------+----------------+---------+------------------------------------+
    | Decryption     | Single-Part    | SMW     | :c:func:`smw_asymmetric_decrypt`   |
    +                +                +---------+------------------------------------+
    |                |                | PSA     | :c:func:`psa_asymmetric_decrypt`   |
    +                +                +---------+------------------------------------+
-   |                |                | PKCS11  | C_DecryptInit()                    |
+   |                |                | PKCS11  | :c:func:`C_DecryptInit`            |
    +                +                +         +                                    +
-   |                |                |         | C_Decrypt()                        |
+   |                |                |         | :c:func:`C_Decrypt`                |
    +                +                +         +------------------------------------+
-   |                |                |         | C_MessageDecryptInit()             |
+   |                |                |         | :c:func:`C_MessageDecryptInit`     |
    +                +                +         +                                    +
-   |                |                |         | C_DecryptMessage()                 |
+   |                |                |         | :c:func:`C_DecryptMessage`         |
    +----------------+----------------+---------+------------------------------------+
 
 

@@ -95,13 +95,13 @@ Supported Operations versus Subsystems
    +                +                +---------+------------------------------------+
    |                |                | PSA     | :c:func:`psa_cipher_encrypt`       |
    +                +                +---------+------------------------------------+
-   |                |                | PKCS11  | C_EncryptInit()                    |
+   |                |                | PKCS11  | :c:func:`C_EncryptInit`            |
    +                +                +         +                                    +
-   |                |                |         | C_Encrypt()                        |
+   |                |                |         | :c:func:`C_Encrypt`                |
    +                +                +         +------------------------------------+
-   |                |                |         | C_MessageEncryptInit()             |
+   |                |                |         | :c:func:`C_MessageEncryptInit`     |
    +                +                +         +                                    +
-   |                |                |         | C_EncryptMessage()                 |
+   |                |                |         | :c:func:`C_EncryptMessage`         |
    +                +----------------+---------+------------------------------------+
    |                | Multi-Part     | SMW     | :c:func:`smw_allocate_context`     |
    +                +                +         +                                    +
@@ -125,31 +125,31 @@ Supported Operations versus Subsystems
    +                +                +         +                                    +
    |                |                |         | :c:func:`psa_cipher_abort`         |
    +                +                +---------+------------------------------------+
-   |                |                | PKCS11  | C_EncryptInit()                    |
+   |                |                | PKCS11  | :c:func:`C_EncryptInit`            |
    +                +                +         +                                    +
-   |                |                |         | C_EncryptUpdate()                  |
+   |                |                |         | :c:func:`C_EncryptUpdate`          |
    +                +                +         +                                    +
-   |                |                |         | C_EncryptFinal()                   |
+   |                |                |         | :c:func:`C_EncryptFinal`           |
    +                +                +         +------------------------------------+
-   |                |                |         | C_MessageEncryptInit()             |
+   |                |                |         | :c:func:`C_MessageEncryptInit`     |
    +                +                +         +                                    +
-   |                |                |         | C_EncryptMessageBegin()            |
+   |                |                |         | :c:func:`C_EncryptMessageBegin`    |
    +                +                +         +                                    +
-   |                |                |         | C_EncryptMessageNext()             |
+   |                |                |         | :c:func:`C_EncryptMessageNext`     |
    +                +                +         +                                    +
-   |                |                |         | C_EncryptMessageFinal()            |
+   |                |                |         | :c:func:`C_EncryptMessageFinal`    |
    +----------------+----------------+---------+------------------------------------+
    | Decryption     | Single-Part    | SMW     | :c:func:`smw_cipher`               |
    +                +                +---------+------------------------------------+
    |                |                | PSA     | :c:func:`psa_cipher_decrypt`       |
    +                +                +---------+------------------------------------+
-   |                |                | PKCS11  | C_DecryptInit()                    |
+   |                |                | PKCS11  | :c:func:`C_DecryptInit`            |
    +                +                +         +                                    +
-   |                |                |         | C_Decrypt()                        |
+   |                |                |         | :c:func:`C_Decrypt`                |
    +                +                +         +------------------------------------+
-   |                |                |         | C_MessageDecryptInit()             |
+   |                |                |         | :c:func:`C_MessageDecryptInit`     |
    +                +                +         +                                    +
-   |                |                |         | C_DecryptMessage()                 |
+   |                |                |         | :c:func:`C_DecryptMessage`         |
    +                +----------------+---------+------------------------------------+
    |                | Multi-Part     | SMW     | :c:func:`smw_allocate_context`     |
    +                +                +         +                                    +
@@ -171,19 +171,19 @@ Supported Operations versus Subsystems
    +                +                +         +                                    +
    |                |                |         | :c:func:`psa_cipher_abort`         |
    +                +                +---------+------------------------------------+
-   |                |                | PKCS11  | C_DecryptInit()                    |
+   |                |                | PKCS11  | :c:func:`C_DecryptInit`            |
    +                +                +         +                                    +
-   |                |                |         | C_DecryptUpdate()                  |
+   |                |                |         | :c:func:`C_DecryptUpdate`          |
    +                +                +         +                                    +
-   |                |                |         | C_DecryptFinal()                   |
+   |                |                |         | :c:func:`C_DecryptFinal`           |
    +                +                +         +------------------------------------+
-   |                |                |         | C_MessageDecryptInit()             |
+   |                |                |         | :c:func:`C_MessageDecryptInit`     |
    +                +                +         +                                    +
-   |                |                |         | C_DecryptMessageBegin()            |
+   |                |                |         | :c:func:`C_DecryptMessageBegin`    |
    +                +                +         +                                    +
-   |                |                |         | C_DecryptMessageNext()             |
+   |                |                |         | :c:func:`C_DecryptMessageNext`     |
    +                +                +         +                                    +
-   |                |                |         | C_DecryptMessageFinal()            |
+   |                |                |         | :c:func:`C_DecryptMessageFinal`    |
    +----------------+----------------+---------+------------------------------------+
 
 AES Symmetric Encryption
@@ -340,6 +340,10 @@ The following table outlines the permitted AES Symmetric Encryption algorithms.
    |                 |         |      - CKM_AES_CBC                                                 |
    |                 |         |    * - Counter (CTR)                                               |
    |                 |         |      - CKM_AES_CTR                                                 |
+   |                 |         |    * - Cipher Feedback (CFB)                                       |
+   |                 |         |      - CKM_AES_CFB128                                              |
+   |                 |         |    * - Output Feedback (OFB)                                       |
+   |                 |         |      - CKM_AES_OFB                                                 |
    |                 |         |    * - Ciphertext Stealing (CTS)                                   |
    |                 |         |      - CKM_AES_CTS                                                 |
    |                 |         |    * - XEX with Ciphertext Stealing (XTS)                          |

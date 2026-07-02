@@ -300,7 +300,7 @@ transient keys within a secure subsystem storage.
    +                  +         +                                              +
    |                  |         | PSA_ECC_FAMILY_SECP_R1                       |
    +                  +---------+----------------------------------------------+
-   |                  | PKCS11  | C_GenerateKeyPair()                          |
+   |                  | PKCS11  | :c:func:`C_GenerateKeyPair`                  |
    +                  +         +                                              +
    |                  |         | CKM_EC_KEY_PAIR_GEN                          |
    +------------------+---------+----------------------------------------------+
@@ -324,7 +324,7 @@ transient keys within a secure subsystem storage.
    +                  +         +                                              +
    |                  |         | PSA_ECC_FAMILY_TWISTED_EDWARDS               |
    +                  +---------+----------------------------------------------+
-   |                  | PKCS11  | C_GenerateKeyPair()                          |
+   |                  | PKCS11  | :c:func:`C_GenerateKeyPair`                  |
    +                  +         +                                              +
    |                  |         | CKM_EC_EDWARDS_KEY_PAIR_GEN                  |
    +------------------+---------+----------------------------------------------+
@@ -338,7 +338,7 @@ transient keys within a secure subsystem storage.
    +                  +         +                                              +
    |                  |         | PSA_ECC_FAMILY_MONTGOMERY                    |
    +                  +---------+----------------------------------------------+
-   |                  | PKCS11  | C_GenerateKeyPair()                          |
+   |                  | PKCS11  | :c:func:`C_GenerateKeyPair`                  |
    +                  +         +                                              +
    |                  |         | CKM_EC_MONTGOMERY_KEY_PAIR_GEN               |
    +------------------+---------+----------------------------------------------+
@@ -350,7 +350,7 @@ transient keys within a secure subsystem storage.
    +                  +         +                                              +
    |                  |         | PSA_KEY_TYPE_RSA_KEY_PAIR                    |
    +                  +---------+----------------------------------------------+
-   |                  | PKCS11  | C_GenerateKeyPair()                          |
+   |                  | PKCS11  | :c:func:`C_GenerateKeyPair`                  |
    +                  +         +                                              +
    |                  |         | CKM_RSA_PKCS_KEY_PAIR_GEN                    |
    +                  +         +                                              +
@@ -374,7 +374,7 @@ transient keys within a secure subsystem storage.
    +                  +         +                                              +
    |                  |         | PSA_KEY_TYPE_AES                             |
    +                  +---------+----------------------------------------------+
-   |                  | PKCS11  | C_GenerateKey()                              |
+   |                  | PKCS11  | :c:func:`C_GenerateKey`                      |
    +                  +         +                                              +
    |                  |         | CKM_AES_KEY_GEN                              |
    +------------------+---------+----------------------------------------------+
@@ -386,7 +386,7 @@ transient keys within a secure subsystem storage.
    +                  +         +                                              +
    |                  |         | PSA_KEY_TYPE_DES                             |
    +                  +---------+----------------------------------------------+
-   |                  | PKCS11  | C_GenerateKey()                              |
+   |                  | PKCS11  | :c:func:`C_GenerateKey`                      |
    +                  +         +                                              +
    |                  |         | CKM_DES_KEY_GEN                              |
    +------------------+---------+----------------------------------------------+
@@ -398,7 +398,7 @@ transient keys within a secure subsystem storage.
    +                  +         +                                              +
    |                  |         | PSA_KEY_TYPE_DES3                            |
    +                  +---------+----------------------------------------------+
-   |                  | PKCS11  | C_GenerateKey()                              |
+   |                  | PKCS11  | :c:func:`C_GenerateKey`                      |
    +                  +         +                                              +
    |                  |         | CKM_DES3_KEY_GEN                             |
    +------------------+---------+----------------------------------------------+
@@ -410,7 +410,7 @@ transient keys within a secure subsystem storage.
    +                  +         +                                              +
    |                  |         | PSA_KEY_TYPE_SM4                             |
    +                  +---------+----------------------------------------------+
-   |                  | PKCS11  | C_GenerateKey()                              |
+   |                  | PKCS11  | :c:func:`C_GenerateKey`                      |
    +                  +         +                                              +
    |                  |         | CKM_SM4_KEY_GEN (NXP vendor define)          |
    +------------------+---------+----------------------------------------------+
@@ -422,7 +422,7 @@ transient keys within a secure subsystem storage.
    +                  +         +                                              +
    |                  |         | PSA_KEY_TYPE_HMAC                            |
    +                  +---------+----------------------------------------------+
-   |                  | PKCS11  | C_GenerateKey()                              |
+   |                  | PKCS11  | :c:func:`C_GenerateKey`                      |
    +                  +         +                                              +
    |                  |         | CKM_GENERIC_SECRET_KEY_GEN                   |
    +------------------+---------+----------------------------------------------+
@@ -448,7 +448,7 @@ persistent or transient key from the subsystem system storage.
    +---------+---------------------------+
    | PSA     | :c:func:`psa_destroy_key` |
    +---------+---------------------------+
-   | PKCS11  | C_DestroyObject()         |
+   | PKCS11  | :c:func:`C_DestroyObject` |
    +---------+---------------------------+
 
 .. _key_management_import:
@@ -482,7 +482,7 @@ Plaintext
    +                  +         +                                    +
    |                  |         | PSA_ECC_FAMILY_SECP_R1             |
    +                  +---------+------------------------------------+
-   |                  | PKCS11  | C_CreateObject()                   |
+   |                  | PKCS11  | :c:func:`C_CreateObject`           |
    +                  +         +                                    +
    |                  |         | CKK_EC                             |
    +------------------+---------+------------------------------------+
@@ -506,7 +506,7 @@ Plaintext
    +                  +         +                                    +
    |                  |         | PSA_ECC_FAMILY_TWISTED_EDWARDS     |
    +                  +---------+------------------------------------+
-   |                  | PKCS11  | C_CreateObject()                   |
+   |                  | PKCS11  | :c:func:`C_CreateObject`           |
    +                  +         +                                    +
    |                  |         | CKK_EC_EDWARDS                     |
    +------------------+---------+------------------------------------+
@@ -520,7 +520,7 @@ Plaintext
    +                  +         +                                    +
    |                  |         | PSA_ECC_FAMILY_MONTGOMERY          |
    +                  +---------+------------------------------------+
-   |                  | PKCS11  | C_CreateObject()                   |
+   |                  | PKCS11  | :c:func:`C_CreateObject`           |
    +                  +         +                                    +
    |                  |         | CKK_EC_MONTGOMERY                  |
    +------------------+---------+------------------------------------+
@@ -532,7 +532,7 @@ Plaintext
    +                  +         +                                    +
    |                  |         | PSA_KEY_TYPE_RSA_KEY_PAIR          |
    +                  +---------+------------------------------------+
-   |                  | PKCS11  | C_CreateObject()                   |
+   |                  | PKCS11  | :c:func:`C_CreateObject`           |
    +                  +         +                                    +
    |                  |         | CKK_RSA                            |
    +------------------+---------+------------------------------------+
@@ -546,7 +546,7 @@ Plaintext
    +                  +         +                                    +
    |                  |         | PSA_KEY_TYPE_AES                   |
    +                  +---------+------------------------------------+
-   |                  | PKCS11  | C_CreateObject()                   |
+   |                  | PKCS11  | :c:func:`C_CreateObject`           |
    +                  +         +                                    +
    |                  |         | CKK_AES                            |
    +------------------+---------+------------------------------------+
@@ -558,7 +558,7 @@ Plaintext
    +                  +         +                                    +
    |                  |         | PSA_KEY_TYPE_DES                   |
    +                  +---------+------------------------------------+
-   |                  | PKCS11  | C_CreateObject()                   |
+   |                  | PKCS11  | :c:func:`C_CreateObject`           |
    +                  +         +                                    +
    |                  |         | CKK_DES                            |
    +------------------+---------+------------------------------------+
@@ -570,7 +570,7 @@ Plaintext
    +                  +         +                                    +
    |                  |         | PSA_KEY_TYPE_DES3                  |
    +                  +---------+------------------------------------+
-   |                  | PKCS11  | C_CreateObject()                   |
+   |                  | PKCS11  | :c:func:`C_CreateObject`           |
    +                  +         +                                    +
    |                  |         | CKK_DES3                           |
    +------------------+---------+------------------------------------+
@@ -582,7 +582,7 @@ Plaintext
    +                  +         +                                    +
    |                  |         | PSA_KEY_TYPE_SM4                   |
    +                  +---------+------------------------------------+
-   |                  | PKCS11  | C_CreateObject()                   |
+   |                  | PKCS11  | :c:func:`C_CreateObject`           |
    +                  +         +                                    +
    |                  |         | CKK_SM4 (NXP vendor define)        |
    +------------------+---------+------------------------------------+
@@ -594,7 +594,7 @@ Plaintext
    +                  +         +                                    +
    |                  |         | PSA_KEY_TYPE_HMAC                  |
    +                  +---------+------------------------------------+
-   |                  | PKCS11  | C_CreateObject()                   |
+   |                  | PKCS11  | :c:func:`C_CreateObject`           |
    +                  +         +                                    +
    |                  |         | CKK_GENERIC_SECRET                 |
    +                  +         +                                    +
@@ -1350,7 +1350,7 @@ the public key attribute containing the public key plaintext value.
    +                  +         +                                                            +
    |                  |         | PSA_ECC_FAMILY_SECP_R1                                     |
    +                  +---------+------------------------------------------------------------+
-   |                  | PKCS11  | C_GetAttributeValue()                                      |
+   |                  | PKCS11  | :c:func:`C_GetAttributeValue`                              |
    +                  +         +                                                            +
    |                  |         | CKA_EC_POINT                                               |
    +------------------+---------+------------------------------------------------------------+
@@ -1374,7 +1374,7 @@ the public key attribute containing the public key plaintext value.
    +                  +         +                                                            +
    |                  |         | PSA_ECC_FAMILY_TWISTED_EDWARDS                             |
    +                  +---------+------------------------------------------------------------+
-   |                  | PKCS11  | C_GetAttributeValue()                                      |
+   |                  | PKCS11  | :c:func:`C_GetAttributeValue`                              |
    +                  +         +                                                            +
    |                  |         | CKA_EC_POINT                                               |
    +------------------+---------+------------------------------------------------------------+
@@ -1388,7 +1388,7 @@ the public key attribute containing the public key plaintext value.
    +                  +         +                                                            +
    |                  |         | PSA_ECC_FAMILY_MONTGOMERY                                  |
    +                  +---------+------------------------------------------------------------+
-   |                  | PKCS11  | C_GetAttributeValue()                                      |
+   |                  | PKCS11  | :c:func:`C_GetAttributeValue`                              |
    +                  +         +                                                            +
    |                  |         | CKA_EC_POINT                                               |
    +------------------+---------+------------------------------------------------------------+
@@ -1400,7 +1400,7 @@ the public key attribute containing the public key plaintext value.
    +                  +         +                                                            +
    |                  |         | PSA_KEY_TYPE_RSA_KEY_PAIR                                  |
    +                  +---------+------------------------------------------------------------+
-   |                  | PKCS11  | C_GetAttributeValue()                                      |
+   |                  | PKCS11  | :c:func:`C_GetAttributeValue`                              |
    +                  +         +                                                            +
    |                  |         | CKA_MODULUS and CKA_PUBLIC_EXPONENT                        |
    +------------------+---------+------------------------------------------------------------+
@@ -1446,7 +1446,7 @@ secret value such as a shared secret or a password.
    +                  +         +                                                       +
    |                  |         | PSA_ALG_HKDF_EXPAND(hash)                             |
    +                  +---------+-------------------------------------------------------+
-   |                  | PKCS11  | C_DeriveKey()                                         |
+   |                  | PKCS11  | :c:func:`C_DeriveKey`                                 |
    +                  +         +                                                       +
    |                  |         | CKM_HKDF_DERIVE                                       |
    +------------------+---------+-------------------------------------------------------+
@@ -1484,7 +1484,7 @@ a blob where key is encrypted.
    +                  +         +                                                       +
    |                  |         | PSA_ALG_ECDH                                          |
    +                  +---------+-------------------------------------------------------+
-   |                  | PKCS11  | C_DeriveKey()                                         |
+   |                  | PKCS11  | :c:func:`C_DeriveKey`                                 |
    +                  +         +                                                       +
    |                  |         | CKM_ECDH1_DERIVE                                      |
    +------------------+---------+-------------------------------------------------------+
@@ -2391,7 +2391,7 @@ API Comparison
    +         +                                                               +
    |         | PSA_ALG_TLS12_PSK_TO_MS(hash_alg)                             |
    +---------+---------------------------------------------------------------+
-   | PKCS11  | C_DeriveKey()                                                 |
+   | PKCS11  | :c:func:`C_DeriveKey`                                         |
    +         +                                                               +
    |         | CKM_ECDH1_DERIVE                                              |
    +         +                                                               +
@@ -3594,7 +3594,7 @@ API Comparison
    +         +                                                               +
    |         | PSA_ALG_VENDOR_TLS13(hash_alg)                                |
    +---------+---------------------------------------------------------------+
-   | PKCS11  | C_DeriveKey()                                                 |
+   | PKCS11  | :c:func:`C_DeriveKey`                                         |
    +         +                                                               +
    |         | CKM_ECDH1_DERIVE                                              |
    +         +                                                               +
@@ -3629,7 +3629,7 @@ key from the secure subsystem without retrieving the actual key material.
    +---------+-----------------------------------+
    | PSA     | :c:func:`psa_get_key_attributes`  |
    +---------+-----------------------------------+
-   | PKCS11  | C_GetAttributeValue()             |
+   | PKCS11  | :c:func:`C_GetAttributeValue`     |
    +---------+-----------------------------------+
 
 The metadata available for the key are described in the

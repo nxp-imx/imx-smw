@@ -92,9 +92,9 @@ Supported Operations versus Subsystems
    +                        +                +---------+------------------------------+
    |                        |                | PSA     | :c:func:`psa_hash_compute`   |
    +                        +                +---------+------------------------------+
-   |                        |                | PKCS11  | C_DigestInit()               |
+   |                        |                | PKCS11  | :c:func:`C_DigestInit`       |
    +                        +                +         +                              +
-   |                        |                |         | C_Digest()                   |
+   |                        |                |         | :c:func:`C_Digest`           |
    +                        +----------------+---------+------------------------------+
    |                        | Multi-Part     | SMW     | :c:func:`smw_hash_init`      |
    +                        +                +         +                              +
@@ -108,11 +108,11 @@ Supported Operations versus Subsystems
    +                        +                +         +                              +
    |                        |                |         | :c:func:`psa_hash_finish`    |
    +                        +                +---------+------------------------------+
-   |                        |                | PKCS11  | C_DigestInit()               |
+   |                        |                | PKCS11  | :c:func:`C_DigestInit`       |
    +                        +                +         +                              +
-   |                        |                |         | C_DigestUpdate()             |
+   |                        |                |         | :c:func:`C_DigestUpdate`     |
    +                        +                +         +                              +
-   |                        |                |         | C_DigestFinal()              |
+   |                        |                |         | :c:func:`C_DigestFinal`      |
    +------------------------+----------------+---------+------------------------------+
 
 

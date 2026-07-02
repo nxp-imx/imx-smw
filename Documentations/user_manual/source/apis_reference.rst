@@ -18,6 +18,13 @@ Two sets of APIs are exposed:
     - The storage APIs are compliant with the
       `ARM PSA Certified Secure Storage API v1.0.4 <https://arm-software.github.io/psa-api/storage/1.0/>`_.
 
+- The PKCS#11 Oasis standard APIs called :ref:`PKCS11 APIs <pkcs11-apis>`,
+  compliant with the following versions:
+
+    - `PKCS#11 v2.40 <http://docs.oasis-open.org/pkcs11/pkcs11-base/v2.40/os/pkcs11-base-v2.40-os.html>`_.
+    - `PKCS#11 v3.2 <https://docs.oasis-open.org/pkcs11/pkcs11-spec/v3.2/csd01/pkcs11-spec-v3.2-csd01.html>`_.
+
+
 Both APIs set are working independently without concurrence.
 
 .. toctree::
@@ -27,3 +34,4 @@ Both APIs set are working independently without concurrence.
 
    apis/smw
    apis/psa
+   apis/pkcs11

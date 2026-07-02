@@ -74,7 +74,7 @@ secure subsystem's persistent storage.
    +---------+---------------------------+
    | PSA     | :c:func:`psa_its_set`     |
    +---------+---------------------------+
-   | PKCS11  | C_CreateObject()          |
+   | PKCS11  | :c:func:`C_CreateObject`  |
    +         +                           +
    |         | CKO_DATA                  |
    +---------+---------------------------+
@@ -208,17 +208,17 @@ secure subsystem's persistent storage.
    :width: 100%
    :class: wrap-table
 
-   +---------+-----------------------------+
-   | **API** | **Function**                |
-   +=========+=============================+
-   | SMW     | :c:func:`smw_retrieve_data` |
-   +---------+-----------------------------+
-   | PSA     | :c:func:`psa_its_get`       |
-   +---------+-----------------------------+
-   | PKCS11  | C_GetAttributeValue()       |
-   +         +                             +
-   |         | CKA_VALUE                   |
-   +---------+-----------------------------+
+   +---------+-------------------------------+
+   | **API** | **Function**                  |
+   +=========+===============================+
+   | SMW     | :c:func:`smw_retrieve_data`   |
+   +---------+-------------------------------+
+   | PSA     | :c:func:`psa_its_get`         |
+   +---------+-------------------------------+
+   | PKCS11  | :c:func:`C_GetAttributeValue` |
+   +         +                               +
+   |         | CKA_VALUE                     |
+   +---------+-------------------------------+
 
 .. _data_management_delete:
 
@@ -241,7 +241,7 @@ secure subsystem's persistent storage.
    +---------+---------------------------+
    | PSA     | :c:func:`psa_its_remove`  |
    +---------+---------------------------+
-   | PKCS11  | C_DestroyObject()         |
+   | PKCS11  | :c:func:`C_DestroyObject` |
    +---------+---------------------------+
 
 .. note::
@@ -262,15 +262,15 @@ data content.
    :width: 100%
    :class: wrap-table
 
-   +---------+------------------------------+
-   | **API** | **Function**                 |
-   +=========+==============================+
-   | SMW     | :c:func:`smw_get_data_info`  |
-   +---------+------------------------------+
-   | PSA     | :c:func:`psa_its_get_info`   |
-   +---------+------------------------------+
-   | PKCS11  | C_GetAttributeValue()        |
-   +---------+------------------------------+
+   +---------+-------------------------------+
+   | **API** | **Function**                  |
+   +=========+===============================+
+   | SMW     | :c:func:`smw_get_data_info`   |
+   +---------+-------------------------------+
+   | PSA     | :c:func:`psa_its_get_info`    |
+   +---------+-------------------------------+
+   | PKCS11  | :c:func:`C_GetAttributeValue` |
+   +---------+-------------------------------+
 
 The metadata available for the data are described in the
 :ref:`smw_objects_attributes_definition` chapter and are:

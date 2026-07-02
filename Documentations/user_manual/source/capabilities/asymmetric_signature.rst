@@ -48,79 +48,79 @@ Supported Operations versus Subsystems
    :width: 100%
    :class: wrap-table
 
-   +------------------------+----------------+---------+------------------------------+
-   | **Operations**         | **Processing** | **API** | **Functions**                |
-   +========================+================+=========+==============================+
-   | Signature Generation   | Single-Part    | SMW     | :c:func:`smw_sign`           |
-   +                        +                +         +                              +
-   |                        |                |         |                              |
-   +                        +                +---------+------------------------------+
-   |                        |                | PSA     | :c:func:`psa_sign_hash`      |
-   +                        +                +         +                              +
-   |                        |                |         | :c:func:`psa_sign_message`   |
-   +                        +                +---------+------------------------------+
-   |                        |                | PKCS11  | C_SignInit()                 |
-   +                        +                +         +                              +
-   |                        |                |         | C_Sign()                     |
-   +                        +                +         +------------------------------+
-   |                        |                |         | C_MessageSignInit()          |
-   +                        +                +         +                              +
-   |                        |                |         | C_SignMessage()              |
-   +                        +----------------+---------+------------------------------+
-   |                        | Multi-Part     | SMW     | :c:func:`smw_sign_init`      |
-   +                        +                +         +                              +
-   |                        |                |         | :c:func:`smw_sign_update`    |
-   +                        +                +         +                              +
-   |                        |                |         | :c:func:`smw_sign_final`     |
-   +                        +                +---------+------------------------------+
-   |                        |                | PKCS11  | C_SignInit()                 |
-   +                        +                +         +                              +
-   |                        |                |         | C_SignUpdate()               |
-   +                        +                +         +                              +
-   |                        |                |         | C_SignFinal()                |
-   +                        +                +         +------------------------------+
-   |                        |                |         | C_MessageSignInit()          |
-   +                        +                +         +                              +
-   |                        |                |         | C_SignMessageBegin()         |
-   +                        +                +         +                              +
-   |                        |                |         | C_SignMessageNext()          |
-   +                        +                +         +                              +
-   |                        |                |         | C_SignMessageFinal()         |
-   +------------------------+----------------+---------+------------------------------+
-   | Signature Verification | Single-Part    | SMW     | :c:func:`smw_verify`         |
-   +                        +                +---------+------------------------------+
-   |                        |                | PSA     | :c:func:`psa_verify_hash`    |
-   +                        +                +         +                              +
-   |                        |                |         | :c:func:`psa_verify_message` |
-   +                        +                +---------+------------------------------+
-   |                        |                | PKCS11  | C_VerifyInit()               |
-   +                        +                +         +                              +
-   |                        |                |         | C_Verify()                   |
-   +                        +                +         +------------------------------+
-   |                        |                |         | C_MessageVerifyInit()        |
-   +                        +                +         +                              +
-   |                        |                |         | C_VerifyMessage()            |
-   +                        +----------------+---------+------------------------------+
-   |                        | Multi-Part     | SMW     | :c:func:`smw_verify_init`    |
-   +                        +                +         +                              +
-   |                        |                |         | :c:func:`smw_verify_update`  |
-   +                        +                +         +                              +
-   |                        |                |         | :c:func:`smw_verify_final`   |
-   +                        +                +---------+------------------------------+
-   |                        |                | PKCS11  | C_VerifyInit()               |
-   +                        +                +         +                              +
-   |                        |                |         | C_VerifyUpdate()             |
-   +                        +                +         +                              +
-   |                        |                |         | C_VerifyFinal()              |
-   +                        +                +         +------------------------------+
-   |                        |                |         | C_MessageVerifyInit()        |
-   +                        +                +         +                              +
-   |                        |                |         | C_VerifyMessageBegin()       |
-   +                        +                +         +                              +
-   |                        |                |         | C_VerifyMessageNext()        |
-   +                        +                +         +                              +
-   |                        |                |         | C_VerifyMessageFinal()       |
-   +------------------------+----------------+---------+------------------------------+
+   +------------------------+----------------+---------+--------------------------------+
+   | **Operations**         | **Processing** | **API** | **Functions**                  |
+   +========================+================+=========+================================+
+   | Signature Generation   | Single-Part    | SMW     | :c:func:`smw_sign`             |
+   +                        +                +         +                                +
+   |                        |                |         |                                |
+   +                        +                +---------+--------------------------------+
+   |                        |                | PSA     | :c:func:`psa_sign_hash`        |
+   +                        +                +         +                                +
+   |                        |                |         | :c:func:`psa_sign_message`     |
+   +                        +                +---------+--------------------------------+
+   |                        |                | PKCS11  | :c:func:`C_SignInit`           |
+   +                        +                +         +                                +
+   |                        |                |         | :c:func:`C_Sign`               |
+   +                        +                +         +--------------------------------+
+   |                        |                |         | :c:func:`C_MessageSignInit`    |
+   +                        +                +         +                                +
+   |                        |                |         | :c:func:`C_SignMessage`        |
+   +                        +----------------+---------+--------------------------------+
+   |                        | Multi-Part     | SMW     | :c:func:`smw_sign_init`        |
+   +                        +                +         +                                +
+   |                        |                |         | :c:func:`smw_sign_update`      |
+   +                        +                +         +                                +
+   |                        |                |         | :c:func:`smw_sign_final`       |
+   +                        +                +---------+--------------------------------+
+   |                        |                | PKCS11  | :c:func:`C_SignInit`           |
+   +                        +                +         +                                +
+   |                        |                |         | :c:func:`C_SignUpdate`         |
+   +                        +                +         +                                +
+   |                        |                |         | :c:func:`C_SignFinal`          |
+   +                        +                +         +--------------------------------+
+   |                        |                |         | :c:func:`C_MessageSignInit`    |
+   +                        +                +         +                                +
+   |                        |                |         | :c:func:`C_SignMessageBegin`   |
+   +                        +                +         +                                +
+   |                        |                |         | :c:func:`C_SignMessageNext`    |
+   +                        +                +         +                                +
+   |                        |                |         | :c:func:`C_SignMessageFinal`   |
+   +------------------------+----------------+---------+--------------------------------+
+   | Signature Verification | Single-Part    | SMW     | :c:func:`smw_verify`           |
+   +                        +                +---------+--------------------------------+
+   |                        |                | PSA     | :c:func:`psa_verify_hash`      |
+   +                        +                +         +                                +
+   |                        |                |         | :c:func:`psa_verify_message`   |
+   +                        +                +---------+--------------------------------+
+   |                        |                | PKCS11  | :c:func:`C_VerifyInit`         |
+   +                        +                +         +                                +
+   |                        |                |         | :c:func:`C_Verify`             |
+   +                        +                +         +--------------------------------+
+   |                        |                |         | :c:func:`C_MessageVerifyInit`  |
+   +                        +                +         +                                +
+   |                        |                |         | :c:func:`C_VerifyMessage`      |
+   +                        +----------------+---------+--------------------------------+
+   |                        | Multi-Part     | SMW     | :c:func:`smw_verify_init`      |
+   +                        +                +         +                                +
+   |                        |                |         | :c:func:`smw_verify_update`    |
+   +                        +                +         +                                +
+   |                        |                |         | :c:func:`smw_verify_final`     |
+   +                        +                +---------+--------------------------------+
+   |                        |                | PKCS11  | :c:func:`C_VerifyInit`         |
+   +                        +                +         +                                +
+   |                        |                |         | :c:func:`C_VerifyUpdate`       |
+   +                        +                +         +                                +
+   |                        |                |         | :c:func:`C_VerifyFinal`        |
+   +                        +                +         +--------------------------------+
+   |                        |                |         | :c:func:`C_MessageVerifyInit`  |
+   +                        +                +         +                                +
+   |                        |                |         | :c:func:`C_VerifyMessageBegin` |
+   +                        +                +         +                                +
+   |                        |                |         | :c:func:`C_VerifyMessageNext`  |
+   +                        +                +         +                                +
+   |                        |                |         | :c:func:`C_VerifyMessageFinal` |
+   +------------------------+----------------+---------+--------------------------------+
 
 
 ECDSA Signatures

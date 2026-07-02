@@ -2081,6 +2081,11 @@ __export psa_status_t psa_import_key(const psa_key_attributes_t *attributes,
 		else
 			security_size =
 				BYTES_TO_BITS(keypair_gen->private_length);
+
+		if (PSA_KEY_TYPE_ECC_GET_FAMILY(key_type) ==
+			    PSA_ECC_FAMILY_SECP_R1 &&
+		    security_size == 528)
+			security_size = 521;
 	} else if (PSA_KEY_TYPE_IS_UNSTRUCTURED(key_type)) {
 		keypair_gen = &keypair_buffer.gen;
 
@@ -2097,11 +2102,6 @@ __export psa_status_t psa_import_key(const psa_key_attributes_t *attributes,
 
 	if (key_type == PSA_KEY_TYPE_DES)
 		security_size = security_size / 8 * 7;
-
-	if (PSA_KEY_TYPE_IS_ECC(key_type) &&
-	    PSA_KEY_TYPE_ECC_GET_FAMILY(key_type) == PSA_ECC_FAMILY_SECP_R1 &&
-	    security_size == 528)
-		security_size = 521;
 
 	if (SET_OVERFLOW(security_size, key_descriptor.security_size))
 		return PSA_ERROR_INVALID_ARGUMENT;

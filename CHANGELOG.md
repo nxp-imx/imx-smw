@@ -70,6 +70,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add support for `USE_ELA` tag in configuration file to enable runtime selection
   of EdgeLock Accelerator (ELA) for AEAD, CIPHER, HASH, and MAC operations.
 * Set the key id to the subsystem id if no id is returned by the object database.
+* Add a new `smw_osal_obj_db_has_capability()` public API function that can be used
+  by applications to retrieve the object database capability flags.
 
 ##### 2. Subsystems
 
@@ -86,6 +88,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE: Add HKDF key derivation support (full HKDF, Extract and Expand steps).
 * ELE: Add support for SM2.
   SMW library version 5.5 requires ELE library version lf-6.18.20-2.0.0 or more recent.
+* ELE: support operations (import, get attributes, export, verify signature, delete)
+  with plain public keys, by storing them in the database.
 
 ##### 3. ARM PSA APIs
 
@@ -113,6 +117,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add wait API
 * Add DERIVE key type to ELE configuration files to enable key generation of
   DERIVE type keys on all ELE platforms.
+* Add get database version API.
 
 #### SMW Tests
 
@@ -132,6 +137,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add PSA test `U_PSA_Attributes_004` validating key permitted algorithm
   `PSA_ALG_VENDOR_ECDSA_ATTESTATION` and `PSA_ALG_VENDOR_CMAC_ATTESTATION`.
 * Add ELE tests to validate HKDF key derivation operations.
+* Add test for database version 2.
+* Add ELE and PSA tests to verify signatures with imported public keys.
 
 #### PKCS#11 Library
 

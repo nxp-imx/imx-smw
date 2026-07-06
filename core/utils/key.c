@@ -144,8 +144,8 @@ end:
 	return status;
 }
 
-static void free_keypair_buffer(struct smw_keypair_buffer *buf,
-				enum smw_config_key_type_id type_id)
+void smw_utils_free_keypair_buffer(enum smw_config_key_type_id type_id,
+				   struct smw_keypair_buffer *buf)
 {
 	if (!buf)
 		return;
@@ -332,8 +332,8 @@ int smw_utils_key_copy(struct smw_keymgr_descriptor *out,
 end:
 	if (status != SMW_STATUS_OK) {
 		if (pub) {
-			free_keypair_buffer(pub->buffer,
-					    out->identifier.type_id);
+			smw_utils_free_keypair_buffer(out->identifier.type_id,
+						      pub->buffer);
 
 			SMW_UTILS_FREE(pub);
 		}
@@ -354,8 +354,8 @@ void smw_utils_key_free(struct smw_keymgr_descriptor *desc)
 		return;
 
 	if (desc->pub) {
-		free_keypair_buffer(desc->pub->buffer,
-				    desc->identifier.type_id);
+		smw_utils_free_keypair_buffer(desc->identifier.type_id,
+					      desc->pub->buffer);
 		SMW_UTILS_FREE(desc->pub);
 	}
 

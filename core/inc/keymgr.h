@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #ifndef __KEYMGR_H__
@@ -130,6 +130,34 @@ void smw_keymgr_free_keys_ptr_array(struct smw_keymgr_descriptor **keys_desc,
  */
 unsigned int
 smw_keymgr_get_api_key_id(struct smw_keymgr_descriptor *descriptor);
+
+/**
+ * smw_keymgr_get_api_buffer() - Return the API key descriptor buffer.
+ * @descriptor: Pointer to the internal Key descriptor structure.
+ *
+ * This function returns the value of the API key descriptor buffer pointer.
+ *
+ * Return:
+ * key descriptor buffer
+ */
+struct smw_keypair_buffer *
+smw_keymgr_get_api_buffer(struct smw_keymgr_descriptor *descriptor);
+
+/**
+ * smw_keymgr_set_api_buffer() - Set the API key descriptor buffer.
+ * @descriptor: Pointer to the internal Key descriptor structure.
+ * @buffer: Address of the key buffer.
+ *
+ * This function sets the address of the key buffer and sets up the
+ * descriptor operations.
+ * @buffer is allowed to be NULL, in which case the key buffer and the
+ * descriptor operations are cleared.
+ *
+ * Return:
+ * none.
+ */
+void smw_keymgr_set_api_buffer(struct smw_keymgr_descriptor *descriptor,
+			       struct smw_keypair_buffer *buffer);
 
 /**
  * smw_keymgr_get_public_data() - Return the address of the public Key buffer.

@@ -143,7 +143,7 @@ int smw_object_db_update(unsigned int s_id,
 	smw_object_db_prepare(s_id, descriptor, &obj);
 
 	/* Only update R/W attributes */
-	if (s_id == INVALID_OBJ_ID) {
+	if (s_id == INVALID_OBJ_ID && !descriptor->key.buffer) {
 		desc_copy.id = descriptor->id;
 		desc_copy.label = descriptor->label;
 		desc_copy.user_id = descriptor->user_id;
@@ -224,6 +224,8 @@ int smw_object_db_get_info(unsigned int *s_id,
 
 void smw_object_db_clean_descriptor(struct smw_object_descriptor *obj)
 {
+	enum smw_config_key_type_id type_id = SMW_CONFIG_KEY_TYPE_ID_INVALID;
+
 	if (!obj)
 		return;
 
@@ -232,6 +234,22 @@ void smw_object_db_clean_descriptor(struct smw_object_descriptor *obj)
 
 	if (obj->user_id)
 		SMW_UTILS_FREE(obj->user_id);
+
+	switch (obj->type) {
+	case SMW_OBJECT_TYPE_NAME_SECRET_KEY:
+	case SMW_OBJECT_TYPE_NAME_PUBLIC_KEY:
+	case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
+		if (obj->key.buffer) {
+			(void)smw_config_get_key_type_id(obj->key.type_name,
+							 &type_id);
+
+			smw_utils_free_keypair_buffer(type_id, obj->key.buffer);
+			obj->key.buffer = NULL;
+		}
+
+	default:
+		break;
+	}
 
 	obj->label = NULL;
 	obj->user_id = NULL;

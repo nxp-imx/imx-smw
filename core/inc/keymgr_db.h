@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022-2025 NXP
+ * Copyright 2022-2026 NXP
  */
 
 #ifndef __KEYMGR_DB_H__
@@ -31,9 +31,12 @@ int smw_keymgr_db_create(unsigned int *u_id,
  * smw_keymgr_db_update() - Update a key in the database
  * @u_id: Key identifier to update in the database
  * @identifier: Internal Key identifier object
+ * @buffer: Optional key buffer that is to be written in the database
  *
  * Function updates a key in the database. The given @identifier
- * replaces the key entry's data.
+ * replaces the key entry's data. If @buffer is not NULL and the key
+ * allows it (e.g. it is an EC or RSA public key), the key buffer is
+ * also updated.
  *
  * Return:
  * SMW_STATUS_OK                - Success
@@ -41,7 +44,8 @@ int smw_keymgr_db_create(unsigned int *u_id,
  * SMW_STATUS_KEY_DB_UPDATE     - Key update error
  */
 int smw_keymgr_db_update(unsigned int u_id,
-			 struct smw_keymgr_identifier *identifier);
+			 struct smw_keymgr_identifier *identifier,
+			 struct smw_keypair_buffer *buffer);
 
 /**
  * smw_keymgr_db_delete() - Delete a key in the database
@@ -69,5 +73,23 @@ int smw_keymgr_db_delete(unsigned int u_id,
  */
 int smw_keymgr_db_get_info(unsigned int u_id,
 			   struct smw_keymgr_identifier *identifier);
+
+/**
+ * smw_keymgr_db_get_buffer() - Retrieve key buffer from the database
+ * @u_id: Key identifier in the database
+ * @identifier: Internal Key identifier object
+ * @buffer: Key buffer object to fill
+ *
+ * Return:
+ * SMW_STATUS_OK                - Success
+ * SMW_STATUS_OPS_INVALID       - OSAL operation invalid
+ * SMW_STATUS_KEY_DB_GET_INFO   - Key get information error
+ * SMW_STATUS_UNKNOWN_ID        - Key ID is unknown
+ * SMW_STATUS_KEY_INVALID       - Unsupported key type
+ * SMW_STATUS_ALLOC_FAILURE     - Memory allocation failed
+ */
+int smw_keymgr_db_get_buffer(unsigned int u_id,
+			     struct smw_keymgr_identifier *identifier,
+			     struct smw_keypair_buffer **buffer);
 
 #endif /* __KEYMGR_DB_H__ */

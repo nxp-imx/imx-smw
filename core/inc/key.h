@@ -211,4 +211,14 @@ void smw_utils_key_free(struct smw_keymgr_descriptor *desc);
  */
 bool smw_utils_key_buffer_set(struct smw_keymgr_descriptor *key_desc);
 
+/**
+ * smw_utils_free_keypair_buffer() - Free key buffer structure
+ * @type_id: The type of the key associated with the key buffer
+ * @buf: Key buffer descriptor to free
+ *
+ * The function frees @buf and all its members.
+ */
+void smw_utils_free_keypair_buffer(enum smw_config_key_type_id type_id,
+				   struct smw_keypair_buffer *buf);
+
 #endif /* __KEY_H__ */

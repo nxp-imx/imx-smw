@@ -1086,6 +1086,23 @@ smw_keymgr_get_api_key_id(struct smw_keymgr_descriptor *descriptor)
 	return descriptor->pub->id;
 }
 
+inline struct smw_keypair_buffer *
+smw_keymgr_get_api_buffer(struct smw_keymgr_descriptor *descriptor)
+{
+	SMW_DBG_ASSERT(descriptor && descriptor->pub);
+
+	return descriptor->pub->buffer;
+}
+
+void smw_keymgr_set_api_buffer(struct smw_keymgr_descriptor *descriptor,
+			       struct smw_keypair_buffer *buffer)
+{
+	SMW_DBG_ASSERT(descriptor && descriptor->pub);
+
+	descriptor->pub->buffer = buffer;
+	(void)setup_key_ops(descriptor);
+}
+
 inline unsigned char *
 smw_keymgr_get_public_data(struct smw_keymgr_descriptor *descriptor)
 {
@@ -1270,8 +1287,16 @@ int smw_keymgr_update_public_buffer(struct smw_keymgr_descriptor *descriptor,
 			status = smw_utils_base64_encode(data, length, pub_data,
 							 &pub_length);
 		} else {
-			pub_length = length;
-			status = SMW_STATUS_OK;
+			if (pub_length < length) {
+				status = SMW_STATUS_OUTPUT_TOO_SHORT;
+			} else {
+				pub_length = length;
+				if (data != pub_data)
+					SMW_UTILS_MEMCPY(pub_data, data,
+							 length);
+
+				status = SMW_STATUS_OK;
+			}
 		}
 
 		if (status == SMW_STATUS_OK ||
@@ -1384,8 +1409,16 @@ int smw_keymgr_update_modulus_buffer(struct smw_keymgr_descriptor *descriptor,
 			status = smw_utils_base64_encode(data, length, mod_data,
 							 &mod_length);
 		} else {
-			mod_length = length;
-			status = SMW_STATUS_OK;
+			if (mod_length < length) {
+				status = SMW_STATUS_OUTPUT_TOO_SHORT;
+			} else {
+				mod_length = length;
+				if (data != mod_data)
+					SMW_UTILS_MEMCPY(mod_data, data,
+							 length);
+
+				status = SMW_STATUS_OK;
+			}
 		}
 
 		if (status == SMW_STATUS_OK ||
@@ -1417,14 +1450,17 @@ static int set_key_identifier(unsigned int u_id,
 			      struct smw_keymgr_descriptor *descriptor)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
+	struct smw_keypair_buffer *buffer =
+		smw_keymgr_get_api_buffer(descriptor);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!descriptor || !descriptor->pub)
 		return status;
 
-	if (descriptor->identifier.s_id != INVALID_KEY_ID) {
-		status = smw_keymgr_db_update(u_id, &descriptor->identifier);
+	if (descriptor->identifier.s_id != INVALID_KEY_ID || buffer) {
+		status = smw_keymgr_db_update(u_id, &descriptor->identifier,
+					      buffer);
 
 		if (status == SMW_STATUS_OK) {
 			if (u_id != INVALID_KEY_ID)
@@ -1654,6 +1690,17 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	if (smw_keymgr_get_public_data(key_desc) &&
+	    smw_keymgr_get_private_data(key_desc))
+		key_desc->identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_PAIR;
+	else if (smw_keymgr_get_public_data(key_desc))
+		key_desc->identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_PUBLIC;
+	else if (smw_keymgr_get_private_data(key_desc))
+		/* Only private data is set */
+		key_desc->identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_PRIVATE;
+	else
+		key_desc->identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_INVALID;
+
 	/*
 	 * Try to create the key in the database before
 	 * importing the key.
@@ -1677,17 +1724,6 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 	}
 
 	args->key_descriptor->attributes = key_desc->identifier.key_attributes;
-
-	if (smw_keymgr_get_public_data(key_desc) &&
-	    smw_keymgr_get_private_data(key_desc))
-		key_desc->identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_PAIR;
-	else if (smw_keymgr_get_public_data(key_desc))
-		key_desc->identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_PUBLIC;
-	else if (smw_keymgr_get_private_data(key_desc))
-		/* Only private data is set */
-		key_desc->identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_PRIVATE;
-	else
-		key_desc->identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_INVALID;
 
 	ret = set_key_identifier(new_id, key_desc);
 	if (ret == SMW_STATUS_OK)

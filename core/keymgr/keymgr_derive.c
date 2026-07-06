@@ -946,7 +946,8 @@ set_derived_key_identifier(unsigned int id,
 		return status;
 
 	if (descriptor->identifier.s_id != INVALID_KEY_ID) {
-		status = smw_keymgr_db_update(id, &descriptor->identifier);
+		status =
+			smw_keymgr_db_update(id, &descriptor->identifier, NULL);
 
 		if (status == SMW_STATUS_OK)
 			descriptor->pub->id = id;

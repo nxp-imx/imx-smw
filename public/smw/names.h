@@ -381,7 +381,6 @@ typedef enum {
  * * SMW_SIGNATURE_TYPE_NAME_PSS: Probabilistic Signature Scheme
  * * SMW_SIGNATURE_TYPE_NAME_CLIENT: TLS client signature
  * * SMW_SIGNATURE_TYPE_NAME_SERVER: TLS server signature
- * * SMW_SIGNATURE_TYPE_NAME_CMAC: Cipher-based Message Authentication Code
  * * SMW_SIGNATURE_TYPE_NAME_NB: Number of signature types
  */
 typedef enum {
@@ -391,7 +390,6 @@ typedef enum {
 	SMW_SIGNATURE_TYPE_NAME_PSS,
 	SMW_SIGNATURE_TYPE_NAME_CLIENT,
 	SMW_SIGNATURE_TYPE_NAME_SERVER,
-	SMW_SIGNATURE_TYPE_NAME_CMAC,
 	SMW_SIGNATURE_TYPE_NAME_NB
 } smw_signature_type_t;
 

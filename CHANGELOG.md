@@ -64,6 +64,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   ED448, X448, SM4) that do not support configurable size range.
   If a size range is set for any of these key types in the config file,
   the operation will fail with `SMW_STATUS_KEY_RANGE_NOT_CONFIGURABLE`.
+* Remove unused SMW_SIGNATURE_TYPE_NAME_CMAC.
 
 
 ##### 2. Subsystems

@@ -17,16 +17,15 @@
 #define MESSAGING_TAG_REPLY   (0xE1u)
 
 /**
- * kStatus_S3MU_AgumentOutOfRange - S3MU status for out of range access.
- * kStatus_S3MU_InvalidArgument - S3MU status for invalid argument check.
- * kStatus_S3MU_RequestTimeout - S3MU status for timeout.
- * kStatus_S3MU_Busy - S3MU status for reservation by other core.
+ * STATUS_S3MU_INVALID_ARGUMENT - S3MU status for invalid argument check.
+ * STATUS_S3MU_REQUEST_TIMEOUT - S3MU status for timeout.
+ * STATUS_S3MU_BUSY - S3MU status for reservation by other core.
  */
 enum {
-	kStatus_S3MU_AgumentOutOfRange = MAKE_STATUS_ELEMU(0x1u),
-	kStatus_S3MU_InvalidArgument = MAKE_STATUS_ELEMU(0x2u),
-	kStatus_S3MU_RequestTimeout = MAKE_STATUS_ELEMU(0x3u),
-	kStatus_S3MU_Busy = MAKE_STATUS_ELEMU(0x4u),
+	STATUS_S3MU_ARGUMENT_OUT_OF_RANGE = MAKE_STATUS_ELEMU(0x1u),
+	STATUS_S3MU_INVALID_ARGUMENT = MAKE_STATUS_ELEMU(0x2u),
+	STATUS_S3MU_REQUEST_TIMEOUT = MAKE_STATUS_ELEMU(0x3u),
+	STATUS_S3MU_BUSY = MAKE_STATUS_ELEMU(0x4u),
 };
 
 typedef struct {
@@ -80,45 +79,45 @@ typedef struct {
 /**
  * s3mu_send_message() - Send message to MU
  * @mu: MU peripheral base address
- * @buf: buffer to store read data
- * @word_count: size of data in words
+ * @buf: Buffer to store read data
+ * @word_count: Size of data in words
  *
  * This function writes message into MU registers and send message to EdgeLock Enclave.
  *
  * Return:
- * kStatus_Success - if success
- * kStatus_S3MU_InvalidArgument - if invalid argument
+ * Status_Success - if success
+ * Status_S3MU_InvalidArgument - if invalid argument
  */
 status_t s3mu_send_message(s3mu_t *mu, void *buf, uint32_t word_count);
 
 /**
  * s3mu_get_response() - Get response from MU
  * @mu: MU peripheral base address
- * @buf: buffer to store read data
+ * @buf: Buffer to store read data
  *
  * This function reads response data from EdgeLock Enclave if available.
  *
  * Return:
- * kStatus_Success - if success
- * kStatus_S3MU_InvalidArgument - if invalid argument
+ * Status_Success - if success
+ * Status_S3MU_InvalidArgument - if invalid argument
  */
 status_t s3mu_get_response(s3mu_t *mu, void *buf);
 
 /**
  * s3mu_wait_for_data() - Wait and Read data from MU
  * @mu: MU peripheral base address
- * @buf: buffer to store read data
- * @word_count: size of data in words
- * @wait: number of iterations to wait
+ * @buf: Buffer to store read data
+ * @word_count: Size of data in words
+ * @wait: Number of iterations to wait
  *
  * This function waits limited time (ticks) and tests if data are ready to be read.
  * When data are ready, reads them into buffer.
  *
  * Return:
- * kStatus_Success - if success
- * kStatus_S3MU_RequestTimeout - if timeout
- * kStatus_S3MU_InvalidArgument - if invalid argument
- * kStatus_S3MU_AgumentOutOfRange - if argument out of range
+ * Status_Success - if success
+ * Status_S3MU_RequestTimeout - if timeout
+ * Status_S3MU_InvalidArgument - if invalid argument
+ * Status_S3MU_AgumentOutOfRange - if argument out of range
  */
 status_t s3mu_wait_for_data(s3mu_t *mu, uint32_t *buf, uint32_t word_count,
 			    uint32_t wait);
@@ -126,18 +125,18 @@ status_t s3mu_wait_for_data(s3mu_t *mu, uint32_t *buf, uint32_t word_count,
 /**
  * s3mu_read_message() - Read message from MU
  * @mu: MU peripheral base address
- * @buf: buffer to store read data
+ * @buf: Buffer to store read data
  * @size: If read_header equals MU_READ_HEADER,
  *        size represent number of word obtained from header.
  *        If read header not equals MU_READ_HEADER,
  *        size is used to determine number of word to be read.
- * @read_header: specifies if size is obtained by response header or provided in parameter
+ * @read_header: Specifies if size is obtained by response header or provided in parameter
  *
  * This function reads message data from EdgeLock Enclave if available.
  *
  * Return:
- * kStatus_Success - if success
- * kStatus_S3MU_InvalidArgument - if invalid argument
+ * Status_Success - if success
+ * Status_S3MU_InvalidArgument - if invalid argument
  */
 status_t s3mu_read_message(s3mu_t *mu, uint32_t *buf, size_t *size,
 			   uint8_t read_header);
@@ -156,8 +155,8 @@ void s3mu_init(s3mu_t *mu, size_t size);
 
 /**
  * s3mu_compute_msg_crc() - Computes CRC
- * @msg: pointer to message
- * @msg_len: size of message in words
+ * @msg: Pointer to message
+ * @msg_len: Size of message in words
  *
  * This function computes CRC of input message.
  *

@@ -8,20 +8,21 @@
 
 #include <stdbool.h>
 
+#include "builtin_macros.h"
 #include "status.h"
 #include "s3mu.h"
 
 enum {
 	/* ELE status for buffer sizes that are too small. */
-	kStatus_ELE_BufferTooSmall = MAKE_STATUS_ELE(0x1u),
-	kStatus_ELE_KeyGroupFull = MAKE_STATUS_ELE(0x2u),
+	STATUS_ELE_BUFFER_TOO_SMALL = MAKE_STATUS_ELE(0x1u),
+	STATUS_ELE_KEY_GROUP_FULL = MAKE_STATUS_ELE(0x2u),
 };
 
 /**
  * nvm_storage_handle_req() - Handle NVM storage requests from ELE
  * @mu: MU peripheral base address
  * @buf: Buffer containing the request message
- * @wordCount: Number of words in the buffer
+ * @word_count: Number of words in the buffer
  *
  * This function is the main dispatcher for NVM storage requests from
  * EdgeLock Enclave. It handles master export, chunk export, and chunk
@@ -29,24 +30,24 @@ enum {
  * interfacing with the registered NVM manager.
  *
  * Return:
- * kStatus_Success                  - Success
- * kStatus_Fail                     - Fail
- * kStatus_S3MU_InvalidArgument     - Invalid argument parameter
+ * Status_Success                  - Success
+ * Status_Fail                     - Fail
+ * Status_S3MU_InvalidArgument     - Invalid argument parameter
  */
-status_t nvm_storage_handle_req(s3mu_t *mu, uint32_t *buf, uint32_t wordCount);
+status_t nvm_storage_handle_req(s3mu_t *mu, uint32_t *buf, uint32_t word_count);
 
 /**
  * ele_mu_get_response() - Get response from MU
  * @mu: MU peripheral base address
- * @buf: buffer to store read data
+ * @buf: Buffer to store read data
  *
  * This function reads response data from EdgeLock Enclave if available.
  *
  * Return:
- * kStatus_Success                  - Success
- * kStatus_Fail                     - Fail
- * kStatus_S3MU_InvalidArgument     - Invalid argument parameter
- * kStatus_S3MU_AgumentOutOfRange   - Argument out of range
+ * Status_Success                  - Success
+ * Status_Fail                     - Fail
+ * Status_S3MU_InvalidArgument     - Invalid argument parameter
+ * Status_S3MU_AgumentOutOfRange   - Argument out of range
  */
 status_t ele_mu_get_response(s3mu_t *mu, uint32_t *buf);
 

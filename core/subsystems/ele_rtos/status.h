@@ -11,42 +11,42 @@
 #define MAKE_STATUS(group, code) ((((group) << 8) + (code)))
 
 /**
- * kStatusGroup_Generic - Group number for generic status codes.
- * kStatusGroup_ELEMU - Group number for ELEMU status codes.
- * kStatusGroup_ELE - Group number for ELE status codes.
+ * STATUSGROUP_GENERIC - Group number for generic status codes.
+ * STATUSGROUP_ELEMU - Group number for ELEMU status codes.
+ * STATUSGROUP_ELE - Group number for ELE status codes.
  */
 enum _status_groups {
-	kStatusGroup_Generic = 0,
-	kStatusGroup_ELEMU = 1,
-	kStatusGroup_ELE = 2,
+	STATUSGROUP_GENERIC = 0,
+	STATUSGROUP_ELEMU = 1,
+	STATUSGROUP_ELE = 2,
 };
 
-#define MAKE_STATUS_GENERIC(code) MAKE_STATUS(kStatusGroup_Generic, code)
-#define MAKE_STATUS_ELE(code)	  MAKE_STATUS(kStatusGroup_ELE, code)
-#define MAKE_STATUS_ELEMU(code)	  MAKE_STATUS(kStatusGroup_ELEMU, code)
+#define MAKE_STATUS_GENERIC(code) MAKE_STATUS(STATUSGROUP_GENERIC, code)
+#define MAKE_STATUS_ELE(code)	  MAKE_STATUS(STATUSGROUP_ELE, code)
+#define MAKE_STATUS_ELEMU(code)	  MAKE_STATUS(STATUSGROUP_ELEMU, code)
 
 /**
- * kStatus_Success - Generic status for Success.
- * kStatus_Fail - Generic status for Fail.
- * kStatus_ReadOnly - Generic status for read only failure.
- * kStatus_OutOfRange - Generic status for out of range access.
- * kStatus_InvalidArgument - Generic status for invalid argument check.
- * kStatus_Timeout - Generic status for timeout.
- * kStatus_NoTransferInProgress - Generic status for no transfer in progress.
- * kStatus_Busy - Generic status for module is busy.
- * kStatus_NoData - Generic status for no data is found for the operation.
+ * STATUS_SUCCESS - Generic status for Success.
+ * STATUS_FAIL - Generic status for Fail.
+ * STATUS_READ_ONLY - Generic status for read only failure.
+ * STATUS_OUT_OF_RANGE - Generic status for out of range access.
+ * STATUS_INVALID_ARGUMENT - Generic status for invalid argument check.
+ * STATUS_TIMEOUT - Generic status for timeout.
+ * STATUS_NO_TRANSFER_IN_PROGRESS - Generic status for no transfer in progress.
+ * STATUS_BUSY - Generic status for module is busy.
+ * STATUS_NO_DATA - Generic status for no data is found for the operation.
  * Note: Specific status codes for ELEMU and ELE are defined in their respective headers.
  */
 enum _status {
-	kStatus_Success = MAKE_STATUS_GENERIC(0u),
-	kStatus_Fail = MAKE_STATUS_GENERIC(1u),
-	kStatus_ReadOnly = MAKE_STATUS_GENERIC(2u),
-	kStatus_OutOfRange = MAKE_STATUS_GENERIC(3u),
-	kStatus_InvalidArgument = MAKE_STATUS_GENERIC(4u),
-	kStatus_Timeout = MAKE_STATUS_GENERIC(5u),
-	kStatus_NoTransferInProgress = MAKE_STATUS_GENERIC(6u),
-	kStatus_Busy = MAKE_STATUS_GENERIC(7u),
-	kStatus_NoData = MAKE_STATUS_GENERIC(8u),
+	STATUS_SUCCESS = MAKE_STATUS_GENERIC(0u),
+	STATUS_FAIL = MAKE_STATUS_GENERIC(1u),
+	STATUS_READ_ONLY = MAKE_STATUS_GENERIC(2u),
+	STATUS_OUT_OF_RANGE = MAKE_STATUS_GENERIC(3u),
+	STATUS_INVALID_ARGUMENT = MAKE_STATUS_GENERIC(4u),
+	STATUS_TIMEOUT = MAKE_STATUS_GENERIC(5u),
+	STATUS_NO_TRANSFER_IN_PROGRESS = MAKE_STATUS_GENERIC(6u),
+	STATUS_BUSY = MAKE_STATUS_GENERIC(7u),
+	STATUS_NO_DATA = MAKE_STATUS_GENERIC(8u),
 };
 
 /* Type used for all status and error return values. */

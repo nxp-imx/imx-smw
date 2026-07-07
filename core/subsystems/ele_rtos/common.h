@@ -149,8 +149,8 @@ bool ele_sign_verify_handle(struct subsystem_context *ele_ctx,
  * @hdl: Pointer to the ELE handles structure.
  *
  * Return:
- * kStatus_Success                  - Success
- * kStatus_Fail                     - Fail
+ * STATUS_SUCCESS                  - Success
+ * STATUS_FAIL                     - Fail
  */
 int ele_rng_init(struct hdl *hdl);
 

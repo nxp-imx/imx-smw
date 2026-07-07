@@ -17,26 +17,26 @@
 
 int ele_rng_init(struct hdl *hdl)
 {
-	status_t err = kStatus_Success;
+	status_t err = STATUS_SUCCESS;
 	uint32_t trng_state = 0u;
 
 	err = ele_get_trng_state(hdl->mu_base, &trng_state);
-	if (err != kStatus_Success)
+	if (err != STATUS_SUCCESS)
 		goto end;
 
-	if (((trng_state & 0xFFu) == kELE_TRNG_ready) &&
-	    ((trng_state & 0xFF00u) == kELE_TRNG_CSAL_success << 8u))
+	if (((trng_state & 0xFFu) == ELE_TRNG_READY) &&
+	    ((trng_state & 0xFF00u) == ELE_TRNG_CSAL_SUCCESS << 8u))
 		goto end;
 
 	err = ele_start_rng(hdl->mu_base);
-	if (err != kStatus_Success)
+	if (err != STATUS_SUCCESS)
 		goto end;
 
 	do {
 		err = ele_get_trng_state(hdl->mu_base, &trng_state);
-	} while (((trng_state & 0xFFu) != kELE_TRNG_ready) &&
-		 ((trng_state & 0xFF00u) != kELE_TRNG_CSAL_success << 8u) &&
-		 err == kStatus_Success);
+	} while (((trng_state & 0xFFu) != ELE_TRNG_READY) &&
+		 ((trng_state & 0xFF00u) != ELE_TRNG_CSAL_SUCCESS << 8u) &&
+		 err == STATUS_SUCCESS);
 
 end:
 	return err;
@@ -46,7 +46,7 @@ static int rng(struct hdl *hdl, void *args)
 {
 	int status = SMW_STATUS_OK;
 
-	status_t err = kStatus_Success;
+	status_t err = STATUS_SUCCESS;
 	uint32_t *output = NULL;
 	size_t size = 0;
 
@@ -67,7 +67,7 @@ static int rng(struct hdl *hdl, void *args)
 		       "      - size: %d\n",
 		       __func__, __LINE__, output, size);
 
-	err = ele_rng_get_random(hdl->mu_base, output, size, kNoReseed);
+	err = ele_rng_get_random(hdl->mu_base, output, size, NORESEED);
 	SMW_DBG_PRINTF(DEBUG, "ELE_RngGetRandom returned %d\n", err);
 
 	status = ele_convert_err(err);

@@ -352,7 +352,7 @@
 #define IMPORT_KEY_MONOTONIC_FLAG_SHIFT	 (5u)
 #define IMPORT_KEY_SYNC_FLAG_SHIFT	 (7u)
 
-typedef struct chunk_export_req {
+typedef struct {
 	mu_hdr_t header;
 	uint32_t storage_handle;
 	uint32_t chunk_size;
@@ -362,20 +362,20 @@ typedef struct chunk_export_req {
 	uint32_t crc;
 } chunk_export_req_t;
 
-typedef struct chunk_export_respond {
+typedef struct {
 	mu_hdr_t header;
 	uint32_t response_code;
 	uint32_t chunk_addr;
 } chunk_export_respond_t;
 
-typedef struct chunk_master_export_respond {
+typedef struct {
 	mu_hdr_t header;
 	uint32_t storage_handle;
 	uint32_t response_code;
 	uint32_t chunk_addr;
 } chunk_master_export_respond_t;
 
-typedef struct chunk_get_req {
+typedef struct {
 	mu_hdr_t header;
 	uint32_t storage_handle;
 	uint32_t blob_id_msb;
@@ -384,20 +384,20 @@ typedef struct chunk_get_req {
 	uint32_t crc;
 } chunk_get_req_t;
 
-typedef struct chunk_get_respond {
+typedef struct {
 	mu_hdr_t header;
 	uint32_t chunk_size;
 	uint32_t chunk_addr;
 	uint32_t response_code;
 } chunk_get_respond_t;
 
-typedef struct chunk_get_done {
+typedef struct {
 	mu_hdr_t header;
 	uint32_t storage_handle;
 	uint32_t status;
 } chunk_get_done_t;
 
-typedef struct chunk_get_done_resp {
+typedef struct {
 	mu_hdr_t header;
 	uint32_t status;
 } chunk_get_done_resp_t;
@@ -408,7 +408,7 @@ typedef struct chunk_get_done_resp {
  * @storage_handle: NVM storage ID for which export is finished
  * @status: Status of export operation, it can be either EXPORT_STATUS_SUCCESS or EXPORT_STATUS_FAIL
  */
-typedef struct chunk_export_finish {
+typedef struct {
 	mu_hdr_t header;
 	uint32_t storage_handle;
 	uint32_t status;

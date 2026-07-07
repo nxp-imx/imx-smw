@@ -11,7 +11,7 @@
 #define MU_READ_HEADER	(0x01u)
 #define GET_HDR_SIZE(x) (((x) & (uint32_t)0xFF00) >> 8u)
 
-typedef struct mu_message {
+typedef struct {
 	mu_hdr_t header;
 	uint32_t payload[S3MU_TR_COUNT - MU_MSG_HEADER_SIZE];
 } mu_message_t;
@@ -49,19 +49,19 @@ static status_t __no_optimization s3mu_hal_receive_data_wait(s3mu_t *mu,
 	uint32_t mask = _BIT(regid);
 
 	if (!mu || !data)
-		return Status_S3MU_InvalidArgument;
+		return STATUS_S3MU_INVALID_ARGUMENT;
 
 	if (!wait)
-		return Status_S3MU_RequestTimeout;
+		return STATUS_S3MU_REQUEST_TIMEOUT;
 
 	while ((mu->RSR & mask) == 0u) {
 		if (--wait == 0u)
-			return Status_S3MU_RequestTimeout;
+			return STATUS_S3MU_REQUEST_TIMEOUT;
 	}
 
 	*data = mu->RR[regid];
 
-	return Status_Success;
+	return STATUS_SUCCESS;
 }
 
 /* Static function to retrieve message form retrieve registers with wait */
@@ -71,14 +71,14 @@ static status_t s3mu_read_data_wait(s3mu_t *mu, uint32_t *buf, uint8_t size,
 	uint32_t *p = buf;
 	uint8_t msg_size = size;
 	uint8_t rx_reg_idx = 0u;
-	status_t ret = Status_S3MU_InvalidArgument;
+	status_t ret = STATUS_S3MU_INVALID_ARGUMENT;
 
 	if (mu && buf && size) {
 		while (msg_size) {
 			if (wait) {
 				ret = s3mu_hal_receive_data_wait(mu, rx_reg_idx,
 								 p, wait);
-				if (ret != Status_Success)
+				if (ret != STATUS_SUCCESS)
 					break;
 			} else {
 				s3mu_hal_receive_data(mu, rx_reg_idx, p);
@@ -99,7 +99,7 @@ status_t s3mu_read_message(s3mu_t *mu, uint32_t *buf, size_t *size,
 	uint32_t msg_size = 0u;
 	uint32_t rx_reg_idx = 0u;
 	uint32_t *p = buf;
-	status_t ret = Status_S3MU_InvalidArgument;
+	status_t ret = STATUS_S3MU_INVALID_ARGUMENT;
 
 	if (mu && buf && size) {
 		if (read_header == MU_READ_HEADER) {
@@ -123,7 +123,7 @@ status_t s3mu_read_message(s3mu_t *mu, uint32_t *buf, size_t *size,
 			msg_size--;
 		}
 
-		ret = Status_Success;
+		ret = STATUS_SUCCESS;
 	}
 
 end:
@@ -135,7 +135,7 @@ status_t s3mu_get_response(s3mu_t *mu, void *buf)
 	size_t size = 0;
 
 	if (!mu || !buf)
-		return Status_S3MU_InvalidArgument;
+		return STATUS_S3MU_INVALID_ARGUMENT;
 
 	return s3mu_read_message(mu, buf, &size, MU_READ_HEADER);
 }
@@ -144,7 +144,7 @@ status_t s3mu_send_message(s3mu_t *mu, void *buf, uint32_t word_count)
 {
 	uint32_t *p = buf;
 	uint32_t tx_reg_idx = 0u;
-	status_t ret = Status_S3MU_InvalidArgument;
+	status_t ret = STATUS_S3MU_INVALID_ARGUMENT;
 
 	if (mu && buf && word_count) {
 		while (word_count != 0u) {
@@ -158,7 +158,7 @@ status_t s3mu_send_message(s3mu_t *mu, void *buf, uint32_t word_count)
 			word_count--;
 		}
 
-		ret = kStatus_Success;
+		ret = STATUS_SUCCESS;
 	}
 
 	return ret;
@@ -168,11 +168,11 @@ status_t s3mu_wait_for_data(s3mu_t *mu, uint32_t *buf, uint32_t word_count,
 			    uint32_t wait)
 {
 	uint8_t size = (word_count & UINT8_MAX);
-	status_t ret = Status_S3MU_InvalidArgument;
+	status_t ret = STATUS_S3MU_INVALID_ARGUMENT;
 
 	if (mu && buf && wait) {
 		if (word_count > S3MU_RR_COUNT)
-			ret = Status_S3MU_AgumentOutOfRange;
+			ret = STATUS_S3MU_ARGUMENT_OUT_OF_RANGE;
 		else
 			ret = s3mu_read_data_wait(mu, buf, size, wait);
 	}

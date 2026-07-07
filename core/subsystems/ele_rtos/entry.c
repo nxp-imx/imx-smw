@@ -41,7 +41,7 @@ end:
 
 static void close_session(struct hdl *hdl)
 {
-	status_t err = kStatus_Success;
+	status_t err = STATUS_SUCCESS;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -120,7 +120,7 @@ static int unload(void)
 
 static int load(void)
 {
-	status_t err = kStatus_Success;
+	status_t err = STATUS_SUCCESS;
 	int status = SMW_STATUS_SUBSYSTEM_LOAD_FAILURE;
 
 	struct hdl *hdl = &ele_ctx.hdl;
@@ -137,11 +137,11 @@ static int load(void)
 	smw_utils_shared_memory_init();
 
 	err = ele_rng_init(hdl);
-	if (err != kStatus_Success)
+	if (err != STATUS_SUCCESS)
 		goto end;
 
 	err = ele_init_services(hdl->mu_base);
-	if (err != kStatus_Success)
+	if (err != STATUS_SUCCESS)
 		goto end;
 
 	status = open_session(hdl);
@@ -336,15 +336,15 @@ int ele_convert_err(uint32_t err)
 	int status = SMW_STATUS_SUBSYSTEM_FAILURE;
 
 	switch (err) {
-	case kStatus_Success:
+	case STATUS_SUCCESS:
 		status = SMW_STATUS_OK;
 		break;
 
-	case kStatus_InvalidArgument:
+	case STATUS_INVALID_ARGUMENT:
 		status = SMW_STATUS_INVALID_PARAM;
 		break;
 
-	case kStatus_ELE_BufferTooSmall:
+	case STATUS_ELE_BUFFER_TOO_SMALL:
 		status = SMW_STATUS_OUTPUT_TOO_SHORT;
 		break;
 

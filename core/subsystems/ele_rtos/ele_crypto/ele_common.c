@@ -30,20 +30,20 @@ void *malloc_if_not_null(void *addr, size_t size)
 /* Weak function to handle nvm manager requests from ELE */
 /* If NVM Manager is defined, this function can be over-ridden */
 __weak status_t nvm_storage_handle_req(s3mu_t *mu, uint32_t *buf,
-				       uint32_t wordCount)
+				       uint32_t word_count)
 {
-	return kStatus_Fail;
+	return STATUS_FAIL;
 }
 
 status_t ele_mu_get_response(s3mu_t *mu, uint32_t *buf)
 {
-	status_t status = kStatus_Success;
+	status_t status = STATUS_SUCCESS;
 	uint32_t rmsg[MSG_RESPONSE_MAX] = { 0u };
 	mu_hdr_t *msg = (mu_hdr_t *)rmsg;
 
 	do {
 		status = s3mu_get_response(mu, rmsg);
-		if (status != kStatus_Success)
+		if (status != STATUS_SUCCESS)
 			break;
 
 		if (msg->hdr_byte.tag == MSG_TAG_RESP) {
@@ -55,10 +55,10 @@ status_t ele_mu_get_response(s3mu_t *mu, uint32_t *buf)
 			status = nvm_storage_handle_req(mu, rmsg,
 							msg->hdr_byte.size);
 		} else {
-			status = kStatus_Fail;
+			status = STATUS_FAIL;
 		}
 
-		if (status != kStatus_Success)
+		if (status != STATUS_SUCCESS)
 			break;
 
 	} while (msg->hdr_byte.tag != MSG_TAG_RESP);

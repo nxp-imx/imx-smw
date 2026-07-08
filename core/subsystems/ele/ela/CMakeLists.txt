@@ -18,11 +18,9 @@ message(STATUS "  ELA Headers: ${ELA_INCLUDE_DIRS}")
 
 set(ela_srcs
     ela_dispatcher.c
-    common.c)
-
-if(ENABLE_CIPHER)
-    list(APPEND ela_srcs cipher.c)
-endif()
+    common.c
+    $<$<BOOL:${ENABLE_CIPHER}>:${CMAKE_CURRENT_SOURCE_DIR}/cipher.c>
+    $<$<BOOL:${ENABLE_AEAD}>:${CMAKE_CURRENT_SOURCE_DIR}/aead.c>)
 
 # Add ELA sources to the parent 'ele' target
 target_sources(ele PRIVATE ${ela_srcs})

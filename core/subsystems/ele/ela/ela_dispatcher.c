@@ -244,6 +244,16 @@ __weak bool ela_cipher_handle(enum operation_id operation_id, void *args,
 	return false;
 }
 
+__weak bool ela_aead_handle(enum operation_id operation_id, void *args,
+			    int *status)
+{
+	(void)operation_id;
+	(void)args;
+	(void)status;
+
+	return false;
+}
+
 bool ela_execute(struct subsystem_context *ele_ctx,
 		 enum operation_id operation_id, void *args, int *status)
 {
@@ -290,14 +300,19 @@ bool ela_execute(struct subsystem_context *ele_ctx,
 	}
 
 	return_status = ela_cipher_handle(operation_id, args, status);
+	if (return_status)
+		goto end;
 
+	return_status = ela_aead_handle(operation_id, args, status);
+
+end:
 	if (smw_utils_mutex_unlock(ela_ctx.mutex)) {
 		SMW_DBG_PRINTF(ERROR, "Failed to unlock ELA mutex\n");
 		return_status = false;
 	}
 
-end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, *status);
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %s with status = %d\n", __func__,
+		       return_status ? "success" : "failure", *status);
 	return return_status;
 }
 

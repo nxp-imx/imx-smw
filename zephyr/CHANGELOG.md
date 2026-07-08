@@ -25,6 +25,7 @@ This release is based on SMW Release 5.5
 * Add RNG operation support.
 * Fix coverity 2026.3.0 findings.
 * Add Key Management support.
+* Add HMAC/CMAC support.
 
 ##### 2. OSAL
 

@@ -729,7 +729,7 @@ The default option value is in **bold**.
   To enable ELA support, ELE subsystem must be enabled and all the dependicies must be
   satisfied. Only available with ELE subsystem. Disabled for all other subsystems.
   </td>
-  <td>ENABLE_KEYMGR_MODULE <br>ENABLE_CIPHER</td>
+  <td>ENABLE_KEYMGR_MODULE and at least one of: ENABLE_CIPHER <br> or ENABLE_AEAD</td>
 </tr>
 <tr>
   <td>-DENABLE_PSA_DEFAULT_ALT=[ON|<b>OFF</b>]</td>

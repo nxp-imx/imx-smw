@@ -76,6 +76,10 @@ The failure is due to the storage manager which is already loaded and a new inst
 * TEE: Add support for SM2.
 * ELE: Add support for ELA for AES cipher one-shot operations (CBC, CTR,
   ECB modes) using plaintext key buffers.
+* ELE: Add support for ELA for AEAD GCM one-shot operations using plaintext key
+  buffers.
+* ELE: Fix error status propagation in ELA cipher buffer size calculation and
+  parameter setup functions.
 
 ##### 3. ARM PSA APIs
 
@@ -90,6 +94,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add a dedicated configuration file for i.MX952.
 * Update the i.MX943 and i.MX952 configuration files to enable ELA support for
   AES cipher one-shot operations.
+* Update the i.MX943 and i.MX952 configuration files to enable ELA support for
+  AEAD one-shot operations.
 
 #### SMW Tests
 
@@ -103,6 +109,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add negative MAC verify subtests to validate that an invalid MAC
   returns `SMW_STATUS_SIGNATURE_INVALID`. Add MAC compute/verify subtests with
   plaintext key buffers using NIST test vectors.
+* Add tests for ELA AEAD one-shot operations (GCM mode with plaintext keys).
 
 #### PKCS#11 Library
 

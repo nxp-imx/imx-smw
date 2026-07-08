@@ -23,7 +23,7 @@ Supported Operations versus Subsystems
    +              +                        +----------------+---------+---------+----------+
    |              | (CCM)                  | Multi-Part     |   Y (2) |    Y    |    N     |
    +              +------------------------+----------------+---------+---------+----------+
-   |              | Galois/Counter Mode    | Single-Part    |   Y (1) |    Y    |    Y     |
+   |              | Galois/Counter Mode    | Single-Part    | Y (1)(3)|    Y    |    Y     |
    +              +                        +----------------+---------+---------+----------+
    |              | (GCM)                  | Multi-Part     |   Y (2) |    Y    |    N     |
    +              +------------------------+----------------+---------+---------+----------+
@@ -34,6 +34,8 @@ Supported Operations versus Subsystems
 
 (1) ELE single-part encryption and decryption operations using GCM and ChaCha20-Poly1305 are not supported on the i.MX8ULP platform.
 (2) ELE Multi-part encryption and decryption operations not supported on the i.MX8ULP, i.MX93 and i.MX91 platforms.
+(3) ELA hardware acceleration for single-part AEAD GCM mode is supported on all platforms except i.MX8ULP, i.MX91, i.MX93 and i.MX95.
+    ELA for GCM requires plaintext key buffer, a 12-byte IV and mandatory AAD. If these conditions are not met, the operation is executed by ELE.
 
 
 .. table:: AEAD APIs
@@ -98,7 +100,7 @@ Supported Operations versus Subsystems
    +                +                +         +                                    +
    |                |                |         | :c:func:`C_EncryptMessageNext`     |
    +                +                +         +                                    +
-   |                |                |         | :c:func:`C_EncryptMessageFinal`    |
+   |                |                |         | :c:func:`C_MessageEncryptFinal`    |
    +----------------+----------------+---------+------------------------------------+
    | Decryption     | Single-Part    | SMW     | :c:func:`smw_aead`                 |
    +                +                +---------+------------------------------------+
@@ -150,7 +152,7 @@ Supported Operations versus Subsystems
    +                +                +         +                                    +
    |                |                |         | :c:func:`C_DecryptMessageNext`     |
    +                +                +         +                                    +
-   |                |                |         | :c:func:`C_DecryptMessageFinal`    |
+   |                |                |         | :c:func:`C_MessageDecryptFinal`    |
    +----------------+----------------+---------+------------------------------------+
 
 AES AEAD

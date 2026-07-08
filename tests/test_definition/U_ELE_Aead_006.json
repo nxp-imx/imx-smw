@@ -1,0 +1,230 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 128,
+			"format": "BASE64",
+			"priv_key": [
+				"yTnMEzl8HTfeauDhy3xCPA=="
+			]
+		},
+		"key 2": {
+			"type": "AES",
+			"security_size": 256,
+			"priv_key": [
+				"92e11dcdaa866f5ce790fd24501f9250",
+				"9aacf4cb8b1339d50c9c1240935dd08b"
+			]
+		},
+		"key 3": {
+			"type": "AES",
+			"security_size": 256,
+			"priv_key": [
+				"7da3bccaffb3464178ca7c722379836d",
+				"b50ce0bfb47640b9572163865332e486"
+			]
+		}
+	},
+	"subtest 1": {
+		"description": [
+			"Encrypt using GCM mode with a dedicated tag field set",
+			"Plaintext key buffer is set",
+			"Test vector: https://csrc.nist.gov/Projects/Cryptographic-Algorithm-Validation-Program/CAVP-TESTING-BLOCK-CIPHER-MODES#GCMVS/gcmtestvectors.zip/gcmEncryptExtIV128.rsp"
+		],
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"tag_field_set": true,
+		"iv": "b3d8cc017cbb89b39e0f67e2",
+		"input": "c3b3c41f113a31b73d9a5cd432103069",
+		"aad": "24825602bd12a984e0092d3e448eda5f",
+		"output": "93fe7d9e9bfd10348a5606e5cafa7354",
+		"tag": "0032a1dc85f1c9786925a2e71d8272dd",
+		"restriction_list": "imx8ulp"
+	},
+	"subtest 2": {
+		"description": "Decrypt using GCM mode",
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"tag_field_set": true,
+		"iv": "b3d8cc017cbb89b39e0f67e2",
+		"input": "93fe7d9e9bfd10348a5606e5cafa7354",
+		"aad": "24825602bd12a984e0092d3e448eda5f",
+		"tag": "0032a1dc85f1c9786925a2e71d8272dd",
+		"output": "c3b3c41f113a31b73d9a5cd432103069",
+		"depends": 1
+	},
+	"subtest 3": {
+		"description": [
+			"Encrypt using GCM mode, tag is part of output buffer",
+			"Plaintext key buffer is set",
+			"Output buffer is too short"
+		],
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"iv": "b3d8cc017cbb89b39e0f67e2",
+		"input": "c3b3c41f113a31b73d9a5cd432103069",
+		"aad": "24825602bd12a984e0092d3e448eda5f",
+		"output": 10,
+		"tag": 16,
+		"restriction_list": "imx8ulp",
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 4": {
+		"description": [
+			"Decrypt using GCM mode with invalid tag",
+			"Tag is set in the dedicated tag field"
+		],
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"tag_field_set": true,
+		"iv": "b3d8cc017cbb89b39e0f67e2",
+		"input": "93fe7d9e9bfd10348a5606e5cafa7354",
+		"aad": "24825602bd12a984e0092d3e448eda5f",
+		"tag": "0032a1dc85f1c9786925a2e71d8272d9",
+		"output": "c3b3c41f113a31b73d9a5cd432103069",
+		"result": "SMW_STATUS_SIGNATURE_INVALID",
+		"restriction_list": "imx8ulp"
+	},
+	"subtest 5": {
+		"description": [
+			"Encrypt using GCM mode, tag is part of output",
+			"Plaintext key buffer is set",
+			"Test vector: https://csrc.nist.gov/Projects/Cryptographic-Algorithm-Validation-Program/CAVP-TESTING-BLOCK-CIPHER-MODES#GCMVS/gcmtestvectors.zip/gcmEncryptExtIV256.rsp"
+		],
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"iv": "ac93a1a6145299bde902f21a",
+		"input": "2d71bcfa914e4ac045b2aa60955fad24",
+		"aad": [
+			"1e0889016f67601c8ebea4943bc23ad6"
+		],
+		"output": [
+			"8995ae2e6df3dbf96fac7b7137bae67f",
+			"eca5aa77d51d4a0a14d9c51e1da474ab"
+		],
+		"tag": 16,
+		"restriction_list": "imx8ulp"
+	},
+	"subtest 6": {
+		"description": [
+			"Decrypt using GCM mode, tag is part of input"
+		],
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"iv": "ac93a1a6145299bde902f21a",
+		"input": [
+			"8995ae2e6df3dbf96fac7b7137bae67f",
+			"eca5aa77d51d4a0a14d9c51e1da474ab"
+		],
+		"aad": [
+			"1e0889016f67601c8ebea4943bc23ad6"
+		],
+		"tag": 16,
+		"output": "2d71bcfa914e4ac045b2aa60955fad24",
+		"depends": 5
+	},
+	"subtest 7": {
+		"description": [
+			"Decrypt using GCM mode",
+			"Tag is part of input buffer",
+			"Output buffer is too short"
+		],
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"iv": "ac93a1a6145299bde902f21a",
+		"input": [
+			"8995ae2e6df3dbf96fac7b7137bae67f",
+			"eca5aa77d51d4a0a14d9c51e1da474ab"
+		],
+		"aad": [
+			"1e0889016f67601c8ebea4943bc23ad6"
+		],
+		"tag": 16,
+		"output": 6,
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT",
+		"restriction_list": "imx8ulp"
+	},
+	"subtest 8": {
+		"description": [
+			"Decrypt using GCM mode",
+			"Tag is part of input buffer",
+			"Invalid tag is set"
+		],
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"iv": "ac93a1a6145299bde902f21a",
+		"input": [
+			"8995ae2e6df3dbf96fac7b7137bae67f",
+			"0fb291bd3dba94a1dfd8b286cfb97a00"
+		],
+		"aad": [
+			"1e0889016f67601c8ebea4943bc23ad6"
+		],
+		"tag": 16,
+		"output": "2d71bcfa914e4ac045b2aa60955fad24",
+		"result": "SMW_STATUS_SIGNATURE_INVALID",
+		"restriction_list": "imx8ulp"
+	},
+	"subtest 9": {
+		"description": [
+			"Encrypt using GCM mode, tag is part of output",
+			"Plaintext key buffer is set",
+			"Test vector: https://csrc.nist.gov/Projects/Cryptographic-Algorithm-Validation-Program/CAVP-TESTING-BLOCK-CIPHER-MODES#GCMVS/gcmtestvectors.zip/gcmEncryptExtIV256.rsp",
+			"Output buffer is larger than required (ciphertext length + tag length) to verify",
+			"that the tag placed immediately after the ciphertext",
+			"Ciphertext + tag saved for decryption operation"
+		],
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 3",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"iv": "c04fd2e701c3dc62b68738b3",
+		"input": "fd671cab1ee21f0df6bb610bf94f0e69",
+		"aad": "fec0311013202e4ffdc4204926ae0ddf",
+		"output": 200,
+		"aead_id": 1,
+		"tag": 16,
+		"restriction_list": "imx8ulp"
+	},
+	"subtest 10": {
+		"description": [
+			"Decrypt using GCM mode, tag is part of input"
+		],
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 3",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"iv": "c04fd2e701c3dc62b68738b3",
+		"aead_id": 1,
+		"aad": "fec0311013202e4ffdc4204926ae0ddf",
+		"tag": 16,
+		"output": "fd671cab1ee21f0df6bb610bf94f0e69",
+		"depends": 9
+	}
+}

@@ -2,8 +2,8 @@
 # ELA Feature Configuration: 
 # - Only enables when user explicitly sets -DENABLE_ELA=ON
 # - Requires ELE subsystem (ELE_ROOT) to be defined
-# - Requires dependencies: ENABLE_KEYMGR_MODULE and ENABLE_CIPHER
-#                          must be enabled
+# - Requires dependencies: ENABLE_KEYMGR_MODULE and either ENABLE_CIPHER or
+#                          ENABLE_AEAD must be enabled
 # - Fails if user requests ELA but dependencies are missing or ELE is disabled
 # =============================================================================
 
@@ -23,7 +23,7 @@ function(enable_ela_option)
     endif()
 
     set(ELA_DEPS_OK OFF)
-    if(ENABLE_KEYMGR_MODULE AND ENABLE_CIPHER)
+    if(ENABLE_KEYMGR_MODULE AND (ENABLE_CIPHER OR ENABLE_AEAD))
         set(ELA_DEPS_OK ON)
     endif()
 
@@ -37,7 +37,7 @@ function(enable_ela_option)
         if(NOT ELA_DEPS_OK)
             message(FATAL_ERROR
                 "ENABLE_ELA=ON requested, but required dependencies are missing:\n"
-                "ENABLE_KEYMGR_MODULE and ENABLE_CIPHER must be enabled")
+                "ENABLE_KEYMGR_MODULE and either ENABLE_CIPHER or ENABLE_AEAD must be enabled")
         endif()
 
         set(ENABLE_ELA ON PARENT_SCOPE)

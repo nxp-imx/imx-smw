@@ -105,8 +105,11 @@ int osal_zephyr_thread_cancel(unsigned long thread)
 	if (!handle)
 		return -1;
 
-	k_thread_abort(handle->tid);
-	k_thread_join(handle->tid, K_FOREVER);
+	if (handle->tid) {
+		k_thread_abort(handle->tid);
+		k_thread_join(handle->tid, K_FOREVER);
+	}
+
 	free_handle(handle);
 
 	return 0;

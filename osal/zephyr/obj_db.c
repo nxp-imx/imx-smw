@@ -77,7 +77,7 @@ int osal_zephyr_get_obj_info(struct smw_osal_object *descriptor)
 	struct smw_storage_data_descriptor data_desc = { 0 };
 	struct smw_keymgr_descriptor key_desc = { 0 };
 
-	if (!descriptor)
+	if (!descriptor || !descriptor->obj_desc)
 		goto end;
 
 	obj_desc = descriptor->obj_desc;

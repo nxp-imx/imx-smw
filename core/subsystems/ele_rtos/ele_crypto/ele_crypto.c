@@ -26,7 +26,7 @@
  */
 status_t ele_load_fw(s3mu_t *mu, const uint8_t *fw, size_t fw_size)
 {
-	status_t status = kStatus_Fail;
+	status_t status = kStatus_Success;
 	uint32_t tmsg[LOAD_FW_SIZE] = { 0u };
 	uint32_t rmsg[S3MU_RR_COUNT] = { 0u };
 	uintptr_t fw_phys = 0u;
@@ -40,6 +40,7 @@ status_t ele_load_fw(s3mu_t *mu, const uint8_t *fw, size_t fw_size)
 	tmsg[1] = fw_phys; // EdgeLock FW address
 	tmsg[2] = 0x0u;	   // Reserved
 	tmsg[3] = fw_phys; // EdgeLock FW address
+
 	/* Send message Security Sub-System */
 	status = s3mu_send_message(mu, tmsg, LOAD_FW_SIZE);
 	if (status != kStatus_Success)
@@ -79,7 +80,7 @@ end:
  */
 status_t ele_init_services(s3mu_t *mu)
 {
-	status_t status = kStatus_Fail;
+	status_t status = kStatus_Success;
 	uint32_t tmsg[INIT_SERVICES_SIZE] = { 0u };
 	uint32_t rmsg[S3MU_RR_COUNT] = { 0u };
 
@@ -118,13 +119,14 @@ status_t ele_init_services(s3mu_t *mu)
  */
 status_t ele_open_session(s3mu_t *mu, uint32_t *sessionID)
 {
-	status_t status = kStatus_Fail;
+	status_t status = kStatus_Success;
 	uint32_t tmsg[OPEN_SESSION_SIZE] = { 0u };
 	uint32_t rmsg[S3MU_RR_COUNT] = { 0u };
 
 	tmsg[0] = OPEN_SESSION; // OPEN_SESSION Command Header
 	tmsg[1] = 0x02000001u;	// EdgeLock ID
 	tmsg[2] = 0x00000000u;	// Operating mode | Priority
+
 	/* Send message Security Sub-System */
 	status = s3mu_send_message(mu, tmsg, OPEN_SESSION_SIZE);
 	if (status != kStatus_Success)
@@ -159,7 +161,7 @@ status_t ele_open_session(s3mu_t *mu, uint32_t *sessionID)
  */
 status_t ele_close_session(s3mu_t *mu, uint32_t sessionID)
 {
-	status_t status = kStatus_Fail;
+	status_t status = kStatus_Success;
 	uint32_t tmsg[CLOSE_SESSION_SIZE] = { 0u };
 	uint32_t rmsg[S3MU_RR_COUNT] = { 0u };
 
@@ -200,12 +202,13 @@ status_t ele_close_session(s3mu_t *mu, uint32_t sessionID)
  */
 status_t ele_ping(s3mu_t *mu)
 {
-	status_t status = kStatus_Fail;
+	status_t status = kStatus_Success;
 	uint32_t tmsg[PING_SIZE] = { 0u };
 	uint32_t rmsg[S3MU_RR_COUNT] = { 0u };
 
 	/****************** PING ELE message ***********************/
 	tmsg[0] = PING; // PING Command Header
+
 	/* Send message Security Sub-System */
 	status = s3mu_send_message(mu, tmsg, PING_SIZE);
 	if (status != kStatus_Success)
@@ -238,12 +241,13 @@ status_t ele_ping(s3mu_t *mu)
  */
 status_t ele_get_fw_version(s3mu_t *mu, uint32_t *EleFwVersion)
 {
-	status_t status = kStatus_Fail;
+	status_t status = kStatus_Success;
 	uint32_t tmsg[GET_FW_VERSION_SIZE] = { 0u };
 	uint32_t rmsg[S3MU_RR_COUNT] = { 0u };
 
 	/****************** Get firmware version ELE message ***********************/
 	tmsg[0] = GET_FW_VERSION; // Get firmware version Command Header
+
 	/* Send message Security Sub-System */
 	status = s3mu_send_message(mu, tmsg, GET_FW_VERSION_SIZE);
 	if (status != kStatus_Success)
@@ -282,12 +286,13 @@ status_t ele_get_fw_version(s3mu_t *mu, uint32_t *EleFwVersion)
  */
 status_t ele_get_fw_status(s3mu_t *mu, uint32_t *EleFwStatus)
 {
-	status_t status = kStatus_Fail;
+	status_t status = kStatus_Success;
 	uint32_t tmsg[GET_FW_STATUS_SIZE] = { 0u };
 	uint32_t rmsg[S3MU_RR_COUNT] = { 0u };
 
 	/****************** Get firmware status ELE message ***********************/
 	tmsg[0] = GET_FW_STATUS; // Get firmware status Command Header
+
 	/* Send message Security Sub-System */
 	status = s3mu_send_message(mu, tmsg, GET_FW_STATUS_SIZE);
 	if (status != kStatus_Success)
@@ -323,12 +328,13 @@ status_t ele_get_fw_status(s3mu_t *mu, uint32_t *EleFwStatus)
  */
 status_t ele_enable_apc(s3mu_t *mu)
 {
-	status_t status = kStatus_Fail;
+	status_t status = kStatus_Success;
 	uint32_t tmsg[ENABLE_APC_SIZE] = { 0u };
 	uint32_t rmsg[S3MU_RR_COUNT] = { 0u };
 
 	/****************** Enable APC ELE message ***********************/
 	tmsg[0] = ENABLE_APC; // Enable APC Command Header
+
 	/* Send message Security Sub-System */
 	status = s3mu_send_message(mu, tmsg, ENABLE_APC_SIZE);
 	if (status != kStatus_Success)
@@ -365,13 +371,14 @@ status_t ele_enable_apc(s3mu_t *mu)
  */
 status_t ele_forward_lifecycle(s3mu_t *mu, uint32_t Lifecycle)
 {
-	status_t status = kStatus_Fail;
+	status_t status = kStatus_Success;
 	uint32_t tmsg[FORWARD_LIFECYCLE_SIZE] = { 0u };
 	uint32_t rmsg[S3MU_RR_COUNT] = { 0u };
 
 	/****************** Forward lifecycle ELE message ***********************/
 	tmsg[0] = FORWARD_LIFECYCLE; // Forward lifecycle Command Header
 	tmsg[1] = Lifecycle;	     // Lifecycle to switch to
+
 	/* Send message Security Sub-System */
 	status = s3mu_send_message(mu, tmsg, FORWARD_LIFECYCLE_SIZE);
 	if (status != kStatus_Success)
@@ -406,13 +413,14 @@ status_t ele_forward_lifecycle(s3mu_t *mu, uint32_t Lifecycle)
  */
 status_t ele_read_fuse(s3mu_t *mu, uint32_t FuseID, uint32_t *Fuse)
 {
-	status_t status = kStatus_Fail;
+	status_t status = kStatus_Success;
 	uint32_t tmsg[READ_FUSE_SIZE] = { 0u };
 	uint32_t rmsg[S3MU_RR_COUNT] = { 0u };
 
 	/****************** Read fuse ELE message ***********************/
 	tmsg[0] = READ_FUSE; // Read fuse Command Header
 	tmsg[1] = FuseID;    // FuseID to be readed
+
 	/* Send message Security Sub-System */
 	status = s3mu_send_message(mu, tmsg, READ_FUSE_SIZE);
 	if (status != kStatus_Success)
@@ -451,13 +459,14 @@ status_t ele_read_fuse(s3mu_t *mu, uint32_t FuseID, uint32_t *Fuse)
  */
 status_t ele_release_rdc(s3mu_t *mu, uint32_t RdcID, uint32_t CoreID)
 {
-	status_t status = kStatus_Fail;
+	status_t status = kStatus_Success;
 	uint32_t tmsg[RELEASE_RDC_SIZE] = { 0u };
 	uint32_t rmsg[S3MU_RR_COUNT] = { 0u };
 
 	/****************** Release RDC ELE message ***********************/
 	tmsg[0] = RELEASE_RDC;		     // Release RDC Command Header
 	tmsg[1] = RdcID << SHIFT_8 | CoreID; // RDC_ID | CoreID
+
 	/* Send message Security Sub-System */
 	status = s3mu_send_message(mu, tmsg, RELEASE_RDC_SIZE);
 	if (status != kStatus_Success)
@@ -475,33 +484,10 @@ status_t ele_release_rdc(s3mu_t *mu, uint32_t RdcID, uint32_t CoreID)
 	return kStatus_Fail;
 }
 
-/**
- * ele_write_fuse() - Write fuse
- * @mu: MU peripheral base address
- * @BitPosition: Fuse identifier expressed as its position in bit in the fuse map.
- * @BitLength: Number of bits to be written
- * @Payload: Data to be written in fuse
- * @lock: Write lock requirement, when set to 1 fuse words are locked,
- *        when set to 0 no write lock done
- * @Processed_idx: Pointer where the index of last proccesed fuse is stored.
- *                 Value is valid if !=0xffff
- *
- * This function is used to write fuses.
- * Example bit granularity - write bit 5 and 7 of fuse word index 10.
- * BitPosition = 10*32+5 = 0x145. BitLength = 3.
- * Payload is 0b101 = 0x5 . Example word granularity - write fuse word index 10.
- * BitPosition = 10*32 = 0x140. BitLength = 32 = 0x60. Payload 0xWord1.
- *
- * Return:
- * kStatus_Success                  - Success
- * kStatus_Fail                     - Fail
- * kStatus_S3MU_InvalidArgument     - Invalid argument parameter
- * kStatus_S3MU_AgumentOutOfRange   - Argument out of range
- */
-status_t ele_write_fuse(s3mu_t *mu, uint32_t BitPosition, uint32_t BitLength,
-			uint32_t Payload, bool lock, uint32_t *Processed_idx)
+status_t ele_write_fuse(s3mu_t *mu, uint32_t bit_position, uint32_t bit_length,
+			uint32_t payload, bool lock, uint32_t *processed_idx)
 {
-	status_t status = kStatus_Fail;
+	status_t status = kStatus_Success;
 	uint32_t tmsg[WRITE_FUSE_SIZE] = { 0u };
 	uint32_t rmsg[S3MU_RR_COUNT] = { 0u };
 
@@ -512,13 +498,16 @@ status_t ele_write_fuse(s3mu_t *mu, uint32_t BitPosition, uint32_t BitLength,
 	 *   | bit 31| Bit 30-29 |  Bit 29-16   |    Bit 15-0     |
 	 *   +----------------------------------------------------+
 	 */
-	uint32_t FuseWord = (uint32_t)((uint32_t)lock << LOCK_SHIFT) |
-			    (BitLength << BIT_LENGTH_SHIFT) | (BitPosition);
+	uint32_t fuse_val = (bit_length << BIT_LENGTH_SHIFT) | (bit_position);
+
+	if (lock)
+		fuse_val |= 1u << LOCK_SHIFT;
 
 	/****************** Write fuse ELE message ***********************/
 	tmsg[0] = WRITE_FUSE; // Write fuse Command Header
-	tmsg[1] = FuseWord;   // Specify fuse and how many bits will be written
-	tmsg[2] = Payload;    // Payload
+	tmsg[1] = fuse_val;   // Specify fuse and how many bits will be written
+	tmsg[2] = payload;    // Payload
+
 	/* Send message Security Sub-System */
 	status = s3mu_send_message(mu, tmsg, WRITE_FUSE_SIZE);
 	if (status != kStatus_Success)
@@ -533,7 +522,7 @@ status_t ele_write_fuse(s3mu_t *mu, uint32_t BitPosition, uint32_t BitLength,
 	if (rmsg[0] == WRITE_FUSE_RESPONSE_HDR && rmsg[1] == RESPONSE_SUCCESS) {
 		/* read last processed fuse index */
 		/* Value is valid if ! 0xffff*/
-		*Processed_idx = rmsg[2];
+		*processed_idx = rmsg[2];
 		return kStatus_Success;
 	}
 
@@ -566,13 +555,14 @@ status_t ele_get_info(s3mu_t *mu, uint8_t *ResponseData)
 					      &responsedata_phys);
 
 	if (!responsedata_addr)
-		return kStatus_Fail;
+		return status;
 
 	/****************** Get info message ***********************/
 	tmsg[0] = GET_INFO; // Get info message Command Header
 	tmsg[1] = 0x0u;
 	tmsg[2] = responsedata_phys; // Output buffer
 	tmsg[3] = ResponseSize;	     // Size of ResponseData length
+
 	/* Send message Security Sub-System */
 	status = s3mu_send_message(mu, tmsg, GET_INFO_SIZE);
 	if (status != kStatus_Success)
@@ -594,7 +584,7 @@ status_t ele_get_info(s3mu_t *mu, uint8_t *ResponseData)
 end:
 	smw_utils_shared_memory_free(responsedata_addr, ResponseSize,
 				     ResponseData);
-	return kStatus_Fail;
+	return status;
 }
 
 /**
@@ -611,7 +601,7 @@ end:
  */
 status_t ele_enable_otfad(s3mu_t *mu, uint8_t OtfadID)
 {
-	status_t status = kStatus_Fail;
+	status_t status = kStatus_Success;
 	uint32_t tmsg[ENABLE_OTFAD_SIZE] = { 0u };
 	uint32_t rmsg[S3MU_RR_COUNT] = { 0u };
 
@@ -652,7 +642,7 @@ status_t ele_enable_otfad(s3mu_t *mu, uint8_t OtfadID)
  */
 status_t ele_clock_change_start(s3mu_t *mu)
 {
-	status_t status = kStatus_Fail;
+	status_t status = kStatus_Success;
 	uint32_t tmsg[CLOCK_CHANGE_START_SIZE] = { 0u };
 	uint32_t rmsg[S3MU_RR_COUNT] = { 0u };
 
@@ -694,7 +684,7 @@ status_t ele_clock_change_start(s3mu_t *mu)
 status_t ele_clock_change_finish(s3mu_t *mu, uint8_t NewClockRateELE,
 				 uint8_t NewClockRateCM33)
 {
-	status_t status = kStatus_Fail;
+	status_t status = kStatus_Success;
 	uint32_t tmsg[CLOCK_CHANGE_FINISH_SIZE] = { 0u };
 	uint32_t rmsg[S3MU_RR_COUNT] = { 0u };
 

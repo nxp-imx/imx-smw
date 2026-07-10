@@ -156,7 +156,7 @@ static inline int smw_utils_get_subsystem_info(smw_subsystem_t subsystem_name,
 {
 	struct smw_ops *ops = get_smw_ops();
 
-	if (!ops)
+	if (!ops || !ops->get_subsystem_info)
 		return -1;
 
 	return ops->get_subsystem_info(subsystem_name, info);

@@ -26,7 +26,7 @@
 status_t ele_rng_get_random(s3mu_t *mu, uint32_t *output, size_t size,
 			    rng_reseed_flag_t reseed_flag)
 {
-	status_t status = kStatus_Fail;
+	status_t status = kStatus_Success;
 	uint32_t tmsg[GET_RNG_RANDOM_SIZE] = { 0u };
 	uint32_t rmsg[S3MU_RR_COUNT] = { 0u };
 	uintptr_t output_phys = 0;
@@ -76,7 +76,7 @@ end:
  */
 status_t ele_start_rng(s3mu_t *mu)
 {
-	status_t status = kStatus_Fail;
+	status_t status = kStatus_Success;
 	uint32_t tmsg[START_RNG_SIZE] = { 0u };
 	uint32_t rmsg[S3MU_RR_COUNT] = { 0u };
 
@@ -116,12 +116,13 @@ status_t ele_start_rng(s3mu_t *mu)
  */
 status_t ele_get_trng_state(s3mu_t *mu, uint32_t *state)
 {
-	status_t status = kStatus_Fail;
+	status_t status = kStatus_Success;
 	uint32_t tmsg[GET_TRNG_STATE_SIZE] = { 0u };
 	uint32_t rmsg[S3MU_RR_COUNT] = { 0u };
 
 	/****************** Get info message ***********************/
 	tmsg[0] = GET_TRNG_STATE; // Get trng state message Command Header
+
 	/* Send message Security Sub-System */
 	status = s3mu_send_message(mu, tmsg, GET_TRNG_STATE_SIZE);
 	if (status != kStatus_Success)

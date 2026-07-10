@@ -122,7 +122,6 @@ static int load(void)
 {
 	status_t err = kStatus_Success;
 	int status = SMW_STATUS_SUBSYSTEM_LOAD_FAILURE;
-	uint32_t ele_version = 0;
 
 	struct hdl *hdl = &ele_ctx.hdl;
 

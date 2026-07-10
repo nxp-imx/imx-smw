@@ -187,19 +187,19 @@ status_t ele_release_rdc(s3mu_t *mu, uint32_t RdcID, uint32_t CoreID);
 /**
  * ele_write_fuse() - Write fuse
  * @mu: MU peripheral base address
- * @BitPosition: Fuse identifier expressed as its position in bit in the fuse map.
- * @BitLength: Number of bits to be written
- * @Payload: Data to be written in fuse
+ * @bit_position: Fuse identifier expressed as its position in bit in the fuse map.
+ * @bit_length: Number of bits to be written
+ * @payload: Data to be written in fuse
  * @lock: Write lock requirement, when set to 1 fuse words are locked,
  *        when set to 0 no write lock done.
- * @Processed_idx: Pointer where the index of last proccesed fuse is stored.
+ * @processed_idx: Pointer where the index of last proccesed fuse is stored.
  *                 Value is valid if !=0xffff
  *
  * This function is used to write fuses.
  * Example bit granularity - write bit 5 and 7 of fuse word index 10.
- * BitPosition = 10*32+5 = 0x145. BitLength = 3.
- * Payload is 0b101 = 0x5 . Example word granularity - write fuse word index 10.
- * BitPosition = 10*32 = 0x140. BitLength = 32 = 0x60. Payload 0xWord1.
+ * bit_position = 10*32+5 = 0x145. bit_length = 3.
+ * payload is 0b101 = 0x5 . Example word granularity - write fuse word index 10.
+ * bit_position = 10*32 = 0x140. bit_length = 32 = 0x60. payload 0xWord1.
  *
  * Return:
  * kStatus_Success                  - Success
@@ -207,8 +207,8 @@ status_t ele_release_rdc(s3mu_t *mu, uint32_t RdcID, uint32_t CoreID);
  * kStatus_S3MU_InvalidArgument     - Invalid argument parameter
  * kStatus_S3MU_AgumentOutOfRange   - Argument out of range
  */
-status_t ele_write_fuse(s3mu_t *mu, uint32_t BitPosition, uint32_t BitLength,
-			uint32_t Payload, bool lock, uint32_t *Processed_idx);
+status_t ele_write_fuse(s3mu_t *mu, uint32_t bit_position, uint32_t bit_length,
+			uint32_t payload, bool lock, uint32_t *processed_idx);
 
 /**
  * ele_get_info() - Get info

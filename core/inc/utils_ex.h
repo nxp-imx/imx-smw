@@ -21,7 +21,7 @@ static inline int smw_utils_file_initialise(void)
 {
 	struct smw_ops *ops = get_smw_ops();
 
-	if (ops->file_initialize)
+	if (ops && ops->file_initialize)
 		return ops->file_initialize();
 
 	return -1;
@@ -33,7 +33,7 @@ static inline int smw_utils_file_write(uint32_t blob_id_msb,
 {
 	struct smw_ops *ops = get_smw_ops();
 
-	if (ops->file_write)
+	if (ops && ops->file_write)
 		return ops->file_write(blob_id_msb, blob_id_lsb, blob_ext,
 				       chunk, chunk_sz);
 
@@ -46,7 +46,7 @@ static inline int smw_utils_file_read(uint32_t blob_id_msb,
 {
 	struct smw_ops *ops = get_smw_ops();
 
-	if (ops->file_read)
+	if (ops && ops->file_read)
 		return ops->file_read(blob_id_msb, blob_id_lsb, blob_ext, chunk,
 				      sz);
 
@@ -57,7 +57,7 @@ static inline void smw_utils_dcache_invalidate(void *addr, size_t size)
 {
 	struct smw_ops *ops = get_smw_ops();
 
-	if (ops->dcache_invalidate)
+	if (ops && ops->dcache_invalidate)
 		ops->dcache_invalidate(addr, size);
 }
 
@@ -65,7 +65,7 @@ static inline void smw_utils_dcache_clean(void *addr, size_t size)
 {
 	struct smw_ops *ops = get_smw_ops();
 
-	if (ops->dcache_clean)
+	if (ops && ops->dcache_clean)
 		ops->dcache_clean(addr, size);
 }
 
@@ -73,7 +73,7 @@ static inline void smw_utils_shared_memory_init(void)
 {
 	struct smw_ops *ops = get_smw_ops();
 
-	if (ops->shared_memory_init)
+	if (ops && ops->shared_memory_init)
 		ops->shared_memory_init();
 }
 
@@ -81,7 +81,7 @@ static inline void smw_utils_shared_memory_deinit(void)
 {
 	struct smw_ops *ops = get_smw_ops();
 
-	if (ops->shared_memory_deinit)
+	if (ops && ops->shared_memory_deinit)
 		ops->shared_memory_deinit();
 }
 
@@ -90,7 +90,7 @@ static inline void *smw_utils_shared_memory_alloc(void *buf, size_t size,
 {
 	struct smw_ops *ops = get_smw_ops();
 
-	if (ops->shared_memory_alloc)
+	if (ops && ops->shared_memory_alloc)
 		return ops->shared_memory_alloc(buf, size, aligned_phys);
 
 	return NULL;
@@ -101,7 +101,7 @@ static inline void smw_utils_shared_memory_free(void *buf, size_t size,
 {
 	struct smw_ops *ops = get_smw_ops();
 
-	if (ops->shared_memory_free)
+	if (ops && ops->shared_memory_free)
 		ops->shared_memory_free(buf, size, original_buf);
 }
 
@@ -109,7 +109,7 @@ static inline void *smw_utils_get_mu_base(void)
 {
 	struct smw_ops *ops = get_smw_ops();
 
-	if (ops->get_mu_base)
+	if (ops && ops->get_mu_base)
 		return ops->get_mu_base();
 
 	return NULL;

@@ -81,7 +81,7 @@ typedef struct {
  * s3mu_send_message() - Send message to MU
  * @mu: MU peripheral base address
  * @buf: buffer to store read data
- * @wordCount: size of data in words
+ * @word_count: size of data in words
  *
  * This function writes message into MU registers and send message to EdgeLock Enclave.
  *
@@ -89,7 +89,7 @@ typedef struct {
  * kStatus_Success - if success
  * kStatus_S3MU_InvalidArgument - if invalid argument
  */
-status_t s3mu_send_message(s3mu_t *mu, void *buf, size_t wordCount);
+status_t s3mu_send_message(s3mu_t *mu, void *buf, uint32_t word_count);
 
 /**
  * s3mu_get_response() - Get response from MU
@@ -108,7 +108,7 @@ status_t s3mu_get_response(s3mu_t *mu, void *buf);
  * s3mu_wait_for_data() - Wait and Read data from MU
  * @mu: MU peripheral base address
  * @buf: buffer to store read data
- * @wordCount: size of data in words
+ * @word_count: size of data in words
  * @wait: number of iterations to wait
  *
  * This function waits limited time (ticks) and tests if data are ready to be read.
@@ -120,7 +120,7 @@ status_t s3mu_get_response(s3mu_t *mu, void *buf);
  * kStatus_S3MU_InvalidArgument - if invalid argument
  * kStatus_S3MU_AgumentOutOfRange - if argument out of range
  */
-status_t s3mu_wait_for_data(s3mu_t *mu, uint32_t *buf, size_t wordCount,
+status_t s3mu_wait_for_data(s3mu_t *mu, uint32_t *buf, uint32_t word_count,
 			    uint32_t wait);
 
 /**

@@ -16,11 +16,16 @@
 /* If addr is NULL, allocate on heap, eitherway return a given addr */
 void *malloc_if_not_null(void *addr, size_t size)
 {
+	void *new = addr;
+
 	/* If out address is null, use HEAP */
 	if (!addr && size > 0u)
-		addr = calloc(1, size);
+		new = calloc(1, size);
 
-	return addr;
+	if (new)
+		return new;
+
+	return NULL;
 }
 
 /* Weak function to handle nvm manager requests from ELE */
@@ -33,7 +38,7 @@ __weak status_t nvm_storage_handle_req(s3mu_t *mu, uint32_t *buf,
 
 status_t ele_mu_get_response(s3mu_t *mu, uint32_t *buf)
 {
-	status_t status = kStatus_Fail;
+	status_t status = kStatus_Success;
 	uint32_t rmsg[MSG_RESPONSE_MAX] = { 0u };
 	mu_hdr_t *msg = (mu_hdr_t *)rmsg;
 
@@ -50,12 +55,13 @@ status_t ele_mu_get_response(s3mu_t *mu, uint32_t *buf)
 		} else if (msg->hdr_byte.tag == MSG_TAG_CMD) {
 			status = nvm_storage_handle_req(mu, rmsg,
 							msg->hdr_byte.size);
-			if (status != kStatus_Success)
-				break;
-
 		} else {
-			return kStatus_Fail;
+			status = kStatus_Fail;
 		}
+
+		if (status != kStatus_Success)
+			break;
+
 	} while (msg->hdr_byte.tag != MSG_TAG_RESP);
 
 	return status;

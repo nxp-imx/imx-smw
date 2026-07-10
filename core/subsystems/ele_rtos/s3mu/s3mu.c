@@ -126,8 +126,7 @@ status_t s3mu_read_message(s3mu_t *mu, uint32_t *buf, size_t *size,
 
 status_t s3mu_get_response(s3mu_t *mu, void *buf)
 {
-	size_t size;
-	(void)size; /* Not used here */
+	size_t size = 0;
 
 	if (!buf)
 		return kStatus_S3MU_InvalidArgument;

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2024, 2026 NXP
  */
 
 #include <stdlib.h>
@@ -175,13 +175,13 @@ int delete_key_psa(struct subtest_data *subtest)
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	if (key_test.data)
-		free(key_test.data);
-
 	/* Read the json-c key description */
 	res = key_read_descriptor_psa(list_keys(subtest), &key_test, key_name);
 	if (res != ERR_CODE(PASSED))
 		return res;
+
+	if (key_test.data)
+		free(key_test.data);
 
 	/* Call delete key function and compare result with expected one */
 	subtest->psa_status = psa_destroy_key(key_test.attributes.id);

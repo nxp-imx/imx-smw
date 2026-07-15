@@ -22,7 +22,7 @@
 
 /* To be defined */
 struct psa_aead_operation_s {
-	int dummy;
+	void *op_context;
 };
 
 /**

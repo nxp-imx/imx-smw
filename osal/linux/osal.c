@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2019-2025 NXP
+ * Copyright 2019-2026 NXP
  */
 
 #include <signal.h>
@@ -156,6 +156,22 @@ static void vprint(unsigned int level, const char *format, va_list args)
 {
 	dbg_printf(level, "[SMW] (%d) [0x%lx] ", getpid(), pthread_self());
 	log_printf(level, format, args);
+}
+
+void dcache_invalidate(void *addr, size_t size)
+{
+	uint32_t i = 0;
+
+	for (; i < size; i += CACHE_LINE_SIZE)
+		DCCIVAC(addr + i);
+}
+
+void dcache_clean(void *addr, size_t size)
+{
+	uint32_t i = 0;
+
+	for (; i < size; i += CACHE_LINE_SIZE)
+		DCBF(addr + i);
 }
 
 __weak void set_log_file(void)
@@ -597,6 +613,9 @@ __export enum smw_status_code smw_osal_lib_init(void)
 	ops.find_obj_init = obj_db_find_init;
 	ops.find_obj_next = obj_db_find_next;
 	ops.find_obj_final = obj_db_find_finalize;
+
+	ops.dcache_invalidate = dcache_invalidate;
+	ops.dcache_clean = dcache_clean;
 
 	status = smw_init(&ops);
 	if (status != SMW_STATUS_OK)

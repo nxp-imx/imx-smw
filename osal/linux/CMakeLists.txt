@@ -24,6 +24,10 @@ target_include_directories(osal
                            PRIVATE ${CMAKE_SOURCE_DIR}/inc
                            PUBLIC ${CMAKE_SOURCE_DIR}/public)
 
+if(ENABLE_ELA)
+    target_compile_definitions(osal PRIVATE ENABLE_ELA)
+endif()
+
 set(EXT_LIBS ${EXT_LIBS} SQLite3::SQLite3 PARENT_SCOPE)
 
 install(FILES ${CMAKE_LOCAL_MODULE_PATH}/FindSQLite3.cmake
@@ -155,7 +159,7 @@ macro(make_smw_conf)
     # i.MX943 specific configuration
     #
     install(FILES ${SMW_CONFIG_FILES_DIR}/ele_imx943_config.txt
-    DESTINATION ${SMW_CONFIG_FILES_INSTALL})
+            DESTINATION ${SMW_CONFIG_FILES_INSTALL})
 
     set(MAKE_SMW_CONF_943 ${SMW_SYS_CONF_SCRIPT}
               in=${BIN_SMW_CONF}

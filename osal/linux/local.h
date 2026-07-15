@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2025 NXP
+ * Copyright 2021-2026 NXP
  */
 
 #ifndef __LOCAL_H__
@@ -66,6 +66,34 @@
 #define CONFIG_ELE	       BIT(4)
 
 #define CONFIG_SMW_DATABASE_VERSION 1
+
+/*
+ * Data cache maintenance macros required by ELA:
+ * ELA accesses shared buffers via physical addresses (DMA), so the CPU cache
+ * must be explicitly managed to maintain coherency.
+ *   DCBF    - Clean (write-back dirty lines) to RAM before DMA read
+ *   DCCIVAC - Clean and invalidate after DMA write
+ * The DCBF and DCCIVAC macros use AArch64-specific system register instructions
+ * (dc cvac and dc civac), which cause build failures on AArch32 targets.
+ * Since ELA is only supported on AArch64 SoCs, these macros are guarded by
+ * ENABLE_ELA and defined as no-ops when ELA support is not compiled in.
+ */
+#define CACHE_LINE_SIZE 32
+
+#ifdef ENABLE_ELA
+#define DCBF(p)                                                                \
+	{                                                                      \
+		asm volatile("dc cvac, %0" : : "r"(p) : "memory");             \
+	}
+
+#define DCCIVAC(p)                                                             \
+	{                                                                      \
+		asm volatile("dc civac, %0" : : "r"(p) : "memory");            \
+	}
+#else
+#define DCBF(p)	   ((void)(p))
+#define DCCIVAC(p) ((void)(p))
+#endif /* ENABLE_ELA */
 
 /**
  * struct smw_info - SMW library configuration

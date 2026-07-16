@@ -16,6 +16,11 @@
 #include "smw/names.h"
 #include "smw/object.h"
 
+/*
+ * typedef void_prt_t - Pointer on void value
+ */
+typedef void *void_ptr_t;
+
 /**
  * union subsystem_info - Union of all subsystem information
  * @tee: TEE Subsystem information.
@@ -424,10 +429,11 @@ typedef int (*smw_osal_file_write_t)(uint32_t blob_id_msb, uint32_t blob_id_lsb,
  */
 typedef int (*smw_osal_file_read_t)(uint32_t blob_id_msb, uint32_t blob_id_lsb,
 				    uint32_t blob_ext, uint32_t *chunk,
-				    size_t *sz);
+				    size_t *chunk_sz);
 
 /**
- * typedef smw_osal_dcache_invalidate_t - Invalidate data cache for a memory range
+ * typedef smw_osal_dcache_invalidate_t - Invalidate data cache for a memory
+ *                                        range
  * @addr: Pointer to the start of the memory range
  * @size: Size of the memory range in bytes
  */
@@ -473,14 +479,15 @@ typedef void (*smw_osal_shared_memory_deinit_t)(void);
  * Return:
  * Pointer to the allocated shared buffer, or NULL if allocation fails.
  */
-typedef void *(*smw_osal_shared_memory_alloc_t)(void *buf, size_t size,
-						uintptr_t *phys_addr);
+typedef void_ptr_t (*smw_osal_shared_memory_alloc_t)(void *buf, size_t size,
+						     uintptr_t *phys_addr);
 
 /**
  * typedef smw_osal_shared_memory_free_t - Free shared buffer allocated for ELE
  * @buf: pointer to the buffer to be freed
  * @size: size of the buffer in bytes
- * @original_buf: pointer to the original buffer provided to alloc_ele_shared()
+ * @original_buf: pointer to the original buffer provided to
+ *                smw_osal_shared_memory_alloc_t()
  *
  * This function frees a shared buffer allocated for ELE.
  * If MMU is enabled, the function unmaps the memory region allocated for the buffer.
@@ -495,7 +502,7 @@ typedef void (*smw_osal_shared_memory_free_t)(void *buf, size_t size,
  * Return:
  * MU Base pointer, or NULL if no MU found.
  */
-typedef void *(*smw_osal_get_mu_base_t)(void);
+typedef void_ptr_t (*smw_osal_get_mu_base_t)(void);
 
 /**
  * struct smw_ops - SMW OSAL operations interface

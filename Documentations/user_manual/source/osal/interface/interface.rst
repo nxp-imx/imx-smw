@@ -115,7 +115,7 @@ Object database management
   :structs: smw_osal_object
 
 NVM storage file operations
-""""""""""""""""""""""""""
+"""""""""""""""""""""""""""
 
 .. kdoc-extension:: /inc/osal.h
   :typedefs: smw_osal_file_initialize_t smw_osal_file_write_t
@@ -136,3 +136,22 @@ MU base address
 """""""""""""""
 .. kdoc-extension:: /inc/osal.h
   :typedefs: smw_osal_get_mu_base_t
+
+Additional data type
+""""""""""""""""""""
+void_ptr_t
+~~~~~~~~~~
+.. c:type:: void_ptr_t
+
+   Generic pointer type.
+
+Definition
+**********
+.. code-block:: c
+
+   typedef void *void_ptr_t;
+
+Description
+***********
+``void_ptr_t`` is a generic pointer type used to reference any type of data.
+

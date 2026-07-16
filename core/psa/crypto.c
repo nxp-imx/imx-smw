@@ -6,7 +6,6 @@
 #include "smw/names.h"
 #include "smw_keymgr.h"
 #include "smw_crypto.h"
-#include "smw_keymgr.h"
 #include "smw_osal.h"
 
 #include "psa/crypto.h"
@@ -207,6 +206,23 @@ static smw_mac_algo_t get_mac_algo_name(psa_algorithm_t alg)
 	return SMW_MAC_ALGO_NAME_NONE;
 }
 
+static psa_status_t do_cancel_operation(struct smw_op_context **ctx)
+{
+	psa_status_t psa_status = PSA_SUCCESS;
+	struct smw_context_args args = { 0 };
+
+	if (!ctx || !*ctx)
+		return psa_status;
+
+	args.context = *ctx;
+	psa_status =
+		call_smw_api_no_fallback(SMW_API_CAST(smw_cancel_operation),
+					 &args);
+	*ctx = args.context;
+
+	return psa_status;
+}
+
 static bool check_aead_tag_length(psa_algorithm_t alg, unsigned int tag_length)
 {
 	const struct aead_algo_info *info = NULL;
@@ -234,163 +250,6 @@ static bool is_psa_subsystem_ele(void)
 	subsystem_name = get_psa_default_subsystem();
 
 	return (subsystem_name == SMW_SUBSYSTEM_NAME_ELE);
-}
-
-static psa_status_t
-set_aead_common_params(psa_key_id_t key, psa_algorithm_t alg,
-		       const uint8_t *nonce, size_t nonce_length,
-		       const uint8_t *additional_data,
-		       size_t additional_data_length, const uint8_t *input,
-		       size_t input_length, uint8_t *output, size_t output_size,
-		       struct smw_aead_args *args, smw_aead_op_type_t op_name)
-{
-	enum smw_status_code status = SMW_STATUS_OK;
-	struct smw_aead_init_args *init = args->init;
-	struct smw_aead_aad_args *aad = args->aad;
-	struct smw_aead_final_args *final = args->final;
-	struct smw_aead_data_args *data = final->data;
-	smw_aead_mode_t mode_name = SMW_AEAD_MODE_NAME_NONE;
-	unsigned int tag_length = 0;
-	unsigned int min_output_size = 0;
-	psa_algorithm_t psa_base_alg = PSA_ALG_NONE;
-
-	if (!PSA_ALG_IS_AEAD(alg) || !input || !input_length || !output ||
-	    !output_size || !nonce || !nonce_length ||
-	    op_name == SMW_AEAD_OP_TYPE_NAME_NONE)
-		return PSA_ERROR_INVALID_ARGUMENT;
-
-	init->key_desc->id = key;
-	status = smw_get_key_type_name(init->key_desc);
-	if (status != SMW_STATUS_OK)
-		return util_smw_to_psa_status(status);
-
-	tag_length = PSA_ALG_AEAD_TAG_LENGTH(alg);
-	if (!tag_length)
-		return PSA_ERROR_INVALID_ARGUMENT;
-
-	if (nonce_length > PSA_AEAD_NONCE_MAX_SIZE)
-		return PSA_ERROR_INVALID_ARGUMENT;
-
-	psa_base_alg = PSA_ALG_AEAD_WITH_DEFAULT_LENGTH_TAG(alg);
-
-	if (!check_aead_tag_length(psa_base_alg, tag_length))
-		return PSA_ERROR_INVALID_ARGUMENT;
-
-	switch (psa_base_alg) {
-	case PSA_ALG_CCM:
-		if (nonce_length < 7 || nonce_length > 13)
-			return PSA_ERROR_INVALID_ARGUMENT;
-		if (is_psa_subsystem_ele() && nonce_length != 12)
-			return PSA_ERROR_INVALID_ARGUMENT;
-		break;
-
-	case PSA_ALG_GCM:
-		if (is_psa_subsystem_ele() && nonce_length != 12)
-			return PSA_ERROR_INVALID_ARGUMENT;
-		break;
-
-	case PSA_ALG_CHACHA20_POLY1305:
-		if (nonce_length != 8 && nonce_length != 12)
-			return PSA_ERROR_INVALID_ARGUMENT;
-		break;
-	}
-
-	mode_name = get_aead_mode_name(psa_base_alg);
-	if (mode_name == SMW_AEAD_MODE_NAME_NONE)
-		return PSA_ERROR_INVALID_ARGUMENT;
-
-	if (op_name == SMW_AEAD_OP_TYPE_NAME_ENCRYPT) {
-		if (SET_OVERFLOW(PSA_AEAD_ENCRYPT_OUTPUT_SIZE(key_type, alg,
-							      input_length),
-				 min_output_size))
-			return PSA_ERROR_INVALID_ARGUMENT;
-	} else if (op_name == SMW_AEAD_OP_TYPE_NAME_DECRYPT) {
-		if (input_length + 1 < tag_length)
-			return PSA_ERROR_BUFFER_TOO_SMALL;
-
-		if (SET_OVERFLOW(PSA_AEAD_DECRYPT_OUTPUT_SIZE(key_type, alg,
-							      input_length),
-				 min_output_size))
-			return PSA_ERROR_INVALID_ARGUMENT;
-	} else {
-		return PSA_ERROR_INVALID_ARGUMENT;
-	}
-
-	if (output_size < min_output_size)
-		return PSA_ERROR_BUFFER_TOO_SMALL;
-
-	init->mode_name = mode_name;
-	init->plaintext_length = input_length;
-	init->user_iv = (unsigned char *)nonce;
-	init->user_iv_length = nonce_length;
-	init->iv_length = nonce_length;
-	init->op_type_name = op_name;
-
-	data->input = (unsigned char *)input;
-	data->input_length = input_length;
-	data->output = output;
-	data->output_length = output_size;
-
-	final->tag = NULL;
-
-	final->tag_length = tag_length;
-	final->op_type_name = op_name;
-
-	aad->data = (unsigned char *)additional_data;
-
-	if (SET_OVERFLOW(additional_data_length, aad->data_length))
-		return PSA_ERROR_INVALID_ARGUMENT;
-
-	return PSA_SUCCESS;
-}
-
-static psa_status_t
-set_aead_encrypt_params(psa_key_id_t key, psa_algorithm_t alg,
-			const uint8_t *nonce, size_t nonce_length,
-			const uint8_t *additional_data,
-			size_t additional_data_length, const uint8_t *input,
-			size_t input_length, uint8_t *output,
-			size_t output_size, struct smw_aead_args *args)
-{
-	psa_status_t status;
-
-	status =
-		set_aead_common_params(key, alg, nonce, nonce_length,
-				       additional_data, additional_data_length,
-				       input, input_length, output, output_size,
-				       args, SMW_AEAD_OP_TYPE_NAME_ENCRYPT);
-	if (status != PSA_SUCCESS)
-		return status;
-
-	if (SET_OVERFLOW(nonce_length, args->final->output_iv_length))
-		return PSA_ERROR_INVALID_ARGUMENT;
-
-	args->final->output_iv = SMW_UTILS_CALLOC(1, nonce_length);
-	if (!args->final->output_iv)
-		return PSA_ERROR_INSUFFICIENT_MEMORY;
-
-	return PSA_SUCCESS;
-}
-
-static psa_status_t
-set_aead_decrypt_params(psa_key_id_t key, psa_algorithm_t alg,
-			const uint8_t *nonce, size_t nonce_length,
-			const uint8_t *additional_data,
-			size_t additional_data_length, const uint8_t *input,
-			size_t input_length, uint8_t *output,
-			size_t output_size, struct smw_aead_args *args)
-{
-	psa_status_t status;
-
-	status =
-		set_aead_common_params(key, alg, nonce, nonce_length,
-				       additional_data, additional_data_length,
-				       input, input_length, output, output_size,
-				       args, SMW_AEAD_OP_TYPE_NAME_DECRYPT);
-	if (status != PSA_SUCCESS)
-		return status;
-
-	return PSA_SUCCESS;
 }
 
 static int compare_buffer(const uint8_t *input_a, size_t input_a_length,
@@ -518,13 +377,229 @@ static psa_status_t set_signature_attributes(psa_algorithm_t alg, bool hashed,
 	return PSA_SUCCESS;
 }
 
-__export psa_status_t psa_aead_abort(psa_aead_operation_t *operation)
+/*
+ * Internal context for AEAD multi-part operations.
+ * Allocated at setup, freed at finish/verify/abort.
+ */
+struct psa_aead_op_ctx {
+	struct smw_op_context *smw_ctx;
+	psa_algorithm_t alg;
+	smw_aead_mode_t smw_mode_name;
+	psa_key_id_t key_id;
+	bool is_encrypt;
+	bool aead_init_done;
+	unsigned int tag_length;
+	unsigned int ad_length;
+	unsigned int plaintext_length;
+	uint8_t nonce[PSA_AEAD_NONCE_MAX_SIZE];
+	unsigned int nonce_length;
+};
+
+static psa_status_t aead_fill_init_args(struct psa_aead_op_ctx *ctx,
+					struct smw_aead_init_args *init)
 {
-	(void)operation;
+	enum smw_status_code smw_status = SMW_STATUS_OK;
+	struct smw_key_descriptor *key_desc = NULL;
+
+	key_desc = init->key_desc;
+	key_desc->id = ctx->key_id;
+	smw_status = smw_get_key_type_name(key_desc);
+	if (smw_status != SMW_STATUS_OK)
+		return util_smw_to_psa_status(smw_status);
+
+	init->mode_name = ctx->smw_mode_name;
+	init->op_type_name = ctx->is_encrypt ? SMW_AEAD_OP_TYPE_NAME_ENCRYPT :
+					       SMW_AEAD_OP_TYPE_NAME_DECRYPT;
+	init->user_iv = ctx->nonce;
+	init->user_iv_length = ctx->nonce_length;
+	init->iv_length = ctx->nonce_length;
+	init->tag_length = ctx->tag_length;
+	init->aad_length = ctx->ad_length;
+	init->plaintext_length = ctx->plaintext_length;
+	init->context = ctx->smw_ctx;
+
+	return PSA_SUCCESS;
+}
+
+static psa_status_t aead_multipart_do_init(struct psa_aead_op_ctx *ctx)
+{
+	psa_status_t psa_status = PSA_SUCCESS;
+	struct smw_aead_init_args init_args = { 0 };
+	struct smw_key_descriptor key_desc = { 0 };
+
+	init_args.key_desc = &key_desc;
+
+	psa_status = aead_fill_init_args(ctx, &init_args);
+	if (psa_status != PSA_SUCCESS)
+		return psa_status;
+
+	psa_status = call_smw_api_init_with_key(SMW_API_CAST(smw_aead_init),
+						&init_args, &init_args.context);
+
+	ctx->smw_ctx = init_args.context;
+
+	return psa_status;
+}
+
+static psa_status_t aead_setup_lengths(struct psa_aead_op_ctx *ctx,
+				       size_t ad_length,
+				       size_t plaintext_length)
+{
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!ctx)
+		return PSA_ERROR_BAD_STATE;
+
+	/* Must be called before nonce is set / init is done. */
+	if (ctx->aead_init_done || ctx->nonce_length)
+		return PSA_ERROR_BAD_STATE;
+
+	if (SET_OVERFLOW(ad_length, ctx->ad_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	if (SET_OVERFLOW(plaintext_length, ctx->plaintext_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	return PSA_SUCCESS;
+}
+
+static psa_status_t aead_setup_nonce(struct psa_aead_op_ctx *ctx,
+				     const uint8_t *nonce, size_t nonce_length)
+{
+	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
+	psa_algorithm_t psa_base_alg = PSA_ALG_NONE;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	/* Nonce must not already be set. */
+	if (ctx->aead_init_done || ctx->nonce_length)
+		return psa_status;
+
+	if (!nonce || !nonce_length || nonce_length > PSA_AEAD_NONCE_MAX_SIZE)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	psa_base_alg = PSA_ALG_AEAD_WITH_DEFAULT_LENGTH_TAG(ctx->alg);
+
+	/* Validate nonce length per algorithm. */
+	switch (psa_base_alg) {
+	case PSA_ALG_CCM:
+		if (nonce_length < 7 || nonce_length > 13)
+			return PSA_ERROR_INVALID_ARGUMENT;
+		if (is_psa_subsystem_ele() && nonce_length != 12)
+			return PSA_ERROR_INVALID_ARGUMENT;
+		break;
+	case PSA_ALG_GCM:
+		if (is_psa_subsystem_ele() && nonce_length != 12)
+			return PSA_ERROR_INVALID_ARGUMENT;
+		break;
+	case PSA_ALG_CHACHA20_POLY1305:
+		if (nonce_length != 12)
+			return PSA_ERROR_INVALID_ARGUMENT;
+		break;
+	default:
+		return PSA_ERROR_NOT_SUPPORTED;
+	}
+
+	SMW_UTILS_MEMCPY(ctx->nonce, nonce, nonce_length);
+	ctx->nonce_length = nonce_length;
+
+	return PSA_SUCCESS;
+}
+
+/*
+ * aead_setup() - Common helper for encrypt/decrypt setup.
+ */
+static psa_status_t aead_setup_algo(struct psa_aead_op_ctx *ctx,
+				    psa_key_id_t key, psa_algorithm_t alg,
+				    bool is_encrypt)
+{
+	psa_algorithm_t psa_base_alg = PSA_ALG_NONE;
+	unsigned int tag_length = 0;
+	smw_aead_mode_t mode_name = SMW_AEAD_MODE_NAME_NONE;
+
+	if (!PSA_ALG_IS_AEAD(alg))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	tag_length = PSA_ALG_AEAD_TAG_LENGTH(alg);
+	if (!tag_length)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	psa_base_alg = PSA_ALG_AEAD_WITH_DEFAULT_LENGTH_TAG(alg);
+	if (!check_aead_tag_length(psa_base_alg, tag_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	mode_name = get_aead_mode_name(psa_base_alg);
+	if (mode_name == SMW_AEAD_MODE_NAME_NONE)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	ctx->alg = alg;
+	ctx->smw_mode_name = mode_name;
+	ctx->key_id = key;
+	ctx->is_encrypt = is_encrypt;
+	ctx->tag_length = tag_length;
+
+	return PSA_SUCCESS;
+}
+
+static psa_status_t aead_allocate_operation(psa_aead_operation_t *operation,
+					    psa_key_id_t key,
+					    psa_algorithm_t alg,
+					    bool is_encrypt)
+{
+	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
+	struct psa_aead_op_ctx *ctx = NULL;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!operation || operation->op_context ||
+	    !smw_utils_is_lib_initialized())
+		goto end;
+
+	ctx = SMW_UTILS_CALLOC(1, sizeof(*ctx));
+	if (!ctx) {
+		psa_status = PSA_ERROR_INSUFFICIENT_MEMORY;
+		goto end;
+	}
+
+	psa_status = aead_setup_algo(ctx, key, alg, is_encrypt);
+	if (psa_status == PSA_SUCCESS)
+		operation->op_context = ctx;
+
+end:
+	if (psa_status != PSA_SUCCESS && ctx)
+		SMW_UTILS_FREE(ctx);
+
+	return psa_status;
+}
+
+__export psa_status_t psa_aead_abort(psa_aead_operation_t *operation)
+{
+	psa_status_t psa_status = PSA_SUCCESS;
+	struct psa_aead_op_ctx *ctx = NULL;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!operation || !smw_utils_is_lib_initialized())
+		return PSA_ERROR_BAD_STATE;
+
+	/* Already aborted/terminated - safe and has no effect. */
+	if (!operation->op_context)
+		return PSA_SUCCESS;
+
+	ctx = operation->op_context;
+
+	psa_status = do_cancel_operation(&ctx->smw_ctx);
+
+	/*
+	 * If the ctx->smw_ctx is NULL, even if psa_status return error
+	 * The subsystem context is no more valid, hence free the PSA context.
+	 */
+	if (!ctx->smw_ctx) {
+		SMW_UTILS_FREE(ctx);
+		SMW_UTILS_MEMSET(operation, 0, sizeof(*operation));
+	}
+
+	return psa_status;
 }
 
 __export psa_status_t
@@ -535,43 +610,82 @@ psa_aead_decrypt(psa_key_id_t key, psa_algorithm_t alg, const uint8_t *nonce,
 		 size_t plaintext_size, size_t *plaintext_length)
 {
 	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
+	struct psa_aead_op_ctx ctx = { 0 };
 	struct smw_aead_args oneshot_args = { 0 };
 	struct smw_aead_aad_args aad = { 0 };
 	struct smw_aead_init_args init = { 0 };
 	struct smw_aead_final_args final = { 0 };
 	struct smw_aead_data_args data = { 0 };
 	struct smw_key_descriptor key_desc = { 0 };
+	size_t min_output_size = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!smw_utils_is_lib_initialized())
 		return psa_status;
 
-	if (!plaintext_length)
-		return PSA_ERROR_INVALID_ARGUMENT;
+	if (!plaintext || !plaintext_size || !plaintext_length || !ciphertext ||
+	    !ciphertext_length) {
+		psa_status = PSA_ERROR_INVALID_ARGUMENT;
+		goto end;
+	}
+
+	psa_status = aead_setup_algo(&ctx, key, alg, false);
+	if (psa_status != PSA_SUCCESS)
+		goto end;
+
+	psa_status = aead_setup_lengths(&ctx, additional_data_length,
+					plaintext_size);
+	if (psa_status != PSA_SUCCESS)
+		goto end;
+
+	psa_status = aead_setup_nonce(&ctx, nonce, nonce_length);
+	if (psa_status != PSA_SUCCESS)
+		goto end;
 
 	init.key_desc = &key_desc;
+	psa_status = aead_fill_init_args(&ctx, &init);
+	if (psa_status != PSA_SUCCESS)
+		goto end;
+
+	if (ciphertext_length + 1 < ctx.tag_length) {
+		psa_status = PSA_ERROR_BUFFER_TOO_SMALL;
+		goto end;
+	}
+
+	if (SET_OVERFLOW(PSA_AEAD_DECRYPT_OUTPUT_SIZE(PSA_KEY_TYPE_NONE, alg,
+						      ciphertext_length),
+			 min_output_size)) {
+		psa_status = PSA_ERROR_INVALID_ARGUMENT;
+		goto end;
+	}
+
+	if (plaintext_size < min_output_size) {
+		psa_status = PSA_ERROR_BUFFER_TOO_SMALL;
+		goto end;
+	}
+
+	data.input = (unsigned char *)ciphertext;
+	data.input_length = ciphertext_length;
+	data.output = plaintext;
+	data.output_length = plaintext_size;
+
 	final.data = &data;
+	final.tag_length = ctx.tag_length;
+	final.op_type_name = init.op_type_name;
+
+	aad.data = (unsigned char *)additional_data;
+	if (SET_OVERFLOW(additional_data_length, aad.data_length)) {
+		psa_status = PSA_ERROR_INVALID_ARGUMENT;
+		goto end;
+	}
 
 	oneshot_args.aad = &aad;
 	oneshot_args.init = &init;
 	oneshot_args.final = &final;
 
-	psa_status = set_aead_decrypt_params(key, alg, nonce, nonce_length,
-					     additional_data,
-					     additional_data_length, ciphertext,
-					     ciphertext_length, plaintext,
-					     plaintext_size, &oneshot_args);
-
-	if (psa_status != PSA_SUCCESS)
-		goto end;
-
-	if (data.output_length == 0)
-		goto end;
-
 	psa_status =
-		call_smw_api((enum smw_status_code(*)(void *))smw_aead,
-			     &oneshot_args, &oneshot_args.init->subsystem_name);
+		call_smw_api_no_fallback(SMW_API_CAST(smw_aead), &oneshot_args);
 
 	if (psa_status != PSA_SUCCESS &&
 	    psa_status != PSA_ERROR_BUFFER_TOO_SMALL)
@@ -587,13 +701,9 @@ __export psa_status_t psa_aead_decrypt_setup(psa_aead_operation_t *operation,
 					     psa_key_id_t key,
 					     psa_algorithm_t alg)
 {
-	(void)operation;
-	(void)key;
-	(void)alg;
-
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	return aead_allocate_operation(operation, key, alg, false);
 }
 
 __export psa_status_t
@@ -604,43 +714,88 @@ psa_aead_encrypt(psa_key_id_t key, psa_algorithm_t alg, const uint8_t *nonce,
 		 size_t ciphertext_size, size_t *ciphertext_length)
 {
 	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
+	struct psa_aead_op_ctx ctx = { 0 };
 	struct smw_aead_args oneshot_args = { 0 };
 	struct smw_aead_aad_args aad = { 0 };
 	struct smw_aead_init_args init = { 0 };
 	struct smw_aead_final_args final = { 0 };
 	struct smw_aead_data_args data = { 0 };
 	struct smw_key_descriptor key_desc = { 0 };
+	unsigned int min_output_size = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!smw_utils_is_lib_initialized())
 		return psa_status;
 
-	if (!ciphertext_length)
-		return PSA_ERROR_INVALID_ARGUMENT;
+	if (!plaintext || !plaintext_length || !ciphertext ||
+	    !ciphertext_size || !ciphertext_length) {
+		psa_status = PSA_ERROR_INVALID_ARGUMENT;
+		goto end;
+	}
+
+	psa_status = aead_setup_algo(&ctx, key, alg, true);
+	if (psa_status != PSA_SUCCESS)
+		goto end;
+
+	psa_status = aead_setup_lengths(&ctx, additional_data_length,
+					plaintext_length);
+	if (psa_status != PSA_SUCCESS)
+		goto end;
+
+	psa_status = aead_setup_nonce(&ctx, nonce, nonce_length);
+	if (psa_status != PSA_SUCCESS)
+		goto end;
 
 	init.key_desc = &key_desc;
+	psa_status = aead_fill_init_args(&ctx, &init);
+	if (psa_status != PSA_SUCCESS)
+		goto end;
+
+	if (SET_OVERFLOW(PSA_AEAD_ENCRYPT_OUTPUT_SIZE(PSA_KEY_TYPE_NONE, alg,
+						      plaintext_length),
+			 min_output_size)) {
+		psa_status = PSA_ERROR_INVALID_ARGUMENT;
+		goto end;
+	}
+
+	if (ciphertext_size < min_output_size) {
+		psa_status = PSA_ERROR_BUFFER_TOO_SMALL;
+		goto end;
+	}
+
+	data.input = (unsigned char *)plaintext;
+	data.input_length = plaintext_length;
+	data.output = ciphertext;
+	data.output_length = ciphertext_size;
+
 	final.data = &data;
+	final.tag_length = ctx.tag_length;
+	final.op_type_name = init.op_type_name;
+
+	if (SET_OVERFLOW(nonce_length, final.output_iv_length)) {
+		psa_status = PSA_ERROR_INVALID_ARGUMENT;
+		goto end;
+	}
+
+	final.output_iv = SMW_UTILS_CALLOC(1, nonce_length);
+	if (!final.output_iv) {
+		psa_status = PSA_ERROR_INSUFFICIENT_MEMORY;
+		goto end;
+	}
+
+	aad.data = (unsigned char *)additional_data;
+	if (SET_OVERFLOW(additional_data_length, aad.data_length)) {
+		psa_status = PSA_ERROR_INVALID_ARGUMENT;
+		goto end;
+	}
 
 	oneshot_args.aad = &aad;
 	oneshot_args.init = &init;
 	oneshot_args.final = &final;
 
 	psa_status =
-		set_aead_encrypt_params(key, alg, nonce, nonce_length,
-					additional_data, additional_data_length,
-					plaintext, plaintext_length, ciphertext,
-					ciphertext_size, &oneshot_args);
-
-	if (psa_status != PSA_SUCCESS)
-		goto end;
-
-	if (!data.output_length)
-		goto end;
-
-	psa_status =
-		call_smw_api((enum smw_status_code(*)(void *))smw_aead,
-			     &oneshot_args, &oneshot_args.init->subsystem_name);
+		call_smw_api_no_fallback(SMW_API_CAST(smw_aead), &oneshot_args);
 
 	if (psa_status != PSA_SUCCESS &&
 	    psa_status != PSA_ERROR_BUFFER_TOO_SMALL)
@@ -649,8 +804,8 @@ psa_aead_encrypt(psa_key_id_t key, psa_algorithm_t alg, const uint8_t *nonce,
 	*ciphertext_length = data.output_length;
 
 end:
-	if (oneshot_args.final->output_iv)
-		SMW_UTILS_FREE(oneshot_args.final->output_iv);
+	if (final.output_iv)
+		SMW_UTILS_FREE(final.output_iv);
 
 	return psa_status;
 }
@@ -659,13 +814,9 @@ __export psa_status_t psa_aead_encrypt_setup(psa_aead_operation_t *operation,
 					     psa_key_id_t key,
 					     psa_algorithm_t alg)
 {
-	(void)operation;
-	(void)key;
-	(void)alg;
-
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	return aead_allocate_operation(operation, key, alg, true);
 }
 
 __export psa_status_t psa_aead_finish(psa_aead_operation_t *operation,
@@ -674,57 +825,151 @@ __export psa_status_t psa_aead_finish(psa_aead_operation_t *operation,
 				      size_t *ciphertext_length, uint8_t *tag,
 				      size_t tag_size, size_t *tag_length)
 {
-	(void)operation;
-	(void)ciphertext;
-	(void)ciphertext_size;
-	(void)ciphertext_length;
-	(void)tag;
-	(void)tag_size;
-	(void)tag_length;
+	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
+	struct psa_aead_op_ctx *ctx = NULL;
+	struct smw_aead_final_args final_args = { 0 };
+	struct smw_aead_data_args data_args = { 0 };
+	unsigned char output_iv[PSA_AEAD_NONCE_MAX_SIZE] = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!operation || !operation->op_context ||
+	    !smw_utils_is_lib_initialized())
+		return psa_status;
+
+	ctx = operation->op_context;
+
+	if (!ctx->is_encrypt || !ctx->aead_init_done)
+		return PSA_ERROR_BAD_STATE;
+
+	if (!ciphertext_length || !tag_length)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	data_args.context = ctx->smw_ctx;
+	data_args.output = ciphertext;
+
+	if (SET_OVERFLOW(ciphertext_size, data_args.output_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	final_args.data = &data_args;
+	final_args.op_type_name = SMW_AEAD_OP_TYPE_NAME_ENCRYPT;
+
+	final_args.tag = tag;
+	if (SET_OVERFLOW(tag_size, final_args.tag_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	final_args.output_iv = output_iv;
+	if (SET_OVERFLOW(ctx->nonce_length, final_args.output_iv_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	psa_status = call_smw_api_no_fallback(SMW_API_CAST(smw_aead_final),
+					      &final_args);
+
+	if (psa_status == PSA_SUCCESS ||
+	    psa_status == PSA_ERROR_BUFFER_TOO_SMALL) {
+		*ciphertext_length = data_args.output_length;
+		*tag_length = final_args.tag_length;
+	}
+
+	/* Context is consumed by smw_aead_final regardless of result. */
+	ctx->smw_ctx = data_args.context;
+	if (!(psa_status == PSA_ERROR_BUFFER_TOO_SMALL ||
+	      psa_status == PSA_ERROR_INVALID_ARGUMENT ||
+	      (psa_status == PSA_SUCCESS && !ciphertext))) {
+		SMW_UTILS_FREE(ctx);
+		SMW_UTILS_MEMSET(operation, 0, sizeof(*operation));
+	}
+
+	return psa_status;
 }
 
 __export psa_status_t psa_aead_generate_nonce(psa_aead_operation_t *operation,
 					      uint8_t *nonce, size_t nonce_size,
 					      size_t *nonce_length)
 {
-	(void)operation;
-	(void)nonce;
-	(void)nonce_size;
-	(void)nonce_length;
+	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
+	struct psa_aead_op_ctx *ctx = NULL;
+	size_t expected_nonce_len = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!operation || !operation->op_context ||
+	    !smw_utils_is_lib_initialized())
+		return psa_status;
+
+	if (!nonce || !nonce_size || !nonce_length)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	ctx = operation->op_context;
+
+	/* Nonce must not already be set. */
+	if (ctx->aead_init_done || ctx->nonce_length)
+		return PSA_ERROR_BAD_STATE;
+
+	/* For all supported algorithms the default nonce length is 12. */
+	expected_nonce_len = PSA_AEAD_NONCE_LENGTH(PSA_KEY_TYPE_NONE, ctx->alg);
+
+	if (nonce_size < expected_nonce_len)
+		return PSA_ERROR_BUFFER_TOO_SMALL;
+
+	psa_status = psa_generate_random(nonce, expected_nonce_len);
+	if (psa_status != PSA_SUCCESS)
+		return psa_status;
+
+	psa_status = aead_setup_nonce(ctx, nonce, expected_nonce_len);
+	if (psa_status != PSA_SUCCESS)
+		return psa_status;
+
+	*nonce_length = expected_nonce_len;
+
+	psa_status = aead_multipart_do_init(ctx);
+	if (psa_status == PSA_SUCCESS)
+		ctx->aead_init_done = true;
+
+	return psa_status;
 }
 
 __export psa_status_t psa_aead_set_lengths(psa_aead_operation_t *operation,
 					   size_t ad_length,
 					   size_t plaintext_length)
 {
-	(void)operation;
-	(void)ad_length;
-	(void)plaintext_length;
+	struct psa_aead_op_ctx *ctx = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!operation || !operation->op_context ||
+	    !smw_utils_is_lib_initialized())
+		return PSA_ERROR_BAD_STATE;
+
+	ctx = operation->op_context;
+
+	return aead_setup_lengths(ctx, ad_length, plaintext_length);
 }
 
 __export psa_status_t psa_aead_set_nonce(psa_aead_operation_t *operation,
 					 const uint8_t *nonce,
 					 size_t nonce_length)
 {
-	(void)operation;
-	(void)nonce;
-	(void)nonce_length;
+	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
+	struct psa_aead_op_ctx *ctx = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!operation || !operation->op_context ||
+	    !smw_utils_is_lib_initialized())
+		return psa_status;
+
+	ctx = operation->op_context;
+
+	psa_status = aead_setup_nonce(ctx, nonce, nonce_length);
+	if (psa_status != PSA_SUCCESS)
+		return psa_status;
+
+	psa_status = aead_multipart_do_init(ctx);
+	if (psa_status == PSA_SUCCESS)
+		ctx->aead_init_done = true;
+
+	return psa_status;
 }
 
 __export psa_status_t psa_aead_update(psa_aead_operation_t *operation,
@@ -732,29 +977,78 @@ __export psa_status_t psa_aead_update(psa_aead_operation_t *operation,
 				      uint8_t *output, size_t output_size,
 				      size_t *output_length)
 {
-	(void)operation;
-	(void)input;
-	(void)input_length;
-	(void)output;
-	(void)output_size;
-	(void)output_length;
+	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
+	struct psa_aead_op_ctx *ctx = NULL;
+	struct smw_aead_data_args data_args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!operation || !operation->op_context ||
+	    !smw_utils_is_lib_initialized())
+		return psa_status;
+
+	ctx = operation->op_context;
+
+	if (!ctx->aead_init_done)
+		return PSA_ERROR_BAD_STATE;
+
+	if (!output_length)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	data_args.context = ctx->smw_ctx;
+	data_args.input = (unsigned char *)input;
+
+	if (SET_OVERFLOW(input_length, data_args.input_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	data_args.output = output;
+
+	if (SET_OVERFLOW(output_size, data_args.output_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	psa_status = call_smw_api_no_fallback(SMW_API_CAST(smw_aead_update),
+					      &data_args);
+
+	ctx->smw_ctx = data_args.context;
+
+	if (psa_status == PSA_SUCCESS ||
+	    psa_status == PSA_ERROR_BUFFER_TOO_SMALL)
+		*output_length = data_args.output_length;
+
+	return psa_status;
 }
 
 __export psa_status_t psa_aead_update_ad(psa_aead_operation_t *operation,
 					 const uint8_t *input,
 					 size_t input_length)
 {
-	(void)operation;
-	(void)input;
-	(void)input_length;
+	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
+	struct psa_aead_op_ctx *ctx = NULL;
+	struct smw_aead_aad_args aad_args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!operation || !operation->op_context ||
+	    !smw_utils_is_lib_initialized())
+		return psa_status;
+
+	ctx = operation->op_context;
+
+	if (!ctx->aead_init_done)
+		return PSA_ERROR_BAD_STATE;
+
+	aad_args.context = ctx->smw_ctx;
+	aad_args.data = (unsigned char *)input;
+
+	if (SET_OVERFLOW(input_length, aad_args.data_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	psa_status = call_smw_api_no_fallback(SMW_API_CAST(smw_aead_update_aad),
+					      &aad_args);
+
+	ctx->smw_ctx = aad_args.context;
+
+	return psa_status;
 }
 
 __export psa_status_t psa_aead_verify(psa_aead_operation_t *operation,
@@ -762,16 +1056,54 @@ __export psa_status_t psa_aead_verify(psa_aead_operation_t *operation,
 				      size_t *plaintext_length,
 				      const uint8_t *tag, size_t tag_length)
 {
-	(void)operation;
-	(void)plaintext;
-	(void)plaintext_size;
-	(void)plaintext_length;
-	(void)tag;
-	(void)tag_length;
+	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
+	struct psa_aead_op_ctx *ctx = NULL;
+	struct smw_aead_final_args final_args = { 0 };
+	struct smw_aead_data_args data_args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!operation || !operation->op_context ||
+	    !smw_utils_is_lib_initialized())
+		return psa_status;
+
+	ctx = operation->op_context;
+
+	if (ctx->is_encrypt || !ctx->aead_init_done)
+		return PSA_ERROR_BAD_STATE;
+
+	if (!plaintext_length)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	data_args.context = ctx->smw_ctx;
+	data_args.output = plaintext;
+
+	if (SET_OVERFLOW(plaintext_size, data_args.output_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	final_args.data = &data_args;
+	final_args.op_type_name = SMW_AEAD_OP_TYPE_NAME_DECRYPT;
+	final_args.tag = (unsigned char *)tag;
+
+	if (SET_OVERFLOW(tag_length, final_args.tag_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	psa_status = call_smw_api_no_fallback(SMW_API_CAST(smw_aead_final),
+					      &final_args);
+
+	if (psa_status == PSA_SUCCESS ||
+	    psa_status == PSA_ERROR_BUFFER_TOO_SMALL)
+		*plaintext_length = data_args.output_length;
+
+	ctx->smw_ctx = data_args.context;
+	if (!(psa_status == PSA_ERROR_BUFFER_TOO_SMALL ||
+	      psa_status == PSA_ERROR_INVALID_ARGUMENT ||
+	      (psa_status == PSA_SUCCESS && !plaintext))) {
+		SMW_UTILS_FREE(ctx);
+		SMW_UTILS_MEMSET(operation, 0, sizeof(*operation));
+	}
+
+	return psa_status;
 }
 
 static psa_status_t
@@ -827,14 +1159,11 @@ asymmetric_encrypt_decrypt(bool is_encrypt_op, psa_key_id_t key,
 		return psa_status;
 
 	if (is_encrypt_op)
-		asymm_func =
-			(enum smw_status_code(*)(void *))smw_asymmetric_encrypt;
+		asymm_func = SMW_API_CAST(smw_asymmetric_encrypt);
 	else
-		asymm_func =
-			(enum smw_status_code(*)(void *))smw_asymmetric_decrypt;
+		asymm_func = SMW_API_CAST(smw_asymmetric_decrypt);
 
-	psa_status =
-		call_smw_api(asymm_func, &op_args, &op_args.subsystem_name);
+	psa_status = call_smw_api_no_fallback(asymm_func, &op_args);
 
 	if (psa_status == PSA_SUCCESS ||
 	    psa_status == PSA_ERROR_BUFFER_TOO_SMALL)
@@ -1002,8 +1331,7 @@ __export psa_status_t psa_cipher_decrypt(psa_key_id_t key, psa_algorithm_t alg,
 		return PSA_SUCCESS;
 	}
 
-	psa_status = call_smw_api((enum smw_status_code(*)(void *))smw_cipher,
-				  &args, &args.init.subsystem_name);
+	psa_status = call_smw_api_no_fallback(SMW_API_CAST(smw_cipher), &args);
 
 	if (psa_status == PSA_SUCCESS)
 		*output_length = args.data.output_length;
@@ -1049,8 +1377,7 @@ __export psa_status_t psa_cipher_encrypt(psa_key_id_t key, psa_algorithm_t alg,
 	if (psa_status != PSA_SUCCESS)
 		goto end;
 
-	psa_status = call_smw_api((enum smw_status_code(*)(void *))smw_cipher,
-				  &args, &args.init.subsystem_name);
+	psa_status = call_smw_api_no_fallback(SMW_API_CAST(smw_cipher), &args);
 
 	if (psa_status == PSA_SUCCESS) {
 		if (ADD_OVERFLOW(args.data.output_length, args.init.iv_length,
@@ -1174,8 +1501,8 @@ __export psa_status_t psa_generate_random(uint8_t *output, size_t output_size)
 		return PSA_ERROR_INVALID_ARGUMENT;
 
 	if (output_size)
-		return call_smw_api((enum smw_status_code(*)(void *))smw_rng,
-				    &args, &args.subsystem_name);
+		return call_smw_api(SMW_API_CAST(smw_rng), &args,
+				    &args.subsystem_name);
 
 	return PSA_SUCCESS;
 }
@@ -1183,8 +1510,7 @@ __export psa_status_t psa_generate_random(uint8_t *output, size_t output_size)
 __export psa_status_t psa_hash_abort(psa_hash_operation_t *operation)
 {
 	psa_status_t psa_status = PSA_SUCCESS;
-	struct smw_context_args args = { 0 };
-	void *api = smw_cancel_operation;
+	struct smw_op_context *smw_ctx = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1195,10 +1521,16 @@ __export psa_status_t psa_hash_abort(psa_hash_operation_t *operation)
 	if (!operation->op_context)
 		return PSA_SUCCESS;
 
-	args.context = operation->op_context;
-	psa_status = call_smw_api(api, &args, &args.subsystem_name);
-	if (psa_status == PSA_SUCCESS)
-		memset(operation, 0, sizeof(*operation));
+	smw_ctx = operation->op_context;
+
+	psa_status = do_cancel_operation(&smw_ctx);
+
+	/*
+	 * If the smw_ctx is NULL, even if psa_status return error
+	 * The subsystem context is no more valid, hence erase the PSA context.
+	 */
+	if (!smw_ctx)
+		SMW_UTILS_MEMSET(operation, 0, sizeof(*operation));
 
 	return psa_status;
 }
@@ -1208,7 +1540,6 @@ psa_hash_clone(const psa_hash_operation_t *source_operation,
 	       psa_hash_operation_t *target_operation)
 {
 	psa_status_t psa_status = PSA_SUCCESS;
-	smw_subsystem_t subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
 	struct smw_copy_context_args args = { 0 };
 	struct smw_op_context *op_context = NULL;
 
@@ -1230,8 +1561,7 @@ psa_hash_clone(const psa_hash_operation_t *source_operation,
 	args.src_context = source_operation->op_context;
 	args.dst_context = op_context;
 	psa_status =
-		call_smw_api((enum smw_status_code(*)(void *))smw_copy_context,
-			     &args, &subsystem_name);
+		call_smw_api_no_fallback(SMW_API_CAST(smw_copy_context), &args);
 	if (psa_status == PSA_SUCCESS)
 		target_operation->op_context = op_context;
 	else
@@ -1278,6 +1608,9 @@ __export psa_status_t psa_hash_compute(psa_algorithm_t alg,
 	if (!smw_utils_is_lib_initialized())
 		return psa_status;
 
+	if (!hash_length)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
 	args.algo_name = get_hash_algo_name(alg);
 	if (args.algo_name == SMW_HASH_ALGO_NAME_NONE)
 		return PSA_ERROR_NOT_SUPPORTED;
@@ -1292,10 +1625,12 @@ __export psa_status_t psa_hash_compute(psa_algorithm_t alg,
 	if (SET_OVERFLOW(hash_size, args.output_length))
 		return PSA_ERROR_INVALID_ARGUMENT;
 
-	psa_status = call_smw_api((enum smw_status_code(*)(void *))smw_hash,
-				  &args, &args.subsystem_name);
+	psa_status = call_smw_api(SMW_API_CAST(smw_hash), &args,
+				  &args.subsystem_name);
 
-	*hash_length = args.output_length;
+	if (psa_status == PSA_SUCCESS ||
+	    psa_status == PSA_ERROR_BUFFER_TOO_SMALL)
+		*hash_length = args.output_length;
 
 	return psa_status;
 }
@@ -1305,7 +1640,6 @@ __export psa_status_t psa_hash_finish(psa_hash_operation_t *operation,
 				      size_t *hash_length)
 {
 	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
-	smw_subsystem_t subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
 	struct smw_hash_final_args args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -1314,6 +1648,9 @@ __export psa_status_t psa_hash_finish(psa_hash_operation_t *operation,
 	    !smw_utils_is_lib_initialized())
 		return psa_status;
 
+	if (!hash_length)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
 	args.context = operation->op_context;
 	args.output = hash;
 
@@ -1321,11 +1658,13 @@ __export psa_status_t psa_hash_finish(psa_hash_operation_t *operation,
 		return PSA_ERROR_INVALID_ARGUMENT;
 
 	psa_status =
-		call_smw_api((enum smw_status_code(*)(void *))smw_hash_final,
-			     &args, &subsystem_name);
+		call_smw_api_no_fallback(SMW_API_CAST(smw_hash_final), &args);
 
 	operation->op_context = args.context;
-	*hash_length = args.output_length;
+
+	if (psa_status == PSA_SUCCESS ||
+	    psa_status == PSA_ERROR_BUFFER_TOO_SMALL)
+		*hash_length = args.output_length;
 
 	return psa_status;
 }
@@ -1346,8 +1685,6 @@ __export psa_status_t psa_hash_resume(psa_hash_operation_t *operation,
 __export psa_status_t psa_hash_setup(psa_hash_operation_t *operation,
 				     psa_algorithm_t alg)
 {
-	enum smw_status_code status = SMW_STATUS_OK;
-	struct smw_context_args ctx_args = { 0 };
 	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
 	struct smw_hash_init_args args = { 0 };
 
@@ -1363,22 +1700,12 @@ __export psa_status_t psa_hash_setup(psa_hash_operation_t *operation,
 	if (args.algo_name == SMW_HASH_ALGO_NAME_NONE)
 		return PSA_ERROR_NOT_SUPPORTED;
 
-	ctx_args.subsystem_name = get_psa_default_subsystem();
+	psa_status = call_smw_api_init(SMW_API_CAST(smw_hash_init), &args,
+				       &args.context, &args.subsystem_name);
 
-	status = smw_allocate_context(&ctx_args);
-	if (status != SMW_STATUS_OK)
-		return util_smw_to_psa_status(status);
-
-	args.context = ctx_args.context;
-
-	psa_status =
-		call_smw_api((enum smw_status_code(*)(void *))smw_hash_init,
-			     &args, &args.subsystem_name);
-
-	if (psa_status == PSA_SUCCESS)
-		operation->op_context = args.context;
-	else if (psa_status == PSA_ERROR_INVALID_ARGUMENT)
-		(void)smw_utils_free_context(&ctx_args.context);
+	operation->op_context = args.context;
+	if (psa_status == PSA_ERROR_INVALID_ARGUMENT)
+		(void)do_cancel_operation(operation->op_context);
 
 	return psa_status;
 }
@@ -1402,7 +1729,6 @@ __export psa_status_t psa_hash_update(psa_hash_operation_t *operation,
 				      const uint8_t *input, size_t input_length)
 {
 	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
-	smw_subsystem_t subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
 	struct smw_hash_update_args args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -1418,8 +1744,7 @@ __export psa_status_t psa_hash_update(psa_hash_operation_t *operation,
 		return PSA_ERROR_INVALID_ARGUMENT;
 
 	psa_status =
-		call_smw_api((enum smw_status_code(*)(void *))smw_hash_update,
-			     &args, &subsystem_name);
+		call_smw_api_no_fallback(SMW_API_CAST(smw_hash_update), &args);
 
 	operation->op_context = args.context;
 
@@ -1473,7 +1798,7 @@ __export psa_status_t psa_mac_compute(psa_key_id_t key, psa_algorithm_t alg,
 		return psa_status;
 
 	if (!mac_length)
-		return PSA_ERROR_INVALID_SIGNATURE;
+		return PSA_ERROR_INVALID_ARGUMENT;
 
 	op_key.id = key;
 	op_args.key_descriptor = &op_key;
@@ -1489,12 +1814,10 @@ __export psa_status_t psa_mac_compute(psa_key_id_t key, psa_algorithm_t alg,
 	if (SET_OVERFLOW(mac_size, op_args.mac_length))
 		return PSA_ERROR_INVALID_ARGUMENT;
 
-	psa_status = call_smw_api((enum smw_status_code(*)(void *))smw_mac,
-				  &op_args, &op_args.subsystem_name);
+	psa_status = call_smw_api_no_fallback(SMW_API_CAST(smw_mac), &op_args);
 
-	if ((psa_status == PSA_SUCCESS ||
-	     psa_status == PSA_ERROR_BUFFER_TOO_SMALL) &&
-	    mac_length)
+	if (psa_status == PSA_SUCCESS ||
+	    psa_status == PSA_ERROR_BUFFER_TOO_SMALL)
 		*mac_length = op_args.mac_length;
 
 	return psa_status;
@@ -1569,9 +1892,8 @@ __export psa_status_t psa_mac_verify(psa_key_id_t key, psa_algorithm_t alg,
 	if (SET_OVERFLOW(mac_length, op_args.mac_length))
 		return PSA_ERROR_INVALID_ARGUMENT;
 
-	psa_status =
-		call_smw_api((enum smw_status_code(*)(void *))smw_mac_verify,
-			     &op_args, &op_args.subsystem_name);
+	psa_status = call_smw_api_no_fallback(SMW_API_CAST(smw_mac_verify),
+					      &op_args);
 
 	return psa_status;
 }
@@ -1746,8 +2068,7 @@ static psa_status_t sign_common(psa_key_id_t key, psa_algorithm_t alg,
 	if (psa_status != PSA_SUCCESS)
 		return psa_status;
 
-	psa_status = call_smw_api((enum smw_status_code(*)(void *))smw_sign,
-				  &args, &args.subsystem_name);
+	psa_status = call_smw_api_no_fallback(SMW_API_CAST(smw_sign), &args);
 
 	if (psa_status == PSA_SUCCESS && signature_length)
 		*signature_length = args.signature_length;
@@ -1823,8 +2144,7 @@ static psa_status_t verify_common(psa_key_id_t key, psa_algorithm_t alg,
 	if (psa_status != PSA_SUCCESS)
 		return psa_status;
 
-	psa_status = call_smw_api((enum smw_status_code(*)(void *))smw_verify,
-				  &args, &args.subsystem_name);
+	psa_status = call_smw_api_no_fallback(SMW_API_CAST(smw_verify), &args);
 
 	return psa_status;
 }

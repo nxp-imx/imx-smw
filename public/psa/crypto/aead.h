@@ -48,9 +48,6 @@ typedef struct psa_aead_operation_s psa_aead_operation_t;
  * psa_aead_operation_init() - Return an initial value for an AEAD operation
  *                             object.
  *
- * .. warning::
- *     Not supported.
- *
  * Return:
  * Return an initial value for an AEAD operation object.
  */
@@ -215,9 +212,6 @@ psa_status_t psa_aead_decrypt(psa_key_id_t key, psa_algorithm_t alg,
  * @alg: [in] The AEAD algorithm to compute such that :c:macro:`PSA_ALG_IS_AEAD`
  *            is true.
  *
- * .. warning::
- *    Not supported.
- *
  * After a successful call to psa_aead_encrypt_setup(), the operation is active,
  * and the application must eventually terminate the operation. The following
  * events terminate an operation\:
@@ -271,9 +265,6 @@ psa_status_t psa_aead_encrypt_setup(psa_aead_operation_t *operation,
  * @alg: [in] The AEAD algorithm to compute such that :c:macro:`PSA_ALG_IS_AEAD`
  *            is true.
  *
- * .. warning::
- *    Not supported.
- *
  * After a successful call to psa_aead_decrypt_setup(), the operation is active,
  * and the application must eventually terminate the operation. The following
  * events terminate an operation\:
@@ -323,9 +314,6 @@ psa_status_t psa_aead_decrypt_setup(psa_aead_operation_t *operation,
  *                  bytes.
  * @plaintext_length: [in] Size of the plaintext to encrypt in bytes.
  *
- * .. warning::
- *     Not supported.
- *
  * The application must call this function before calling psa_aead_set_nonce()
  * or psa_aead_generate_nonce(), if the algorithm for the operation requires it.
  * If the algorithm does not require it, calling this function is optional.
@@ -364,9 +352,6 @@ psa_status_t psa_aead_set_lengths(psa_aead_operation_t *operation,
  * @nonce: [out] Buffer where the generated nonce is to be written.
  * @nonce_size: [in] Size of the @nonce buffer in bytes.
  * @nonce_length: [out] On success, the number of bytes of the generated nonce.
- *
- * .. warning::
- *     Not supported.
  *
  * This function generates a random nonce for the authenticated encryption
  * operation with an appropriate size for the chosen algorithm, key type and key
@@ -423,9 +408,6 @@ psa_status_t psa_aead_generate_nonce(psa_aead_operation_t *operation,
  *                     are type of key and the algorithm respectively that were
  *                     used to set up the AEAD operation.
  *
- * .. warning::
- *     Not supported.
- *
  * This function sets the nonce for the authenticated encryption or decryption
  * operation.
  *
@@ -471,9 +453,6 @@ psa_status_t psa_aead_set_nonce(psa_aead_operation_t *operation,
  * @operation: [in] Active AEAD operation.
  * @input: [in] Buffer containing the fragment of additional data.
  * @input_length: [in] Size of the @input buffer in bytes.
- *
- * .. warning::
- *     Not supported.
  *
  * Additional data is authenticated, but not encrypted.
  *
@@ -524,9 +503,6 @@ psa_status_t psa_aead_update_ad(psa_aead_operation_t *operation,
  * @output_size: [in] Size of the @output buffer in bytes.
  * @output_length: [out] On success, the number of bytes that make up the
  *                       returned output.
- *
- * .. warning::
- *     Not supported.
  *
  * The @output_size parameter must be appropriate for the selected algorithm and
  * key\:
@@ -606,9 +582,6 @@ psa_status_t psa_aead_update(psa_aead_operation_t *operation,
  * @tag_size: [in] Size of the @tag buffer in bytes.
  * @tag_length: [out] On success, the number of bytes that make up the returned
  *                    tag.
- *
- * .. warning::
- *    Not supported.
  *
  * The operation must have been set up with psa_aead_encrypt_setup().
  *
@@ -692,9 +665,6 @@ psa_status_t psa_aead_finish(psa_aead_operation_t *operation,
  * @tag: [in] Buffer containing the authentication tag.
  * @tag_length: [in] Size of the @tag buffer in bytes.
  *
- * .. warning::
- *     Not supported.
- *
  * The operation must have been set up with psa_aead_decrypt_setup().
  *
  * This function finishes the authenticated decryption of the message
@@ -759,9 +729,6 @@ psa_status_t psa_aead_verify(psa_aead_operation_t *operation,
 /**
  * psa_aead_abort() - Abort an AEAD operation.
  * @operation: Initialized AEAD operation.
- *
- * .. warning::
- *    Not supported.
  *
  * Aborting an operation frees all associated resources except for the operation
  * object itself. Once aborted, the operation object can be reused for another

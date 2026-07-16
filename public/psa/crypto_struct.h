@@ -20,7 +20,6 @@
  *   https://arm-software.github.io/psa-api/crypto/1.3/
  */
 
-/* To be defined */
 struct psa_aead_operation_s {
 	void *op_context;
 };

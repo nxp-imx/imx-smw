@@ -2128,7 +2128,11 @@
  * The block size for a block cipher, or 1 for a stream cipher. The return value
  * is undefined if @type is not a supported cipher key type.
  */
-#define PSA_BLOCK_CIPHER_BLOCK_LENGTH(type) (1u << (((type) >> 8) & 7))
+#define PSA_BLOCK_CIPHER_BLOCK_LENGTH(type)                                    \
+	(((type) & PSA_KEY_TYPE_CATEGORY_MASK) ==                              \
+			 PSA_KEY_TYPE_CATEGORY_SYMMETRIC ?                     \
+		 1u << (((type) >> 8) & 7) :                                   \
+		 0u)
 
 /**
  * PSA_DH_FAMILY_RFC7919 - Finite-field Diffie-Hellman groups defined for TLS

@@ -117,16 +117,14 @@
  *                                     supported key types and AEAD algorithms.
  * @input_length: [in] Size of the input in bytes.
  *
- * .. warning::
- *    Not supported.
- *
  * If the size of the output buffer is at least this large, it is guaranteed
  * that psa_aead_update() will not fail due to an insufficient buffer size.
  *
  * See also :c:macro:`PSA_AEAD_UPDATE_OUTPUT_SIZE`.
  */
 #define PSA_AEAD_UPDATE_OUTPUT_MAX_SIZE(input_length)                          \
-/* implementation-defined value */
+	(PSA_ROUND_UP_TO_MULTIPLE(PSA_BLOCK_CIPHER_BLOCK_MAX_SIZE,             \
+				  (input_length)))
 
 /**
  * PSA_AEAD_UPDATE_OUTPUT_SIZE() - A sufficient output buffer size for
@@ -134,9 +132,6 @@
  * @key_type: [in] A symmetric key type that is compatible with algorithm @alg.
  * @alg: [in] An AEAD algorithm such that :c:macro:`PSA_ALG_IS_AEAD` is true.
  * @input_length: [in] Size of the input in bytes.
- *
- * .. warning::
- *    Not supported.
  *
  * If the size of the output buffer is at least this large, it is guaranteed
  * that psa_aead_update() will not fail due to an insufficient buffer size.
@@ -150,16 +145,19 @@
  * incompatible, return 0.
  */
 #define PSA_AEAD_UPDATE_OUTPUT_SIZE(key_type, alg, input_length)               \
-/* implementation-defined value */
+	(PSA_AEAD_NONCE_LENGTH(key_type, alg) != 0 ?                           \
+		 PSA_ALG_IS_AEAD_ON_BLOCK_CIPHER(alg) ?                        \
+		 PSA_ROUND_UP_TO_MULTIPLE(PSA_BLOCK_CIPHER_BLOCK_LENGTH(       \
+						  key_type),                   \
+					  (input_length)) :                    \
+		 (input_length) :                                              \
+		 0u)
 
 /**
  * PSA_AEAD_FINISH_OUTPUT_SIZE() - A sufficient ciphertext buffer size for
  *                                 psa_aead_finish(), in bytes.
  * @key_type: [in] A symmetric key type that is compatible with algorithm @alg.
  * @alg: [in] An AEAD algorithm such that :c:macro:`PSA_ALG_IS_AEAD` is true.
- *
- * .. warning::
- *    Not supported.
  *
  * If the size of the ciphertext buffer is at least this large, it is guaranteed
  * that psa_aead_finish() will not fail due to an insufficient ciphertext buffer
@@ -173,28 +171,25 @@
  * incompatible, return 0.
  */
 #define PSA_AEAD_FINISH_OUTPUT_SIZE(key_type, alg)                             \
-/* implementation-defined value */
+	(PSA_AEAD_NONCE_LENGTH(key_type, alg) != 0 &&                          \
+			 PSA_ALG_IS_AEAD_ON_BLOCK_CIPHER(alg) ?                \
+		 PSA_BLOCK_CIPHER_BLOCK_LENGTH(key_type) :                     \
+		 0u)
 
 /**
  * PSA_AEAD_FINISH_OUTPUT_MAX_SIZE - The maximum the ciphertext buffer size
  *                                   of psa_aead_finish(), for any of the
  *                                   supported key types and AEAD algorithms.
  *
- * .. warning::
- *    Not supported.
- *
  * See also :c:macro:`PSA_AEAD_FINISH_OUTPUT_SIZE`.
  */
-#define PSA_AEAD_FINISH_OUTPUT_MAX_SIZE 0 /* implementation-defined value */
+#define PSA_AEAD_FINISH_OUTPUT_MAX_SIZE (PSA_BLOCK_CIPHER_BLOCK_MAX_SIZE)
 
 /**
  * PSA_AEAD_VERIFY_OUTPUT_SIZE() - A sufficient plaintext buffer size for
  *                                 psa_aead_verify(), in bytes.
  * @key_type: [in] A symmetric key type that is compatible with algorithm @alg.
  * @alg: [in] An AEAD algorithm such that :c:macro:`PSA_ALG_IS_AEAD` is true.
- *
- * .. warning::
- *    Not supported.
  *
  * If the size of the plaintext buffer is at least this large, it is guaranteed
  * that psa_aead_verify() will not fail due to an insufficient plaintext buffer
@@ -208,19 +203,19 @@
  * incompatible, return 0.
  */
 #define PSA_AEAD_VERIFY_OUTPUT_SIZE(key_type, alg)                             \
-	/* implementation-defined value */
+	(PSA_AEAD_NONCE_LENGTH(key_type, alg) != 0 &&                          \
+			 PSA_ALG_IS_AEAD_ON_BLOCK_CIPHER(alg) ?                \
+		 PSA_BLOCK_CIPHER_BLOCK_LENGTH(key_type) :                     \
+		 0u)
 
 /**
  * PSA_AEAD_VERIFY_OUTPUT_MAX_SIZE - The maximum plaintext buffer size of
  *                                   psa_aead_verify(), for any of the supported
  *                                   key types and AEAD algorithms.
  *
- * .. warning::
- *    Not supported.
- *
  * See also :c:macro:`PSA_AEAD_VERIFY_OUTPUT_SIZE`.
  */
-#define PSA_AEAD_VERIFY_OUTPUT_MAX_SIZE 0 /* implementation-defined value */
+#define PSA_AEAD_VERIFY_OUTPUT_MAX_SIZE (PSA_BLOCK_CIPHER_BLOCK_MAX_SIZE)
 
 /**
  * PSA_AEAD_NONCE_LENGTH() - The default nonce size for an AEAD algorithm, in

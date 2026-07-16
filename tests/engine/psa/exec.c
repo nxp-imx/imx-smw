@@ -269,6 +269,20 @@ static int execute_aead_cmd(char *cmd, struct subtest_data *subtest)
 {
 	if (!strcmp(cmd, AEAD))
 		return aead_psa(subtest);
+	else if (!strcmp(cmd, AEAD_INIT))
+		return aead_init_psa(subtest);
+	else if (!strcmp(cmd, AEAD_UPDATE_AAD))
+		return aead_update_aad_psa(subtest);
+	else if (!strcmp(cmd, AEAD_UPDATE))
+		return aead_update_psa(subtest);
+	else if (!strcmp(cmd, AEAD_FINAL))
+		return aead_final_psa(subtest);
+	else if (!strcmp(cmd, AEAD_SET_LENGTHS))
+		return aead_set_lengths_psa(subtest);
+	else if (!strcmp(cmd, AEAD_SET_NONCE))
+		return aead_set_nonce_psa(subtest);
+	else if (!strcmp(cmd, AEAD_ABORT))
+		return aead_abort_psa(subtest);
 
 	DBG_PRINT("Undefined command");
 	return ERR_CODE(UNDEFINED_CMD);

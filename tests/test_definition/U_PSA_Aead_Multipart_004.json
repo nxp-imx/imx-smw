@@ -1,0 +1,134 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"GCM"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 1",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93",
+			"imx95"
+		]
+	},
+	"subtest 2": {
+		"description": [
+			"Cross-validation: One-shot encrypt -> Multi-part decrypt"
+		],
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"iv": "9dbfc7aed2484e2577246c14",
+		"aad": "353637383132333435363738",
+		"input": [
+			"4c616469657320616e642047656e746c",
+			"656d656e206f662074686520636c6173",
+			"73206f66202739393a20496620492063",
+			"6f756c64206f6666657220796f75206f",
+			"6e6c79206f6e652074697020666f7220",
+			"746865206675747572652c2073756e73",
+			"637265656e20776f756c642062652069",
+			"742e"
+		],
+		"aead_id": 1,
+		"depends": 1
+	},
+	"subtest 3": {
+		"description": [
+			"Multi-part decrypt previous one-shot encryption"
+		],
+		"command": "AEAD_INIT",
+		"api": "PSA",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"aead_id": 1,
+		"aad": 12,
+		"context_id": 1,
+		"depends": 2
+	},
+	"subtest 4": {
+		"command": "AEAD_UPDATE_AAD",
+		"api": "PSA",
+		"aad": "353637383132333435363738",
+		"context_id": 1,
+		"depends": 3
+	},
+	"subtest 5": {
+		"description": "GCM encryption UPDATE #1 - first 32 bytes",
+		"command": "AEAD_UPDATE",
+		"api": "PSA",
+		"input": 32,
+		"output": [
+			"4c616469657320616e642047656e746c",
+			"656d656e206f662074686520636c6173"
+		],
+		"aead_id": 1,
+		"context_id": 1,
+		"depends": 4
+	},
+	"subtest 6": {
+		"description": "GCM encryption UPDATE #2 - second 32 bytes",
+		"command": "AEAD_UPDATE",
+		"api": "PSA",
+		"input": 32,
+		"output": [
+			"73206f66202739393a20496620492063",
+			"6f756c64206f6666657220796f75206f"
+		],
+		"aead_id": 1,
+		"context_id": 1,
+		"depends": 5
+	},
+	"subtest 7": {
+		"description": "GCM encryption UPDATE #3 - last 50 bytes",
+		"command": "AEAD_UPDATE",
+		"api": "PSA",
+		"input": 50,
+		"output": [
+			"6e6c79206f6e652074697020666f7220",
+			"746865206675747572652c2073756e73",
+			"637265656e20776f756c642062652069",
+			"742e"
+		],
+		"aead_id": 1,
+		"context_id": 1,
+		"depends": 6
+	},
+	"subtest 8": {
+		"description": [
+			"GCM encryption FINAL - last 50 bytes",
+			"Tag appended to output buffer"
+		],
+		"command": "AEAD_FINAL",
+		"api": "PSA",
+		"op_type": "DECRYPT",
+		"tag_field_set": true,
+		"context_id": 1,
+		"aead_id": 1,
+		"depends": 7
+	},
+	"subtest 9": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 1",
+		"depends": 1
+	}
+}

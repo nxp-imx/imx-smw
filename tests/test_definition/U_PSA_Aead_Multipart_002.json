@@ -1,0 +1,175 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"GCM"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 1",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 2": {
+		"description": [
+			"AEAD encryption init using CCM mode and opaque key",
+			"No plaintext / AAD and no IV"
+		],
+		"command": "AEAD_INIT",
+		"api": "PSA",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"tag": 16,
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 3": {
+		"description": [
+			"Validate the set nonce before set lengths",
+			"Set nonce is ok."
+		],
+		"command": "AEAD_SET_NONCE",
+		"api": "PSA",
+		"op_type": "ENCRYPT",
+		"iv": "9dbfc7aed2484e2577246c14",
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 4": {
+		"description": [
+			"Validate the generate nonce after the set nonce",
+			"As nonce already set, it fails.",
+			"Do not abort operation."
+		],
+		"command": "AEAD_SET_NONCE",
+		"api": "PSA",
+		"op_type": "ENCRYPT",
+		"op_no_abort": true,
+		"context_id": 0,
+		"depends": 2,
+		"result": "PSA_ERROR_BAD_STATE"
+	},
+	"subtest 5": {
+		"description": [
+			"Validate the set nonce before set lengths",
+			"Set length failed.",
+			"Do not abort operation."
+		],
+		"command": "AEAD_SET_LENGTHS",
+		"api": "PSA",
+		"aad": 12,
+		"plaintext_len": 64,
+		"context_id": 0,
+		"op_no_abort": true,
+		"depends": 4,
+		"result": "PSA_ERROR_BAD_STATE"
+	},
+	"subtest 6": {
+		"description": [
+			"Abort the operation"
+		],
+		"command": "AEAD_ABORT",
+		"api": "PSA",
+		"context_id": 0,
+		"depends": 5
+	},
+	"subtest 7": {
+		"description": [
+			"Update AAD without operation context"
+		],
+		"command": "AEAD_UPDATE_AAD",
+		"api": "PSA",
+		"aad": "353637383132333435363738",
+		"context_id": 0,
+		"depends": 6,
+		"result": "PSA_ERROR_BAD_STATE"
+	},
+	"subtest 8": {
+		"description": [
+			"Update data without operation context"
+		],
+		"command": "AEAD_UPDATE",
+		"api": "PSA",
+		"input": "32333435363738394142434445463031",
+		"context_id": 0,
+		"depends": 7,
+		"result": "PSA_ERROR_BAD_STATE"
+	},
+	"subtest 9": {
+		"description": [
+			"Final without operation context"
+		],
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"api": "PSA",
+		"context_id": 0,
+		"depends": 8,
+		"result": "PSA_ERROR_BAD_STATE"
+	},
+	"subtest 10": {
+		"description": [
+			"AEAD encryption init using CCM mode and opaque key",
+			"No plaintext / AAD and no IV"
+		],
+		"command": "AEAD_INIT",
+		"api": "PSA",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"tag": 16,
+		"context_id": 1,
+		"depends": 1
+	},
+	"subtest 11": {
+		"description": [
+			"Update AAD operation not initialized"
+		],
+		"command": "AEAD_UPDATE_AAD",
+		"api": "PSA",
+		"aad": "353637383132333435363738",
+		"context_id": 1,
+		"op_no_abort": true,
+		"depends": 10,
+		"result": "PSA_ERROR_BAD_STATE"
+	},
+	"subtest 12": {
+		"description": [
+			"Update data operation not initialized"
+		],
+		"command": "AEAD_UPDATE",
+		"api": "PSA",
+		"input": "32333435363738394142434445463031",
+		"context_id": 1,
+		"op_no_abort": true,
+		"depends": 11,
+		"result": "PSA_ERROR_BAD_STATE"
+	},
+	"subtest 13": {
+		"description": [
+			"Final operation not initialized"
+		],
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"api": "PSA",
+		"context_id": 2,
+		"op_no_abort": true,
+		"depends": 12,
+		"result": "PSA_ERROR_BAD_STATE"
+	}
+}

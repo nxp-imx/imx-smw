@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #include <assert.h>
@@ -425,7 +425,7 @@ int util_read_test_error(enum arguments_test_err_case *error,
 int util_compare_buffers(unsigned char *buffer, size_t buffer_len,
 			 unsigned char *expected_buffer, size_t expected_len)
 {
-	if (buffer_len > expected_len) {
+	if (expected_len && buffer_len > expected_len) {
 		DBG_PRINT("Bad length, got %d expected %d", buffer_len,
 			  expected_len);
 		return ERR_CODE(SUBSYSTEM);

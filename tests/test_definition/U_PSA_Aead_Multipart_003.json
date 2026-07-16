@@ -1,0 +1,116 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CCM"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 1",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 2": {
+		"description": "AEAD encryption init using CCM mode and opaque key",
+		"command": "AEAD_INIT",
+		"api": "PSA",
+		"key_name": "key 1",
+		"mode": "CCM",
+		"op_type": "ENCRYPT",
+		"iv": "9dbfc7aed2484e2577246c14",
+		"tag": 16,
+		"aad": 12,
+		"plaintext_len": 64,
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 3": {
+		"command": "AEAD_UPDATE_AAD",
+		"api": "PSA",
+		"aad": "353637383132333435363738",
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 4": {
+		"description": "CCM encryption UPDATE #1 - first 16 bytes of plaintext",
+		"command": "AEAD_UPDATE",
+		"api": "PSA",
+		"input": "32333435363738394142434445463031",
+		"save_output": true,
+		"context_id": 0,
+		"depends": 3
+	},
+	"subtest 5": {
+		"description": "CCM encryption UPDATE #2 - next 32 bytes of plaintext",
+		"command": "AEAD_UPDATE",
+		"api": "PSA",
+		"input": [
+			"32333435363738394142434445463031",
+			"32333435363738394142434445463031",
+			"32333435363738394142434445463031"
+		],
+		"save_output": true,
+		"context_id": 0,
+		"depends": 4
+	},
+	"subtest 6": {
+		"description": [
+			"CCM encryption FINAL - last 16 bytes of plaintext",
+			"Tag appended to output buffer (not in dedicated field)",
+			"Output saved (aead_id=0) for verification in subtest 7"
+		],
+		"command": "AEAD_FINAL",
+		"api": "PSA",
+		"op_type": "ENCRYPT",
+		"tag": 16,
+		"iv": 16,
+		"save_output": true,
+		"context_id": 0,
+		"aead_id": 0,
+		"depends": 5
+	},
+	"subtest 7": {
+		"description": [
+			"Cross-validation: Multi-part encrypt -> One-shot decrypt",
+			"Verifies multi-part AEAD encryption (subtests 2-6) by decrypting",
+			"with one-shot operation using saved ciphertext, IV, and tag (aead_id=0)"
+		],
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "key 1",
+		"op_type": "DECRYPT",
+		"mode": "CCM",
+		"tag_field_set": true,
+		"aad": "353637383132333435363738",
+		"iv": "9dbfc7aed2484e2577246c14",
+		"output": [
+			"32333435363738394142434445463031",
+			"32333435363738394142434445463031",
+			"32333435363738394142434445463031",
+			"32333435363738394142434445463031"
+		],
+		"aead_id": 0,
+		"depends": 6
+	},
+	"subtest 8": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 1",
+		"depends": 1
+	}
+}

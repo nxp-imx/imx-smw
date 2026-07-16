@@ -130,43 +130,6 @@ static int aead_bad_params(struct json_object *params, void **arg,
 
 	return ret;
 }
-
-/**
- * aead_update_save_out_data() - Save intermediate output data
- * @subtest: Subtest data
- * @aead_args: SMW AEAD update arguments
- * @ctx_id: Local context ID
- *
- * If 'save_output' JSON parameter is set to true, output data from a AEAD update
- * operation is saved in the AEAD output data linked list.
- *
- * Return:
- * PASSED           - Success
- * -BAD_PARAM_TYPE  - JSON parameter incorrectly set
- * Error code from autil_read_json_type
- * Error code from util_aead_add_output_data
- */
-static int aead_update_save_out_data(struct subtest_data *subtest,
-				     struct smw_aead_data_args *aead_args,
-				     unsigned int ctx_id)
-{
-	int res = ERR_CODE(PASSED);
-	bool save_flag = false;
-
-	res = util_read_json_type(&save_flag, SAVE_OUT_OBJ, t_boolean,
-				  subtest->params);
-	if (res == ERR_CODE(VALUE_NOTFOUND))
-		res = ERR_CODE(PASSED);
-
-	if (save_flag && aead_args->output_length)
-		res = util_aead_add_output_data(list_aeads(subtest), ctx_id,
-						aead_args->output,
-						aead_args->output_length, NULL,
-						0, NULL, 0);
-
-	return res;
-}
-
 /**
  * aead_save_final_output_data() - Save final output data
  * @subtest: Subtest data
@@ -178,7 +141,7 @@ static int aead_update_save_out_data(struct subtest_data *subtest,
  *
  * Return:
  * PASSED   - Success
- * Error code from util_aead_add_output_data
+ * Error code from util_aead_output_data
  */
 static int aead_save_final_output_data(struct subtest_data *subtest,
 				       struct smw_aead_data_args *aead_args,
@@ -187,10 +150,10 @@ static int aead_save_final_output_data(struct subtest_data *subtest,
 	int res = ERR_CODE(PASSED);
 
 	if (aead_args->output_length)
-		res = util_aead_add_output_data(list_aeads(subtest), ctx_id,
-						aead_args->output,
-						aead_args->output_length, NULL,
-						0, NULL, 0);
+		res = util_aead_add_data(list_aeads(subtest), ctx_id,
+					 aead_args->output,
+					 aead_args->output_length, NULL, 0,
+					 NULL, 0);
 
 	return res;
 }
@@ -591,8 +554,10 @@ static int compare_tag(struct smw_aead_final_args *args,
 		res = util_compare_buffers(args->tag, args->tag_length,
 					   expected_tag, expected_tag_len);
 	} else {
-		if (!args->data->output || !args->data->output_length ||
-		    args->tag_length > args->data->output_length)
+		if (!args->data)
+			res = ERR_CODE(BAD_ARGS);
+		else if (!args->data->output || !args->data->output_length ||
+			 args->tag_length > args->data->output_length)
 			res = ERR_CODE(BAD_ARGS);
 		else if (!SUB_OVERFLOW(args->data->output_length,
 				       args->tag_length, &index))
@@ -605,101 +570,6 @@ static int compare_tag(struct smw_aead_final_args *args,
 	}
 
 	return res;
-}
-
-/**
- * compare_output() - Compare output received with expected output
- * @args: Pointer to SMW AEAD final API arguments
- * @expected_output: Pointer to expected output buffer
- * @expected_output_len: Pointer to expected output buffer length
- *
- * Compare output with expected output, if the expected output buffer is set in
- * the JSON file.
- *
- * Return:
- * PASSED - Success
- * Error code from util_compare_buffers
- */
-static int compare_output(struct smw_aead_final_args *args,
-			  unsigned char *expected_output,
-			  unsigned int expected_output_len)
-{
-	int res = ERR_CODE(PASSED);
-
-	if (args->data->output && expected_output)
-		res = util_compare_buffers(args->data->output,
-					   args->data->output_length,
-					   expected_output,
-					   expected_output_len);
-
-	return res;
-}
-
-/**
- * compare_output_and_tag() - Compare tag and output
- * @args: Pointer to SMW AEAD final API arguments
- * @expected_output: Pointer to expected output buffer
- * @expected_output_len: Pointer to expected output buffer length
- * @expected_tag: Pointer to expected tag buffer
- * @expected_tag_len: Pointer to expected tag buffer length
- * @tag_field_set: True if the tag is set in the dedicated tag field
- *
- * For encryption operation, compare tag received from the subsystem
- * with expected tag, if the expected tag is set in the JSON file.
- *
- * Return:
- * PASSED   - Success
- * Error code from util_compare_buffers
- */
-static int compare_output_and_tag(struct smw_aead_final_args *args,
-				  unsigned char *expected_output,
-				  unsigned int expected_output_len,
-				  unsigned char *expected_tag,
-				  unsigned int expected_tag_len,
-				  bool tag_field_set)
-{
-	int res = ERR_CODE(PASSED);
-
-	res = compare_output(args, expected_output, expected_output_len);
-	if (res == ERR_CODE(PASSED))
-		res = compare_tag(args, expected_tag, expected_tag_len,
-				  tag_field_set);
-
-	return res;
-}
-
-/**
- * check_tag_follows_output() - Check that the tag follows the output
- * @args: Pointer to SMW AEAD final API arguments
- * @tag_length: Tag length
- *
- * In the cases where the output tag is NULL, check that the tag bytes are
- * written after the output bytes.
- *
- * Return:
- * PASSED   - Success
- * FAILED   - Found an output buffer which might be misconstructed
- */
-static int check_tag_follows_output(struct smw_aead_final_args *args,
-				    unsigned int tag_length)
-{
-	static const unsigned char zeros[8] = { 0 };
-
-	if (!args->data->output)
-		return ERR_CODE(PASSED);
-
-	/* Tag is not part of the output */
-	if (args->tag)
-		return ERR_CODE(PASSED);
-
-	if (tag_length > sizeof(zeros))
-		tag_length = sizeof(zeros);
-
-	if (!memcmp(args->data->output + args->data->input_length, zeros,
-		    tag_length))
-		return ERR_CODE(FAILED);
-
-	return ERR_CODE(PASSED);
 }
 
 static int set_final_output_iv_params(struct subtest_data *subtest,
@@ -755,7 +625,7 @@ static int set_final_output_iv_params(struct subtest_data *subtest,
  * PASSED                - Success
  * ERR_CODE(INTERNAL)    - Context node data not found in list_aeads
  * Error code from util_list_find_node
- * Error code from util_aead_add_output_data
+ * Error code from util_aead_add_data
  */
 static int save_multipart_encryption_output(struct subtest_data *subtest,
 					    struct smw_aead_final_args *args,
@@ -773,11 +643,10 @@ static int save_multipart_encryption_output(struct subtest_data *subtest,
 	if (!node_data)
 		return ERR_CODE(INTERNAL);
 
-	res = util_aead_add_output_data(list_aead_output(subtest), aead_id,
-					node_data->output,
-					node_data->output_len, args->tag,
-					args->tag_length, args->output_iv,
-					args->output_iv_length);
+	res = util_aead_add_data(list_aead_output(subtest), aead_id,
+				 node_data->output, node_data->output_len,
+				 args->tag, args->tag_length, args->output_iv,
+				 args->output_iv_length);
 
 	return res;
 }
@@ -819,26 +688,24 @@ static int aead_encrypt(struct subtest_data *subtest)
 	args.aad = &aad;
 	aead_args = &args;
 
-	args.init->version = subtest->version;
-	args.final->version = subtest->version;
-	args.final->data->version = subtest->version;
-	args.aad->version = subtest->version;
+	init.version = subtest->version;
+	final.version = subtest->version;
+	data.version = subtest->version;
+	aad.version = subtest->version;
 
-	res = set_init_params(subtest, args.init, &key, &key_buffer);
+	res = set_init_params(subtest, &init, &key, &key_buffer);
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
-	res = set_encrypt_iv_params(subtest, &args.final->output_iv,
-				    &args.final->output_iv_length,
-				    &args.init->user_iv,
-				    &args.init->user_iv_length,
-				    &args.init->iv_length);
+	res = set_encrypt_iv_params(subtest, &final.output_iv,
+				    &final.output_iv_length, &init.user_iv,
+				    &init.user_iv_length, &init.iv_length);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(MISSING_PARAMS))
 		goto end;
 
 	/* Read AAD buffer, if any */
-	res = util_read_hex_buffer(&args.aad->data, &args.aad->data_length,
-				   subtest->params, AAD_OBJ);
+	res = util_read_hex_buffer(&aad.data, &aad.data_length, subtest->params,
+				   AAD_OBJ);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(MISSING_PARAMS)) {
 		DBG_PRINT("Failed to read AAD buffer");
 		goto end;
@@ -857,12 +724,9 @@ static int aead_encrypt(struct subtest_data *subtest)
 
 	if (aead_id != UINT_MAX) {
 		res = util_aead_find_node(list_aead_output(subtest), aead_id,
-					  &args.final->data->input,
-					  &args.final->data->input_length,
-					  &args.final->tag,
-					  &args.final->tag_length,
-					  &args.init->user_iv,
-					  &args.init->user_iv_length,
+					  &data.input, &data.input_length,
+					  &final.tag, &final.tag_length,
+					  &init.user_iv, &init.user_iv_length,
 					  tag_field_set);
 
 		/* 'aead_id' must not be in the AEAD list */
@@ -874,8 +738,7 @@ static int aead_encrypt(struct subtest_data *subtest)
 	}
 
 	/* Read input buffer */
-	res = util_read_hex_buffer(&args.final->data->input,
-				   &args.final->data->input_length,
+	res = util_read_hex_buffer(&data.input, &data.input_length,
 				   subtest->params, INPUT_OBJ);
 	if ((!is_api_test(subtest) && res != ERR_CODE(PASSED)) ||
 	    (is_api_test(subtest) && res != ERR_CODE(PASSED) &&
@@ -893,14 +756,13 @@ static int aead_encrypt(struct subtest_data *subtest)
 
 	/* Allocate memory to output buffer */
 	res = set_output_params(subtest, &expected_output, &expected_out_len,
-				args.final->tag_length, args.final->data, true,
-				tag_field_set);
+				final.tag_length, &data, true, tag_field_set);
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
 	/* Specific test cases */
 	res = aead_bad_params(subtest->params, (void **)&aead_args,
-			      &args.init->key_desc, &args.init->context);
+			      &init.key_desc, &init.context);
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
@@ -908,7 +770,7 @@ static int aead_encrypt(struct subtest_data *subtest)
 	if (subtest->smw_status != SMW_STATUS_OK) {
 		if (subtest->smw_status == SMW_STATUS_OUTPUT_TOO_SHORT)
 			DBG_PRINT("Buffer too short, expected %u",
-				  args.final->data->output_length);
+				  data.output_length);
 
 		res = ERR_CODE(API_STATUS_NOK);
 		goto end;
@@ -919,45 +781,48 @@ static int aead_encrypt(struct subtest_data *subtest)
 		 * Copy ciphertext, tag and output IV params to "aead_output" list,
 		 * if aead_id is set.
 		 */
-		res = util_aead_add_output_data(list_aead_output(subtest),
-						aead_id,
-						args.final->data->output,
-						args.final->data->output_length,
-						args.final->tag,
-						args.final->tag_length,
-						args.final->output_iv,
-						args.final->output_iv_length);
+		res = util_aead_add_data(list_aead_output(subtest), aead_id,
+					 final.data->output,
+					 final.data->output_length, final.tag,
+					 final.tag_length, final.output_iv,
+					 final.output_iv_length);
 		if (res != ERR_CODE(PASSED))
 			goto end;
 	}
 
-	res = check_tag_follows_output(args.final, args.final->tag_length);
-	if (res != ERR_CODE(PASSED))
-		goto end;
+	if (!args.final->tag) {
+		res = util_aead_check_tag_follows_output(data.output,
+							 data.input_length,
+							 final.tag_length);
+		if (res != ERR_CODE(PASSED))
+			goto end;
+	}
 
-	res = compare_output_and_tag(args.final, expected_output,
-				     expected_out_len, expected_tag,
-				     expected_tag_len, tag_field_set);
+	res = util_compare_buffers(data.output, data.output_length,
+				   expected_output, expected_out_len);
+	if (res == ERR_CODE(PASSED))
+		res = compare_tag(args.final, expected_tag, expected_tag_len,
+				  tag_field_set);
 
 end:
 
-	if (args.init->user_iv)
-		free(args.init->user_iv);
+	if (init.user_iv)
+		free(init.user_iv);
 
-	if (args.final->output_iv)
-		free(args.final->output_iv);
+	if (final.output_iv)
+		free(final.output_iv);
 
-	if (args.aad->data)
-		free(args.aad->data);
+	if (aad.data)
+		free(aad.data);
 
-	if (args.final->data->input)
-		free(args.final->data->input);
+	if (data.input)
+		free(data.input);
 
-	if (args.final->data->output)
-		free(args.final->data->output);
+	if (data.output)
+		free(data.output);
 
-	if (args.final->tag)
-		free(args.final->tag);
+	if (final.tag)
+		free(final.tag);
 
 	if (expected_output)
 		free(expected_output);
@@ -1011,18 +876,18 @@ static int aead_decrypt(struct subtest_data *subtest)
 	args.aad = &aad;
 	aead_args = &args;
 
-	args.init->version = subtest->version;
-	args.final->version = subtest->version;
-	args.final->data->version = subtest->version;
-	args.aad->version = subtest->version;
+	init.version = subtest->version;
+	final.version = subtest->version;
+	data.version = subtest->version;
+	aad.version = subtest->version;
 
-	res = set_init_params(subtest, args.init, &key, &key_buffer);
+	res = set_init_params(subtest, &init, &key, &key_buffer);
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
 	/* Read AAD buffer, if any */
-	res = util_read_hex_buffer(&args.aad->data, &args.aad->data_length,
-				   subtest->params, AAD_OBJ);
+	res = util_read_hex_buffer(&aad.data, &aad.data_length, subtest->params,
+				   AAD_OBJ);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(MISSING_PARAMS)) {
 		DBG_PRINT("Failed to read AAD buffer");
 		goto end;
@@ -1047,12 +912,9 @@ static int aead_decrypt(struct subtest_data *subtest)
 	 */
 	if (aead_id != UINT_MAX) {
 		res = util_aead_find_node(list_aead_output(subtest), aead_id,
-					  &args.final->data->input,
-					  &args.final->data->input_length,
-					  &args.final->tag,
-					  &args.final->tag_length,
-					  &args.init->user_iv,
-					  &args.init->user_iv_length,
+					  &data.input, &data.input_length,
+					  &final.tag, &final.tag_length,
+					  &init.user_iv, &init.user_iv_length,
 					  tag_field_set);
 
 		/* 'aead_id' must be in the AEAD list */
@@ -1110,14 +972,13 @@ static int aead_decrypt(struct subtest_data *subtest)
 
 	/* Set output buffer parameters */
 	res = set_output_params(subtest, &expected_output, &expected_out_len,
-				args.final->tag_length, args.final->data, false,
-				tag_field_set);
+				final.tag_length, &data, false, tag_field_set);
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
 	/* Specific test cases */
 	res = aead_bad_params(subtest->params, (void **)&aead_args,
-			      &args.init->key_desc, &args.init->context);
+			      &init.key_desc, &init.context);
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
@@ -1125,14 +986,15 @@ static int aead_decrypt(struct subtest_data *subtest)
 	if (subtest->smw_status != SMW_STATUS_OK) {
 		if (subtest->smw_status == SMW_STATUS_OUTPUT_TOO_SHORT)
 			DBG_PRINT("Buffer too short, expected %u",
-				  args.final->data->output_length);
+				  data.output_length);
 
 		res = ERR_CODE(API_STATUS_NOK);
 		goto end;
 	}
 
 	/* Optional output comparison */
-	res = compare_output(args.final, expected_output, expected_out_len);
+	res = util_compare_buffers(data.output, data.output_length,
+				   expected_output, expected_out_len);
 
 end:
 	if (iv)
@@ -1144,11 +1006,11 @@ end:
 	if (tag)
 		free(tag);
 
-	if (args.aad->data)
-		free(args.aad->data);
+	if (aad.data)
+		free(aad.data);
 
-	if (args.final->data->output)
-		free(args.final->data->output);
+	if (data.output)
+		free(data.output);
 
 	if (expected_output)
 		free(expected_output);
@@ -1400,7 +1262,9 @@ int aead_update(struct subtest_data *subtest)
 				DBG_PRINT("Failed to update context node data");
 		}
 	} else {
-		res = aead_update_save_out_data(subtest, &args, ctx_id);
+		res = util_aead_update_save_out_data(subtest, args.output,
+						     args.output_length,
+						     ctx_id);
 	}
 
 end:

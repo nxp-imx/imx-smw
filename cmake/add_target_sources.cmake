@@ -10,7 +10,7 @@ function(add_private_sources_ifdef target cond)
   if(BUILD_ZEPHYR)
     zephyr_library_sources_ifdef(${cond} ${ARGN})
   else()
-    target_sources(${target} PRIVATE $<$<BOOL:${cond}>:${ARGN}>)
+    target_sources(${target} PRIVATE $<$<BOOL:${${cond}}>:${ARGN}>)
   endif()
 endfunction()
 

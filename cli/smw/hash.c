@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "common.h"
 #include "error_handler.h"
 #include "hash_table_generated.h"
@@ -145,6 +146,8 @@ enum cli_exit_code cli_hash_operation(struct parsed_options *args)
 	status = smw_hash(&hash_args);
 	if (!is_smw_api_success("smw_hash", status))
 		goto cleanup;
+
+	SUCCESS("Hash");
 
 	/* Write output */
 	if (util_write_output_data(output, output_size, args->output_filename,

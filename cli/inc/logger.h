@@ -33,10 +33,14 @@ void logger_cleanup(void);
 
 /* Internal logging functions */
 void logger_log_error(const char *fmt, ...);
+void logger_log_smw_error(const char *fmt, ...);
+void logger_log_psa_error(const char *fmt, ...);
 void logger_log_info(const char *fmt, ...);
 
 /* Logging macros */
-#define LOG_ERROR(fmt, ...) logger_log_error(fmt, ##__VA_ARGS__)
-#define LOG_INFO(fmt, ...)  logger_log_info(fmt, ##__VA_ARGS__)
+#define LOG_ERROR(fmt, ...)	logger_log_error(fmt, ##__VA_ARGS__)
+#define LOG_SMW_ERROR(fmt, ...) logger_log_smw_error(fmt, ##__VA_ARGS__)
+#define LOG_PSA_ERROR(fmt, ...) logger_log_psa_error(fmt, ##__VA_ARGS__)
+#define LOG_INFO(fmt, ...)	logger_log_info(fmt, ##__VA_ARGS__)
 
 #endif /* CLI_LOGGER_H */

@@ -12,6 +12,7 @@
 #include <smw_keymgr.h>
 #include <smw_status.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "common.h"
 #include "error_handler.h"
 #include "helper.h"
@@ -370,7 +371,6 @@ static int parse_smw_multi_algos(const char *algo_str, const char *key_type,
 		single_algo = parse_smw_single_algo(token, key_type);
 
 		if (single_algo == SMW_ATTR_ALGO_NONE) {
-			LOG_ERROR("Unknown algorithm: %s", token);
 			goto cleanup;
 		}
 
@@ -792,7 +792,6 @@ static void print_key_result(const struct smw_key_descriptor *key_desc,
 	struct smw_key_descriptor query_key = { 0 };
 	struct smw_key_attributes query_key_attrs = { 0 };
 	enum smw_status_code status = SMW_STATUS_OK;
-	unsigned int actual_size = key_desc->security_size;
 
 	query_key.id = key_desc->id;
 	query_key.type_name = key_desc->type_name;
@@ -803,7 +802,6 @@ static void print_key_result(const struct smw_key_descriptor *key_desc,
 
 	status = smw_get_key_attributes(&get_attr_args);
 	if (status == SMW_STATUS_OK) {
-		actual_size = query_key.security_size;
 		usage_flags_to_string(query_key.attributes.usage_flags,
 				      usage_str, sizeof(usage_str));
 		permitted_algo_to_string(query_key.attributes.permitted_algo,
@@ -817,18 +815,14 @@ static void print_key_result(const struct smw_key_descriptor *key_desc,
 					 sizeof(algo_str));
 	}
 
-	printf("\n");
-	printf("Asymmetric key pair generated successfully\n");
-	printf("==========================================\n");
-	printf("ID: 0x%08x (%u) | Type: %s | Size: %u bits\n", key_desc->id,
-	       key_desc->id,
-	       asym_key_type_to_string((uint32_t)key_desc->type_name),
-	       actual_size);
-	printf("Usage: %s\n", usage_str);
-	printf("Permitted algo: %s\n", algo_str);
-	printf("Persistence: %s | Sensitive: %s\n",
-	       transient ? "transient" : "persistent",
-	       sensitive ? "yes" : "no");
+	SUCCESS("Symmetric key generation");
+	INFO("Key ID", "0x%08x (%u)", key_desc->id, key_desc->id);
+	INFO("Type", "%s", asym_key_type_to_string(key_desc->type_name));
+	INFO("Size", "%u bits", key_desc->security_size);
+	INFO("Usage", "%s", usage_str);
+	INFO("Algorithm", "%s", algo_str);
+	INFO("Persistent", "%s", transient ? "no" : "yes");
+	INFO("Sensitive", "%s", sensitive ? "yes" : "no");
 	printf("\n");
 }
 
@@ -847,8 +841,8 @@ void cli_keygen_asym_help(void)
 
 	printf("  -S, --subsystem <name>    Force subsystem (ELE/TEE/SECO)\n\n");
 
-	printf("\nExamples:\n");
-	printf("  %s keygen-asym -t RSA -s 2048 -a PSS-SHA256 -u sign,verify -i 1\n\n",
+	printf("Examples:\n");
+	printf("  %s keygen-asym -t RSA -s 2048 -a PSS-SHA256 -u sign,verify -i 1\n",
 	       prog_name);
 	printf("  %s keygen-asym -t SECP_R1 -s 256 -a ECDSA-SHA256 -u sign,verify",
 	       prog_name);
@@ -897,9 +891,9 @@ enum cli_exit_code cli_keygen_asym_operation(struct parsed_options *args)
 		security_size = fixed_size;
 		if (args->op.keygen.key_size &&
 		    args->op.keygen.key_size != fixed_size) {
-			printf("\nWarning: Key type %s has fixed size %u bits, ignoring -s %u\n",
-			       args->op.keygen.key_type, fixed_size,
-			       args->op.keygen.key_size);
+			WARNING("Key type %s has fixed size %u bits, ignoring -s %u\n",
+				args->op.keygen.key_type, fixed_size,
+				args->op.keygen.key_size);
 		}
 	} else {
 		if (args->op.keygen.key_size == 0) {
@@ -959,11 +953,8 @@ enum cli_exit_code cli_keygen_asym_operation(struct parsed_options *args)
 
 	status = smw_config_check_generate_key(gen_args.subsystem_name,
 					       &key_info);
-	if (status != SMW_STATUS_OK) {
-		if (!is_smw_api_success("smw_config_check_generate_key",
-					status))
-			goto cleanup;
-	}
+	if (!is_smw_api_success("smw_config_check_generate_key", status))
+		goto cleanup;
 
 	log_smw_keygen_params(&gen_args);
 
@@ -975,8 +966,7 @@ enum cli_exit_code cli_keygen_asym_operation(struct parsed_options *args)
 	}
 
 	if (status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
-		printf("\nWarning: Key generated successfully,");
-		printf(" but some policy elements were ignored\n");
+		WARNING("Key generated but some policy elements were ignored\n");
 	}
 
 	print_key_result(&key_desc, args->op.keygen.transient,

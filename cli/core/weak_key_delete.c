@@ -5,31 +5,32 @@
 
 #include <stdio.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "compiler.h"
 #include "helper.h"
-#include "parser_key_delete.h"
+
+/**
+ * @brief Weak default implementation for key delete operation
+ *
+ * This function is used when the backend (SMW/PSA) doesn't provide
+ * an implementation. It will be overridden by the strong symbol in
+ * smw/key_delete.c or psa/key_delete.c if they are linked.
+ *
+ * @param args Pointer to parsed command-line options structure
+ */
+__weak enum cli_exit_code cli_key_delete_operation(struct parsed_options *args)
+{
+	(void)args;
+	ERROR("key-delete operation is not supported by this backend\n");
+	return CLI_EXIT_OPERATION_FAILURE;
+}
 
 /**
  * @brief Weak default key delete help (backend-agnostic)
  */
 __weak void cli_key_delete_help(void)
 {
-	printf("\n");
-	print_tool_banner();
-	printf("Key Delete Operation\n\n");
-	cli_key_delete_help_common();
-	printf("\n");
-}
-
-/**
- * @brief Weak default key delete operation (not supported)
- */
-__weak enum cli_exit_code cli_key_delete_operation(struct parsed_options *args)
-{
-	(void)args;
-	FPRINTF(stderr,
-		"Error: key-delete operation is not supported by this backend\n");
-	return CLI_EXIT_OPERATION_FAILURE;
+	printf("key-delete operation is not available in this build.\n");
 }
 
 /**
@@ -37,5 +38,5 @@ __weak enum cli_exit_code cli_key_delete_operation(struct parsed_options *args)
  */
 __weak const char *cli_key_delete_inline_desc(void)
 {
-	return "Delete a key from the secure subsystem";
+	return "Delete a key from the secure subsystem (not implemented)";
 }

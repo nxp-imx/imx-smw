@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "common.h"
 #include "helper.h"
 #include "logger.h"
@@ -209,6 +210,8 @@ static enum cli_exit_code cipher_execute(struct parsed_options *args,
 			LOG_ERROR("Output buffer too short");
 		goto cleanup;
 	}
+
+	SUCCESS("Symmetric Ciphering");
 
 	/* Write output */
 	if (util_write_output_data(output, output_length, args->output_filename,

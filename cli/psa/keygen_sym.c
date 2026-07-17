@@ -9,6 +9,7 @@
 #include <strings.h>
 #include <psa/crypto.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "common.h"
 #include "helper.h"
 #include "key_sym_mappings.h"
@@ -190,15 +191,13 @@ static void print_key_result(psa_key_id_t key_id,
 	actual_algo = psa_get_key_algorithm(attributes);
 	algo_name = psa_algorithm_to_string(actual_algo);
 
-	printf("\n");
-	printf("Symmetric key generated successfully\n");
-	printf("====================================\n");
-	printf("ID: 0x%08x (%u) | Type: %s | Size: %zu bits\n", key_id, key_id,
-	       key_type_to_string(psa_get_key_type(attributes)),
-	       psa_get_key_bits(attributes));
-	printf("Usage: %s\n", usage_str);
-	printf("Permitted algo: %s\n", algo_name);
-	printf("Persistence: %s\n", transient ? "transient" : "persistent");
+	SUCCESS("Symmetric key generation");
+	INFO("Key ID", "0x%08x (%u)", key_id, key_id);
+	INFO("Type", "%s", key_type_to_string(psa_get_key_type(attributes)));
+	INFO("Size", "%zu bits", psa_get_key_bits(attributes));
+	INFO("Usage", "%s", usage_str);
+	INFO("Algorithm", "%s", algo_name);
+	INFO("Persistent", "%s", transient ? "no" : "yes");
 	printf("\n");
 }
 
@@ -216,8 +215,8 @@ void cli_keygen_sym_help(void)
 	/* Print common options */
 	cli_keygen_sym_help_common();
 
-	printf("\nNotes for PSA:\n");
-	printf("  - PSA supports only ONE algorithm per key (first one is used)\n");
+	printf("\nNote:");
+	printf(" PSA supports only ONE algorithm per key (first one is used)\n");
 
 	printf("\nExamples:\n");
 	printf("  %s keygen-sym -t AES -s 256 -a CBC -u encrypt,decrypt -i 1\n",

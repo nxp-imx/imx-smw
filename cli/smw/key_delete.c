@@ -9,6 +9,7 @@
 #include <smw_keymgr.h>
 #include <smw_status.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "common.h"
 #include "error_handler.h"
 #include "helper.h"
@@ -39,10 +40,8 @@ static void log_smw_key_delete_params(const struct smw_delete_key_args *args)
  */
 static void print_delete_result(unsigned int key_id)
 {
-	printf("\n");
-	printf("Key deleted successfully\n");
-	printf("========================\n");
-	printf("Key ID: 0x%08x (%u)\n", key_id, key_id);
+	SUCCESS("Key deletion");
+	INFO("Key ID", "0x%08x (%u)", key_id, key_id);
 	printf("\n");
 }
 
@@ -61,7 +60,7 @@ void cli_key_delete_help(void)
 
 	printf("  -S, --subsystem <name>    Force subsystem (ELE/TEE/SECO)\n\n");
 
-	printf("\nExample:\n");
+	printf("Example:\n");
 	printf("  %s key-delete -i 20\n\n", prog_name);
 }
 
@@ -101,10 +100,8 @@ enum cli_exit_code cli_key_delete_operation(struct parsed_options *args)
 
 	/* Call smw_delete_key() */
 	status = smw_delete_key(&delete_args);
-	if (status != SMW_STATUS_OK) {
-		if (!is_smw_api_success("smw_delete_key", status))
-			goto cleanup;
-	}
+	if (!is_smw_api_success("smw_delete_key", status))
+		goto cleanup;
 
 	print_delete_result(key_desc.id);
 

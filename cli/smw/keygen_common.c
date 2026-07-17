@@ -56,7 +56,6 @@ smw_attr_usage_t parse_smw_usage_flags(const char *usage_str)
 		} else if (!strcasecmp(token, "export")) {
 			SMW_ATTR_USAGE_SET_EXPORT(flags);
 		} else {
-			LOG_ERROR("Unknown usage flag: %s", token);
 			free(usage_copy);
 			return 0;
 		}

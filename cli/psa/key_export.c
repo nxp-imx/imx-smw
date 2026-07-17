@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "common.h"
 #include "helper.h"
 #include "logger.h"
@@ -45,11 +46,9 @@ static void log_psa_key_export_params(psa_key_id_t key_id, const uint8_t *data,
 static void print_export_result(psa_key_id_t key_id, size_t data_length,
 				const char *pub_file)
 {
-	printf("\n");
-	printf("Key exported successfully\n");
-	printf("========================\n");
-	printf("Key ID: 0x%08x (%u)\n", key_id, key_id);
-	printf("Public key:  %s (%zu bytes)\n", pub_file, data_length);
+	SUCCESS("Key export");
+	INFO("Key ID", "0x%08x (%u)", key_id, key_id);
+	INFO("Public key", "%s (%zu bytes)", pub_file, data_length);
 	printf("\n");
 }
 

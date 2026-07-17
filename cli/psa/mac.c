@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <psa/crypto.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "common.h"
 #include "helper.h"
 #include "logger.h"
@@ -192,7 +193,7 @@ static enum cli_exit_code mac_run(struct parsed_options *args, bool verify)
 		if (!is_psa_api_success("psa_mac_verify", status))
 			goto cleanup;
 
-		printf("\nMAC verification: SUCCESS\n\n");
+		SUCCESS("MAC Verification");
 
 	} else {
 		/*
@@ -221,6 +222,8 @@ static enum cli_exit_code mac_run(struct parsed_options *args, bool verify)
 					 mac_buf, mac_size, &mac_length);
 		if (!is_psa_api_success("psa_mac_compute", status))
 			goto cleanup;
+
+		SUCCESS("MAC Computation");
 
 		if (util_write_output_data(mac_buf, mac_length,
 					   args->op.mac.mac_filename,

@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "helper.h"
 #include "logger.h"
 #include "opt_parser.h"
@@ -147,13 +148,13 @@ static enum cli_exit_code handler_dispatch(const char *operation,
 	const struct operation_entry *entry = NULL;
 
 	if (!operation) {
-		FPRINTF(stderr, "Error: No operation specified\n");
+		ERROR("No operation specified\n");
 		return CLI_EXIT_OPERATION_FAILURE;
 	}
 
 	entry = find_operation(operation);
 	if (!entry) {
-		FPRINTF(stderr, "Error: Unknown operation '%s'\n", operation);
+		ERROR("Unknown operation '%s'\n", operation);
 		return CLI_EXIT_OPERATION_FAILURE;
 	}
 
@@ -190,7 +191,7 @@ static void handler_show_help(const char *operation, const char *prog_name)
 	/* Show help for specific operation */
 	entry = find_operation(operation);
 	if (!entry) {
-		FPRINTF(stderr, "Error: Unknown operation '%s'\n", operation);
+		ERROR("Unknown operation '%s'\n", operation);
 		return;
 	}
 

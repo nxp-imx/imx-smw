@@ -11,6 +11,7 @@
 #include <smw_keymgr.h>
 #include <smw_status.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "common.h"
 #include "error_handler.h"
 #include "helper.h"
@@ -184,7 +185,7 @@ static enum cli_exit_code mac_run(struct parsed_options *args, bool verify)
 		if (!is_smw_api_success("smw_mac_verify", status))
 			goto cleanup;
 
-		printf("\nMAC verification: SUCCESS\n\n");
+		SUCCESS("MAC Computation");
 
 	} else {
 		/*
@@ -232,6 +233,8 @@ static enum cli_exit_code mac_run(struct parsed_options *args, bool verify)
 		status = smw_mac(&mac_args);
 		if (!is_smw_api_success("smw_mac", status))
 			goto cleanup;
+
+		SUCCESS("MAC Computation");
 
 		/* Write output (file or stdout) */
 		if (util_write_output_data(mac_buf, mac_args.mac_length,

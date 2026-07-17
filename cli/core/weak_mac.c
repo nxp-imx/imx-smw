@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "compiler.h"
 #include "helper.h"
 #include "logger.h"
@@ -21,18 +22,14 @@
 __weak enum cli_exit_code cli_mac_operation(struct parsed_options *args)
 {
 	(void)args;
-	LOG_ERROR("MAC operation not implemented in this build");
-	FPRINTF(stderr, "Error: MAC operation not implemented in this build\n");
-	FPRINTF(stderr, "This binary was compiled without MAC support.\n");
+	ERROR("mac operation not implemented in this build");
 	return CLI_EXIT_NOT_IMPLEMENTED;
 }
 
 __weak enum cli_exit_code cli_mac_verify_operation(struct parsed_options *args)
 {
 	(void)args;
-	LOG_ERROR("MAC operation not implemented in this build");
-	FPRINTF(stderr, "Error: MAC operation not implemented in this build\n");
-	FPRINTF(stderr, "This binary was compiled without MAC support.\n");
+	ERROR("mac-verify operation not implemented in this build");
 	return CLI_EXIT_NOT_IMPLEMENTED;
 }
 
@@ -41,7 +38,7 @@ __weak enum cli_exit_code cli_mac_verify_operation(struct parsed_options *args)
  */
 __weak void cli_mac_help(void)
 {
-	printf("MAC operation is not available in this build.\n");
+	printf("mac operation is not available in this build.\n");
 }
 
 /**

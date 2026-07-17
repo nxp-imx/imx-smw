@@ -12,6 +12,7 @@
 #include <smw_keymgr.h>
 #include <smw_status.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "common.h"
 #include "error_handler.h"
 #include "helper.h"
@@ -127,11 +128,8 @@ static int parse_smw_permitted_algos_multi(const char *algo_str,
 	while (token) {
 		/* Parse this mode/hash */
 		single_algo = parse_single_mode(token, key_type);
-		if (!single_algo) {
-			LOG_ERROR("Unknown mode/algorithm: %s for key type %s",
-				  token, key_type);
+		if (!single_algo)
 			goto cleanup;
-		}
 
 		/* Combine using OR */
 		combined_algo |= single_algo;
@@ -279,17 +277,14 @@ static void print_key_result(const struct smw_key_descriptor *key_desc,
 				 key_type_to_algo(key_desc->type_name),
 				 algo_str, sizeof(algo_str));
 
-	printf("\n");
-	printf("Symmetric key generated successfully\n");
-	printf("====================================\n");
-	printf("ID: 0x%08x (%u) | Type: %s | Size: %u bits\n", key_desc->id,
-	       key_desc->id, key_type_to_string(key_desc->type_name),
-	       key_desc->security_size);
-	printf("Usage: %s\n", usage_str);
-	printf("Permitted algo: %s\n", algo_str);
-	printf("Persistence: %s | Sensitive: %s\n",
-	       transient ? "transient" : "persistent",
-	       sensitive ? "yes" : "no");
+	SUCCESS("Symmetric key generation");
+	INFO("Key ID", "0x%08x (%u)", key_desc->id, key_desc->id);
+	INFO("Type", "%s", key_type_to_string(key_desc->type_name));
+	INFO("Size", "%u bits", key_desc->security_size);
+	INFO("Usage", "%s", usage_str);
+	INFO("Algorithm", "%s", algo_str);
+	INFO("Persistent", "%s", transient ? "no" : "yes");
+	INFO("Sensitive", "%s", sensitive ? "yes" : "no");
 	printf("\n");
 }
 
@@ -309,7 +304,7 @@ void cli_keygen_sym_help(void)
 
 	printf("  -S, --subsystem <name>    Force subsystem (ELE/TEE/SECO)\n\n");
 
-	printf("\nExamples:\n");
+	printf("Examples:\n");
 	printf("  %s keygen-sym -t AES -s 256 -a CBC -u encrypt,decrypt -i 1\n",
 	       prog_name);
 	printf("  %s keygen-sym -t HMAC -s 256 -a SHA256 -u sign,verify -i 0x12345678\n\n",
@@ -436,8 +431,7 @@ enum cli_exit_code cli_keygen_sym_operation(struct parsed_options *args)
 
 	/* Log warning if policy was ignored */
 	if (status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
-		printf("\nWarning: Key generated successfully,");
-		printf(" but some policy elements were ignored\n");
+		WARNING("Key generated but some policy elements were ignored\n");
 	}
 
 	/* Print result */

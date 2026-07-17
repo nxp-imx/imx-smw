@@ -12,6 +12,7 @@
 #include <string.h>
 #include <time.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "common.h"
 #include "error_handler.h"
 #include "helper.h"
@@ -201,8 +202,7 @@ enum cli_exit_code cli_device_attestation_operation(struct parsed_options *args)
 		LOG_INFO("Challenge loaded from file: %zu bytes",
 			 challenge_len);
 	} else {
-		printf("\nWarning: No challenge file provided, ");
-		printf("using current date/time as 16-byte challenge\n\n");
+		WARNING("No challenge file provided, using current time as 16-byte challenge\n\n");
 		if (generate_date_challenge(&challenge, &challenge_len))
 			goto cleanup;
 	}
@@ -247,6 +247,8 @@ enum cli_exit_code cli_device_attestation_operation(struct parsed_options *args)
 	status = smw_device_attestation(&attest_args);
 	if (!is_smw_api_success("smw_device_attestation", status))
 		goto cleanup;
+
+	SUCCESS("Get Device Attestation");
 
 	/* Write certificate to file or stdout */
 	if (util_write_output_data(certificate, attest_args.certificate_length,

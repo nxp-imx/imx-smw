@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "common.h"
 #include "hash_table_generated.h"
 #include "helper.h"
@@ -57,10 +58,7 @@ void cli_hash_help(void)
 	/* Print common options */
 	cli_hash_help_common();
 
-	/* PSA-specific notes */
-	printf("\nNote: PSA API does not support subsystem selection.\n\n");
-
-	printf("Examples:\n");
+	printf("\nExamples:\n");
 	printf("  %s hash -a SHA256 -i input.bin\n", prog_name);
 	printf("  %s hash -a SHAKE256 -i data.bin -l 64 -o hash.bin\n",
 	       prog_name);
@@ -126,6 +124,8 @@ enum cli_exit_code cli_hash_operation(struct parsed_options *args)
 
 	if (!is_psa_api_success("psa_hash_compute", status))
 		goto cleanup;
+
+	SUCCESS("Hash");
 
 	/* Write output */
 	if (util_write_output_data(output, output_length, args->output_filename,

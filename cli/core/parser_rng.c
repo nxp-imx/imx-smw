@@ -9,13 +9,14 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include "cli_print.h"
 #include "helper.h"
 #include "opt_parser.h"
 #include "parser_rng.h"
 #include "utils.h"
 
 /* Short getopt options string for RNG */
-static const char *rng_short_opts = "hs:o:S:L::t";
+static const char *rng_short_opts = ":hs:o:S:L::t";
 
 /* Define options for RNG operation */
 static const struct option rng_options[] = {
@@ -69,6 +70,7 @@ int parse_rng_options(int argc, char **argv, struct parsed_options *opts,
 	int opt = 0;
 	char *endptr = NULL;
 	unsigned long tmp = 0;
+	opterr = 0;
 
 	while ((opt = getopt_long(argc, argv, rng_short_opts, rng_options,
 				  NULL)) != -1) {
@@ -80,8 +82,7 @@ int parse_rng_options(int argc, char **argv, struct parsed_options *opts,
 		case 's':
 			/* Validate it's not another option */
 			if (optarg[0] == '-') {
-				FPRINTF(stderr,
-					"Error: Size value cannot start with '-'.\n");
+				ERROR("Size value cannot start with '-'");
 				FPRINTF(stderr,
 					"       Expected a positive number.\n");
 				print_help_hint(prog_name, "rng");
@@ -92,26 +93,21 @@ int parse_rng_options(int argc, char **argv, struct parsed_options *opts,
 			tmp = strtoul(optarg, &endptr, 0);
 
 			if (errno || endptr == optarg || *endptr != '\0') {
-				FPRINTF(stderr,
-					"Error: Invalid size value '%s'\n",
-					optarg);
+				ERROR("Invalid size value '%s'", optarg);
 				print_help_hint(prog_name, "rng");
 				return -1;
 			}
 
 			/* Validate size fits in 32-bit unsigned int */
 			if (tmp > UINT32_MAX) {
-				FPRINTF(stderr,
-					"Error: Size exceeds maximum %u\n",
-					UINT32_MAX);
+				ERROR("Size exceeds maximum %u", UINT32_MAX);
 				print_help_hint(prog_name, "rng");
 				return -1;
 			}
 
 			opts->op.rng.size = (size_t)tmp;
 			if ((unsigned long)opts->op.rng.size != tmp) {
-				FPRINTF(stderr,
-					"Error: Size value too large for this platform\n");
+				ERROR("Size value too large for this platform");
 				print_help_hint(prog_name, "rng");
 				return -1;
 			}
@@ -140,7 +136,18 @@ int parse_rng_options(int argc, char **argv, struct parsed_options *opts,
 			opts->text_format = true;
 			break;
 
+		case ':':
+			/* Missing argument for a known option */
+			ERROR("Option '%s' requires an argument",
+			      SAFE_ARGV_OPT(argv, "<unknown>"));
+			print_help_hint(prog_name, "rng");
+			return -1;
+
+		case '?':
 		default:
+			/* Unknown option */
+			ERROR("Unknown option '%s'",
+			      SAFE_ARGV_OPT(argv, "<unknown>"));
 			print_help_hint(prog_name, "rng");
 			return -1;
 		}
@@ -148,8 +155,7 @@ int parse_rng_options(int argc, char **argv, struct parsed_options *opts,
 
 	/* Validate required options */
 	if (!opts->show_help && !opts->op.rng.size) {
-		FPRINTF(stderr,
-			"Error: --size is required for RNG operation\n");
+		ERROR("--size is required for RNG operation");
 		print_help_hint(prog_name, "rng");
 		return -1;
 	}

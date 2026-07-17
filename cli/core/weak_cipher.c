@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "compiler.h"
 #include "helper.h"
 #include "logger.h"
@@ -21,9 +22,7 @@
 __weak enum cli_exit_code cli_encrypt_operation(struct parsed_options *args)
 {
 	(void)args;
-	FPRINTF(stderr,
-		"Error: Encrypt operation not implemented in this build\n");
-	FPRINTF(stderr, "This binary was compiled without cipher support.\n");
+	ERROR("encrypt operation is not implemented in this build");
 	return CLI_EXIT_NOT_IMPLEMENTED;
 }
 
@@ -35,9 +34,7 @@ __weak enum cli_exit_code cli_encrypt_operation(struct parsed_options *args)
 __weak enum cli_exit_code cli_decrypt_operation(struct parsed_options *args)
 {
 	(void)args;
-	FPRINTF(stderr,
-		"Error: Decrypt operation not implemented in this build\n");
-	FPRINTF(stderr, "This binary was compiled without cipher support.\n");
+	ERROR("decrypt operation is not implemented in this build");
 	return CLI_EXIT_NOT_IMPLEMENTED;
 }
 
@@ -46,7 +43,7 @@ __weak enum cli_exit_code cli_decrypt_operation(struct parsed_options *args)
  */
 __weak void cli_encrypt_help(void)
 {
-	printf("Encrypt operation is not available in this build.\n");
+	printf("encrypt operation is not available in this build.\n");
 }
 
 /**
@@ -54,5 +51,5 @@ __weak void cli_encrypt_help(void)
  */
 __weak void cli_decrypt_help(void)
 {
-	printf("Decrypt operation is not available in this build.\n");
+	printf("decrypt operation is not available in this build.\n");
 }

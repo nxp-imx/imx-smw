@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "common.h"
 #include "helper.h"
 #include "logger.h"
@@ -31,10 +32,8 @@ static void log_psa_key_delete_params(psa_key_id_t key_id)
  */
 static void print_delete_result(psa_key_id_t key_id)
 {
-	printf("\n");
-	printf("Key deleted successfully\n");
-	printf("========================\n");
-	printf("Key ID: 0x%08x (%u)\n", key_id, key_id);
+	SUCCESS("Key deletion");
+	INFO("Key ID", "0x%08x (%u)", key_id, key_id);
 	printf("\n");
 }
 

@@ -5,9 +5,9 @@
 
 #include <stdio.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "compiler.h"
 #include "helper.h"
-#include "logger.h"
 
 /**
  * @brief Weak default implementation for RNG operation
@@ -21,9 +21,7 @@
 __weak enum cli_exit_code cli_rng_operation(struct parsed_options *args)
 {
 	(void)args;
-	LOG_ERROR("RNG operation not implemented in this build");
-	FPRINTF(stderr, "Error: RNG operation not implemented in this build\n");
-	FPRINTF(stderr, "This binary was compiled without RNG support.\n");
+	ERROR("rng operation is not implemented in this build");
 	return CLI_EXIT_NOT_IMPLEMENTED;
 }
 
@@ -32,7 +30,7 @@ __weak enum cli_exit_code cli_rng_operation(struct parsed_options *args)
  */
 __weak void cli_rng_help(void)
 {
-	printf("RNG operation is not available in this build.\n");
+	printf("rng operation is not available in this build.\n");
 }
 
 /**

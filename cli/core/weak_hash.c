@@ -5,9 +5,9 @@
 
 #include <stdio.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "compiler.h"
 #include "helper.h"
-#include "logger.h"
 
 /**
  * @brief Weak default implementation for hash operation
@@ -21,10 +21,7 @@
 __weak enum cli_exit_code cli_hash_operation(struct parsed_options *args)
 {
 	(void)args;
-	LOG_ERROR("Hash operation not implemented in this build");
-	FPRINTF(stderr,
-		"Error: Hash operation not implemented in this build\n");
-	FPRINTF(stderr, "This binary was compiled without Hash support.\n");
+	ERROR("hash operation is not implemented in this build");
 	return CLI_EXIT_NOT_IMPLEMENTED;
 }
 
@@ -33,7 +30,7 @@ __weak enum cli_exit_code cli_hash_operation(struct parsed_options *args)
  */
 __weak void cli_hash_help(void)
 {
-	printf("Hash operation is not available in this build.\n");
+	printf("hash operation is not available in this build.\n");
 }
 
 /**

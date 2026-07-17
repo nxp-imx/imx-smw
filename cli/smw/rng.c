@@ -9,6 +9,7 @@
 #include <smw_crypto.h>
 #include <smw_status.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "common.h"
 #include "helper.h"
 #include "logger.h"
@@ -106,6 +107,8 @@ enum cli_exit_code cli_rng_operation(struct parsed_options *args)
 	status = smw_rng(&rng_args);
 	if (!is_smw_api_success("smw_rng", status))
 		goto cleanup;
+
+	SUCCESS("RNG");
 
 	/* Write output using common helper */
 	if (util_write_output_data(buffer, args->op.rng.size,

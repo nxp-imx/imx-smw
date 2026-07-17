@@ -6,7 +6,7 @@
 #include <psa/crypto.h>
 #include <stdio.h>
 #include "apis_dispatcher.h"
-#include "error_handler.h"
+#include "common.h"
 #include "logger.h"
 
 /**
@@ -18,12 +18,8 @@ enum cli_exit_code cli_backend_init(void)
 
 	status = psa_crypto_init();
 
-	if (status != PSA_SUCCESS) {
-		LOG_ERROR("psa_crypto_init() failed: %s (%d)\nDescription: %s",
-			  cli_psa_status_to_name(status), (int)status,
-			  cli_psa_status_to_description(status));
+	if (!is_psa_api_success("psa_crypto_init", status))
 		return CLI_EXIT_INIT_FAILURE;
-	}
 
 	LOG_INFO("PSA Crypto initialized successfully");
 

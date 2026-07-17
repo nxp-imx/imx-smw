@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "common.h"
 #include "helper.h"
 #include "logger.h"
@@ -41,9 +42,6 @@ void cli_rng_help(void)
 
 	/* Print common options */
 	cli_rng_help_common();
-
-	/* PSA-specific notes */
-	printf("\nNote: PSA API does not support subsystem selection.\n\n");
 
 	printf("Examples:\n");
 	printf("  %s rng -s 32\n", prog_name);
@@ -91,6 +89,8 @@ enum cli_exit_code cli_rng_operation(struct parsed_options *args)
 	status = psa_generate_random(buffer, args->op.rng.size);
 	if (!is_psa_api_success("psa_generate_random", status))
 		goto cleanup;
+
+	SUCCESS("RNG");
 
 	/* Write output using common helper */
 	if (util_write_output_data(buffer, args->op.rng.size,

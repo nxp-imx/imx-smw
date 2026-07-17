@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "common.h"
 #include "error_handler.h"
 #include "helper.h"
@@ -75,6 +76,8 @@ enum cli_exit_code cli_dev_get_lifecycle_operation(struct parsed_options *args)
 
 	LOG_INFO("Lifecycle: %s (%d)", lifecycle_str,
 		 lifecycle_args.lifecycle_name);
+
+	SUCCESS("Get Device Lifecycle");
 
 	/* Write output to file if specified, otherwise print to stdout */
 	if (args->output_filename) {

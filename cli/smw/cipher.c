@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "common.h"
 #include "error_handler.h"
 #include "helper.h"
@@ -249,6 +250,11 @@ static enum cli_exit_code cipher_execute(struct parsed_options *args,
 				  cipher_args.data.output_length);
 		goto cleanup;
 	}
+
+	if (encrypt)
+		SUCCESS("Symmetric Encryption");
+	else
+		SUCCESS("Symmetric Decryption");
 
 	/* Use the actual output length returned by SMW */
 	output_size = cipher_args.data.output_length;

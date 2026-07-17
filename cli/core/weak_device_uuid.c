@@ -5,9 +5,9 @@
 
 #include <stdio.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "compiler.h"
 #include "helper.h"
-#include "logger.h"
 
 /**
  * @brief Weak default implementation for dev-get-uuid operation
@@ -21,9 +21,7 @@
 __weak enum cli_exit_code cli_device_uuid_operation(struct parsed_options *args)
 {
 	(void)args;
-	LOG_ERROR("Device UUID operation not implemented in this build");
-	FPRINTF(stderr,
-		"This operation is only available for SMW backend (nxp_smw).\n");
+	ERROR("dev-get-uuid operation is only available for SMW backend (nxp_smw)");
 	return CLI_EXIT_NOT_IMPLEMENTED;
 }
 
@@ -32,7 +30,7 @@ __weak enum cli_exit_code cli_device_uuid_operation(struct parsed_options *args)
  */
 __weak void cli_device_uuid_help(void)
 {
-	printf("Device UUID operation is not available in this build.\n");
+	printf("dev-get-uuid operation is not available in this build.\n");
 	printf("This operation is only supported with SMW backend (nxp_smw).\n");
 }
 

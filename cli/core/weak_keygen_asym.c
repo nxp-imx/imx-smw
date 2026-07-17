@@ -5,9 +5,9 @@
 
 #include <stdio.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "compiler.h"
 #include "helper.h"
-#include "logger.h"
 
 /**
  * @brief Weak default implementation for asymmetric key generation operation
@@ -21,10 +21,7 @@
 __weak enum cli_exit_code cli_keygen_asym_operation(struct parsed_options *args)
 {
 	(void)args;
-	FPRINTF(stderr,
-		"Error: Asymmetric key generation operation not implemented in this build\n");
-	FPRINTF(stderr,
-		"This binary was compiled without asymmetric key generation support.\n");
+	ERROR("keygen-asym operation is not implemented in this build");
 	return CLI_EXIT_NOT_IMPLEMENTED;
 }
 
@@ -33,7 +30,7 @@ __weak enum cli_exit_code cli_keygen_asym_operation(struct parsed_options *args)
  */
 __weak void cli_keygen_asym_help(void)
 {
-	printf("Asymmetric key generation operation is not available in this build.\n");
+	printf("keygen-asym operation is not available in this build.\n");
 }
 
 /**

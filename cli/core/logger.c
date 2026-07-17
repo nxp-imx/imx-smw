@@ -10,11 +10,17 @@
 #include <string.h>
 #include <strings.h>
 #include <time.h>
+#include "cli_print.h"
 #include "helper.h"
 #include "logger.h"
 
 /* Log levels */
-enum log_level { LOG_LEVEL_ERROR, LOG_LEVEL_INFO };
+enum log_level {
+	LOG_LEVEL_ERROR,
+	LOG_LEVEL_SMW_ERROR,
+	LOG_LEVEL_PSA_ERROR,
+	LOG_LEVEL_INFO
+};
 
 /* User-specified logging (via -L option) */
 static enum log_dest log_dest = LOG_DEST_NONE;
@@ -28,13 +34,17 @@ static bool env_log_enabled;
 /**
  * @brief Get log level string
  *
- * @param level of the log (ERROR or INFO)
+ * @param level of the log (ERROR, SMW_ERROR, PSA_ERROR or INFO)
  */
 static const char *log_level_string(enum log_level level)
 {
 	switch (level) {
 	case LOG_LEVEL_ERROR:
-		return "[ERROR]";
+		return "[CLI] [ERROR]";
+	case LOG_LEVEL_SMW_ERROR:
+		return "[SMW] [ERROR]";
+	case LOG_LEVEL_PSA_ERROR:
+		return "[PSA] [ERROR]";
 	case LOG_LEVEL_INFO:
 		return "[CLI]";
 	default:
@@ -75,7 +85,7 @@ static void logger_get_timestamp(char *buffer, size_t size)
  * Writes log messages to both environment-based and user-specified log destinations.
  * Handles dual logging output with timestamps and log level prefixes.
  *
- * @param level The log level for the message (ERROR, INFO, etc.)
+ * @param level The log level for the message (ERROR, SMW_ERROR, PSA_ERROR, INFO)
  * @param fmt Format string for the message (printf-style)
  * @param args Variable argument list containing format arguments
  */
@@ -118,7 +128,24 @@ static void logger_log_message_va(enum log_level level, const char *fmt,
 }
 
 /**
- * @brief Log error message
+ * @brief Internal helper to print error to stderr with color and tag
+ *
+ * @param tag    The error tag string (e.g. "[ERROR]", "[SMW] [ERROR]")
+ * @param fmt    Format string for the error message (printf-style)
+ * @param args   Variable argument list containing format arguments
+ */
+static void logger_print_error_va(const char *tag, const char *fmt,
+				  va_list args)
+{
+	if (!log_enabled || log_dest != LOG_DEST_STDERR) {
+		FPRINTF(stderr, "\n%s%s ", IS_TTY_STDERR ? COLOR_RED : "", tag);
+		VFPRINTF(stderr, fmt, args);
+		FPRINTF(stderr, "%s\n\n", IS_TTY_STDERR ? COLOR_RESET : "");
+	}
+}
+
+/**
+ * @brief Log generic CLI error message
  *
  * @param fmt Format string for the error message (printf-style)
  * @param ... Variable arguments for format string
@@ -131,14 +158,47 @@ void logger_log_error(const char *fmt, ...)
 	logger_log_message_va(LOG_LEVEL_ERROR, fmt, args);
 	va_end(args);
 
-	/* Also print to stderr (unless already logging to stderr) */
-	if (!log_enabled || log_dest != LOG_DEST_STDERR) {
-		va_start(args, fmt);
-		FPRINTF(stderr, "Error: ");
-		VFPRINTF(stderr, fmt, args);
-		FPRINTF(stderr, "\n");
-		va_end(args);
-	}
+	va_start(args, fmt);
+	logger_print_error_va("[CLI] [ERROR]", fmt, args);
+	va_end(args);
+}
+
+/**
+ * @brief Log SMW backend error message
+ *
+ * @param fmt Format string for the error message (printf-style)
+ * @param ... Variable arguments for format string
+ */
+void logger_log_smw_error(const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	logger_log_message_va(LOG_LEVEL_SMW_ERROR, fmt, args);
+	va_end(args);
+
+	va_start(args, fmt);
+	logger_print_error_va("[SMW] [ERROR]", fmt, args);
+	va_end(args);
+}
+
+/**
+ * @brief Log PSA backend error message
+ *
+ * @param fmt Format string for the error message (printf-style)
+ * @param ... Variable arguments for format string
+ */
+void logger_log_psa_error(const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	logger_log_message_va(LOG_LEVEL_PSA_ERROR, fmt, args);
+	va_end(args);
+
+	va_start(args, fmt);
+	logger_print_error_va("[PSA] [ERROR]", fmt, args);
+	va_end(args);
 }
 
 /**
@@ -160,7 +220,7 @@ void logger_log_info(const char *fmt, ...)
  * @brief Initializes the logging subsystem.
  *
  * @param dest: User-specified log destination (LOG_DEST_NONE/STDERR/FILE)
- * @param log_file: Log file path (required if dest is LOG_DEST_FILE)
+ * @param log_filename: Log file path (required if dest is LOG_DEST_FILE)
  */
 void logger_init(enum log_dest dest, const char *log_filename)
 {
@@ -198,8 +258,7 @@ void logger_init(enum log_dest dest, const char *log_filename)
 				timestamp);
 			FFLUSH(env_log_file);
 		} else {
-			FPRINTF(stderr,
-				"Warning: Automatic logging disabled - cannot open SMW_LOG_FILE='%s': %s\n",
+			WARNING("Automatic logging disabled - cannot open SMW_LOG_FILE='%s': %s\n",
 				log_path, strerror(errno));
 			env_log_enabled = false;
 		}
@@ -217,16 +276,14 @@ void logger_init(enum log_dest dest, const char *log_filename)
 	/* If destination is file, open it */
 	if (dest == LOG_DEST_FILE) {
 		if (!log_filename || !strlen(log_filename)) {
-			FPRINTF(stderr,
-				"Error: Log file destination specified but no filename provided\n");
+			ERROR("Log file destination specified but no filename provided");
 			log_enabled = false;
 			return;
 		}
 
 		log_file = fopen(log_filename, "a");
 		if (!log_file) {
-			FPRINTF(stderr, "Error: Failed to open log file: %s\n",
-				log_filename);
+			ERROR("Failed to open log file: %s", log_filename);
 			log_enabled = false;
 			return;
 		}

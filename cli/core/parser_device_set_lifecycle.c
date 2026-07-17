@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "helper.h"
 #include "lifecycle_table.h"
 #include "opt_parser.h"
@@ -15,7 +16,7 @@
 #include "utils.h"
 
 /* Short getopt options for set device lifecycle operation */
-static const char *dev_set_lifecycle_short_opts = "hl:S:L::";
+static const char *dev_set_lifecycle_short_opts = ":hl:S:L::";
 
 /* Define options for set device lifecycle operation */
 static const struct option dev_set_lifecycle_options[] = {
@@ -48,10 +49,9 @@ void cli_dev_set_lifecycle_help(void)
 
 	printf("Usage: %s dev-set-lifecycle [OPTIONS]\n\n", prog_name);
 
-	printf("Description: Set device lifecycle state.\n\n");
+	printf("Description: Set device lifecycle state.\n");
 
-	printf("Warning: This operation is IRREVERSIBLE.");
-	printf(" A confirmation prompt will be shown.\n\n");
+	WARNING("This operation is IRREVERSIBLE. A confirmation prompt will be shown.\n");
 
 	printf("Options:\n");
 	printf("\n      --list                List all available lifecycle values\n\n");
@@ -79,6 +79,7 @@ int parse_dev_set_lifecycle_options(int argc, char **argv,
 				    const char *prog_name)
 {
 	int opt = 0;
+	opterr = 0;
 
 	/* This operation is only supported by SMW backend */
 	if (prog_name && strstr(prog_name, "nxp_psa")) {
@@ -111,7 +112,18 @@ int parse_dev_set_lifecycle_options(int argc, char **argv,
 				return -1;
 			break;
 
+		case ':':
+			/* Missing argument for a known option */
+			ERROR("Option '%s' requires an argument",
+			      SAFE_ARGV_OPT(argv, "<unknown>"));
+			print_help_hint(prog_name, "dev-set-lifecycle");
+			return -1;
+
+		case '?':
 		default:
+			/* Unknown option */
+			ERROR("Unknown option '%s'",
+			      SAFE_ARGV_OPT(argv, "<unknown>"));
 			print_help_hint(prog_name, "dev-set-lifecycle");
 			return -1;
 		}
@@ -120,9 +132,8 @@ int parse_dev_set_lifecycle_options(int argc, char **argv,
 	/* Validate: --lifecycle is required unless --list or --help */
 	if (!opts->show_list && !opts->show_help &&
 	    !opts->op.dev_set_lc.lifecycle_name) {
-		FPRINTF(stderr,
-			"Error: --lifecycle <name> is required.\n"
-			"       Use --list to see available lifecycles.\n");
+		ERROR("--lifecycle <name> is required");
+		PRINT_USE_LIST("lifecycles");
 		print_help_hint(prog_name, "dev-set-lifecycle");
 		return -1;
 	}

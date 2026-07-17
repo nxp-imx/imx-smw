@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "error_handler.h"
+#include "helper.h"
 #include "logger.h"
 
 /**
@@ -18,9 +19,9 @@ bool is_psa_api_success(const char *func, psa_status_t status)
 	bool ret = false;
 
 	if (status != PSA_SUCCESS) {
-		LOG_ERROR("%s() failed: %s (%d)\nDescription: %s", func,
-			  cli_psa_status_to_name(status), (int)status,
-			  cli_psa_status_to_description(status));
+		LOG_PSA_ERROR("%s() failed: %s (%d)\n[DESCRIPTION] %s", func,
+			      cli_psa_status_to_name(status), (int)status,
+			      cli_psa_status_to_description(status));
 	} else {
 		LOG_INFO("%s() succeeded: %s (%d)", func,
 			 cli_psa_status_to_name(status), (int)status);

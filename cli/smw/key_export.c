@@ -9,6 +9,7 @@
 #include <smw_keymgr.h>
 #include <smw_status.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "common.h"
 #include "error_handler.h"
 #include "helper.h"
@@ -79,25 +80,17 @@ static void print_export_result(unsigned int key_id,
 				const char *pub_file, bool is_rsa,
 				size_t data_length)
 {
-	printf("\n");
-	printf("Key exported successfully\n");
-	printf("=========================\n");
-	printf("Key ID: 0x%08x (%u)\n", key_id, key_id);
-
+	SUCCESS("Key export");
+	INFO("Key ID", "0x%08x (%u)", key_id, key_id);
 	if (is_rsa) {
-		if (pub_file && key_buffer->rsa.modulus) {
-			printf("RSA modulus:        %s (%zu bytes)\n", pub_file,
-			       data_length);
-			printf("RSA public exp:     %u bytes",
-			       key_buffer->rsa.public_length);
-			printf(" (typically 65537)\n");
-		}
+		if (pub_file && key_buffer->rsa.modulus)
+			INFO("RSA modulus", "%s (%zu bytes)", pub_file,
+			     data_length);
 	} else {
 		if (pub_file && key_buffer->gen.public_data)
-			printf("Public key:  %s (%zu bytes)\n", pub_file,
-			       data_length);
+			INFO("Public key", "%s (%zu bytes)", pub_file,
+			     data_length);
 	}
-
 	printf("\n");
 }
 

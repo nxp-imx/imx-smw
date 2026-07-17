@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include "cli_print.h"
 #include "helper.h"
 #include "key_asym_mappings.h"
 #include "opt_parser.h"
@@ -23,7 +24,7 @@
 #define KEY_ID_RESERVED_START 0x40000000
 
 /* Short getopt options for asymmetric KEYGEN */
-static const char *keygen_asym_short_opts = "ht:s:i:a:u:S:L::";
+static const char *keygen_asym_short_opts = ":ht:s:i:a:u:S:L::";
 
 /* Define options for asymmetric KEYGEN operation */
 static const struct option keygen_asym_options[] = {
@@ -371,14 +372,12 @@ static int parse_key_size(const char *size_str, unsigned int *size)
 	tmp = strtoul(size_str, &endptr, 10);
 
 	if (errno || endptr == size_str || *endptr != '\0') {
-		FPRINTF(stderr, "Error: Invalid key size value '%s'\n",
-			size_str);
+		ERROR("Invalid key size value '%s'", size_str);
 		return -1;
 	}
 
 	if (!tmp || tmp > 16384) {
-		FPRINTF(stderr,
-			"Error: Key size must be between 1 and 16384 bits\n");
+		ERROR("Key size must be between 1 and 16384 bits");
 		return -1;
 	}
 
@@ -404,12 +403,12 @@ static int parse_key_id(const char *id_str, unsigned int *id)
 	tmp = strtoul(id_str, &endptr, 0);
 
 	if (errno || endptr == id_str || *endptr != '\0') {
-		FPRINTF(stderr, "Error: Invalid key ID value '%s'\n", id_str);
+		ERROR("Invalid key ID value '%s'", id_str);
 		return -1;
 	}
 
 	if (tmp > UINT32_MAX) {
-		FPRINTF(stderr, "Error: Key ID value too large\n");
+		ERROR("Key ID value too large");
 		return -1;
 	}
 
@@ -432,6 +431,7 @@ int parse_keygen_asym_options(int argc, char **argv,
 	int opt = 0;
 	int option_index = 0;
 	bool id_specified = false;
+	opterr = 0;
 
 	opts->op.keygen.key_id = 0;
 
@@ -459,23 +459,20 @@ int parse_keygen_asym_options(int argc, char **argv,
 
 		case 't':
 			if (!optarg || optarg[0] == '\0' || optarg[0] == '-') {
-				FPRINTF(stderr,
-					"Error: --type requires an argument\n");
+				ERROR("--type requires an argument");
 				print_help_hint(prog_name, "keygen-asym");
 				return -1;
 			}
 			opts->op.keygen.key_type = strdup(optarg);
 			if (!opts->op.keygen.key_type) {
-				FPRINTF(stderr,
-					"Error: Memory allocation failed\n");
+				ERROR("Memory allocation failed");
 				return -1;
 			}
 			break;
 
 		case 's':
 			if (!optarg) {
-				FPRINTF(stderr,
-					"Error: --size requires an argument\n");
+				ERROR("--size requires an argument");
 				print_help_hint(prog_name, "keygen-asym");
 				return -1;
 			}
@@ -487,8 +484,7 @@ int parse_keygen_asym_options(int argc, char **argv,
 
 		case 'i':
 			if (!optarg) {
-				FPRINTF(stderr,
-					"Error: --id requires an argument\n");
+				ERROR("--id requires an argument");
 				print_help_hint(prog_name, "keygen-asym");
 				return -1;
 			}
@@ -501,30 +497,26 @@ int parse_keygen_asym_options(int argc, char **argv,
 
 		case 'a':
 			if (!optarg) {
-				FPRINTF(stderr,
-					"Error: --algo requires an argument\n");
+				ERROR("--algo requires an argument");
 				print_help_hint(prog_name, "keygen-asym");
 				return -1;
 			}
 			opts->op.keygen.permitted_algo = strdup(optarg);
 			if (!opts->op.keygen.permitted_algo) {
-				FPRINTF(stderr,
-					"Error: Memory allocation failed\n");
+				ERROR("Memory allocation failed");
 				return -1;
 			}
 			break;
 
 		case 'u':
 			if (!optarg) {
-				FPRINTF(stderr,
-					"Error: --usage requires an argument\n");
+				ERROR("--usage requires an argument");
 				print_help_hint(prog_name, "keygen-asym");
 				return -1;
 			}
 			opts->op.keygen.usage = strdup(optarg);
 			if (!opts->op.keygen.usage) {
-				FPRINTF(stderr,
-					"Error: Memory allocation failed\n");
+				ERROR("Memory allocation failed");
 				return -1;
 			}
 			break;
@@ -539,7 +531,18 @@ int parse_keygen_asym_options(int argc, char **argv,
 				return -1;
 			break;
 
+		case ':':
+			/* Missing argument for a known option */
+			ERROR("Option '%s' requires an argument",
+			      SAFE_ARGV_OPT(argv, "<unknown>"));
+			print_help_hint(prog_name, "keygen-asym");
+			return -1;
+
+		case '?':
 		default:
+			/* Unknown option */
+			ERROR("Unknown option '%s'",
+			      SAFE_ARGV_OPT(argv, "<unknown>"));
 			print_help_hint(prog_name, "keygen-asym");
 			return -1;
 		}
@@ -553,24 +556,20 @@ int parse_keygen_asym_options(int argc, char **argv,
 	/* Validate required options */
 	if (!opts->show_help) {
 		if (!opts->op.keygen.key_type) {
-			FPRINTF(stderr,
-				"Error: --type is required for asymmetric key gen\n");
-			FPRINTF(stderr,
-				"       Use --list to see available types\n");
+			ERROR("--type is required for asymmetric key gen");
+			PRINT_USE_LIST("types");
 			print_help_hint(prog_name, "keygen-asym");
 			return -1;
 		}
 
 		if (!opts->op.keygen.permitted_algo) {
-			FPRINTF(stderr,
-				"Error: --algo is required for asymmetric key gen\n");
+			ERROR("--algo is required for asymmetric key gen");
 			print_help_hint(prog_name, "keygen-asym");
 			return -1;
 		}
 
 		if (!opts->op.keygen.usage) {
-			FPRINTF(stderr,
-				"Error: --usage is required for asymmetric key gen\n");
+			ERROR("--usage is required for asymmetric key gen");
 			print_help_hint(prog_name, "keygen-asym");
 			return -1;
 		}
@@ -578,27 +577,24 @@ int parse_keygen_asym_options(int argc, char **argv,
 		/* Validate ID constraints based on persistence */
 		if (opts->op.keygen.transient) {
 			if (id_specified) {
-				FPRINTF(stderr,
-					"Error: --id cannot be used with --transient\n");
+				ERROR("--id cannot be used with --transient");
 				print_help_hint(prog_name, "keygen-asym");
 				return -1;
 			}
 			opts->op.keygen.key_id = KEY_ID_TRANSIENT;
 		} else {
 			if (!id_specified) {
+				ERROR("--id is required for persistent keys");
 				FPRINTF(stderr,
-					"Error: --id is required for persistent keys\n");
-				FPRINTF(stderr,
-					"       ID must be in range (0 < id < 0x%08x)",
+					"              ID must be in range (0 < id < 0x%08x)\n",
 					KEY_ID_RESERVED_START);
 				print_help_hint(prog_name, "keygen-asym");
 				return -1;
 			}
 			if (!opts->op.keygen.key_id ||
 			    opts->op.keygen.key_id >= KEY_ID_RESERVED_START) {
-				FPRINTF(stderr,
-					"Error: Persistent key ID must be in range (0 < id < 0x%08x)",
-					KEY_ID_RESERVED_START);
+				ERROR("Persistent key ID must be in range (0 < id < 0x%08x)",
+				      KEY_ID_RESERVED_START);
 				print_help_hint(prog_name, "keygen-asym");
 				return -1;
 			}

@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "helper.h"
 #include "lifecycle_table.h"
 #include "opt_parser.h"
@@ -15,7 +16,7 @@
 #include "utils.h"
 
 /* Short getopt options for get device lifecycle operation */
-static const char *dev_get_lifecycle_short_opts = "ho:S:L::";
+static const char *dev_get_lifecycle_short_opts = ":ho:S:L::";
 
 /* Define options for get device lifecycle operation */
 static const struct option dev_get_lifecycle_options[] = {
@@ -76,6 +77,7 @@ int parse_dev_get_lifecycle_options(int argc, char **argv,
 				    const char *prog_name)
 {
 	int opt = 0;
+	opterr = 0;
 
 	/* This operation is only supported by SMW backend */
 	if (prog_name && strstr(prog_name, "nxp_psa")) {
@@ -113,7 +115,18 @@ int parse_dev_get_lifecycle_options(int argc, char **argv,
 				return -1;
 			break;
 
+		case ':':
+			/* Missing argument for a known option */
+			ERROR("Option '%s' requires an argument",
+			      SAFE_ARGV_OPT(argv, "<unknown>"));
+			print_help_hint(prog_name, "dev-get-lifecycle");
+			return -1;
+
+		case '?':
 		default:
+			/* Unknown option */
+			ERROR("Unknown option '%s'",
+			      SAFE_ARGV_OPT(argv, "<unknown>"));
 			print_help_hint(prog_name, "dev-get-lifecycle");
 			return -1;
 		}

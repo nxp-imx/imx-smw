@@ -11,13 +11,14 @@
 #include <string.h>
 #include <strings.h>
 #include "cipher_algo_generated.h"
+#include "cli_print.h"
 #include "helper.h"
 #include "opt_parser.h"
 #include "parser_cipher.h"
 #include "utils.h"
 
 /* Short getopt options for CIPHER operations */
-static const char *cipher_short_opts = "ha:k:i:o:S:L::";
+static const char *cipher_short_opts = ":ha:k:i:o:S:L::";
 
 /* Define options for CIPHER operations */
 static const struct option cipher_long_opts[] = {
@@ -83,6 +84,7 @@ static int parse_cipher_common(int argc, char **argv,
 			       const char *prog_name, const char *op_name)
 {
 	int opt = 0;
+	opterr = 0;
 	bool psa_backend = is_psa(prog_name);
 
 	while ((opt = getopt_long(argc, argv, cipher_short_opts,
@@ -98,8 +100,7 @@ static int parse_cipher_common(int argc, char **argv,
 
 		case 'a':
 			if (!optarg) {
-				FPRINTF(stderr,
-					"Error: --algo requires an argument\n");
+				ERROR("--algo requires an argument");
 				print_help_hint(prog_name, op_name);
 				return -1;
 			}
@@ -115,8 +116,7 @@ static int parse_cipher_common(int argc, char **argv,
 			unsigned long tmp = 0;
 
 			if (!optarg) {
-				FPRINTF(stderr,
-					"Error: --key-id requires an argument\n");
+				ERROR("--key-id requires an argument");
 				print_help_hint(prog_name, op_name);
 				return -1;
 			}
@@ -125,15 +125,13 @@ static int parse_cipher_common(int argc, char **argv,
 			tmp = strtoul(optarg, &endptr, 0);
 
 			if (errno || endptr == optarg || *endptr != '\0') {
-				FPRINTF(stderr, "Error: Invalid key ID '%s'\n",
-					optarg);
+				ERROR("Invalid key ID '%s'\n", optarg);
 				print_help_hint(prog_name, op_name);
 				return -1;
 			}
 
 			if (tmp > UINT32_MAX) {
-				FPRINTF(stderr,
-					"Error: Key ID value out of range\n");
+				ERROR("Key ID value out of range");
 				print_help_hint(prog_name, op_name);
 				return -1;
 			}
@@ -162,15 +160,13 @@ static int parse_cipher_common(int argc, char **argv,
 
 		case 1: /* --iv */
 			if (!optarg) {
-				FPRINTF(stderr,
-					"Error: --iv requires a hex string argument\n");
+				ERROR("--iv requires a hex string argument");
 				print_help_hint(prog_name, op_name);
 				return -1;
 			}
 			opts->op.cipher.iv_hex = strdup(optarg);
 			if (!opts->op.cipher.iv_hex) {
-				FPRINTF(stderr,
-					"Error: Memory allocation failed for IV\n");
+				ERROR("Memory allocation failed for IV");
 				return -1;
 			}
 			break;
@@ -185,7 +181,18 @@ static int parse_cipher_common(int argc, char **argv,
 				return -1;
 			break;
 
+		case ':':
+			/* Missing argument for a known option */
+			ERROR("Option '%s' requires an argument",
+			      SAFE_ARGV_OPT(argv, "<unknown>"));
+			print_help_hint(prog_name, op_name);
+			return -1;
+
+		case '?':
 		default:
+			/* Unknown option */
+			ERROR("Unknown option '%s'",
+			      SAFE_ARGV_OPT(argv, "<unknown>"));
 			print_help_hint(prog_name, op_name);
 			return -1;
 		}
@@ -200,27 +207,20 @@ static int parse_cipher_common(int argc, char **argv,
 	/* Validate required options (skip if --help) */
 	if (!opts->show_help) {
 		if (opts->op.cipher.algo == CIPHER_ALGO_NONE) {
-			FPRINTF(stderr,
-				"Error: --algo is required for %s operation\n",
-				op_name);
-			FPRINTF(stderr,
-				"       Use --list to see available algorithms\n");
+			ERROR("--algo is required for %s operation", op_name);
+			PRINT_USE_LIST("algorithms");
 			print_help_hint(prog_name, op_name);
 			return -1;
 		}
 
 		if (!opts->op.cipher.key_id) {
-			FPRINTF(stderr,
-				"Error: --key-id is required for %s operation\n",
-				op_name);
+			ERROR("--key-id is required for %s operation", op_name);
 			print_help_hint(prog_name, op_name);
 			return -1;
 		}
 
 		if (!opts->input_filename) {
-			FPRINTF(stderr,
-				"Error: --input is required for %s operation\n",
-				op_name);
+			ERROR("--input is required for %s operation", op_name);
 			print_help_hint(prog_name, op_name);
 			return -1;
 		}
@@ -232,22 +232,19 @@ static int parse_cipher_common(int argc, char **argv,
 		 */
 		if (!psa_backend && !opts->op.cipher.iv_hex &&
 		    cipher_algo_requires_iv(opts->op.cipher.algo)) {
-			FPRINTF(stderr,
-				"Error: --iv is required for this algorithm\n");
+			ERROR("--iv is required for this algorithm");
 			print_help_hint(prog_name, op_name);
 			return -1;
 		}
 
 		if (opts->op.cipher.iv_hex &&
 		    !cipher_algo_requires_iv(opts->op.cipher.algo)) {
-			FPRINTF(stderr,
-				"Warning: --iv is ignored for ECB mode\n");
+			WARNING("--iv is ignored for ECB mode\n");
 		}
 
 		if (psa_backend && opts->op.cipher.iv_hex &&
 		    cipher_algo_requires_iv(opts->op.cipher.algo)) {
-			FPRINTF(stderr,
-				"Note: --iv accepted but ignored (PSA manages IV internally)\n");
+			WARNING("--iv accepted but ignored (PSA manages IV internally)\n");
 		}
 	}
 

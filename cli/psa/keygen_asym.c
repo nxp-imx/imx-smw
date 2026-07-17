@@ -10,6 +10,7 @@
 #include <psa/crypto.h>
 #include "apis_dispatcher.h"
 #include "builtin_macros.h"
+#include "cli_print.h"
 #include "common.h"
 #include "helper.h"
 #include "keygen_common.h"
@@ -657,8 +658,8 @@ static psa_algorithm_t parse_psa_permitted_algo(const char *algo_str,
 
 		/* Warn if multiple algorithms specified */
 		if (saveptr && *saveptr) {
-			printf("\nWarning: PSA supports only one algorithm per key. Using: %s\n",
-			       token);
+			WARNING("PSA supports only one algorithm per key. Using: %s\n",
+				token);
 		}
 	}
 
@@ -700,21 +701,20 @@ static void print_key_result(psa_key_id_t key_id,
 			     bool transient)
 {
 	char usage_str[USAGE_STR_MAX_LEN] = { 0 };
+	psa_key_type_t key_type = psa_get_key_type(attributes);
+	size_t key_bits = psa_get_key_bits(attributes);
+	psa_algorithm_t actual_algo = psa_get_key_algorithm(attributes);
 
 	usage_flags_to_string(psa_get_key_usage_flags(attributes), usage_str,
 			      sizeof(usage_str));
 
-	printf("\n");
-	printf("Asymmetric key pair generated successfully\n");
-	printf("==========================================\n");
-	printf("ID: 0x%08x (%u) | Type: %s | Size: %zu bits\n", key_id, key_id,
-	       get_key_type_string(psa_get_key_type(attributes),
-				   psa_get_key_bits(attributes)),
-	       psa_get_key_bits(attributes));
-	printf("Usage: %s\n", usage_str);
-	printf("Permitted algo: %s\n",
-	       psa_algorithm_to_string(psa_get_key_algorithm(attributes)));
-	printf("Persistence: %s\n", transient ? "transient" : "persistent");
+	SUCCESS("Asymmetric key generation");
+	INFO("Key ID", "0x%08x (%u)", key_id, key_id);
+	INFO("Type", "%s", get_key_type_string(key_type, key_bits));
+	INFO("Size", "%zu bits", key_bits);
+	INFO("Usage", "%s", usage_str);
+	INFO("Algorithm", "%s", psa_algorithm_to_string(actual_algo));
+	INFO("Persistent", "%s", transient ? "no" : "yes");
 	printf("\n");
 }
 
@@ -729,6 +729,9 @@ void cli_keygen_asym_help(void)
 
 	/* Print common options */
 	cli_keygen_asym_help_common();
+
+	printf("\nNote:");
+	printf(" PSA supports only ONE algorithm per key (first one is used)\n");
 
 	printf("\nExamples:\n");
 	printf("  %s keygen-asym -t RSA -s 2048 -a PSS-SHA256 -u sign,verify -i 1\n",
@@ -780,9 +783,9 @@ enum cli_exit_code cli_keygen_asym_operation(struct parsed_options *args)
 	if (args->op.keygen.key_size != 0) {
 		if (key_bits != 0 && args->op.keygen.key_size != key_bits) {
 			/* User specified -s for a fixed-size key */
-			printf("\nWarning: Key type %s has fixed size %zu bits, ignoring -s %u\n",
-			       args->op.keygen.key_type, key_bits,
-			       args->op.keygen.key_size);
+			WARNING("Key type %s has fixed size %zu bits, ignoring -s %u\n",
+				args->op.keygen.key_type, key_bits,
+				args->op.keygen.key_size);
 		} else if (key_bits == 0) {
 			/* Variable-size key, use user-provided size */
 			key_bits = args->op.keygen.key_size;
@@ -799,8 +802,6 @@ enum cli_exit_code cli_keygen_asym_operation(struct parsed_options *args)
 		parse_psa_permitted_algo(args->op.keygen.permitted_algo,
 					 args->op.keygen.key_type, usage_flags);
 	if (algorithm == PSA_ALG_NONE) {
-		LOG_ERROR("Invalid permitted algorithm: %s",
-			  args->op.keygen.permitted_algo);
 		goto cleanup;
 	}
 

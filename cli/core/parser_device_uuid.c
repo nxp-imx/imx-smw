@@ -8,13 +8,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "helper.h"
 #include "opt_parser.h"
 #include "parser_device_uuid.h"
 #include "utils.h"
 
 /* Short getopt options for DEVICE_UUID */
-static const char *device_uuid_short_opts = "ho:S:L::t";
+static const char *device_uuid_short_opts = ":ho:S:L::t";
 
 /* Define options for DEVICE_UUID operation */
 static const struct option device_uuid_options[] = {
@@ -76,6 +77,7 @@ int parse_device_uuid_options(int argc, char **argv,
 			      const char *prog_name)
 {
 	int opt = 0;
+	opterr = 0;
 
 	/* This operation is only supported by SMW backend */
 	if (prog_name && strstr(prog_name, "nxp_psa")) {
@@ -113,7 +115,18 @@ int parse_device_uuid_options(int argc, char **argv,
 			opts->text_format = true;
 			break;
 
+		case ':':
+			/* Missing argument for a known option */
+			ERROR("Option '%s' requires an argument",
+			      SAFE_ARGV_OPT(argv, "<unknown>"));
+			print_help_hint(prog_name, "dev-get-uuid");
+			return -1;
+
+		case '?':
 		default:
+			/* Unknown option */
+			ERROR("Unknown option '%s'",
+			      SAFE_ARGV_OPT(argv, "<unknown>"));
 			print_help_hint(prog_name, "dev-get-uuid");
 			return -1;
 		}

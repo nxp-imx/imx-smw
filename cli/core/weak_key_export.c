@@ -5,9 +5,9 @@
 
 #include <stdio.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "compiler.h"
 #include "helper.h"
-#include "logger.h"
 
 /**
  * @brief Weak default implementation for key export operation
@@ -21,10 +21,7 @@
 __weak enum cli_exit_code cli_key_export_operation(struct parsed_options *args)
 {
 	(void)args;
-	FPRINTF(stderr,
-		"Error: Key export operation not implemented in this build\n");
-	FPRINTF(stderr,
-		"This binary was compiled without key export support.\n");
+	ERROR("key-export operation is not implemented in this build");
 	return CLI_EXIT_NOT_IMPLEMENTED;
 }
 
@@ -33,7 +30,7 @@ __weak enum cli_exit_code cli_key_export_operation(struct parsed_options *args)
  */
 __weak void cli_key_export_help(void)
 {
-	printf("Key export operation is not available in this build.\n");
+	printf("key-export operation is not available in this build.\n");
 }
 
 /**

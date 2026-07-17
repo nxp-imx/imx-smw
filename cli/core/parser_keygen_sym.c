@@ -11,6 +11,7 @@
 #include <string.h>
 #include <strings.h>
 #include <time.h>
+#include "cli_print.h"
 #include "helper.h"
 #include "opt_parser.h"
 #include "parser_keygen_sym.h"
@@ -20,7 +21,7 @@
 #define MAX_KEY_ID   0x40000000
 
 /* Short getopt options for symmetric KEYGEN */
-static const char *keygen_sym_short_opts = "ht:s:i:a:u:S:L::";
+static const char *keygen_sym_short_opts = ":ht:s:i:a:u:S:L::";
 
 /* Define options for symmetric KEYGEN operation */
 static const struct option keygen_sym_options[] = {
@@ -235,14 +236,12 @@ static int parse_key_size(const char *size_str, unsigned int *size)
 	tmp = strtoul(size_str, &endptr, 10);
 
 	if (errno || endptr == size_str || *endptr != '\0') {
-		FPRINTF(stderr, "Error: Invalid key size value '%s'\n",
-			size_str);
+		ERROR("Invalid key size value '%s'", size_str);
 		return -1;
 	}
 
 	if (!tmp || tmp > MAX_KEY_SIZE) {
-		FPRINTF(stderr,
-			"Error: Key size must be between 1 and 4096 bits\n");
+		ERROR("Key size must be between 1 and 4096 bits");
 		return -1;
 	}
 
@@ -268,12 +267,12 @@ static int parse_key_id(const char *id_str, unsigned int *id)
 	tmp = strtoul(id_str, &endptr, 0);
 
 	if (errno || endptr == id_str || *endptr != '\0') {
-		FPRINTF(stderr, "Error: Invalid key ID value '%s'\n", id_str);
+		ERROR("Invalid key ID value '%s'\n", id_str);
 		return -1;
 	}
 
 	if (tmp > UINT32_MAX) {
-		FPRINTF(stderr, "Error: Key ID value too large\n");
+		ERROR("Key ID value too large\n");
 		return -1;
 	}
 
@@ -321,10 +320,10 @@ static void warn_ignored_args(int argc, char **argv, int optind_start,
 	char stripped[64] = { 0 };
 
 	/* Print ignored arguments */
-	FPRINTF(stderr, "Warning: The following argument(s) were ignored:");
+	WARNING("The following argument(s) were ignored:");
 	for (i = optind_start; i < argc; i++)
-		FPRINTF(stderr, " '%s'", argv[i]);
-	FPRINTF(stderr, "\n");
+		printf(" '%s'", argv[i]);
+	printf("\n\n");
 
 	/* Check if all ignored arguments are valid usage flags */
 	for (i = optind_start; i < argc; i++) {
@@ -387,6 +386,7 @@ int parse_keygen_sym_options(int argc, char **argv, struct parsed_options *opts,
 	int opt = 0;
 	int option_index = 0;
 	bool id_specified = false;
+	opterr = 0;
 
 	opts->op.keygen.key_id = 0;
 
@@ -413,23 +413,20 @@ int parse_keygen_sym_options(int argc, char **argv, struct parsed_options *opts,
 
 		case 't':
 			if (!optarg || optarg[0] == '\0' || optarg[0] == '-') {
-				FPRINTF(stderr,
-					"Error: --type requires an argument\n");
+				ERROR("--type requires an argument\n");
 				print_help_hint(prog_name, "keygen-sym");
 				return -1;
 			}
 			opts->op.keygen.key_type = strdup(optarg);
 			if (!opts->op.keygen.key_type) {
-				FPRINTF(stderr,
-					"Error: Memory allocation failed\n");
+				ERROR("Memory allocation failed\n");
 				return -1;
 			}
 			break;
 
 		case 's':
 			if (!optarg) {
-				FPRINTF(stderr,
-					"Error: --size requires an argument\n");
+				ERROR("--size requires an argument\n");
 				print_help_hint(prog_name, "keygen-sym");
 				return -1;
 			}
@@ -441,8 +438,7 @@ int parse_keygen_sym_options(int argc, char **argv, struct parsed_options *opts,
 
 		case 'i':
 			if (!optarg) {
-				FPRINTF(stderr,
-					"Error: --id requires an argument\n");
+				ERROR("--id requires an argument\n");
 				print_help_hint(prog_name, "keygen-sym");
 				return -1;
 			}
@@ -455,30 +451,26 @@ int parse_keygen_sym_options(int argc, char **argv, struct parsed_options *opts,
 
 		case 'a':
 			if (!optarg) {
-				FPRINTF(stderr,
-					"Error: --algo requires an argument\n");
+				ERROR("--algo requires an argument\n");
 				print_help_hint(prog_name, "keygen-sym");
 				return -1;
 			}
 			opts->op.keygen.permitted_algo = strdup(optarg);
 			if (!opts->op.keygen.permitted_algo) {
-				FPRINTF(stderr,
-					"Error: Memory allocation failed\n");
+				ERROR("Memory allocation failed\n");
 				return -1;
 			}
 			break;
 
 		case 'u':
 			if (!optarg) {
-				FPRINTF(stderr,
-					"Error: --usage requires an argument\n");
+				ERROR("--usage requires an argument\n");
 				print_help_hint(prog_name, "keygen-sym");
 				return -1;
 			}
 			opts->op.keygen.usage = strdup(optarg);
 			if (!opts->op.keygen.usage) {
-				FPRINTF(stderr,
-					"Error: Memory allocation failed\n");
+				ERROR("Memory allocation failed\n");
 				return -1;
 			}
 			break;
@@ -493,7 +485,18 @@ int parse_keygen_sym_options(int argc, char **argv, struct parsed_options *opts,
 				return -1;
 			break;
 
+		case ':':
+			/* Missing argument for a known option */
+			ERROR("Option '%s' requires an argument",
+			      SAFE_ARGV_OPT(argv, "<unknown>"));
+			print_help_hint(prog_name, "keygen-sym");
+			return -1;
+
+		case '?':
 		default:
+			/* Unknown option */
+			ERROR("Unknown option '%s'",
+			      SAFE_ARGV_OPT(argv, "<unknown>"));
 			print_help_hint(prog_name, "keygen-sym");
 			return -1;
 		}
@@ -510,31 +513,26 @@ int parse_keygen_sym_options(int argc, char **argv, struct parsed_options *opts,
 	/* Validate required options */
 	if (!opts->show_help) {
 		if (!opts->op.keygen.key_type) {
-			FPRINTF(stderr,
-				"Error: --type is required for symmetric key gen\n");
-			FPRINTF(stderr,
-				"       Use --list to see available types\n");
+			ERROR("--type is required for symmetric key gen");
+			PRINT_USE_LIST("types");
 			print_help_hint(prog_name, "keygen-sym");
 			return -1;
 		}
 
 		if (!opts->op.keygen.key_size) {
-			FPRINTF(stderr,
-				"Error: --size is required for symmetric key gen\n");
+			ERROR("--size is required for symmetric key gen");
 			print_help_hint(prog_name, "keygen-sym");
 			return -1;
 		}
 
 		if (!opts->op.keygen.permitted_algo) {
-			FPRINTF(stderr,
-				"Error: --algo is required for symmetric key gen\n");
+			ERROR("--algo is required for symmetric key gen");
 			print_help_hint(prog_name, "keygen-sym");
 			return -1;
 		}
 
 		if (!opts->op.keygen.usage) {
-			FPRINTF(stderr,
-				"Error: --usage is required for symmetric key gen\n");
+			ERROR("--usage is required for symmetric key gen");
 			print_help_hint(prog_name, "keygen-sym");
 			return -1;
 		}
@@ -543,8 +541,7 @@ int parse_keygen_sym_options(int argc, char **argv, struct parsed_options *opts,
 		if (opts->op.keygen.transient) {
 			/* Transient key: ID must not be specified */
 			if (id_specified) {
-				FPRINTF(stderr,
-					"Error: --id cannot be used with --transient\n");
+				ERROR("--id cannot be used with --transient");
 				print_help_hint(prog_name, "keygen-sym");
 				return -1;
 			}
@@ -552,9 +549,9 @@ int parse_keygen_sym_options(int argc, char **argv, struct parsed_options *opts,
 		} else {
 			/* Persistent key: ID must be provided by the user */
 			if (!id_specified) {
+				ERROR("--id is required for persistent keys");
 				FPRINTF(stderr,
-					"Error: --id is required for persistent keys\n");
-				FPRINTF(stderr, "       ID must be in range");
+					"              ID must be in range");
 				FPRINTF(stderr, " (0 < id < 0x%08x)\n",
 					MAX_KEY_ID);
 				print_help_hint(prog_name, "keygen-sym");
@@ -563,8 +560,7 @@ int parse_keygen_sym_options(int argc, char **argv, struct parsed_options *opts,
 			/* Validate specified ID is in valid range */
 			if (!opts->op.keygen.key_id ||
 			    opts->op.keygen.key_id >= MAX_KEY_ID) {
-				FPRINTF(stderr,
-					"Error: Persistent key ID must be in range");
+				ERROR("Persistent key ID must be in range");
 				FPRINTF(stderr, " (0 < id < 0x%08x)\n",
 					MAX_KEY_ID);
 				print_help_hint(prog_name, "keygen-sym");

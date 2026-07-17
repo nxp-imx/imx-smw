@@ -21,7 +21,7 @@ struct cli_error_info {
 	const char *description;
 };
 
-#define ERROR(_code, _desc)                                                    \
+#define ERROR_ENTRY(_code, _desc)                                              \
 	{                                                                      \
 		.code = (_code), .name = #_code, .description = (_desc)        \
 	}

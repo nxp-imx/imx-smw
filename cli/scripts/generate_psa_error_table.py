@@ -88,7 +88,7 @@ def generate_complete_file(error_list):
     # Error table
     error_table = "static const struct cli_error_info psa_error_table[] = {\n"
     for error_code, description in error_list:
-        error_table += f'\tERROR({error_code},\n'
+        error_table += f'\tERROR_ENTRY({error_code},\n'
         error_table += f'\t      "{description}"),\n'
     error_table += "};\n\n"
 

@@ -41,9 +41,9 @@ bool is_smw_api_success(const char *func, enum smw_status_code status)
 	bool ret = false;
 
 	if (status != SMW_STATUS_OK) {
-		LOG_ERROR("%s() failed: %s (%d)\nDescription: %s", func,
-			  cli_smw_status_to_name(status), status,
-			  cli_smw_status_to_description(status));
+		LOG_SMW_ERROR("%s() failed: %s (%d)\n[DESCRIPTION] %s", func,
+			      cli_smw_status_to_name(status), status,
+			      cli_smw_status_to_description(status));
 	} else {
 		LOG_INFO("%s() succeeded: %s (%d)", func,
 			 cli_smw_status_to_name(status), status);

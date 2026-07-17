@@ -31,7 +31,7 @@
 		FILE *_tmp_fp = (fp);                                          \
 		if (_tmp_fp && fclose(_tmp_fp)) {                              \
 			(void)fprintf(stderr,                                  \
-				      "Error: fclose failed at %s:%d: %s\n",   \
+				      "[ERROR] fclose failed at %s:%d: %s\n",  \
 				      __FILE__, __LINE__, strerror(errno));    \
 		}                                                              \
 	} while (0)
@@ -47,7 +47,7 @@
 		FILE *_tmp_fp = (fp);                                          \
 		if (_tmp_fp && fflush(_tmp_fp)) {                              \
 			(void)fprintf(stderr,                                  \
-				      "Error: fflush failed at %s:%d: %s\n",   \
+				      "[ERROR] fflush failed at %s:%d: %s\n",  \
 				      __FILE__, __LINE__, strerror(errno));    \
 		}                                                              \
 	} while (0)
@@ -59,26 +59,26 @@
  *
  * Checks return value. For stderr failures, attempts stdout.
  */
-#define FPRINTF(stream, ...)                                                          \
-	do {                                                                          \
-		FILE *_tmp_stream = (stream);                                         \
-		if (fprintf(_tmp_stream, __VA_ARGS__) < 0) {                          \
-			if (_tmp_stream == stderr) {                                  \
-				(void)printf(                                         \
-					"Error: fprintf to stderr failed at %s:%d\n", \
-					__FILE__, __LINE__);                          \
-			} else if (_tmp_stream == stdout) {                           \
-				(void)fprintf(                                        \
-					stderr,                                       \
-					"Error: fprintf to stdout failed at %s:%d\n", \
-					__FILE__, __LINE__);                          \
-			} else {                                                      \
-				(void)fprintf(                                        \
-					stderr,                                       \
-					"Error: fprintf failed at %s:%d: %s\n",       \
-					__FILE__, __LINE__, strerror(errno));         \
-			}                                                             \
-		}                                                                     \
+#define FPRINTF(stream, ...)                                                           \
+	do {                                                                           \
+		FILE *_tmp_stream = (stream);                                          \
+		if (fprintf(_tmp_stream, __VA_ARGS__) < 0) {                           \
+			if (_tmp_stream == stderr) {                                   \
+				(void)printf(                                          \
+					"[ERROR] fprintf to stderr failed at %s:%d\n", \
+					__FILE__, __LINE__);                           \
+			} else if (_tmp_stream == stdout) {                            \
+				(void)fprintf(                                         \
+					stderr,                                        \
+					"[ERROR] fprintf to stdout failed at %s:%d\n", \
+					__FILE__, __LINE__);                           \
+			} else {                                                       \
+				(void)fprintf(                                         \
+					stderr,                                        \
+					"[ERROR] fprintf failed at %s:%d: %s\n",       \
+					__FILE__, __LINE__, strerror(errno));          \
+			}                                                              \
+		}                                                                      \
 	} while (0)
 
 /**
@@ -89,14 +89,14 @@
  *
  * Checks return value. Reports errors to stderr.
  */
-#define VFPRINTF(stream, fmt, args)                                            \
-	do {                                                                   \
-		FILE *_tmp_stream = (stream);                                  \
-		if (vfprintf(_tmp_stream, fmt, args) < 0) {                    \
-			(void)fprintf(stderr,                                  \
-				      "Error: vfprintf failed at %s:%d: %s\n", \
-				      __FILE__, __LINE__, strerror(errno));    \
-		}                                                              \
+#define VFPRINTF(stream, fmt, args)                                             \
+	do {                                                                    \
+		FILE *_tmp_stream = (stream);                                   \
+		if (vfprintf(_tmp_stream, fmt, args) < 0) {                     \
+			(void)fprintf(stderr,                                   \
+				      "[ERROR] vfprintf failed at %s:%d: %s\n", \
+				      __FILE__, __LINE__, strerror(errno));     \
+		}                                                               \
 	} while (0)
 
 /**
@@ -109,7 +109,7 @@
 	do {                                                                   \
 		if (printf(__VA_ARGS__) < 0) {                                 \
 			(void)fprintf(stderr,                                  \
-				      "Error: printf failed at %s:%d: %s\n",   \
+				      "[ERROR] printf failed at %s:%d: %s\n",  \
 				      __FILE__, __LINE__, strerror(errno));    \
 		}                                                              \
 	} while (0)
@@ -130,7 +130,7 @@
 		if (fwrite(ptr, size, _tmp_nmemb, _tmp_stream) !=              \
 		    _tmp_nmemb) {                                              \
 			(void)fprintf(stderr,                                  \
-				      "Error: fwrite failed at %s:%d: %s\n",   \
+				      "[ERROR] fwrite failed at %s:%d: %s\n",  \
 				      __FILE__, __LINE__, strerror(errno));    \
 		}                                                              \
 	} while (0)
@@ -143,22 +143,34 @@
  *
  * Checks for errors and truncation. Reports to stderr on failure.
  */
-#define SNPRINTF(dest, size, ...)                                                     \
-	do {                                                                          \
-		char *_tmp_dest = (dest);                                             \
-		size_t _tmp_size = (size);                                            \
-		int _ret = snprintf(_tmp_dest, _tmp_size, __VA_ARGS__);               \
-		if (_ret < 0) {                                                       \
-			(void)fprintf(stderr,                                         \
-				      "Error: snprintf failed at %s:%d\n",            \
-				      __FILE__, __LINE__);                            \
-			_tmp_dest[0] = '\0';                                          \
-		} else if ((size_t)_ret >= _tmp_size) {                               \
-			(void)fprintf(                                                \
-				stderr,                                               \
-				"Error: String truncated at %s:%d (max %zu chars)\n", \
-				__FILE__, __LINE__, (size_t)_tmp_size - 1);           \
-		}                                                                     \
+#define SNPRINTF(dest, size, ...)                                                      \
+	do {                                                                           \
+		char *_tmp_dest = (dest);                                              \
+		size_t _tmp_size = (size);                                             \
+		int _ret = snprintf(_tmp_dest, _tmp_size, __VA_ARGS__);                \
+		if (_ret < 0) {                                                        \
+			(void)fprintf(stderr,                                          \
+				      "[ERROR] snprintf failed at %s:%d\n",            \
+				      __FILE__, __LINE__);                             \
+			_tmp_dest[0] = '\0';                                           \
+		} else if ((size_t)_ret >= _tmp_size) {                                \
+			(void)fprintf(                                                 \
+				stderr,                                                \
+				"[ERROR] String truncated at %s:%d (max %zu chars)\n", \
+				__FILE__, __LINE__, (size_t)_tmp_size - 1);            \
+		}                                                                      \
 	} while (0)
+
+/**
+ * SAFE_ARGV_OPT - Safely retrieve the option string from argv using optind.
+ *
+ * @argv: The argument vector
+ * @fallback: String to return if optind - 1 is not a valid index
+ *
+ * Avoids signed integer overflow of (optind - 1) by checking optind > 0
+ * before subtraction. Returns a fallback string if index is out of range.
+ */
+#define SAFE_ARGV_OPT(argv, fallback)                                          \
+	((optind) > 0 ? (argv)[(optind) - 1] : (fallback))
 
 #endif /* CLI_HELPER_H */

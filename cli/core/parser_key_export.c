@@ -10,13 +10,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include "cli_print.h"
 #include "helper.h"
 #include "opt_parser.h"
 #include "parser_key_export.h"
 #include "utils.h"
 
 /* Short getopt options for key export */
-static const char *key_export_short_opts = "hi:o:S:L::dp";
+static const char *key_export_short_opts = ":hi:o:S:L::dp";
 
 /* Define options for key export operation */
 static const struct option key_export_options[] = {
@@ -77,13 +78,12 @@ static int parse_key_id(const char *id_str, unsigned int *id)
 	tmp = strtoul(id_str, &endptr, 0);
 
 	if (errno || endptr == id_str || *endptr != '\0') {
-		FPRINTF(stderr, "Error: Invalid key ID value '%s'\n", id_str);
+		ERROR("Invalid key ID value '%s'", id_str);
 		return -1;
 	}
 
 	if (tmp > UINT32_MAX || !tmp) {
-		FPRINTF(stderr, "Error: Key ID must be between 1 and %u\n",
-			UINT32_MAX);
+		ERROR("Key ID must be between 1 and %u", UINT32_MAX);
 		return -1;
 	}
 
@@ -105,6 +105,7 @@ int parse_key_export_options(int argc, char **argv, struct parsed_options *opts,
 	int opt = 0;
 	int option_index = 0;
 	bool id_specified = false;
+	opterr = 0;
 
 	while ((opt = getopt_long(argc, argv, key_export_short_opts,
 				  key_export_options, &option_index)) != -1) {
@@ -115,8 +116,7 @@ int parse_key_export_options(int argc, char **argv, struct parsed_options *opts,
 
 		case 'i':
 			if (!optarg) {
-				FPRINTF(stderr,
-					"Error: --id requires an argument\n");
+				ERROR("--id requires an argument");
 				print_help_hint(prog_name, "key-export");
 				return -1;
 			}
@@ -129,8 +129,7 @@ int parse_key_export_options(int argc, char **argv, struct parsed_options *opts,
 
 		case 'o':
 			if (!optarg || optarg[0] == '\0' || optarg[0] == '-') {
-				FPRINTF(stderr,
-					"Error: --pub-output requires an argument\n");
+				ERROR("--pub-output requires an argument");
 				print_help_hint(prog_name, "key-export");
 				return -1;
 			}
@@ -144,8 +143,7 @@ int parse_key_export_options(int argc, char **argv, struct parsed_options *opts,
 
 		case 'd':
 			if (opts->op.key_export.use_pem) {
-				FPRINTF(stderr,
-					"Error: --der and --pem are mutually exclusive\n");
+				ERROR("--der and --pem are mutually exclusive");
 				print_help_hint(prog_name, "key-export");
 				return -1;
 			}
@@ -154,8 +152,7 @@ int parse_key_export_options(int argc, char **argv, struct parsed_options *opts,
 
 		case 'p':
 			if (opts->op.key_export.use_der) {
-				FPRINTF(stderr,
-					"Error: --der and --pem are mutually exclusive\n");
+				ERROR("--der and --pem are mutually exclusive");
 				print_help_hint(prog_name, "key-export");
 				return -1;
 			}
@@ -172,7 +169,18 @@ int parse_key_export_options(int argc, char **argv, struct parsed_options *opts,
 				return -1;
 			break;
 
+		case ':':
+			/* Missing argument for a known option */
+			ERROR("Option '%s' requires an argument",
+			      SAFE_ARGV_OPT(argv, "<unknown>"));
+			print_help_hint(prog_name, "key-export");
+			return -1;
+
+		case '?':
 		default:
+			/* Unknown option */
+			ERROR("Unknown option '%s'",
+			      SAFE_ARGV_OPT(argv, "<unknown>"));
 			print_help_hint(prog_name, "key-export");
 			return -1;
 		}
@@ -181,15 +189,13 @@ int parse_key_export_options(int argc, char **argv, struct parsed_options *opts,
 	/* Validate required options */
 	if (!opts->show_help) {
 		if (!id_specified) {
-			FPRINTF(stderr,
-				"Error: --id is required for key export\n");
+			ERROR("--id is required for key export");
 			print_help_hint(prog_name, "key-export");
 			return -1;
 		}
 
 		if (!opts->op.key_export.key_file) {
-			FPRINTF(stderr,
-				"Error: --pub-output is required for key export\n");
+			ERROR("--pub-output is required for key export");
 			print_help_hint(prog_name, "key-export");
 			return -1;
 		}

@@ -99,7 +99,7 @@ def generate_complete_file(status_list):
     # Error table
     error_table = "static const struct cli_error_info smw_error_table[] = {\n"
     for status_code, description in status_list:
-        error_table += f'\tERROR({status_code},\n'
+        error_table += f'\tERROR_ENTRY({status_code},\n'
         error_table += f'\t      "{description}"),\n'
     error_table += "};\n\n"
 

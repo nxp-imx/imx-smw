@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include "cli_print.h"
 #include "hash_table_generated.h"
 #include "helper.h"
 #include "opt_parser.h"
@@ -19,7 +20,7 @@
 #define MAX_HASH_LENGTH 1024
 
 /* Short getopt options for HASH */
-static const char *hash_short_opts = "ha:i:o:S:L::l:t";
+static const char *hash_short_opts = ":ha:i:o:S:L::l:t";
 
 /* Define options for HASH operation */
 static const struct option hash_options[] = {
@@ -105,16 +106,14 @@ static enum hash_algo parse_hash_algo(const char *algo_str)
 
 	/* Validate input */
 	if (!algo_str || algo_str[0] == '\0') {
-		FPRINTF(stderr, "Error: Hash algorithm cannot be empty\n");
+		ERROR("Hash algorithm cannot be empty");
 		return HASH_ALGO_NONE;
 	}
 
 	/* Reject if it looks like an option */
 	if (algo_str[0] == '-') {
-		FPRINTF(stderr,
-			"Error: Hash algorithm cannot start with '-'.\n");
-		FPRINTF(stderr,
-			"       Use --list to see available algorithms\n");
+		ERROR("Hash algorithm cannot start with '-'");
+		PRINT_USE_LIST("algorithms");
 		return HASH_ALGO_NONE;
 	}
 
@@ -124,8 +123,8 @@ static enum hash_algo parse_hash_algo(const char *algo_str)
 			return hash_algo_table[i].algo;
 	}
 
-	FPRINTF(stderr, "Error: Unknown hash algorithm '%s'\n", algo_str);
-	FPRINTF(stderr, "       Use --list to see available algorithms\n");
+	ERROR("Unknown hash algorithm '%s'", algo_str);
+	PRINT_USE_LIST("algorithms");
 	return HASH_ALGO_NONE;
 }
 
@@ -141,6 +140,7 @@ int parse_hash_options(int argc, char **argv, struct parsed_options *opts,
 		       const char *prog_name)
 {
 	int opt = 0;
+	opterr = 0;
 
 	while ((opt = getopt_long(argc, argv, hash_short_opts, hash_options,
 				  NULL)) != -1) {
@@ -154,8 +154,7 @@ int parse_hash_options(int argc, char **argv, struct parsed_options *opts,
 
 		case 'a':
 			if (!optarg) {
-				FPRINTF(stderr,
-					"Error: --algo requires an argument\n");
+				ERROR("--algo requires an argument");
 				print_help_hint(prog_name, "hash");
 				return -1;
 			}
@@ -189,8 +188,7 @@ int parse_hash_options(int argc, char **argv, struct parsed_options *opts,
 			unsigned long tmp = 0;
 
 			if (!optarg) {
-				FPRINTF(stderr,
-					"Error: --length requires an argument\n");
+				ERROR("--length requires an argument");
 				print_help_hint(prog_name, "hash");
 				return -1;
 			}
@@ -199,16 +197,13 @@ int parse_hash_options(int argc, char **argv, struct parsed_options *opts,
 			tmp = strtoul(optarg, &endptr, 10);
 
 			if (errno || endptr == optarg || *endptr != '\0') {
-				FPRINTF(stderr,
-					"Error: Invalid length value '%s'\n",
-					optarg);
+				ERROR("Invalid length value '%s'", optarg);
 				print_help_hint(prog_name, "hash");
 				return -1;
 			}
 
 			if (!tmp || tmp > MAX_HASH_LENGTH) {
-				FPRINTF(stderr,
-					"Error: Length must be between 1 and 1024 bytes\n");
+				ERROR("Length must be between 1 and 1024 bytes");
 				print_help_hint(prog_name, "hash");
 				return -1;
 			}
@@ -229,7 +224,18 @@ int parse_hash_options(int argc, char **argv, struct parsed_options *opts,
 			opts->text_format = true;
 			break;
 
+		case ':':
+			/* Missing argument for a known option */
+			ERROR("Option '%s' requires an argument",
+			      SAFE_ARGV_OPT(argv, "<unknown>"));
+			print_help_hint(prog_name, "hash");
+			return -1;
+
+		case '?':
 		default:
+			/* Unknown option */
+			ERROR("Unknown option '%s'",
+			      SAFE_ARGV_OPT(argv, "<unknown>"));
 			print_help_hint(prog_name, "hash");
 			return -1;
 		}
@@ -244,27 +250,22 @@ int parse_hash_options(int argc, char **argv, struct parsed_options *opts,
 	/* Validate required options */
 	if (!opts->show_help) {
 		if (opts->op.hash.algo == HASH_ALGO_NONE) {
-			FPRINTF(stderr,
-				"Error: --algo is required for hash operation\n");
-			FPRINTF(stderr,
-				"       Use --list to see available algorithms\n");
+			ERROR("--algo is required for hash operation");
+			PRINT_USE_LIST("algorithms");
 			print_help_hint(prog_name, "hash");
 			return -1;
 		}
 
 		if (!opts->input_filename) {
-			FPRINTF(stderr,
-				"Error: --input is required for hash operation\n");
+			ERROR("--input is required for hash operation");
 			print_help_hint(prog_name, "hash");
 			return -1;
 		}
 
 		if (opts->op.hash.output_length > 0 &&
 		    !is_hash_algo_xof(opts->op.hash.algo)) {
-			FPRINTF(stderr,
-				"Error: --length option is only valid for XOF algorithms (e.g., SHAKE256)\n");
-			FPRINTF(stderr,
-				"       Use --list to see available algorithms\n");
+			ERROR("--length option is only valid for XOF algorithms (e.g., SHAKE256)");
+			PRINT_USE_LIST("algorithms");
 			print_help_hint(prog_name, "hash");
 			return -1;
 		}

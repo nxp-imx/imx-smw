@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include "cli_print.h"
 #include "helper.h"
 #include "opt_parser.h"
 #include "parser_cipher.h"
@@ -158,8 +159,7 @@ smw_subsystem_t parse_subsystem(const char *subsystem_str)
 	if (!strcasecmp(subsystem_str, "SECO"))
 		return SMW_SUBSYSTEM_NAME_SECO;
 
-	FPRINTF(stderr, "Warning: Unknown subsystem '%s', using default\n",
-		subsystem_str);
+	WARNING("Unknown subsystem '%s', using default\n", subsystem_str);
 	return SMW_SUBSYSTEM_NAME_NONE;
 }
 
@@ -183,21 +183,19 @@ char *parse_file_opt(const char *src, const char *field_name)
 		goto cleanup;
 
 	if (src[0] == '-') {
-		FPRINTF(stderr, "Error: %s cannot start with '-'.\n",
-			field_name);
+		ERROR("%s cannot start with '-'", field_name);
 		goto cleanup;
 	}
 
 	dest = calloc(src_len + 1, 1);
 	if (!dest) {
-		FPRINTF(stderr, "Error: Out of memory allocating %s\n",
-			field_name);
+		ERROR("Out of memory allocating %s", field_name);
 		goto cleanup;
 	}
 
 	ret = snprintf(dest, src_len + 1, "%s", src);
 	if (ret < 0) {
-		FPRINTF(stderr, "Error: Failed to set %s\n", field_name);
+		ERROR("Failed to set %s", field_name);
 		goto cleanup;
 	}
 
@@ -303,7 +301,7 @@ enum operation parse_cli_options(int argc, char **argv,
 
 	/* Check if there is at least one argument for the operation */
 	if (argc < 2) {
-		FPRINTF(stderr, "Error: Must specify an operation\n");
+		ERROR("Must specify an operation");
 		print_short_usage(argv[0]);
 		return OP_NONE;
 	}
@@ -311,7 +309,7 @@ enum operation parse_cli_options(int argc, char **argv,
 	/* Find operation in dispatch table */
 	parser = find_operation_parser(argv[1]);
 	if (!parser) {
-		FPRINTF(stderr, "Error: Invalid operation '%s'\n", argv[1]);
+		ERROR("Invalid operation '%s'", argv[1]);
 		print_short_usage(argv[0]);
 		return OP_NONE;
 	}

@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include "cli_print.h"
 #include "helper.h"
 #include "mac_algo_mappings.h"
 #include "opt_parser.h"
@@ -110,15 +111,13 @@ int mac_parse_algo_string(const char *algo_str, char *base_algo,
 
 	if (!dash) {
 		if (!is_valid_mac_base(algo_str)) {
-			FPRINTF(stderr, "Error: Unknown MAC algorithm '%s'\n",
-				algo_str);
+			ERROR("Unknown MAC algorithm '%s'", algo_str);
 			return -1;
 		}
 
 		if (mac_base_needs_hash(algo_str)) {
-			FPRINTF(stderr,
-				"Error: '%s' requires a hash, use e.g. '%s-SHA256'\n",
-				algo_str, algo_str);
+			ERROR("'%s' requires a hash, use e.g. '%s-SHA256'",
+			      algo_str, algo_str);
 			return -1;
 		}
 
@@ -129,8 +128,7 @@ int mac_parse_algo_string(const char *algo_str, char *base_algo,
 	base_len = (size_t)(dash - algo_str);
 
 	if (!base_len || base_len >= base_size) {
-		FPRINTF(stderr, "Error: Invalid MAC algorithm format '%s'\n",
-			algo_str);
+		ERROR("Invalid MAC algorithm format '%s'", algo_str);
 		return -1;
 	}
 
@@ -138,29 +136,25 @@ int mac_parse_algo_string(const char *algo_str, char *base_algo,
 	base_algo[base_len] = '\0';
 
 	if (!is_valid_mac_base(base_algo)) {
-		FPRINTF(stderr, "Error: Unknown MAC base algorithm '%s'\n",
-			base_algo);
+		ERROR("Unknown MAC base algorithm '%s'", base_algo);
 		return -1;
 	}
 
 	if (!mac_base_needs_hash(base_algo)) {
-		FPRINTF(stderr,
-			"Error: '%s' does not use a hash, remove '-%s'\n",
-			base_algo, dash + 1);
+		ERROR("'%s' does not use a hash, remove '-%s'", base_algo,
+		      dash + 1);
 		return -1;
 	}
 
 	if (!*(dash + 1)) {
-		FPRINTF(stderr, "Error: Missing hash after '-' in '%s'\n",
-			algo_str);
+		ERROR("Missing hash after '-' in '%s'", algo_str);
 		return -1;
 	}
 
 	if (!is_valid_hmac_hash(dash + 1)) {
-		FPRINTF(stderr, "Error: Unknown hash algorithm '%s' for %s\n",
-			dash + 1, base_algo);
-		FPRINTF(stderr,
-			"       Use --list to see supported hash algorithms\n");
+		ERROR("Unknown hash algorithm '%s' for %s", dash + 1,
+		      base_algo);
+		PRINT_USE_LIST("algorithms");
 		return -1;
 	}
 
@@ -186,12 +180,12 @@ static int parse_mac_key_id(const char *id_str, unsigned int *id)
 	tmp = strtoul(id_str, &endptr, 0);
 
 	if (errno || endptr == id_str || *endptr != '\0') {
-		FPRINTF(stderr, "Error: Invalid key ID value '%s'\n", id_str);
+		ERROR("Invalid key ID value '%s'", id_str);
 		return -1;
 	}
 
 	if (tmp > UINT32_MAX) {
-		FPRINTF(stderr, "Error: Key ID value too large\n");
+		ERROR("Key ID value too large");
 		return -1;
 	}
 
@@ -313,7 +307,7 @@ void cli_mac_verify_help_common(void)
 }
 
 /* Short getopt options string for MAC (compute) */
-static const char *mac_short_opts = "hk:a:i:m:S:L::t";
+static const char *mac_short_opts = ":hk:a:i:m:S:L::t";
 
 /* Define options for MAC (compute) operation */
 static const struct option mac_options[] = {
@@ -358,8 +352,7 @@ int parse_mac_options(int argc, char **argv, struct parsed_options *opts,
 
 		case 'k':
 			if (!optarg) {
-				FPRINTF(stderr,
-					"Error: --key-id requires an argument\n");
+				ERROR("--key-id requires an argument");
 				print_help_hint(prog_name, "mac");
 				return -1;
 			}
@@ -375,8 +368,7 @@ int parse_mac_options(int argc, char **argv, struct parsed_options *opts,
 			char hash[MAC_HASH_MAX_LEN] = { 0 };
 
 			if (!optarg || optarg[0] == '-') {
-				FPRINTF(stderr,
-					"Error: --algo requires an argument\n");
+				ERROR("--algo requires an argument");
 				print_help_hint(prog_name, "mac");
 				return -1;
 			}
@@ -389,8 +381,7 @@ int parse_mac_options(int argc, char **argv, struct parsed_options *opts,
 
 			opts->op.mac.algo = strdup(optarg);
 			if (!opts->op.mac.algo) {
-				FPRINTF(stderr,
-					"Error: Memory allocation failed\n");
+				ERROR("Memory allocation failed");
 				return -1;
 			}
 			break;
@@ -428,7 +419,18 @@ int parse_mac_options(int argc, char **argv, struct parsed_options *opts,
 			opts->text_format = true;
 			break;
 
+		case ':':
+			/* Missing argument for a known option */
+			ERROR("Option '%s' requires an argument",
+			      SAFE_ARGV_OPT(argv, "<unknown>"));
+			print_help_hint(prog_name, "mac");
+			return -1;
+
+		case '?':
 		default:
+			/* Unknown option */
+			ERROR("Unknown option '%s'",
+			      SAFE_ARGV_OPT(argv, "<unknown>"));
 			print_help_hint(prog_name, "mac");
 			return -1;
 		}
@@ -441,22 +443,20 @@ int parse_mac_options(int argc, char **argv, struct parsed_options *opts,
 
 	if (!opts->show_help) {
 		if (!key_id_set) {
-			FPRINTF(stderr,
-				"Error: --key-id is required for mac\n");
+			ERROR("--key-id is required for mac");
 			print_help_hint(prog_name, "mac");
 			return -1;
 		}
 
 		if (!opts->op.mac.algo) {
-			FPRINTF(stderr, "Error: --algo is required for mac\n");
-			FPRINTF(stderr,
-				"       Use --list to see supported algorithms\n");
+			ERROR("--algo is required for mac");
+			PRINT_USE_LIST("algorithms");
 			print_help_hint(prog_name, "mac");
 			return -1;
 		}
 
 		if (!opts->input_filename) {
-			FPRINTF(stderr, "Error: --input is required for mac\n");
+			ERROR("--input is required for mac");
 			print_help_hint(prog_name, "mac");
 			return -1;
 		}
@@ -466,7 +466,7 @@ int parse_mac_options(int argc, char **argv, struct parsed_options *opts,
 }
 
 /* Short getopt options string for MAC (verify) */
-static const char *mac_verify_short_opts = "hk:a:i:m:S:L::";
+static const char *mac_verify_short_opts = ":hk:a:i:m:S:L::";
 
 /* Define options for MAC (verify) operation */
 static const struct option mac_verify_options[] = {
@@ -495,6 +495,7 @@ int parse_mac_verify_options(int argc, char **argv, struct parsed_options *opts,
 	int opt = 0;
 	int option_index = 0;
 	bool key_id_set = false;
+	opterr = 0;
 
 	while ((opt = getopt_long(argc, argv, mac_verify_short_opts,
 				  mac_verify_options, &option_index)) != -1) {
@@ -511,8 +512,7 @@ int parse_mac_verify_options(int argc, char **argv, struct parsed_options *opts,
 
 		case 'k':
 			if (!optarg) {
-				FPRINTF(stderr,
-					"Error: --key-id requires an argument\n");
+				ERROR("--key-id requires an argument");
 				print_help_hint(prog_name, "mac-verify");
 				return -1;
 			}
@@ -528,8 +528,7 @@ int parse_mac_verify_options(int argc, char **argv, struct parsed_options *opts,
 			char hash[MAC_HASH_MAX_LEN] = { 0 };
 
 			if (!optarg || optarg[0] == '-') {
-				FPRINTF(stderr,
-					"Error: --algo requires an argument\n");
+				ERROR("--algo requires an argument");
 				print_help_hint(prog_name, "mac-verify");
 				return -1;
 			}
@@ -542,8 +541,7 @@ int parse_mac_verify_options(int argc, char **argv, struct parsed_options *opts,
 
 			opts->op.mac.algo = strdup(optarg);
 			if (!opts->op.mac.algo) {
-				FPRINTF(stderr,
-					"Error: Memory allocation failed\n");
+				ERROR("Memory allocation failed");
 				return -1;
 			}
 			break;
@@ -577,7 +575,18 @@ int parse_mac_verify_options(int argc, char **argv, struct parsed_options *opts,
 				return -1;
 			break;
 
+		case ':':
+			/* Missing argument for a known option */
+			ERROR("Option '%s' requires an argument",
+			      SAFE_ARGV_OPT(argv, "<unknown>"));
+			print_help_hint(prog_name, "mac-verify");
+			return -1;
+
+		case '?':
 		default:
+			/* Unknown option */
+			ERROR("Unknown option '%s'",
+			      SAFE_ARGV_OPT(argv, "<unknown>"));
 			print_help_hint(prog_name, "mac-verify");
 			return -1;
 		}
@@ -590,31 +599,26 @@ int parse_mac_verify_options(int argc, char **argv, struct parsed_options *opts,
 
 	if (!opts->show_help) {
 		if (!key_id_set) {
-			FPRINTF(stderr,
-				"Error: --key-id is required for mac-verify\n");
+			ERROR("--key-id is required for mac-verify");
 			print_help_hint(prog_name, "mac-verify");
 			return -1;
 		}
 
 		if (!opts->op.mac.algo) {
-			FPRINTF(stderr,
-				"Error: --algo is required for mac-verify\n");
-			FPRINTF(stderr,
-				"       Use --list to see supported algorithms\n");
+			ERROR("--algo is required for mac-verify");
+			PRINT_USE_LIST("algorithms");
 			print_help_hint(prog_name, "mac-verify");
 			return -1;
 		}
 
 		if (!opts->input_filename) {
-			FPRINTF(stderr,
-				"Error: --input is required for mac-verify\n");
+			ERROR("--input is required for mac-verify");
 			print_help_hint(prog_name, "mac-verify");
 			return -1;
 		}
 
 		if (!opts->op.mac.mac_filename) {
-			FPRINTF(stderr,
-				"Error: --mac is required for mac-verify\n");
+			ERROR("--mac is required for mac-verify");
 			print_help_hint(prog_name, "mac-verify");
 			return -1;
 		}

@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "cli_print.h"
 #include "helper.h"
 #include "logger.h"
 #include "opt_parser.h"
@@ -140,10 +141,15 @@ int util_write_output_data(const unsigned char *buffer, size_t size,
 			}
 		}
 	} else {
+		printf("Output      :\n\n");
 		/* No output file: write to stdout */
 		fprint_hex_dump(stdout, buffer, size);
 	}
 
+	if (filename && strlen(filename) > 0)
+		INFO("Output", "%s (%zu bytes)", filename, size);
+
+	printf("\n");
 	ret = 0; /* Success */
 
 cleanup:

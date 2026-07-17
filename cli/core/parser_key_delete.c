@@ -9,13 +9,14 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include "cli_print.h"
 #include "helper.h"
 #include "opt_parser.h"
 #include "parser_key_delete.h"
 #include "utils.h"
 
 /* Short getopt options for key delete */
-static const char *key_delete_short_opts = "hi:S:L::";
+static const char *key_delete_short_opts = ":hi:S:L::";
 
 /* Define options for key delete operation */
 static const struct option key_delete_options[] = {
@@ -70,13 +71,12 @@ static int parse_key_id(const char *id_str, unsigned int *id)
 	tmp = strtoul(id_str, &endptr, 0);
 
 	if (errno || endptr == id_str || *endptr != '\0') {
-		FPRINTF(stderr, "Error: Invalid key ID value '%s'\n", id_str);
+		ERROR("Invalid key ID value '%s'", id_str);
 		return -1;
 	}
 
 	if (tmp > UINT32_MAX || !tmp) {
-		FPRINTF(stderr, "Error: Key ID must be between 1 and %u\n",
-			UINT32_MAX);
+		ERROR("Key ID must be between 1 and %u", UINT32_MAX);
 		return -1;
 	}
 
@@ -98,6 +98,7 @@ int parse_key_delete_options(int argc, char **argv, struct parsed_options *opts,
 	int opt = 0;
 	int option_index = 0;
 	bool id_specified = false;
+	opterr = 0;
 
 	while ((opt = getopt_long(argc, argv, key_delete_short_opts,
 				  key_delete_options, &option_index)) != -1) {
@@ -108,8 +109,7 @@ int parse_key_delete_options(int argc, char **argv, struct parsed_options *opts,
 
 		case 'i':
 			if (!optarg) {
-				FPRINTF(stderr,
-					"Error: --id requires an argument\n");
+				ERROR("--id requires an argument");
 				print_help_hint(prog_name, "key-delete");
 				return -1;
 			}
@@ -130,7 +130,18 @@ int parse_key_delete_options(int argc, char **argv, struct parsed_options *opts,
 				return -1;
 			break;
 
+		case ':':
+			/* Missing argument for a known option */
+			ERROR("Option '%s' requires an argument",
+			      SAFE_ARGV_OPT(argv, "<unknown>"));
+			print_help_hint(prog_name, "key-delete");
+			return -1;
+
+		case '?':
 		default:
+			/* Unknown option */
+			ERROR("Unknown option '%s'",
+			      SAFE_ARGV_OPT(argv, "<unknown>"));
 			print_help_hint(prog_name, "key-delete");
 			return -1;
 		}
@@ -139,8 +150,7 @@ int parse_key_delete_options(int argc, char **argv, struct parsed_options *opts,
 	/* Validate required options */
 	if (!opts->show_help) {
 		if (!id_specified) {
-			FPRINTF(stderr,
-				"Error: --id is required for key delete\n");
+			ERROR("--id is required for key delete");
 			print_help_hint(prog_name, "key-delete");
 			return -1;
 		}

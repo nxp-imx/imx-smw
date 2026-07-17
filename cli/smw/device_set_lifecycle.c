@@ -9,11 +9,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include "apis_dispatcher.h"
+#include "cli_print.h"
 #include "common.h"
 #include "error_handler.h"
 #include "helper.h"
 #include "lifecycle_table.h"
 #include "logger.h"
+#include "utils.h"
 
 #define USAGE_STR 8
 
@@ -47,9 +49,8 @@ static int confirm_lifecycle_change(const char *lifecycle_str)
 {
 	char input[USAGE_STR] = { 0 };
 
-	printf("\n");
-	printf("Warning: You are about to change the device lifecycle to: %s\n",
-	       lifecycle_str);
+	WARNING("You are about to change the device lifecycle to: %s\n",
+		lifecycle_str);
 	printf("This operation is IRREVERSIBLE.\n\n");
 	printf("Type 'yes' to confirm, anything else to cancel: ");
 	FFLUSH(stdout);
@@ -92,7 +93,8 @@ enum cli_exit_code cli_dev_set_lifecycle_operation(struct parsed_options *args)
 	target_lifecycle =
 		string_to_lifecycle_name(args->op.dev_set_lc.lifecycle_name);
 	if (target_lifecycle == SMW_LIFECYCLE_NAME_NONE) {
-		LOG_ERROR("Unknown lifecycle. Use --list to see valid names.");
+		LOG_ERROR("Unknown lifecycle");
+		PRINT_USE_LIST("types");
 		goto cleanup;
 	}
 
@@ -117,6 +119,7 @@ enum cli_exit_code cli_dev_set_lifecycle_operation(struct parsed_options *args)
 	if (!is_smw_api_success("smw_device_set_lifecycle", status))
 		goto cleanup;
 
+	SUCCESS("Set Device Lifecycle");
 	LOG_INFO("Lifecycle successfully set to: %s (%d)", lifecycle_str,
 		 target_lifecycle);
 

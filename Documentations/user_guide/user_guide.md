@@ -140,7 +140,7 @@ and supported by the SMW Library.
   <td>HKDF</td>
 	<td>❌</td>
 	<td>✔️</td>
-	<td>❌</td>
+	<td>✔️<sup><a href="#t_note_7">7</a></sup></td>
 	<td>✔️</td>
 	<td>✔️</td>
 	<td>❌️</td>
@@ -371,6 +371,7 @@ and supported by the SMW Library.
 									use/access provisioned assets with the
 									PKCS#11 APIs (see <a href="#5-pkcs11">5. PKCS11</a>).<br>
 <a name="t_note_6"><sup>6</sup></a> Using a vendor algorithm. See the declaration of <code>PSA_ALG_VENDOR_TLS13</code> for more details.<br>
+<a name="t_note_7"><sup>7</sup></a> HKDF operations are only supported on i.MX937, i.MX943 and i.MX952, and only SHA-256 is supported as the PRF hash algorithm.<br>
 </p>
 
 Following <a href="#table-certificate">Certificates table</a> lists the certificate types supported by SMW, PKCS#11 and PSA libraries.

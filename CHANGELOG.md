@@ -83,6 +83,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * TEE: Fix coverity 2026.6.0 findings
 * ELE: Add ELA one-shot HMAC (HMAC-SHA256, HMAC-SHA384 and HMAC-SHA512)
   compute and verify support for plaintext key buffers.
+* ELE: Add HKDF key derivation support (full HKDF, Extract and Expand steps).
 
 ##### 3. ARM PSA APIs
 
@@ -108,6 +109,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Update the i.MX943 and i.MX952 configuration files to enable ELA support for
   MAC one-shot operations.
 * Add wait API
+* Add DERIVE key type to ELE configuration files to enable key generation of
+  DERIVE type keys on all ELE platforms.
 
 #### SMW Tests
 
@@ -126,12 +129,14 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add i.MX937 validation.
 * Add PSA test `U_PSA_Attributes_004` validating key permitted algorithm
   `PSA_ALG_VENDOR_ECDSA_ATTESTATION` and `PSA_ALG_VENDOR_CMAC_ATTESTATION`.
+* Add ELE tests to validate HKDF key derivation operations.
 
 #### PKCS#11 Library
 
 * Add support for `CKM_AES_CFB128` and `CKM_AES_OFB` mechanisms.
 * Fix RSA PSS when the mask generation function is set by the user.
-
+* Add `CKM_HKDF_DERIVE` support for plaintext base keys.
+* Support plaintext cipher keys in cipher operations.
 
 #### PKCS#11 Tests
 
@@ -139,6 +144,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add RSA PSS test where the mask generation function is set.
 * Add i.MX937 validation.
 * Fix coverity 2026.6.0 findings
+* Skip HKDF derive tests on ELE if not i.MX937, i.MX943 or i.MX952, and on SECO.
 
 #### CLI Application
 

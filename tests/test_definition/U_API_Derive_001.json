@@ -1,7 +1,7 @@
 {
 	"keys": {
 		"key 1": {
-			"type": "SECP_R1",
+			"type": "DERIVE",
 			"security_size": 256,
 			"attributes_list": [
 				"TRANSIENT"
@@ -92,7 +92,14 @@
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
-		"key_name": "key 1"
+		"key_name": "key 1",
+		"restriction_list": [
+			"imx8ulp",
+			"imx8qxp",
+			"imx91",
+			"imx93",
+			"imx95"
+		]
 	},
 	"subtest 2": {
 		"description": "Key derivation argument is NULL",

@@ -1761,17 +1761,13 @@ static int kdf_hkdf_prepare_result(struct subtest_data *subtest,
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	if (args->kdf_name == SMW_KDF_NAME_HKDF_EXPAND ||
-	    args->kdf_name == SMW_KDF_NAME_HKDF) {
-		res = util_key_get_key_params(subtest, OP_OUTPUT_OBJ,
-					      &okey_params);
-		if (res != ERR_CODE(PASSED))
-			return res;
+	res = util_key_get_key_params(subtest, OP_OUTPUT_OBJ, &okey_params);
+	if (res != ERR_CODE(PASSED))
+		return res;
 
-		res = key_read_attributes(okey_params, &key->attributes);
-		if (res != ERR_CODE(PASSED))
-			return res;
-	}
+	res = key_read_attributes(okey_params, &key->attributes);
+	if (res != ERR_CODE(PASSED))
+		return res;
 
 	return res;
 }

@@ -1,0 +1,169 @@
+{
+	"keys": {
+		"base key 1": {
+			"type": "DERIVE",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"DERIVE"
+			],
+			"permitted_algo": [
+				"HKDF",
+				"HASH=SHA256"
+			]
+		},
+		"derived key 1": {
+			"type": "AES",
+			"security_size": 128,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"ECB_NO_PADDING"
+			]
+		},
+		"prk opaque": {
+			"type": "DERIVE",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"DERIVE"
+			],
+			"permitted_algo": [
+				"HKDF",
+				"HASH=SHA256"
+			]
+		},
+		"derived key 2": {
+			"type": "AES",
+			"security_size": 128,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"ECB_NO_PADDING"
+			]
+		}
+	},
+	"subtest 1": {
+		"description": "Generate opaque DERIVE key (base key 1)",
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "base key 1",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93",
+			"imx95"
+		]
+	},
+	"subtest 2": {
+		"description":
+			"HKDF full SHA256 - opaque base key, salt and info provided, AES-128 output stored",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "base key 1",
+		"op_type": "HKDF",
+		"store_key": true,
+		"op_args": {
+			"salt": "000102030405060708090a0b0c0d0e0f",
+			"info": "f0f1f2f3f4f5f6f7f8f9",
+			"algo": "SHA256"
+		},
+		"op_output": "derived key 1",
+		"depends": 1,
+		"result": "SMW_STATUS_OK"
+	},
+	"subtest 3": {
+		"description":
+			"HKDF extract SHA256 - opaque base key, salt provided, PRK stored",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "base key 1",
+		"op_type": "HKDF_EXTRACT",
+		"store_key": true,
+		"op_args": {
+			"salt": "000102030405060708090a0b0c0d0e0f",
+			"algo": "SHA256"
+		},
+		"op_output": "prk opaque",
+		"depends": 1,
+		"result": "SMW_STATUS_OK"
+	},
+	"subtest 4": {
+		"description":
+			"HKDF expand SHA256 - PRK from subtest 3, info provided, AES-128 output stored",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "prk opaque",
+		"op_type": "HKDF_EXPAND",
+		"store_key": true,
+		"op_args": {
+			"info": "f0f1f2f3f4f5f6f7f8f9",
+			"algo": "SHA256"
+		},
+		"op_output": "derived key 2",
+		"depends": 3,
+		"result": "SMW_STATUS_OK"
+	},
+	"subtest 5": {
+		"description": "ECB encrypt with derived key 1 (from full HKDF)",
+		"command": "CIPHER",
+		"subsystem": "ELE",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"key_name": "derived key 1",
+		"input": "30313233343536373839404142434445",
+		"cipher_id": 1,
+		"depends": 2,
+		"result": "SMW_STATUS_OK"
+	},
+	"subtest 6": {
+		"description":
+			"ECB decrypt with derived key 2 (from HKDF extract+expand) - output must match original plaintext",
+		"command": "CIPHER",
+		"subsystem": "ELE",
+		"mode": "ECB",
+		"op_type": "DECRYPT",
+		"key_name": "derived key 2",
+		"cipher_id": 1,
+		"output": "30313233343536373839404142434445",
+		"depends": [
+			4,
+			5
+		],
+		"result": "SMW_STATUS_OK"
+	},
+	"subtest 7": {
+		"command": "DELETE",
+		"key_name": "base key 1",
+		"depends": 1
+	},
+	"subtest 8": {
+		"command": "DELETE",
+		"key_name": "derived key 1",
+		"depends": 2
+	},
+	"subtest 9": {
+		"command": "DELETE",
+		"key_name": "prk opaque",
+		"depends": 3
+	},
+	"subtest 10": {
+		"command": "DELETE",
+		"key_name": "derived key 2",
+		"depends": 4
+	}
+}

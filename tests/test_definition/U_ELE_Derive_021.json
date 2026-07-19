@@ -1,0 +1,88 @@
+{
+	"keys": {
+		"ikm plaintext 1": {
+			"type": "RAW",
+			"pub_key":
+				"0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b"
+		},
+		"prk plaintext 1": {
+			"shared_secret": [
+				"00000000000000000000000000000000",
+				"00000000000000000000000000000000"
+			]
+		},
+		"okm plaintext 1": {
+			"shared_secret": [
+				"00000000000000000000000000000000",
+				"00000000000000000000000000000000"
+			]
+		},
+		"okm plaintext 2": {
+			"shared_secret": [
+				"00000000000000000000000000000000",
+				"00000000000000000000000000000000"
+			]
+		}
+	},
+	"subtest 1": {
+		"description":
+			"HKDF full SHA256 - OKM verified against known test vector",
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_input": "ikm plaintext 1",
+		"op_output": "okm plaintext 2",
+		"op_type": "HKDF",
+		"op_args": {
+			"salt": "000102030405060708090a0b0c",
+			"info": "f0f1f2f3f4f5f6f7f8f9",
+			"algo": "SHA256"
+		},
+		"output":
+			"3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1a5a4c5db02d56ecc4c5bf",
+		"result": "SMW_STATUS_OK",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93",
+			"imx95"
+		]
+	},
+	"subtest 2": {
+		"description":
+			"HKDF extract SHA256 - PRK verified against known test vector",
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_input": "ikm plaintext 1",
+		"op_output": "prk plaintext 1",
+		"op_type": "HKDF_EXTRACT",
+		"op_args": {
+			"salt": "000102030405060708090a0b0c",
+			"algo": "SHA256"
+		},
+		"output":
+			"077709362c2e32df0ddc3f0dc47bba6390b6c73bb50f9c3122ec844ad7c2b3e5",
+		"result": "SMW_STATUS_OK",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93",
+			"imx95"
+		]
+	},
+	"subtest 3": {
+		"description":
+			"HKDF expand SHA256 - OKM verified against known test vector",
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_input": "prk plaintext 1",
+		"op_output": "okm plaintext 1",
+		"op_type": "HKDF_EXPAND",
+		"op_args": {
+			"info": "f0f1f2f3f4f5f6f7f8f9",
+			"algo": "SHA256"
+		},
+		"depends": 2,
+		"output":
+			"3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1a5a4c5db02d56ecc4c5bf"
+	}
+}

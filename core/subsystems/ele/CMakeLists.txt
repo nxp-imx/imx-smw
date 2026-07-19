@@ -30,6 +30,7 @@ set(ele_srcs
     $<$<BOOL:${ENABLE_CONTEXT}>:operation_context.c>
     $<$<BOOL:${ENABLE_KEYMGR_MODULE}>:keymgr.c
                                       keymgr_derive.c
+                                      keymgr_derive_kdf.c
                                       keymgr_derive_oem_mk.c
                                       key_policy.c
                                       lifecycle.c

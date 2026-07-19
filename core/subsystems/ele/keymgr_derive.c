@@ -2,16 +2,20 @@
 /*
  * Copyright 2022, 2024-2026 NXP
  */
+#include "smw_osal.h"
 #include "smw_status.h"
 
 #include "compiler.h"
 #include "debug.h"
+#include "utils.h"
+#include "subsystems.h"
 
 #include "common.h"
 
-__weak int derive_hkdf(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
+__weak int derive_hkdf(struct subsystem_context *ele_ctx,
+		       struct smw_keymgr_derive_key_args *args)
 {
-	(void)hdl;
+	(void)ele_ctx;
 	(void)args;
 
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
@@ -69,7 +73,7 @@ int ele_derive_key(struct subsystem_context *ele_ctx,
 	case SMW_CONFIG_KDF_ID_HKDF:
 	case SMW_CONFIG_KDF_ID_HKDF_EXTRACT:
 	case SMW_CONFIG_KDF_ID_HKDF_EXPAND:
-		status = derive_hkdf(&ele_ctx->hdl, args);
+		status = derive_hkdf(ele_ctx, args);
 		break;
 
 	case SMW_CONFIG_KDF_ID_OEM_MASTER_KEY:

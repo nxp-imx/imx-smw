@@ -498,6 +498,7 @@ static int smw_keymgr_convert_prk_desc(struct smw_key_descriptor *in,
 				       struct smw_keymgr_descriptor *out)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
+	struct smw_keypair_buffer *in_buf = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -508,16 +509,29 @@ static int smw_keymgr_convert_prk_desc(struct smw_key_descriptor *in,
 
 	out->identifier.type_id = SMW_CONFIG_KEY_TYPE_ID_RAW;
 
-	if (!in->buffer) {
-		out->format_id = SMW_KEYMGR_FORMAT_ID_INVALID;
-	} else {
-		status = smw_utils_key_get_format_id(in->buffer->format_name,
-						     &out->format_id);
+	if (in->id != INVALID_KEY_ID) {
+		/*
+		 * PRK is stored in the DB after HKDF Extract. Look up the DB to
+		 * retrieve the subsystem key ID and key group assigned by the
+		 * subsystem during Extract.
+		 */
+		status = smw_keymgr_db_get_info(in->id, &out->identifier);
 		if (status != SMW_STATUS_OK)
 			goto end;
+	} else {
+		out->identifier.s_id = INVALID_KEY_ID;
+		in_buf = in->buffer;
+		if (!in_buf) {
+			out->format_id = SMW_KEYMGR_FORMAT_ID_INVALID;
+		} else {
+			status =
+				smw_utils_key_get_format_id(in_buf->format_name,
+							    &out->format_id);
+			if (status != SMW_STATUS_OK)
+				goto end;
+		}
 	}
 
-	out->identifier.s_id = in->id;
 	out->pub = in;
 
 	status = setup_key_ops(out);
@@ -871,11 +885,8 @@ static int convert_output_args(struct smw_derive_key_args *args,
  * @id: New key identifier created in the database
  * @derive_key_args: Pointer to internal Key derivation arguments structure
  *
- * Function creates a new key in the OSAL object database if the KDF is HKDF
- * or ECDH.
- * The result of HKDF Extract step is PRK. This key is not stored in the SMW
- * key database.
- *
+ * Function creates a new key entry in the OSAL object database for the
+ * supported KDF types (HKDF, ECDH, TLS).
  * The given @identifier is stored in the object entry.
  *
  * Return:
@@ -894,14 +905,8 @@ static int create_key_in_db(unsigned int *new_id,
 
 	switch (derive_key_args->kdf_id) {
 	case SMW_CONFIG_KDF_ID_HKDF:
-	case SMW_CONFIG_KDF_ID_HKDF_EXPAND:
-		status = smw_keymgr_db_create(new_id, identifier);
-		break;
-
 	case SMW_CONFIG_KDF_ID_HKDF_EXTRACT:
-		status = SMW_STATUS_OK;
-		break;
-
+	case SMW_CONFIG_KDF_ID_HKDF_EXPAND:
 	case SMW_CONFIG_KDF_ID_ECDH:
 	case SMW_CONFIG_KDF_ID_TLS12_OP_KEY_EXCHANGE:
 	case SMW_CONFIG_KDF_ID_TLS13_KEY_EXCHANGE:
@@ -960,9 +965,7 @@ set_derived_key_identifier(unsigned int id,
  * If the KDF based key derivation operation returns a status other than
  * SMW_STATUS_OK and SMW_STATUS_KEY_POLICY_WARNING_IGNORED, delete the key from
  * the database. If the key derivation operation is successful, update the
- * derived key identifier in the database.
- * If the current HKDF step is HKDF Extract, as the key identifier of PRK is not
- * stored in the database, do not update the database.
+ * derived key identifier in the database with the subsystem key ID and group.
  *
  * Return:
  * SMW_STATUS_OK                - Success
@@ -977,9 +980,6 @@ static int update_key_in_db(int status, unsigned int *id,
 	int temp_status = SMW_STATUS_OK;
 	struct smw_keymgr_derived_key_desc *key_desc =
 		&derive_key_args->key_derived;
-
-	if (derive_key_args->kdf_id == SMW_CONFIG_KDF_ID_HKDF_EXTRACT)
-		goto end;
 
 	if (status != SMW_STATUS_OK &&
 	    status != SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
@@ -1104,6 +1104,33 @@ int smw_keymgr_update_shared_secret(struct smw_keymgr_derived_key_desc *desc,
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
+}
+
+enum smw_hkdf_step
+smw_keymgr_get_hkdf_step(struct smw_keymgr_derive_key_args *args)
+{
+	enum smw_hkdf_step step = SMW_HKDF_STEP_INVALID;
+
+	if (args) {
+		switch (args->kdf_id) {
+		case SMW_CONFIG_KDF_ID_HKDF:
+			step = SMW_HKDF_STEP_FULL;
+			break;
+
+		case SMW_CONFIG_KDF_ID_HKDF_EXTRACT:
+			step = SMW_HKDF_STEP_EXTRACT;
+			break;
+
+		case SMW_CONFIG_KDF_ID_HKDF_EXPAND:
+			step = SMW_HKDF_STEP_EXPAND;
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	return step;
 }
 
 /**

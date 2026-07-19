@@ -14,6 +14,13 @@
 /* The master secret is always exactly 48 bytes in length (cf RFC 5246)*/
 #define TLS12_MASTER_SECRET_SEC_SIZE 384
 
+enum smw_hkdf_step {
+	SMW_HKDF_STEP_INVALID,
+	SMW_HKDF_STEP_EXTRACT, /* HKDF step 1 - extract */
+	SMW_HKDF_STEP_EXPAND,  /* HKDF step 2 - expand */
+	SMW_HKDF_STEP_FULL     /* HKDF steps 1 and 2 combined */
+};
+
 enum smw_tls12_key_exchange_id {
 	SMW_TLS12_KEY_EXCHANGE_ID_DH_DSS,
 	SMW_TLS12_KEY_EXCHANGE_ID_DH_RSA,
@@ -455,6 +462,17 @@ int smw_keymgr_update_shared_secret(struct smw_keymgr_derived_key_desc *desc,
  */
 void smw_keymgr_set_shared_secret_id(struct smw_keymgr_derived_key_desc *desc,
 				     uint32_t id);
+
+/**
+ * smw_keymgr_get_hkdf_step() - Get the HKDF step
+ * @args: Pointer to internal key derivation argument structure
+ *
+ * Return:
+ * HKDF step type
+ * SMW_HKDF_STEP_INVALID
+ */
+enum smw_hkdf_step
+smw_keymgr_get_hkdf_step(struct smw_keymgr_derive_key_args *args);
 
 /**
  * smw_keymgr_get_salt() - Get salt buffer address

@@ -791,6 +791,30 @@ static smw_attr_algo_t get_hash_algo_id(CK_MECHANISM_TYPE mech_type)
 	return hash_algo_id;
 }
 
+static unsigned int get_hash_output_len(CK_MECHANISM_TYPE mech_type)
+{
+	switch (mech_type) {
+	case CKM_MD5:
+		return 16;
+	case CKM_SHA_1:
+		return 20;
+	case CKM_SHA224:
+	case CKM_SHA3_224:
+		return 28;
+	case CKM_SHA256:
+	case CKM_SHA3_256:
+		return 32;
+	case CKM_SHA384:
+	case CKM_SHA3_384:
+		return 48;
+	case CKM_SHA512:
+	case CKM_SHA3_512:
+		return 64;
+	default:
+		return 0;
+	}
+}
+
 static smw_kdf_t get_kdf(CK_MECHANISM_TYPE mech_type)
 {
 	smw_kdf_t kdf = SMW_KDF_NAME_NONE;
@@ -2439,6 +2463,9 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	struct libobj_key_derive_params *derive_params = args;
 	struct lib_derive_ctx *ctx = derive_params->ctx;
 	struct libobj_obj *obj = derive_params->derived_key;
+	unsigned int sec_size = 0;
+	bool hkdf_ctx_new = false;
+	CK_MECHANISM_TYPE mech = 0;
 
 	devinfo = libdev_get_devinfo(slotid);
 	if (!devinfo)
@@ -2497,6 +2524,50 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 			ret = set_hkdf_args(derive_params, &derive_args);
 			if (ret != CKR_OK)
 				return ret;
+
+			/*
+			 * When the base key is plaintext, the subsystem writes
+			 * the OKM (or PRK for HKDF-Extract) into a
+			 * caller-supplied buffer.
+			 * Allocate a context and an output buffer sized to:
+			 *   - HKDF-Extract: hash output length (PRK size)
+			 *   - HKDF-Full / HKDF-Expand: derived key security size
+			 */
+			if (!base_key.id) {
+				ctx = calloc(1, sizeof(*ctx));
+				if (!ctx)
+					return CKR_HOST_MEMORY;
+
+				if (derive_params->hkdf_params.extract &&
+				    !derive_params->hkdf_params.expand) {
+					mech = derive_params->hkdf_params
+						       .prf_hash_mech;
+					sec_size = get_hash_output_len(mech);
+					if (!sec_size) {
+						free(ctx);
+						return CKR_ARGUMENTS_BAD;
+					}
+				} else {
+					sec_size = der_key_desc.security_size;
+					sec_size = BITS_TO_BYTES_SIZE(sec_size);
+				}
+
+				ctx->shared_buffer_len = sec_size;
+				ctx->shared_buffer =
+					calloc(1, ctx->shared_buffer_len);
+				if (!ctx->shared_buffer) {
+					free(ctx);
+					return CKR_HOST_MEMORY;
+				}
+
+				der_key_desc.shared_secret = ctx->shared_buffer;
+				der_key_desc.shared_secret_len =
+					ctx->shared_buffer_len;
+
+				derive_args.store_derived_key = false;
+				derive_params->ctx = ctx;
+				hkdf_ctx_new = true;
+			}
 		}
 
 		break;
@@ -2556,6 +2627,16 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	case CKM_HKDF_DERIVE:
 		if (derive_params->ctx && tls13_args.psk)
 			free(tls13_args.psk);
+
+		if (ret != CKR_OK && hkdf_ctx_new) {
+			if (derive_params->ctx) {
+				if (derive_params->ctx->shared_buffer)
+					free(derive_params->ctx->shared_buffer);
+
+				free(derive_params->ctx);
+				derive_params->ctx = NULL;
+			}
+		}
 
 		break;
 
@@ -3211,6 +3292,54 @@ end:
 	return ret;
 }
 
+static CK_RV set_plaintext_cipher_key(struct libobj_obj *key_obj,
+				      struct smw_keypair_buffer **key_buffer,
+				      struct smw_key_descriptor *key_desc)
+{
+	CK_RV ret = CKR_ARGUMENTS_BAD;
+	struct libobj_key_cipher *cipher_key = get_subkey_from(key_obj);
+
+	if (!cipher_key || !cipher_key->value.array)
+		goto end;
+
+	ret = key_desc_set_key_type(key_desc, get_key_type(key_obj), NULL);
+	if (ret != CKR_OK)
+		goto end;
+
+	*key_buffer = calloc(1, sizeof(**key_buffer));
+	if (!*key_buffer) {
+		ret = CKR_HOST_MEMORY;
+		goto end;
+	}
+
+	(*key_buffer)[0].gen.private_data = cipher_key->value.array;
+
+	if (SET_OVERFLOW(cipher_key->value.number,
+			 (*key_buffer)[0].gen.private_length)) {
+		ret = CKR_ARGUMENTS_BAD;
+		goto cleanup;
+	}
+
+	key_desc->buffer = &(*key_buffer)[0];
+
+	if (SET_OVERFLOW(BYTES_TO_BITS(cipher_key->value.number),
+			 key_desc->security_size)) {
+		ret = CKR_ARGUMENTS_BAD;
+		goto cleanup;
+	}
+
+	return CKR_OK;
+
+cleanup:
+	if (*key_buffer) {
+		free(*key_buffer);
+		*key_buffer = NULL;
+	}
+
+end:
+	return ret;
+}
+
 static CK_RV
 set_smw_cipher_init_args(struct lib_cipher_ctx *ctx,
 			 struct smw_cipher_init_args *smw_init_args,
@@ -3224,6 +3353,7 @@ set_smw_cipher_init_args(struct lib_cipher_ctx *ctx,
 	unsigned int i = 0;
 	unsigned int key_length = 0;
 	bool is_xts = false;
+	struct libobj_obj *key_obj = NULL;
 
 	if (ctx->cipher_mech == CKM_AES_XTS) {
 		is_xts = true;
@@ -3253,8 +3383,15 @@ set_smw_cipher_init_args(struct lib_cipher_ctx *ctx,
 		}
 
 	} else {
-		key_desc_ptr[0].id =
-			get_key_token_id((struct libobj_obj *)ctx->hkey);
+		key_obj = (struct libobj_obj *)ctx->hkey;
+		key_desc_ptr[0].id = get_key_token_id(key_obj);
+
+		if (!key_desc_ptr[0].id) {
+			ret = set_plaintext_cipher_key(key_obj, key_buffer,
+						       &key_desc_ptr[0]);
+			if (ret != CKR_OK)
+				return ret;
+		}
 	}
 
 	for (i = 0; i < smw_init_args->nb_keys; i++)

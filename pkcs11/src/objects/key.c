@@ -2518,6 +2518,14 @@ cleanup:
 			(void)cancel_derive_operation(device);
 	}
 
+	/*
+	 * For HKDF plaintext derivation, op_mkeyderive() allocates a
+	 * lib_derive_ctx in derive_params.ctx. The shared_buffer ownership
+	 * is transferred to the key object, so only free the ctx struct.
+	 */
+	if (mech->mechanism == CKM_HKDF_DERIVE && !ctx && derive_params.ctx)
+		free(derive_params.ctx);
+
 end:
 	DBG_TRACE("Derive secret Key object (%p) return %ld",
 		  derive_params.derived_key, ret);

@@ -1626,10 +1626,15 @@ CK_RV libobj_derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	if (ret == CKR_OK) {
 		ret = obj_db_update(derived_key);
 		if (ret == CKR_OBJECT_HANDLE_INVALID) {
-			/* For HKDF Extract operation, PRK is not stored in the DB,
-			 * Hence, ignore if CKR_OBJECT_HANDLE_INVALID is returned.
+			/*
+			 * When the derived key is not stored in the ELE keystore
+			 * (plaintext HKDF, HKDF extract-only PRK, TLS HKDF, or
+			 * TLS12 key-and-mac derive), obj_db_update() returns
+			 * CKR_OBJECT_HANDLE_INVALID because there is no valid ELE
+			 * key ID. Ignore this error in those cases.
 			 */
-			if (is_hkdf_extract_set(mech) ||
+			if (mech->mechanism == CKM_HKDF_DERIVE ||
+			    is_hkdf_extract_set(mech) ||
 			    is_tls_hkdf(hsession, mech) ||
 			    mech->mechanism == CKM_TLS12_KEY_AND_MAC_DERIVE)
 				ret = CKR_OK;

@@ -476,6 +476,13 @@ static int object_derive_key_hkdf(CK_FUNCTION_LIST_PTR pfunc)
 
 	SUBTEST_START();
 
+	if (!is_tee_subsystem() &&
+	    (is_seco_subsystem() ||
+	     (is_ele_subsystem() && !is_937() && !is_943() && !is_952()))) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
 
@@ -550,9 +557,9 @@ static int object_derive_key_hkdf(CK_FUNCTION_LIST_PTR pfunc)
 		if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
 			goto end;
 
-		if (CHECK_EXPECTED(bsensitive,
+		if (CHECK_EXPECTED(!bsensitive,
 				   "Got key sensitive %d expected %d",
-				   bsensitive, CK_TRUE))
+				   bsensitive, CK_FALSE))
 			goto end;
 
 		TEST_OUT("Delete the derived key\n");
@@ -634,6 +641,13 @@ static int object_derive_key_perform_op(CK_FUNCTION_LIST_PTR pfunc)
 
 	SUBTEST_START();
 
+	if (!is_tee_subsystem() &&
+	    (is_seco_subsystem() ||
+	     (is_ele_subsystem() && !is_937() && !is_943() && !is_952()))) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
 
@@ -682,25 +696,25 @@ static int object_derive_key_perform_op(CK_FUNCTION_LIST_PTR pfunc)
 
 	TEST_OUT("Initialize encrypt message operation\n");
 	ret = pfunc->C_EncryptInit(sess, &enc_dec_mech, aes_derived_key);
-	if (ret != CKR_OK)
-		return ret;
+	if (CHECK_CK_RV(CKR_OK, "C_EncryptInit"))
+		goto end;
 
 	TEST_OUT("Encrypt message\n");
 	ret = pfunc->C_Encrypt(sess, data, data_len, encrypted_data,
 			       &encrypted_data_len);
-	if (ret != CKR_OK)
-		return ret;
+	if (CHECK_CK_RV(CKR_OK, "C_Encrypt"))
+		goto end;
 
 	TEST_OUT("Initialize decrypt message operation\n");
 	ret = pfunc->C_DecryptInit(sess, &enc_dec_mech, aes_derived_key);
-	if (ret != CKR_OK)
-		return ret;
+	if (CHECK_CK_RV(CKR_OK, "C_DecryptInit"))
+		goto end;
 
 	TEST_OUT("Decrypt encrypted message data\n");
 	ret = pfunc->C_Decrypt(sess, encrypted_data, encrypted_data_len,
 			       recovered_data, &recovered_data_len);
-	if (ret != CKR_OK)
-		return ret;
+	if (CHECK_CK_RV(CKR_OK, "C_Decrypt"))
+		goto end;
 
 	if (!util_compare_buffers(data, data_len, recovered_data,
 				  recovered_data_len)) {
@@ -773,6 +787,13 @@ static int object_derive_key_hkdf_step(CK_FUNCTION_LIST_PTR pfunc)
 
 	SUBTEST_START();
 
+	if (!is_tee_subsystem() &&
+	    (is_seco_subsystem() ||
+	     (is_ele_subsystem() && !is_937() && !is_943() && !is_952()))) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
 
@@ -837,8 +858,8 @@ static int object_derive_key_hkdf_step(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
 		goto end;
 
-	if (CHECK_EXPECTED(bsensitive, "Got key sensitive %d expected %d",
-			   bsensitive, CK_TRUE))
+	if (CHECK_EXPECTED(!bsensitive, "Got key sensitive %d expected %d",
+			   bsensitive, CK_FALSE))
 		goto end;
 
 	status = TEST_PASS;

@@ -107,7 +107,8 @@
 		"restriction_list": [
 			"imx8ulp",
 			"imx943",
-			"imx95"
+			"imx95",
+			"imx952"
 		]
 	},
 	"subtest 2": {

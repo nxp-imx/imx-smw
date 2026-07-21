@@ -50,7 +50,8 @@
 		"subsystem": "ELE",
 		"key_name": "key ECDSA",
 		"restriction_list": [
-			"imx95"
+			"imx95",
+			"imx952"
 		]
 	},
 	"subtest 2": {

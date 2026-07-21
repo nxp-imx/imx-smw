@@ -52,6 +52,7 @@
 		"restriction_list": [
 			"imx8ulp",
 			"imx95",
+			"imx952",
 			"imx943"
 		]
 	},
@@ -145,6 +146,7 @@
 		"depends": 3,
 		"restriction_list": [
 			"imx95",
+			"imx952",
 			"imx943"
 		]
 	},

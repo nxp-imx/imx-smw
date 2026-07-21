@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2024, 2026 NXP
  */
 
+#include <ctype.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -141,6 +142,35 @@ static int execute_command(char *cmd, struct subtest_data *subtest)
 }
 
 /**
+ * compare_hostname_prefix() - Compare the host name and the prefix
+ * @prefix: Prefix from the restriction list
+ * @hostname: Host name to verify
+ *
+ * Return:
+ * PASSED          - Subtest applicable
+ * SKIPPED         - Subtest skipped
+ */
+static int check_hostname_prefix(const char *prefix, const char *hostname)
+{
+	size_t len = 0;
+	size_t host_len = 0;
+
+	if (!prefix || !hostname)
+		return ERR_CODE(PASSED);
+
+	len = strlen(prefix);
+	host_len = strlen(hostname);
+
+	if (len < host_len && isdigit((unsigned char)*(hostname + len)))
+		return ERR_CODE(PASSED);
+
+	if (len <= host_len && !strncmp(hostname, prefix, len))
+		return ERR_CODE(SKIPPED);
+
+	return ERR_CODE(PASSED);
+}
+
+/**
  * is_subtest_skipped() - Return if a subtest is skipped
  * @params: JSON-C Subtest parameters object
  *
@@ -159,15 +189,11 @@ static int is_subtest_skipped(struct json_object *params)
 	size_t nb_members = 0;
 	size_t i = 0;
 	struct json_object *hostname_obj = NULL;
-	size_t host_len = 0;
-	size_t len = 0;
 
 	if (gethostname(hostname, sizeof(hostname))) {
 		res = ERR_CODE(INTERNAL);
 		goto exit;
 	}
-
-	host_len = strlen(hostname);
 
 	res = util_read_json_type(&restriction_list_obj, RESTRICTION_LIST_OBJ,
 				  t_buffer, params);
@@ -182,13 +208,7 @@ static int is_subtest_skipped(struct json_object *params)
 	switch (json_object_get_type(restriction_list_obj)) {
 	case json_type_string:
 		prefix = json_object_get_string(restriction_list_obj);
-		if (prefix) {
-			len = strlen(prefix);
-
-			if (len <= host_len && !strncmp(hostname, prefix, len))
-				res = ERR_CODE(SKIPPED);
-		}
-
+		res = check_hostname_prefix(prefix, hostname);
 		break;
 
 	case json_type_array:
@@ -206,15 +226,9 @@ static int is_subtest_skipped(struct json_object *params)
 			}
 
 			prefix = json_object_get_string(hostname_obj);
-			if (prefix) {
-				len = strlen(prefix);
-
-				if (len <= host_len &&
-				    !strncmp(hostname, prefix, len)) {
-					res = ERR_CODE(SKIPPED);
-					break;
-				}
-			}
+			res = check_hostname_prefix(prefix, hostname);
+			if (res == ERR_CODE(SKIPPED))
+				break;
 		}
 
 		break;

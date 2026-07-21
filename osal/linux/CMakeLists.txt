@@ -141,6 +141,17 @@ macro(make_smw_conf)
                       smw_config_file="${SMW_CONFIG_FILES_INSTALL}/ele_imx95_config.txt")
 
     #
+    # i.MX952 specific configuration
+    #
+    install(FILES ${SMW_CONFIG_FILES_DIR}/ele_imx952_config.txt
+            DESTINATION ${SMW_CONFIG_FILES_INSTALL})
+
+    set(MAKE_SMW_CONF_952 ${SMW_SYS_CONF_SCRIPT}
+                      in=${BIN_SMW_CONF}
+                      conf=setup-imx952
+                      smw_config_file="${SMW_CONFIG_FILES_INSTALL}/ele_imx952_config.txt")
+
+    #
     # i.MX943 specific configuration
     #
     install(FILES ${SMW_CONFIG_FILES_DIR}/ele_imx943_config.txt
@@ -158,6 +169,7 @@ macro(make_smw_conf)
                       COMMAND ${MAKE_SMW_CONF}
                       COMMAND ${MAKE_SMW_CONF_8ULP}
                       COMMAND ${MAKE_SMW_CONF_95}
+                      COMMAND ${MAKE_SMW_CONF_952}
                       COMMAND ${MAKE_SMW_CONF_943}
                       COMMAND ${MAKE_ELE_SE_CONF}
                       COMMAND ${MAKE_TEE_CONF}

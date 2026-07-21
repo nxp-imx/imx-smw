@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024-2025 NXP
+ * Copyright 2024-2026 NXP
  */
 
 #include "local.h"
@@ -697,6 +697,51 @@ static int read_smw_conf(FILE *fp, struct lib_config_args *config, char **line,
 }
 
 /**
+ * check_hostname_prefix() - Check if hostname starts with given prefix
+ * @prefix: Prefix to match
+ * @prefix_len: Length of prefix string
+ * @hostname: Full hostname to check
+ *
+ * This function checks if the hostname starts with the prefix, but ensures
+ * that if there are additional characters after the prefix, they are NOT
+ * digits.
+ * This prevents "imx95" from matching "imx952" while allowing "imx95-evk".
+ *
+ * Return:
+ * true  - Hostname matches prefix
+ * false - Hostname does not match prefix
+ */
+static bool check_hostname_prefix(const char *prefix, size_t prefix_len,
+				  const char *hostname)
+{
+	size_t host_len = 0;
+
+	if (!prefix || !hostname)
+		return false;
+
+	host_len = strlen(hostname);
+
+	if (host_len < prefix_len)
+		return false;
+
+	if (strncmp(hostname, prefix, prefix_len) != 0)
+		return false;
+
+	if (host_len == prefix_len)
+		return true;
+
+	/*
+	 * When the hostname has additional digits after the device prefix,
+	 * it indicates a different SOC (e.g., "imx952" vs "imx95").
+	 */
+	if (*(hostname + prefix_len) >= '0' && *(hostname + prefix_len) <= '9')
+		return false;
+
+	/* Extra characters are non-digits (e.g., "-evk"), so it's a match */
+	return true;
+}
+
+/**
  * read_smw_conf_device() - Read specific SMW Library subsystem configuration
  * @fp: [in] Pointer to configuration file
  * @config: [in/out] OSAL configuration context
@@ -748,7 +793,7 @@ static int read_smw_conf_device(FILE *fp, struct lib_config_args *config,
 	string_to_lower(hostname, strlen(hostname));
 	string_to_lower(device, device_length);
 
-	if (strncmp(hostname, device, device_length)) {
+	if (!check_hostname_prefix(device, device_length, hostname)) {
 		/* Configuration is not for this host */
 		ret = RET_NO_ERROR;
 		goto end;

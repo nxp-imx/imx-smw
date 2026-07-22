@@ -167,6 +167,8 @@ static CK_RV check_cipher_params(CK_MECHANISM_TYPE mechanism,
 
 	switch (mechanism) {
 	case CKM_AES_CBC:
+	case CKM_AES_CFB128:
+	case CKM_AES_OFB:
 		if (!pparameter) {
 			DBG_TRACE("CBC mode: IV is not set");
 			return CKR_MECHANISM_PARAM_INVALID;

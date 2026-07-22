@@ -8,6 +8,7 @@
 
 #include "config.h"
 #include "debug.h"
+#include "endian.h"
 #include "utils.h"
 
 #include "common.h"
@@ -111,28 +112,6 @@ end:
 	return status;
 }
 
-static int convert_endian(unsigned char *src, unsigned char *dst,
-			  unsigned int size)
-{
-	unsigned int i = 0;
-
-	if (!src || size == 0)
-		return SMW_STATUS_INVALID_PARAM;
-
-	if (dst) {
-		for (; i < size; i++)
-			dst[i] = src[size - 1 - i];
-	} else {
-		for (; i < size / 2; i++) {
-			src[i] ^= src[size - 1 - i];
-			src[size - 1 - i] ^= src[i];
-			src[i] ^= src[size - 1 - i];
-		}
-	}
-
-	return SMW_STATUS_OK;
-}
-
 static int is_conversion_req(struct subsystem_context *ele_ctx,
 			     enum smw_config_key_type_id type_id, bool *convert)
 {
@@ -193,7 +172,7 @@ int check_and_convert_endian(struct subsystem_context *ele_ctx,
 		out = *dst;
 	}
 
-	status = convert_endian(src, out, size);
+	status = smw_utils_convert_endian(src, out, size);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -239,9 +218,10 @@ int check_and_convert_sign_endian(struct subsystem_context *ele_ctx,
 		out_s = *converted_sign + part_size;
 	}
 
-	status = convert_endian(sign, out_r, part_size);
+	status = smw_utils_convert_endian(sign, out_r, part_size);
 	if (status == SMW_STATUS_OK)
-		status = convert_endian(sign + part_size, out_s, part_size);
+		status = smw_utils_convert_endian(sign + part_size, out_s,
+						  part_size);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

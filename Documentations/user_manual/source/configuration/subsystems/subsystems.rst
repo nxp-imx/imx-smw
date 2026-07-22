@@ -532,6 +532,11 @@ derivation operation type values.
    | OEM_MASTER_KEY        | OEM Master key derivation.                                        |
    +-----------------------+-------------------------------------------------------------------+
 
+.. note::
+  Starting with SMW Library version 5.5, the context which is part of
+  `TLS12_OP_KEY_EXCHANGE` is freed by the library upon completion of the key
+  expansion operation, so the application doesn't need to call the
+  :c:func:`smw_cancel_operation` function.
 
 **Cryptographic operation type**
 

@@ -830,17 +830,19 @@ chapters `Secure Subsystems Capabilities` and `Subsystems Configuration`
 
 ## Symmetric Encryption
 
-| Mechanism Name | Description                                                                                        |
-| :------------- | :------------------------------------------------------------------------------------------------- |
-| `CKM_AES_ECB`  | AES encryption/decryption in Electronic CodeBook (ECB) mode.                                       |
-| `CKM_AES_CBC`  | AES encryption/decryption in Cipher Block Chaining (CBC) mode.                                     |
-| `CKM_AES_CTR`  | AES encryption/decryption in Counter (CTR) mode.                                                   |
-| `CKM_AES_CTS`  | AES encryption/decryption in Cipher Text Stealing (CTS) mode.                                      |
-| `CKM_AES_XTS`  | AES encryption/decryption in XEX-based Tweaked CodeBook mode with Cipher Text Stealing (XTS) mode. |
-| `CKM_DES_ECB`  | DES encryption/decryption in Electronic CodeBook (ECB) mode.                                       |
-| `CKM_DES_CBC`  | DES encryption/decryption in Cipher Block Chaining (CBC) mode.                                     |
-| `CKM_DES3_ECB` | Triple-DES encryption/decryption in Electronic CodeBook (ECB) mode.                                |
-| `CKM_DES3_CBC` | Triple-DES encryption/decryption in Cipher Block Chaining (CBC) mode.                              |
+| Mechanism Name  | Description                                                                                        |
+| :-------------- | :------------------------------------------------------------------------------------------------- |
+| `CKM_AES_ECB`   | AES encryption/decryption in Electronic CodeBook (ECB) mode.                                       |
+| `CKM_AES_CBC`   | AES encryption/decryption in Cipher Block Chaining (CBC) mode.                                     |
+| `CKM_AES_CFB128`| AES encryption/decryption in Cipher Feedback (CFB) mode with 128-bit segment.                      |
+| `CKM_AES_CTR`   | AES encryption/decryption in Counter (CTR) mode.                                                   |
+| `CKM_AES_CTS`   | AES encryption/decryption in Cipher Text Stealing (CTS) mode.                                      |
+| `CKM_AES_OFB`   | AES encryption/decryption in Output Feedback (OFB) mode.                                           |
+| `CKM_AES_XTS`   | AES encryption/decryption in XEX-based Tweaked CodeBook mode with Cipher Text Stealing (XTS) mode. |
+| `CKM_DES_ECB`   | DES encryption/decryption in Electronic CodeBook (ECB) mode.                                       |
+| `CKM_DES_CBC`   | DES encryption/decryption in Cipher Block Chaining (CBC) mode.                                     |
+| `CKM_DES3_ECB`  | Triple-DES encryption/decryption in Electronic CodeBook (ECB) mode.                                |
+| `CKM_DES3_CBC`  | Triple-DES encryption/decryption in Cipher Block Chaining (CBC) mode.                              |
 
 
 **Additional NXP Vendor mechanisms**

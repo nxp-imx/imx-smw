@@ -981,6 +981,7 @@ static int sign_verify_rsa_pss(CK_FUNCTION_LIST_PTR pfunc)
 	sign_verify_mech.pParameter = &pss_params;
 	sign_verify_mech.ulParameterLen = sizeof(pss_params);
 	pss_params.hashAlg = CKM_SHA384;
+	pss_params.mgf = CKG_MGF1_SHA384;
 	pss_params.sLen = 48;
 
 	TEST_OUT("Generate RSA Keypair\n");

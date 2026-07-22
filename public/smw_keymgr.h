@@ -426,9 +426,12 @@ struct smw_kdf_tls12_key_expansion_args {
  * data internally and associate it with the context. The same context needs to
  * be passed to the master secret and key expansion operations.
  *
- * Upon completion of the operations (with either success or error), the context
- * is not released and remains valid. Calling smw_cancel_operation() will release
- * it and any associated data.
+ * Upon completion of the key expansion operation, the context and any associated
+ * data is freed.
+ *
+ * In previous versions of the SMW library (up to and incl. 5.4), the context was
+ * not freed and remained valid, so applications needed to call smw_cancel_operation().
+ * This call is no longer needed.
  */
 struct smw_kdf_tls12_op_args {
 	unsigned char version;

@@ -65,6 +65,8 @@ The failure is due to the storage manager which is already loaded and a new inst
   If a size range is set for any of these key types in the config file,
   the operation will fail with `SMW_STATUS_KEY_RANGE_NOT_CONFIGURABLE`.
 * Remove unused SMW_SIGNATURE_TYPE_NAME_CMAC.
+* Free the context associated with the `TLS12_OP_KEY_EXCHANGE` operation after
+  executing the key expansion operation.
 
 ##### 2. Subsystems
 
@@ -86,6 +88,9 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Add a subtest to verify that setting a size range for fixed-size key types
   (e.g., ED448) returns SMW_STATUS_KEY_RANGE_NOT_CONFIGURABLE.
+* Updated TLS tests to verify that calling `smw_cancel_operation()` returns
+  `SMW_STATUS_INVALID_PARAM` after key expansion (since the context is now
+  freed internally).
 
 #### PKCS#11 Library
 

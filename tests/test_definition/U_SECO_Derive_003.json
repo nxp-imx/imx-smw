@@ -1,9 +1,13 @@
 {
 	"keys": {
-		"master secret 256": {},
-		"master secret 384": {},
-		"key expansion 256": {},
-		"key expansion 384": {},
+		"master secret 1": {},
+		"master secret 2": {},
+		"master secret 3": {},
+		"master secret 4": {},
+		"key expansion 1": {},
+		"key expansion 2": {},
+		"key expansion 3": {},
+		"key expansion 4": {},
 		"client write enc key": {},
 		"server write enc key": {},
 		"client write mac key": {},
@@ -33,13 +37,21 @@
 	},
 	"subtest 1": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"context_id": 0
+		"context_id": 1
 	},
 	"subtest 2": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"context_id": 1
+		"context_id": 2
 	},
 	"subtest 3": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 3
+	},
+	"subtest 4": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 4
+	},
+	"subtest 5": {
 		"command": "DERIVE",
 		"subsystem": "SECO",
 		"op_type": "TLS12_OP_KEY_EXCHANGE",
@@ -65,89 +77,12 @@
 				"5af3369ef67443a72c741115e70f7b55"
 			]
 		},
-		"op_output": "master secret 256",
+		"op_output": "master secret 1",
 		"op_input": "self 256-bit ecdh key",
-		"context_id": 0,
+		"context_id": 1,
 		"depends": 1
 	},
-	"subtest 4": {
-		"command": "DERIVE",
-		"subsystem": "SECO",
-		"op_type": "TLS12_OP_KEY_EXCHANGE",
-		"op_args": {
-			"op_name": "KEY_EXPANSION",
-			"encryption_name": "AES_128_CBC",
-			"prf_name": "SHA256",
-			"random_data": {
-				"client_random": [
-					"000102030405060708090a0b0c0d0e0f",
-					"000102030405060708090a0b0c0d0e0f"
-				],
-				"server_random": [
-					"000102030405060708090a0b0c0d0e0f",
-					"000102030405060708090a0b0c0d0e0f"
-				]
-			},
-			"client_w_mac_key_name": "client write mac key",
-			"server_w_mac_key_name": "server write mac key",
-			"client_w_enc_key_name": "client write enc key",
-			"server_w_enc_key_name": "server write enc key"
-		},
-		"op_output": "key expansion 256",
-		"op_input": "master secret 256",
-		"context_id": 0,
-		"depends": [
-			1,
-			3
-		]
-	},
-	"subtest 5": {
-		"command": "DERIVE",
-		"subsystem": "SECO",
-		"op_type": "TLS12_OP_KEY_EXCHANGE",
-		"op_args": {
-			"op_name": "KEY_EXPANSION",
-			"encryption_name": "AES_128_GCM",
-			"prf_name": "SHA256",
-			"random_data": {
-				"client_random": [
-					"000102030405060708090a0b0c0d0e0f",
-					"000102030405060708090a0b0c0d0e0f"
-				],
-				"server_random": [
-					"000102030405060708090a0b0c0d0e0f",
-					"000102030405060708090a0b0c0d0e0f"
-				]
-			},
-			"client_write_iv": "000000000000000000000000",
-			"server_write_iv": "000000000000000000000000",
-			"client_w_enc_key_name": "client write enc key",
-			"server_w_enc_key_name": "server write enc key"
-		},
-		"op_output": "key expansion 256",
-		"op_input": "master secret 256",
-		"context_id": 0,
-		"depends": [
-			1,
-			3
-		]
-	},
 	"subtest 6": {
-		"command": "SIGN",
-		"subsystem": "SECO",
-		"sign_attr": [
-			"TLS_1_2_CLIENT",
-			"HASH=SHA256"
-		],
-		"message": [
-			"f149e41d848f59276cfddd743bafa9a9",
-			"0e1ee4a263a118142b33e3702176ef0a"
-		],
-		"key_name": "master secret 256",
-		"sign_id": 0,
-		"depends": 3
-	},
-	"subtest 7": {
 		"command": "DERIVE",
 		"subsystem": "SECO",
 		"op_type": "TLS12_OP_KEY_EXCHANGE",
@@ -175,12 +110,119 @@
 				"f484aec5acfd2b03f1afe811eb75d61f"
 			]
 		},
-		"op_output": "master secret 384",
+		"op_output": "master secret 2",
 		"op_input": "self 384-bit ecdh key",
-		"context_id": 1,
+		"context_id": 2,
 		"depends": 2
 	},
+	"subtest 7": {
+		"command": "DERIVE",
+		"subsystem": "SECO",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"store_key": true,
+		"op_args": {
+			"op_name": "MASTER_SECRET",
+			"key_exchange_name": "ECDHE_ECDSA",
+			"prf_name": "SHA256",
+			"random_data": {
+				"client_random": [
+					"000102030405060708090a0b0c0d0e0f",
+					"000102030405060708090a0b0c0d0e0f"
+				],
+				"server_random": [
+					"000102030405060708090a0b0c0d0e0f",
+					"000102030405060708090a0b0c0d0e0f"
+				]
+			},
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			]
+		},
+		"op_output": "master secret 3",
+		"op_input": "self 256-bit ecdh key",
+		"context_id": 3,
+		"depends": 3
+	},
 	"subtest 8": {
+		"command": "DERIVE",
+		"subsystem": "SECO",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"store_key": true,
+		"op_args": {
+			"op_name": "MASTER_SECRET",
+			"key_exchange_name": "ECDHE_ECDSA",
+			"prf_name": "SHA384",
+			"random_data": {
+				"client_random": [
+					"000102030405060708090a0b0c0d0e0f",
+					"000102030405060708090a0b0c0d0e0f"
+				],
+				"server_random": [
+					"000102030405060708090a0b0c0d0e0f",
+					"000102030405060708090a0b0c0d0e0f"
+				]
+			},
+			"peer_public_key": [
+				"856277b7c97e7344447fa6611bcb257f",
+				"0410a4720a0c850256d35cc8853331db",
+				"20658e0055afaf32f6286111ba025b25",
+				"230f75fc9adc273d5c244590dd45dc6b",
+				"b64faca0f30a91bb9f4dc99a99af21a3",
+				"f484aec5acfd2b03f1afe811eb75d61f"
+			]
+		},
+		"op_output": "master secret 4",
+		"op_input": "self 384-bit ecdh key",
+		"context_id": 4,
+		"depends": 4
+	},
+	"subtest 9": {
+		"command": "DERIVE",
+		"subsystem": "SECO",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "KEY_EXPANSION",
+			"encryption_name": "AES_128_CBC",
+			"prf_name": "SHA256",
+			"random_data": {
+				"client_random": [
+					"000102030405060708090a0b0c0d0e0f",
+					"000102030405060708090a0b0c0d0e0f"
+				],
+				"server_random": [
+					"000102030405060708090a0b0c0d0e0f",
+					"000102030405060708090a0b0c0d0e0f"
+				]
+			},
+			"client_w_mac_key_name": "client write mac key",
+			"server_w_mac_key_name": "server write mac key",
+			"client_w_enc_key_name": "client write enc key",
+			"server_w_enc_key_name": "server write enc key"
+		},
+		"op_output": "key expansion 1",
+		"op_input": "master secret 1",
+		"context_id": 1,
+		"depends": 5
+	},
+	"subtest 10": {
+		"command": "SIGN",
+		"subsystem": "SECO",
+		"sign_attr": [
+			"TLS_1_2_CLIENT",
+			"HASH=SHA256"
+		],
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a"
+		],
+		"key_name": "master secret 1",
+		"sign_id": 1,
+		"depends": 5
+	},
+	"subtest 11": {
 		"command": "DERIVE",
 		"subsystem": "SECO",
 		"op_type": "TLS12_OP_KEY_EXCHANGE",
@@ -203,15 +245,70 @@
 			"client_w_enc_key_name": "client write enc key",
 			"server_w_enc_key_name": "server write enc key"
 		},
-		"op_output": "key expansion 384",
-		"op_input": "master secret 384",
-		"context_id": 1,
-		"depends": [
-			2,
-			7
-		]
+		"op_output": "key expansion 2",
+		"op_input": "master secret 2",
+		"context_id": 2,
+		"depends": 6
 	},
-	"subtest 9": {
+	"subtest 12": {
+		"command": "SIGN",
+		"subsystem": "SECO",
+		"sign_attr": [
+			"TLS_1_2_CLIENT",
+			"HASH=SHA384"
+		],
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a"
+		],
+		"key_name": "master secret 2",
+		"sign_id": 2,
+		"depends": 6
+	},
+	"subtest 13": {
+		"command": "DERIVE",
+		"subsystem": "SECO",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "KEY_EXPANSION",
+			"encryption_name": "AES_128_GCM",
+			"prf_name": "SHA256",
+			"random_data": {
+				"client_random": [
+					"000102030405060708090a0b0c0d0e0f",
+					"000102030405060708090a0b0c0d0e0f"
+				],
+				"server_random": [
+					"000102030405060708090a0b0c0d0e0f",
+					"000102030405060708090a0b0c0d0e0f"
+				]
+			},
+			"client_write_iv": "000000000000000000000000",
+			"server_write_iv": "000000000000000000000000",
+			"client_w_enc_key_name": "client write enc key",
+			"server_w_enc_key_name": "server write enc key"
+		},
+		"op_output": "key expansion 3",
+		"op_input": "master secret 3",
+		"context_id": 3,
+		"depends": 7
+	},
+	"subtest 14": {
+		"command": "SIGN",
+		"subsystem": "SECO",
+		"sign_attr": [
+			"TLS_1_2_CLIENT",
+			"HASH=SHA256"
+		],
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a"
+		],
+		"key_name": "master secret 3",
+		"sign_id": 3,
+		"depends": 7
+	},
+	"subtest 15": {
 		"command": "DERIVE",
 		"subsystem": "SECO",
 		"op_type": "TLS12_OP_KEY_EXCHANGE",
@@ -234,15 +331,12 @@
 			"client_w_enc_key_name": "client write enc key",
 			"server_w_enc_key_name": "server write enc key"
 		},
-		"op_output": "key expansion 384",
-		"op_input": "master secret 384",
-		"context_id": 1,
-		"depends": [
-			2,
-			7
-		]
+		"op_output": "key expansion 4",
+		"op_input": "master secret 4",
+		"context_id": 4,
+		"depends": 8
 	},
-	"subtest 10": {
+	"subtest 16": {
 		"command": "SIGN",
 		"subsystem": "SECO",
 		"sign_attr": [
@@ -253,21 +347,36 @@
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a"
 		],
-		"signature": 32,
-		"key_name": "master secret 384",
-		"sign_id": 1,
-		"depends": 7
+		"key_name": "master secret 4",
+		"sign_id": 4,
+		"depends": 8
 	},
-	"subtest 11": {
+	"subtest 17": {
 		"command": "OP_CONTEXT_CANCEL",
 		"subsystem": "SECO",
 		"context_id": 1,
-		"depends": 2
+		"depends": 1,
+		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 12": {
+	"subtest 18": {
 		"command": "OP_CONTEXT_CANCEL",
 		"subsystem": "SECO",
-		"context_id": 0,
-		"depends": 1
+		"context_id": 2,
+		"depends": 2,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 19": {
+		"command": "OP_CONTEXT_CANCEL",
+		"subsystem": "SECO",
+		"context_id": 3,
+		"depends": 3,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 20": {
+		"command": "OP_CONTEXT_CANCEL",
+		"subsystem": "SECO",
+		"context_id": 4,
+		"depends": 4,
+		"result": "SMW_STATUS_INVALID_PARAM"
 	}
 }

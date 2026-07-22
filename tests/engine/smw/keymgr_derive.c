@@ -1197,6 +1197,8 @@ static int kdf_tls12_op_end_operation(struct subtest_data *subtest,
 	struct key_data key_data = { 0 };
 	struct smw_kdf_tls12_op_args *tls_args = NULL;
 	struct smw_kdf_tls12_key_expansion_args *ke = NULL;
+	unsigned int ctx_id = UINT_MAX;
+	struct smw_op_context *context = NULL;
 	struct llist *keys = NULL;
 
 	if (!args || !subtest || !args->kdf_arguments) {
@@ -1223,6 +1225,18 @@ static int kdf_tls12_op_end_operation(struct subtest_data *subtest,
 				     subtest->params);
 	} else if (tls_args->op_name == SMW_TLS12_OP_NAME_KEY_EXPANSION) {
 		ke = &tls_args->key_expansion;
+
+		res = util_context_set_op_ctx(subtest, &ctx_id, &context, NULL);
+		if (res != ERR_CODE(PASSED))
+			return res;
+
+		if (tls_args->context != context) {
+			res = util_context_update_node(list_op_ctxs(subtest),
+						       ctx_id,
+						       tls_args->context);
+			if (res != ERR_CODE(PASSED))
+				return res;
+		}
 
 		if (kdf_tls12_is_mac_key_expected(ke->encryption_name)) {
 			key_data.identifier = ke->client_w_mac_key_id;

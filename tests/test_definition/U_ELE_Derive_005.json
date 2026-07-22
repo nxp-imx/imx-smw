@@ -69,19 +69,61 @@
 	},
 	"subtest 3": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"context_id": 0,
+		"context_id": 1,
 		"restriction_list": [
 			"imx8ulp"
 		]
 	},
 	"subtest 4": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"context_id": 1,
+		"context_id": 2,
 		"restriction_list": [
 			"imx8ulp"
 		]
 	},
 	"subtest 5": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 3,
+		"restriction_list": [
+			"imx8ulp"
+		]
+	},
+	"subtest 6": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 4,
+		"restriction_list": [
+			"imx8ulp"
+		]
+	},
+	"subtest 7": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 5,
+		"restriction_list": [
+			"imx8ulp"
+		]
+	},
+	"subtest 8": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 6,
+		"restriction_list": [
+			"imx8ulp"
+		]
+	},
+	"subtest 9": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 7,
+		"restriction_list": [
+			"imx8ulp"
+		]
+	},
+	"subtest 10": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 8,
+		"restriction_list": [
+			"imx8ulp"
+		]
+	},
+	"subtest 11": {
 		"command": "DERIVE",
 		"subsystem": "ELE",
 		"op_type": "TLS12_OP_KEY_EXCHANGE",
@@ -105,13 +147,13 @@
 		},
 		"op_output": "master secret 256 1",
 		"op_input": "self 256-bit ecdh key",
-		"context_id": 0,
+		"context_id": 1,
 		"depends": [
 			1,
 			3
 		]
 	},
-	"subtest 6": {
+	"subtest 12": {
 		"command": "DERIVE",
 		"subsystem": "ELE",
 		"op_type": "TLS12_OP_KEY_EXCHANGE",
@@ -138,13 +180,13 @@
 		},
 		"op_output": "master secret 256 2",
 		"op_input": "self 256-bit ecdh key",
-		"context_id": 0,
+		"context_id": 2,
 		"depends": [
 			1,
-			3
+			4
 		]
 	},
-	"subtest 7": {
+	"subtest 13": {
 		"command": "DERIVE",
 		"subsystem": "ELE",
 		"op_type": "TLS12_OP_KEY_EXCHANGE",
@@ -168,13 +210,13 @@
 		},
 		"op_output": "master secret 256 3",
 		"op_input": "self 256-bit ecdh key",
-		"context_id": 0,
+		"context_id": 3,
 		"depends": [
 			1,
-			3
+			5
 		]
 	},
-	"subtest 8": {
+	"subtest 14": {
 		"command": "DERIVE",
 		"subsystem": "ELE",
 		"op_type": "TLS12_OP_KEY_EXCHANGE",
@@ -201,13 +243,13 @@
 		},
 		"op_output": "master secret 256 4",
 		"op_input": "self 256-bit ecdh key",
-		"context_id": 0,
+		"context_id": 4,
 		"depends": [
 			1,
-			3
+			6
 		]
 	},
-	"subtest 9": {
+	"subtest 15": {
 		"command": "DERIVE",
 		"subsystem": "ELE",
 		"op_type": "TLS12_OP_KEY_EXCHANGE",
@@ -234,13 +276,13 @@
 		},
 		"op_output": "master secret 384 1",
 		"op_input": "self 384-bit ecdh key",
-		"context_id": 1,
+		"context_id": 5,
 		"depends": [
 			2,
-			4
+			7
 		]
 	},
-	"subtest 10": {
+	"subtest 16": {
 		"command": "DERIVE",
 		"subsystem": "ELE",
 		"op_type": "TLS12_OP_KEY_EXCHANGE",
@@ -269,13 +311,13 @@
 		},
 		"op_output": "master secret 384 2",
 		"op_input": "self 384-bit ecdh key",
-		"context_id": 1,
+		"context_id": 6,
 		"depends": [
 			2,
-			4
+			8
 		]
 	},
-	"subtest 11": {
+	"subtest 17": {
 		"command": "DERIVE",
 		"subsystem": "ELE",
 		"op_type": "TLS12_OP_KEY_EXCHANGE",
@@ -302,13 +344,13 @@
 		},
 		"op_output": "master secret 384 3",
 		"op_input": "self 384-bit ecdh key",
-		"context_id": 1,
+		"context_id": 7,
 		"depends": [
 			2,
-			4
+			9
 		]
 	},
-	"subtest 12": {
+	"subtest 18": {
 		"command": "DERIVE",
 		"subsystem": "ELE",
 		"op_type": "TLS12_OP_KEY_EXCHANGE",
@@ -337,13 +379,13 @@
 		},
 		"op_output": "master secret 384 4",
 		"op_input": "self 384-bit ecdh key",
-		"context_id": 1,
+		"context_id": 8,
 		"depends": [
 			2,
-			4
+			10
 		]
 	},
-	"subtest 13": {
+	"subtest 19": {
 		"command": "DERIVE",
 		"subsystem": "ELE",
 		"op_type": "TLS12_OP_KEY_EXCHANGE",
@@ -367,14 +409,14 @@
 			"server_w_enc_key_name": "server write enc key 1"
 		},
 		"op_output": "key expansion 256",
-		"op_input": "master secret 256 4",
-		"context_id": 0,
+		"op_input": "master secret 256 1",
+		"context_id": 1,
 		"depends": [
 			1,
-			3
+			11
 		]
 	},
-	"subtest 14": {
+	"subtest 20": {
 		"command": "DERIVE",
 		"subsystem": "ELE",
 		"op_type": "TLS12_OP_KEY_EXCHANGE",
@@ -398,14 +440,14 @@
 			"server_w_enc_key_name": "server write enc key 2"
 		},
 		"op_output": "key expansion 256",
-		"op_input": "master secret 256 4",
-		"context_id": 0,
+		"op_input": "master secret 256 2",
+		"context_id": 2,
 		"depends": [
 			1,
-			3
+			12
 		]
 	},
-	"subtest 15": {
+	"subtest 21": {
 		"command": "DERIVE",
 		"subsystem": "ELE",
 		"op_type": "TLS12_OP_KEY_EXCHANGE",
@@ -431,14 +473,14 @@
 			"server_w_mac_key_name": "server write mac key 1"
 		},
 		"op_output": "key expansion 256",
-		"op_input": "master secret 256 4",
-		"context_id": 0,
+		"op_input": "master secret 256 3",
+		"context_id": 3,
 		"depends": [
 			1,
-			3
+			13
 		]
 	},
-	"subtest 16": {
+	"subtest 22": {
 		"command": "DERIVE",
 		"subsystem": "ELE",
 		"op_type": "TLS12_OP_KEY_EXCHANGE",
@@ -462,14 +504,14 @@
 			"server_w_enc_key_name": "server write enc key 4"
 		},
 		"op_output": "key expansion 384",
-		"op_input": "master secret 384 4",
-		"context_id": 1,
+		"op_input": "master secret 384 1",
+		"context_id": 5,
 		"depends": [
 			2,
-			4
+			15
 		]
 	},
-	"subtest 17": {
+	"subtest 23": {
 		"command": "DERIVE",
 		"subsystem": "ELE",
 		"op_type": "TLS12_OP_KEY_EXCHANGE",
@@ -493,14 +535,14 @@
 			"server_w_enc_key_name": "server write enc key 5"
 		},
 		"op_output": "key expansion 384",
-		"op_input": "master secret 384 4",
-		"context_id": 1,
+		"op_input": "master secret 384 2",
+		"context_id": 6,
 		"depends": [
 			2,
-			4
+			16
 		]
 	},
-	"subtest 18": {
+	"subtest 24": {
 		"command": "DERIVE",
 		"subsystem": "ELE",
 		"op_type": "TLS12_OP_KEY_EXCHANGE",
@@ -526,14 +568,14 @@
 			"server_w_mac_key_name": "server write mac key 2"
 		},
 		"op_output": "key expansion 384",
-		"op_input": "master secret 384 4",
-		"context_id": 1,
+		"op_input": "master secret 384 3",
+		"context_id": 7,
 		"depends": [
 			2,
-			4
+			17
 		]
 	},
-	"subtest 19": {
+	"subtest 25": {
 		"command": "SIGN",
 		"subsystem": "ELE",
 		"sign_attr": [
@@ -546,9 +588,9 @@
 		],
 		"key_name": "master secret 256 4",
 		"sign_id": 0,
-		"depends": 5
+		"depends": 14
 	},
-	"subtest 20": {
+	"subtest 26": {
 		"command": "SIGN",
 		"subsystem": "ELE",
 		"sign_attr": [
@@ -561,9 +603,9 @@
 		],
 		"key_name": "master secret 256 4",
 		"sign_id": 1,
-		"depends": 5
+		"depends": 14
 	},
-	"subtest 21": {
+	"subtest 27": {
 		"command": "SIGN",
 		"subsystem": "ELE",
 		"sign_attr": [
@@ -576,9 +618,9 @@
 		],
 		"key_name": "master secret 384 4",
 		"sign_id": 2,
-		"depends": 9
+		"depends": 18
 	},
-	"subtest 22": {
+	"subtest 28": {
 		"command": "SIGN",
 		"subsystem": "ELE",
 		"sign_attr": [
@@ -591,173 +633,215 @@
 		],
 		"key_name": "master secret 384 4",
 		"sign_id": 3,
-		"depends": 9
+		"depends": 18
 	},
-	"subtest 23": {
+	"subtest 29": {
 		"command": "OP_CONTEXT_CANCEL",
 		"subsystem": "ELE",
 		"context_id": 1,
-		"depends": 4
+		"depends": 12,
+		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 24": {
+	"subtest 30": {
 		"command": "OP_CONTEXT_CANCEL",
 		"subsystem": "ELE",
-		"context_id": 0,
-		"depends": 3
+		"context_id": 2,
+		"depends": 11,
+		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 25": {
+	"subtest 31": {
+		"command": "OP_CONTEXT_CANCEL",
+		"subsystem": "ELE",
+		"context_id": 3,
+		"depends": 12,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 32": {
+		"command": "OP_CONTEXT_CANCEL",
+		"context_id": 4,
+		"subsystem": "ELE",
+		"depends": 14
+	},
+	"subtest 33": {
+		"command": "OP_CONTEXT_CANCEL",
+		"subsystem": "ELE",
+		"context_id": 5,
+		"depends": 22,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 34": {
+		"command": "OP_CONTEXT_CANCEL",
+		"subsystem": "ELE",
+		"context_id": 6,
+		"depends": 23,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 35": {
+		"command": "OP_CONTEXT_CANCEL",
+		"subsystem": "ELE",
+		"context_id": 7,
+		"depends": 24,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 37": {
+		"command": "OP_CONTEXT_CANCEL",
+		"subsystem": "ELE",
+		"context_id": 8,
+		"depends": 18
+	},
+	"subtest 38": {
 		"command": "DELETE",
 		"subsystem": "ELE",
 		"key_name": "self 384-bit ecdh key",
 		"depends": 2
 	},
-	"subtest 26": {
+	"subtest 39": {
 		"command": "DELETE",
 		"key_name": "self 256-bit ecdh key",
 		"depends": 1
 	},
-	"subtest 27": {
-		"command": "DELETE",
-		"subsystem": "ELE",
-		"key_name": "master secret 256 1",
-		"depends": 5
-	},
-	"subtest 28": {
-		"command": "DELETE",
-		"subsystem": "ELE",
-		"key_name": "master secret 256 2",
-		"depends": 6
-	},
-	"subtest 29": {
-		"command": "DELETE",
-		"subsystem": "ELE",
-		"key_name": "master secret 256 3",
-		"depends": 7
-	},
-	"subtest 30": {
-		"command": "DELETE",
-		"subsystem": "ELE",
-		"key_name": "master secret 256 4",
-		"depends": 8
-	},
-	"subtest 31": {
-		"command": "DELETE",
-		"subsystem": "ELE",
-		"key_name": "master secret 384 1",
-		"depends": 9
-	},
-	"subtest 32": {
-		"command": "DELETE",
-		"subsystem": "ELE",
-		"key_name": "master secret 384 2",
-		"depends": 10
-	},
-	"subtest 33": {
-		"command": "DELETE",
-		"subsystem": "ELE",
-		"key_name": "master secret 384 3",
-		"depends": 11
-	},
-	"subtest 34": {
-		"command": "DELETE",
-		"subsystem": "ELE",
-		"key_name": "master secret 384 4",
-		"depends": 12
-	},
-	"subtest 35": {
-		"command": "DELETE",
-		"subsystem": "ELE",
-		"key_name": "client write enc key 1",
-		"depends": 13
-	},
-	"subtest 36": {
-		"command": "DELETE",
-		"subsystem": "ELE",
-		"key_name": "client write enc key 2",
-		"depends": 14
-	},
-	"subtest 37": {
-		"command": "DELETE",
-		"subsystem": "ELE",
-		"key_name": "client write enc key 3",
-		"depends": 15
-	},
-	"subtest 38": {
-		"command": "DELETE",
-		"subsystem": "ELE",
-		"key_name": "client write enc key 4",
-		"depends": 16
-	},
-	"subtest 39": {
-		"command": "DELETE",
-		"subsystem": "ELE",
-		"key_name": "client write enc key 5",
-		"depends": 17
-	},
 	"subtest 40": {
 		"command": "DELETE",
 		"subsystem": "ELE",
-		"key_name": "client write enc key 6",
-		"depends": 18
+		"key_name": "master secret 256 1",
+		"depends": 11
 	},
 	"subtest 41": {
 		"command": "DELETE",
 		"subsystem": "ELE",
-		"key_name": "server write enc key 1",
-		"depends": 13
+		"key_name": "master secret 256 2",
+		"depends": 12
 	},
 	"subtest 42": {
 		"command": "DELETE",
 		"subsystem": "ELE",
-		"key_name": "server write enc key 2",
-		"depends": 14
+		"key_name": "master secret 256 3",
+		"depends": 13
 	},
 	"subtest 43": {
 		"command": "DELETE",
 		"subsystem": "ELE",
-		"key_name": "server write enc key 3",
-		"depends": 15
+		"key_name": "master secret 256 4",
+		"depends": 14
 	},
 	"subtest 44": {
 		"command": "DELETE",
 		"subsystem": "ELE",
-		"key_name": "server write enc key 4",
-		"depends": 16
+		"key_name": "master secret 384 1",
+		"depends": 15
 	},
 	"subtest 45": {
 		"command": "DELETE",
 		"subsystem": "ELE",
-		"key_name": "server write enc key 5",
-		"depends": 17
+		"key_name": "master secret 384 2",
+		"depends": 16
 	},
 	"subtest 46": {
 		"command": "DELETE",
 		"subsystem": "ELE",
-		"key_name": "server write enc key 6",
-		"depends": 18
+		"key_name": "master secret 384 3",
+		"depends": 17
 	},
 	"subtest 47": {
 		"command": "DELETE",
 		"subsystem": "ELE",
-		"key_name": "client write mac key 1",
-		"depends": 15
+		"key_name": "master secret 384 4",
+		"depends": 18
 	},
 	"subtest 48": {
 		"command": "DELETE",
 		"subsystem": "ELE",
-		"key_name": "client write mac key 2",
-		"depends": 18
+		"key_name": "client write enc key 1",
+		"depends": 19
 	},
 	"subtest 49": {
 		"command": "DELETE",
 		"subsystem": "ELE",
-		"key_name": "server write mac key 1",
-		"depends": 15
+		"key_name": "client write enc key 2",
+		"depends": 20
 	},
 	"subtest 50": {
 		"command": "DELETE",
 		"subsystem": "ELE",
+		"key_name": "client write enc key 3",
+		"depends": 21
+	},
+	"subtest 51": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "client write enc key 4",
+		"depends": 22
+	},
+	"subtest 52": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "client write enc key 5",
+		"depends": 23
+	},
+	"subtest 53": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "client write enc key 6",
+		"depends": 24
+	},
+	"subtest 54": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "server write enc key 1",
+		"depends": 19
+	},
+	"subtest 55": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "server write enc key 2",
+		"depends": 20
+	},
+	"subtest 56": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "server write enc key 3",
+		"depends": 21
+	},
+	"subtest 57": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "server write enc key 4",
+		"depends": 22
+	},
+	"subtest 58": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "server write enc key 5",
+		"depends": 23
+	},
+	"subtest 59": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "server write enc key 6",
+		"depends": 24
+	},
+	"subtest 60": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "client write mac key 1",
+		"depends": 21
+	},
+	"subtest 61": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "client write mac key 2",
+		"depends": 24
+	},
+	"subtest 62": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "server write mac key 1",
+		"depends": 21
+	},
+	"subtest 63": {
+		"command": "DELETE",
+		"subsystem": "ELE",
 		"key_name": "server write mac key 2",
-		"depends": 18
+		"depends": 24
 	}
 }

@@ -113,7 +113,8 @@
 	"subtest 8": {
 		"command": "OP_CONTEXT_CANCEL",
 		"context_id": 0,
-		"depends": 2
+		"depends": 2,
+		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 9": {
 		"command": "DELETE",

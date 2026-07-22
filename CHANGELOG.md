@@ -90,11 +90,13 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### PKCS#11 Library
 
 * Add support for `CKM_AES_CFB128` and `CKM_AES_OFB` mechanisms.
+* Fix RSA PSS when the mask generation function is set by the user.
 
 
 #### PKCS#11 Tests
 
 * Add `CKM_AES_CFB128` and `CKM_AES_OFB` cases for existing cipher tests.
+* Add RSA PSS test where the mask generation function is set.
 
 ---
 ### <a id ="rel_5_4"></a></br>**Release 5.4**

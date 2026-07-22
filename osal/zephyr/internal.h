@@ -8,6 +8,7 @@
 
 #include <zephyr/logging/log.h>
 
+#include "builtin_macros.h"
 #include "osal.h"
 
 /*******************************************************************************

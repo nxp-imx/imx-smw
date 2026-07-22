@@ -184,12 +184,30 @@ __weak int osal_zephyr_file_read(uint32_t blob_id_msb, uint32_t blob_id_lsb,
 
 void osal_zephyr_dcache_invalidate(void *addr, size_t size)
 {
-	DCACHE_INVALIDATE(addr, size);
+	uint32_t addr_u32 = 0u;
+	uint32_t size_u32 = 0u;
+
+	if (SET_OVERFLOW((uintptr_t)addr, addr_u32) ||
+	    SET_OVERFLOW(size, size_u32)) {
+		LOG_ERR("Invalid parameters for dcache invalidate\n");
+		return;
+	}
+
+	DCACHE_INVALIDATE(addr_u32, size_u32);
 }
 
 void osal_zephyr_dcache_clean(void *addr, size_t size)
 {
-	DCACHE_CLEAN(addr, size);
+	uint32_t addr_u32 = 0u;
+	uint32_t size_u32 = 0u;
+
+	if (SET_OVERFLOW((uintptr_t)addr, addr_u32) ||
+	    SET_OVERFLOW(size, size_u32)) {
+		LOG_ERR("Invalid parameters for dcache clean\n");
+		return;
+	}
+
+	DCACHE_CLEAN(addr_u32, size_u32);
 }
 
 __weak void osal_shared_memory_init(void)

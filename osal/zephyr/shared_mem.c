@@ -61,10 +61,18 @@ void *osal_shared_memory_alloc(void *buf, size_t size, uintptr_t *aligned_phys)
 
 	DCACHE_INVALIDATE(aligned_buf, size);
 
-	*aligned_phys = ELE_BUF_PA +
-			((uintptr_t)aligned_buf - (uintptr_t)ctx->heap_buf);
+	if (SUB_OVERFLOW((uintptr_t)aligned_buf, (uintptr_t)ctx->heap_buf,
+			 aligned_phys))
+		goto end;
+
+	if (ADD_OVERFLOW(*aligned_phys, ELE_BUF_PA, aligned_phys))
+		goto end;
 
 	return aligned_buf;
+
+end:
+	k_heap_free(&ctx->heap, aligned_buf);
+	return NULL;
 }
 
 void osal_shared_memory_free(void *buf, size_t size, void *original_buf)

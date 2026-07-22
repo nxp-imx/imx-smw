@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021, 2023-2025 NXP
+ * Copyright 2021, 2023-2026 NXP
  */
 
 #ifndef __KEYMGR_DERIVE_H__
@@ -353,6 +353,17 @@ smw_keymgr_tls12_get_server_random_length(struct smw_keymgr_tls12_args *args);
  */
 struct smw_op_context *
 smw_keymgr_tls12_get_context(struct smw_keymgr_tls12_args *args);
+
+/**
+ * smw_keymgr_tls12_set_context() - Set the TLS1.2 operation context
+ * @args: TLS 1.2 internal arguments
+ * @ctx: Address of the new TLS1.2 operation context
+ *
+ * Return:
+ * None
+ */
+void smw_keymgr_tls12_set_context(struct smw_keymgr_tls12_args *args,
+				  struct smw_op_context *ctx);
 
 /**
  * smw_keymgr_tls12_is_encryption_aead() - Return if the Cipher mode is AEAD

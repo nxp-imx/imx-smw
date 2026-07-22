@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2025 NXP
+ * Copyright 2021-2026 NXP
  */
 
+#include "smw_crypto.h"
 #include "smw_keymgr.h"
 #include "smw_status.h"
 
@@ -1717,6 +1718,14 @@ smw_keymgr_tls12_get_context(struct smw_keymgr_tls12_args *args)
 	return args->pub_op_args->context;
 }
 
+void smw_keymgr_tls12_set_context(struct smw_keymgr_tls12_args *args,
+				  struct smw_op_context *ctx)
+{
+	SMW_DBG_ASSERT(args && args->is_operation && args->pub_op_args);
+
+	args->pub_op_args->context = ctx;
+}
+
 /**
  * smw_keymgr_tls13_get_peer_len() - Get peer public key buffer length
  * @args: Pointer to internal arguments structure
@@ -2237,6 +2246,29 @@ static int convert_input_args(struct smw_derive_key_args *args,
 	return status;
 }
 
+static int derive_key_finish_operation(struct smw_keymgr_derive_key_args *args)
+{
+	struct smw_keymgr_tls12_args *tls_args = args->kdf_args;
+	struct smw_context_args ctx_args = { 0 };
+	struct smw_op_context *ctx = NULL;
+
+	if (args->kdf_id != SMW_CONFIG_KDF_ID_TLS12_OP_KEY_EXCHANGE ||
+	    !tls_args ||
+	    tls_args->op_id != SMW_TLS12_OPERATION_ID_KEY_EXPANSION)
+		return SMW_STATUS_OK;
+
+	ctx = smw_keymgr_tls12_get_context(tls_args);
+	if (!ctx)
+		return SMW_STATUS_OPERATION_FAILURE;
+
+	ctx_args.context = ctx;
+
+	smw_cancel_operation(&ctx_args);
+	smw_keymgr_tls12_set_context(tls_args, NULL);
+
+	return SMW_STATUS_OK;
+}
+
 static int derive_key_convert_args(struct smw_derive_key_args *args,
 				   struct smw_keymgr_derive_key_args *conv_args,
 				   enum subsystem_id *subsystem_id)
@@ -2318,6 +2350,7 @@ smw_keymgr_get_peer_pub_buffer_len(struct smw_keymgr_derive_key_args *args)
 enum smw_status_code smw_derive_key(struct smw_derive_key_args *args)
 {
 	int status = SMW_STATUS_OK;
+	int tmp_status = SMW_STATUS_OK;
 
 	struct smw_keymgr_derive_key_args derive_key_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
@@ -2353,6 +2386,10 @@ enum smw_status_code smw_derive_key(struct smw_derive_key_args *args)
 		status = update_key_in_db(status, &new_id, &derive_key_args);
 
 end:
+	tmp_status = derive_key_finish_operation(&derive_key_args);
+	if (status == SMW_STATUS_OK)
+		status = tmp_status;
+
 	if (derive_key_args.kdf_args)
 		SMW_UTILS_FREE(derive_key_args.kdf_args);
 

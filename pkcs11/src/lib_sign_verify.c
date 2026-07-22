@@ -227,7 +227,7 @@ static CK_RV check_rsa_pss(CK_MECHANISM_TYPE mechanism, CK_VOID_PTR pparameter,
 		if (mech_hash && mech_hash != mgf_hash)
 			return CKR_MECHANISM_PARAM_INVALID;
 
-		mech_hash = mech_params->mgf;
+		mech_hash = mgf_hash;
 	}
 
 	/* Set context with mechanism parameters */

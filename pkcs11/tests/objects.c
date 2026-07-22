@@ -39,10 +39,11 @@ static int encrypt_decrypt_aes(CK_FUNCTION_LIST_PTR pfunc)
 
 	psa_key_type_t key_type = PSA_KEY_TYPE_AES;
 
-	CK_MECHANISM_TYPE aes_mech_type[] = { CKM_AES_CBC, CKM_AES_CTR };
+	CK_MECHANISM_TYPE aes_mech_type[] = { CKM_AES_CBC, CKM_AES_CFB128,
+					      CKM_AES_CTR, CKM_AES_OFB };
 
-	psa_algorithm_t aes_algo_type[] = { PSA_ALG_CBC_NO_PADDING,
-					    PSA_ALG_CTR };
+	psa_algorithm_t aes_algo_type[] = { PSA_ALG_CBC_NO_PADDING, PSA_ALG_CFB,
+					    PSA_ALG_CTR, PSA_ALG_OFB };
 
 	CK_BYTE iv[] = { 0x01, 0x02,  0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
 			 0x09, 0x010, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
@@ -163,6 +164,8 @@ static int encrypt_decrypt_aes(CK_FUNCTION_LIST_PTR pfunc)
 
 			switch (encrypt_decrypt_mech.mechanism) {
 			case CKM_AES_CBC:
+			case CKM_AES_CFB128:
+			case CKM_AES_OFB:
 				encrypt_decrypt_mech.pParameter = iv;
 				encrypt_decrypt_mech.ulParameterLen =
 					sizeof(iv);
@@ -2409,8 +2412,10 @@ static int generate_cipher_key_check_mode(CK_FUNCTION_LIST_PTR pfunc)
 		case CKM_AES_XTS:
 		case CKM_AES_ECB:
 		case CKM_AES_CBC:
+		case CKM_AES_CFB128:
 		case CKM_AES_CTR:
 		case CKM_AES_CTS:
+		case CKM_AES_OFB:
 		case CKM_DES_CBC:
 		case CKM_DES_ECB:
 		case CKM_DES3_CBC:

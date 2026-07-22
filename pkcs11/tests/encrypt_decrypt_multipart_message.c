@@ -1448,7 +1448,8 @@ static int encrypt_decrypt_multipart_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	CK_SESSION_HANDLE sess = 0;
 
 	CK_MECHANISM_TYPE aes_mech_type[] = { CKM_AES_ECB, CKM_AES_CBC,
-					      CKM_AES_CTR };
+					      CKM_AES_CFB128, CKM_AES_CTR,
+					      CKM_AES_OFB };
 
 	CK_BYTE iv[] = { 0x01, 0x02,  0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
 			 0x09, 0x010, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
@@ -1574,6 +1575,10 @@ static int encrypt_decrypt_multipart_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 		switch (enc_dec_mech.mechanism) {
 		case CKM_AES_CBC:
+		case CKM_AES_CFB128:
+		case CKM_AES_CTS:
+		case CKM_AES_OFB:
+		case CKM_AES_XTS:
 			enc_dec_mech.pParameter = iv;
 			enc_dec_mech.ulParameterLen = sizeof(iv);
 			break;
@@ -1584,16 +1589,6 @@ static int encrypt_decrypt_multipart_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 			ctr_params.ulCounterBits = counter_bits;
 			enc_dec_mech.pParameter = &ctr_params;
 			enc_dec_mech.ulParameterLen = sizeof(ctr_params);
-			break;
-
-		case CKM_AES_CTS:
-			enc_dec_mech.pParameter = iv;
-			enc_dec_mech.ulParameterLen = sizeof(iv);
-			break;
-
-		case CKM_AES_XTS:
-			enc_dec_mech.pParameter = iv;
-			enc_dec_mech.ulParameterLen = sizeof(iv);
 			break;
 
 		case CKM_AES_GCM:

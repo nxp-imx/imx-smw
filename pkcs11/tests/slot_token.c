@@ -124,7 +124,9 @@ static struct smw_mech_def mlist_ele[] = {
 	M(SHA3_256),
 	M(SHA3_384),
 	M(SHA3_512),
+	M(AES_CFB128),
 	M(AES_CTR),
+	M(AES_OFB),
 	M(AES_GCM),
 	M_OPT(CHACHA20_POLY1305),
 	M_OPT(HKDF_DERIVE),
@@ -170,6 +172,7 @@ static struct smw_mech_def mlist_ele[] = {
  * Array must list mechanisms supported only by SMW ELE subsystem i.MX8ULP.
  */
 static struct smw_mech_def mlist_ele_8ulp[] = {
+	M(AES_CFB128),
 	M(AES_CTR),
 	M(AES_CMAC_GENERAL),
 	M(DES3_CMAC_GENERAL),

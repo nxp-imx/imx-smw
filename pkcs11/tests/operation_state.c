@@ -666,7 +666,8 @@ static int operation_state_cipher_aes(CK_FUNCTION_LIST_PTR pfunc)
 	CK_SESSION_HANDLE session = 0;
 
 	CK_MECHANISM_TYPE aes_mech_type[] = {
-		CKM_AES_ECB, CKM_AES_CBC, CKM_AES_CTR, CKM_AES_CTS, CKM_AES_XTS,
+		CKM_AES_ECB, CKM_AES_CBC, CKM_AES_CFB128, CKM_AES_CTR,
+		CKM_AES_CTS, CKM_AES_OFB, CKM_AES_XTS,
 	};
 	CK_BYTE iv[] = { 0x01, 0x02,  0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
 			 0x09, 0x010, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
@@ -753,7 +754,9 @@ static int operation_state_cipher_aes(CK_FUNCTION_LIST_PTR pfunc)
 			break;
 
 		case CKM_AES_CBC:
+		case CKM_AES_CFB128:
 		case CKM_AES_CTS:
+		case CKM_AES_OFB:
 		case CKM_AES_XTS:
 			encrypt_decrypt_mech.pParameter = iv;
 			encrypt_decrypt_mech.ulParameterLen = ARRAY_SIZE(iv);

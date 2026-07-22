@@ -16,6 +16,7 @@ add_private_sources(utils
     attrs.c
     base64.c
     cipher.c
+    endian.c
     exec.c
     hash.c
     info.c

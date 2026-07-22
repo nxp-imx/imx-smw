@@ -80,6 +80,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add file read/write API.
 * Add shared memory API.
 * Add get mu base address API.
+* Add a dedicated configuration file for i.MX952.
 
 #### SMW Tests
 

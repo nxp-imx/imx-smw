@@ -12,6 +12,61 @@
 #include "smw/names.h"
 
 /**
+ * typedef smw_soc_id_t - NXP SoC Identifiers
+ *
+ * List of all NXP SoC identifiers handled in the library.
+ * List may be non-exhaustive.
+ *
+ * Values:
+ *
+ * * SOC_UNKNOWN: Device not identified.
+ * * SOC_IMX8ULP: i.MX8ULP device.
+ * * SOC_IMX91: i.MX91 device.
+ * * SOC_IMX93: i.MX93 device.
+ * * SOC_IMX95: i.MX95 device.
+ * * SOC_IMX941: i.MX941 device.
+ * * SOC_IMX942: i.MX942 device.
+ * * SOC_IMX943: i.MX943 device.
+ * * SOC_IMX937: i.MX937 device (equivalent to i.MX952).
+ * * SOC_IMX952: i.MX952 device.
+ */
+typedef enum {
+	SOC_UNKNOWN = 0x0,
+	SOC_IMX8ULP = 0x84d,
+	SOC_IMX91 = 0x9100,
+	SOC_IMX93 = 0x9300,
+	SOC_IMX95 = 0x9500,
+	SOC_IMX941 = 0x9410,
+	SOC_IMX942 = 0x9420,
+	SOC_IMX943 = 0x9430,
+	SOC_IMX937 = 0x9370,
+	SOC_IMX952 = 0x9520,
+} smw_soc_id_t;
+
+/**
+ * typedef smw_soc_revision_t - NXP SOC Revision
+ *
+ * List of revision handled in the library.
+ * List may be non-exhaustive.
+ *
+ * Values:
+ * * SOC_REV_A0: SoC revision A0.
+ * * SOC_REV_A1: SoC revision A1.
+ * * SOC_REV_A2: SoC revision A2.
+ * * SOC_REV_B0: SoC revision B0.
+ * * SOC_REV_B1: SoC revision B1.
+ * * SOC_REV_C0: SoC revision C0.
+ */
+typedef enum {
+	SOC_REV_A0 = 0xa000,
+	SOC_REV_A1 = 0xa100,
+	SOC_REV_A2 = 0xa200,
+	SOC_REV_B0 = 0xb000,
+	SOC_REV_B1 = 0xb100,
+	SOC_REV_C0 = 0xc000,
+} smw_soc_revision_t;
+
+/**
  * struct smw_device_attestation_args - Device attestation arguments
  * @version: [in] Version of this structure.
  * @subsystem_name: [in] Secure Subsystem name. See &typedef smw_subsystem_t.
@@ -110,6 +165,28 @@ struct smw_device_reprovision_args {
 	smw_subsystem_t subsystem_name;
 	unsigned char *data;
 	unsigned int data_length;
+};
+
+/**
+ * struct smw_device_info_args - Device information arguments
+ * @version: [in] Version of this structure.
+ * @subsystem_name: [in] Secure Subsystem name. See &typedef smw_subsystem_t.
+ * @soc_id: [out] SoC identifier. See &typedef smw_soc_id_t.
+ * @soc_rev: [out] SoC revision. See &typedef smw_soc_revision_t.
+ * @lifecycle: [out] SoC lifecycle. See &typedef smw_lifecycle_t.
+ * @srkh_fused: [out] True if the OEM SRKH is fused, false otherwise.
+ *
+ * The @subsystem_name designates the Secure Subsystem to be used.
+ * If this field is :ref:`SMW_SUBSYSTEM_NAME_NONE <smw_subsystem_t>`,
+ * the default configured Secure Subsystem is used.
+ */
+struct smw_device_info_args {
+	unsigned char version;
+	smw_subsystem_t subsystem_name;
+	smw_soc_id_t soc_id;
+	smw_soc_revision_t soc_rev;
+	smw_lifecycle_t lifecycle;
+	bool srkh_fused;
 };
 
 /**
@@ -272,5 +349,22 @@ smw_device_reprovision_prepare(struct smw_device_reprovision_args *args);
  */
 enum smw_status_code
 smw_device_reprovision(struct smw_device_reprovision_args *args);
+
+/**
+ * smw_device_get_info() - Get the device information.
+ * @args: Pointer to the structure that contains the device information
+ *        arguments.
+ *
+ * Reads the device information including the SoC ID, SoC revision and
+ * whether the OEM SRKH is fused.
+ *
+ * Return:
+ *  - SMW_STATUS_OK:
+ *      Operation succeeded.
+ *  - SMW_STATUS_INVALID_PARAM:
+ *      - @args is NULL.
+ *  - Other error code from &enum smw_status_code
+ */
+enum smw_status_code smw_device_get_info(struct smw_device_info_args *args);
 
 #endif /* __SMW_DEVICE_H__ */

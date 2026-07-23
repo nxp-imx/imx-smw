@@ -14,28 +14,34 @@ Supported Operations versus Subsystems
    :widths: 10 15 15 10 10 10
    :class: wrap-table
 
-   +--------------+------------------------+----------------+---------+---------+----------+
-   | **Key Type** | **Mode**               | **Processing** | **Subsystem**                |
-   +              +                        +                +---------+---------+----------+
-   |              |                        |                | **ELE** | **TEE** | **SECO** |
-   +==============+========================+================+=========+=========+==========+
-   | AES          | Counter with CBC-MAC   | Single-Part    |    Y    |    Y    |    Y     |
-   +              +                        +----------------+---------+---------+----------+
-   |              | (CCM)                  | Multi-Part     |   Y (2) |    Y    |    N     |
-   +              +------------------------+----------------+---------+---------+----------+
-   |              | Galois/Counter Mode    | Single-Part    | Y (1)(3)|    Y    |    Y     |
-   +              +                        +----------------+---------+---------+----------+
-   |              | (GCM)                  | Multi-Part     |   Y (2) |    Y    |    N     |
-   +              +------------------------+----------------+---------+---------+----------+
-   |              | ChaCha20-Poly1305      | Single-Part    |   Y (1) |    N    |    N     |
-   +              +                        +----------------+---------+---------+----------+
-   |              |                        | Multi-Part     |    N    |    N    |    N     |
-   +--------------+------------------------+----------------+---------+---------+----------+
+   +--------------+------------------------+----------------+----------+---------+----------+
+   | **Key Type** | **Mode**               | **Processing** | **Subsystem**                 |
+   +              +                        +                +----------+---------+----------+
+   |              |                        |                | **ELE**  | **TEE** | **SECO** |
+   +==============+========================+================+==========+=========+==========+
+   | AES          | Counter with CBC-MAC   | Single-Part    |    Y     |    Y    |    Y     |
+   +              +                        +----------------+----------+---------+----------+
+   |              | (CCM)                  | Multi-Part     |   Y (2)  |    Y    |    N     |
+   +              +------------------------+----------------+----------+---------+----------+
+   |              | Galois/Counter Mode    | Single-Part    | Y (1)(3) |    Y    |    Y     |
+   +              +                        +----------------+----------+---------+----------+
+   |              | (GCM)                  | Multi-Part     | Y (2)(4) |    Y    |    N     |
+   +              +------------------------+----------------+----------+---------+----------+
+   |              | ChaCha20-Poly1305      | Single-Part    |   Y (1)  |    N    |    N     |
+   +              +                        +----------------+----------+---------+----------+
+   |              |                        | Multi-Part     |    N     |    N    |    N     |
+   +--------------+------------------------+----------------+----------+---------+----------+
 
-(1) ELE single-part encryption and decryption operations using GCM and ChaCha20-Poly1305 are not supported on the i.MX8ULP platform.
-(2) ELE Multi-part encryption and decryption operations not supported on the i.MX8ULP, i.MX93 and i.MX91 platforms.
-(3) ELA hardware acceleration for single-part AEAD GCM mode is supported on all platforms except i.MX8ULP, i.MX91, i.MX93 and i.MX95.
-    ELA for GCM requires plaintext key buffer, a 12-byte IV and mandatory AAD. If these conditions are not met, the operation is executed by ELE.
+(1) ELE single-part encryption and decryption operations using GCM and ChaCha20-Poly1305 are
+    not supported on the i.MX8ULP platform.
+(2) ELE Multi-part encryption and decryption operations not supported on the i.MX8ULP, i.MX93
+    and i.MX91 platforms.
+(3) ELA hardware acceleration for single-part AEAD GCM mode is supported on all platforms except
+    i.MX8ULP, i.MX91, i.MX93 and i.MX95. ELA for GCM requires plaintext key buffer, a 12-byte
+    IV and mandatory AAD. If these conditions are not met, the operation is executed by ELE.
+(4) ELE Multi-part encryption operations using GCM mode with opaque keys produce
+    incorrect authentication tags on i.MX95 B0. However, using plaintext key
+    buffers works correctly.
 
 
 .. table:: AEAD APIs

@@ -42,7 +42,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ECC Signature verification with imported public key having x or y coordinate
   MSB=0 is not supported.
 * AEAD multi-part encryption operations using GCM mode with opaque keys produce
-  incorrect authentication tags on i.MX95. However, using plaintext key
+  incorrect authentication tags on i.MX95 B0. However, using plaintext key
   buffers works correctly.
 
 ##### 3. TEE Subsystem
@@ -83,6 +83,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 ##### 3. ARM PSA APIs
 
+* Add support for AEAD Multipart.
+
 ##### 4. OSAL
 
 * Remove size range definitions for ED25519, X25519, ED448 and X448 from ELE
@@ -110,6 +112,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   returns `SMW_STATUS_SIGNATURE_INVALID`. Add MAC compute/verify subtests with
   plaintext key buffers using NIST test vectors.
 * Add tests for ELA AEAD one-shot operations (GCM mode with plaintext keys).
+* Add PSA tests validating the AEAD Multipart.
 
 #### PKCS#11 Library
 

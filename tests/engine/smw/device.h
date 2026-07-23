@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2024, 2026 NXP
  */
 #ifndef __DEVICE_H__
 #define __DEVICE_H__
@@ -64,5 +64,16 @@ int device_lifecycle(struct subtest_data *subtest, bool set);
  * -INTERNAL_OUT_OF_MEMORY  - Out of memory
  */
 int device_reprovision(struct subtest_data *subtest);
+
+/**
+ * device_get_info() - Get the device information
+ * @subtest: Subtest data.
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -API_STATUS_NOK          - SMW API Call return error
+ */
+int device_get_info(struct subtest_data *subtest);
 
 #endif /* __DEVICE_H__ */

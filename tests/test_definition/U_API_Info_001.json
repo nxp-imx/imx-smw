@@ -7,5 +7,18 @@
 	"subtest 2": {
 		"command": "GET_VERSION",
 		"lib_version": 5.5
+	},
+	"subtest 3": {
+		"command": "DEVICE_GET_INFO",
+		"test_error": "ARGS_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 4": {
+		"command": "DEVICE_GET_INFO",
+		"version": 255,
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
+	},
+	"subtest 5": {
+		"command": "DEVICE_GET_INFO"
 	}
 }

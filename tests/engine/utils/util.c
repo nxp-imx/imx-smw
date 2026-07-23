@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <json.h>
 #include <libgen.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -847,4 +848,19 @@ int util_read_decryption_input_buffer(struct subtest_data *subtest,
 		res = ERR_CODE(PASSED);
 
 	return res;
+}
+
+void util_log_tty(const char *function, int line, const char *fmt, ...)
+{
+	va_list args = { 0 };
+	FILE *tty = fopen("/dev/tty", "w");
+
+	if (tty) {
+		va_start(args, fmt);
+		(void)fprintf(tty, "[TEST] [%s:%d] ", function, line);
+		(void)vfprintf(tty, fmt, args);
+		(void)fprintf(tty, "\n");
+		va_end(args);
+		(void)fclose(tty);
+	}
 }

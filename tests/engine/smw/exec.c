@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #include <string.h>
@@ -356,6 +356,8 @@ static int execute_device_cmd(char *cmd, struct subtest_data *subtest)
 {
 	if (!strcmp(cmd, DEVICE_ATTESTATION))
 		return device_attestation(subtest);
+	else if (!strcmp(cmd, DEVICE_GET_INFO))
+		return device_get_info(subtest);
 	else if (!strcmp(cmd, DEVICE_UUID))
 		return device_uuid(subtest);
 	else if (!strcmp(cmd, DEVICE_SET_LIFECYCLE))

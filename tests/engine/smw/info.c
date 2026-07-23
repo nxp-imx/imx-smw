@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2023, 2026 NXP
  */
 
 #include <string.h>
@@ -28,6 +28,7 @@ static int check_version(struct subtest_data *subtest)
 		return ret;
 
 	DBG_PRINT("Library version is %d.%d", major, minor);
+	LOG_TTY("Library version is %d.%d", major, minor);
 
 	/* Build the major.minor version double word */
 	lib_version = minor;

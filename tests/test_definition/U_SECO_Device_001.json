@@ -1,0 +1,12 @@
+{
+	"subtest 1": {
+		"command": "DEVICE_UUID",
+		"subsystem": "SECO",
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+	},
+	"subtest 2": {
+		"command": "DEVICE_GET_INFO",
+		"subsystem": "SECO",
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+	}
+}

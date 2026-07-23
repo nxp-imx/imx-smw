@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #ifndef __UTIL_H__
@@ -420,5 +420,16 @@ int util_read_decryption_input_buffer(struct subtest_data *subtest,
 				      unsigned char **data,
 				      unsigned int *data_len, unsigned int id,
 				      char *field);
+
+/**
+ * util_log_tty() - Print message on the linux consol directly.
+ * @function: Function name.
+ * @line: Line number in the function.
+ * @fmt: Formatting of the function last argument.
+ * @...: Function last argument, message to display.
+ */
+void util_log_tty(const char *function, int line, const char *fmt, ...);
+
+#define LOG_TTY(...) util_log_tty(__func__, __LINE__, __VA_ARGS__)
 
 #endif /* __UTIL_H__ */

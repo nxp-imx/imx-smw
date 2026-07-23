@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2025 NXP
+ * Copyright 2023-2026 NXP
  */
 
 #include <string.h>
@@ -15,10 +15,21 @@
 #include "util_certificate.h"
 #include "util_cst.h"
 #include "util_file.h"
+#include "util_subsystem.h"
 
 #define LIFECYCLE(_name)                                                       \
 	{                                                                      \
 		.name = SMW_LIFECYCLE_NAME_##_name, .string = #_name           \
+	}
+
+#define SOC_ID(_name)                                                          \
+	{                                                                      \
+		.id = SOC_##_name, .string = #_name                            \
+	}
+
+#define SOC_REV(_name)                                                         \
+	{                                                                      \
+		.rev = SOC_REV_##_name, .string = #_name                       \
 	}
 
 static struct {
@@ -26,6 +37,57 @@ static struct {
 	const char *string;
 } lifecycle_names[] = { LIFECYCLE(CURRENT), LIFECYCLE(OPEN), LIFECYCLE(CLOSED),
 			LIFECYCLE(CLOSED_LOCKED) };
+
+static struct {
+	smw_soc_id_t id;
+	const char *string;
+} soc_id_names[] = {
+	SOC_ID(IMX8ULP), SOC_ID(IMX91),	 SOC_ID(IMX93),
+	SOC_ID(IMX95),	 SOC_ID(IMX941), SOC_ID(IMX942),
+	SOC_ID(IMX943),	 SOC_ID(IMX952), SOC_ID(IMX937),
+};
+
+static struct {
+	smw_soc_revision_t rev;
+	const char *string;
+} soc_rev_names[] = { SOC_REV(A0), SOC_REV(A1), SOC_REV(A2),
+		      SOC_REV(B0), SOC_REV(B1), SOC_REV(C0) };
+
+static const char *soc_id_to_string(smw_soc_id_t id)
+{
+	unsigned int i = 0;
+
+	for (; i < ARRAY_SIZE(soc_id_names); i++) {
+		if (soc_id_names[i].id == id)
+			return soc_id_names[i].string;
+	}
+
+	return "UNKNOWN";
+}
+
+static const char *soc_rev_to_string(smw_soc_revision_t rev)
+{
+	unsigned int i = 0;
+
+	for (; i < ARRAY_SIZE(soc_rev_names); i++) {
+		if (soc_rev_names[i].rev == rev)
+			return soc_rev_names[i].string;
+	}
+
+	return "UNKNOWN";
+}
+
+static const char *lifecycle_to_string(smw_lifecycle_t name)
+{
+	unsigned int i = 0;
+
+	for (; i < ARRAY_SIZE(lifecycle_names); i++) {
+		if (lifecycle_names[i].name == name)
+			return lifecycle_names[i].string;
+	}
+
+	return "UNKNOWN";
+}
 
 smw_lifecycle_t device_get_lifecycle_name(const char *string)
 {
@@ -182,6 +244,48 @@ static int set_lifecycle_bad_args(struct subtest_data *subtest,
  */
 static int set_reprovision_bad_args(struct subtest_data *subtest,
 				    struct smw_device_reprovision_args **args)
+{
+	int ret = ERR_CODE(PASSED);
+	enum arguments_test_err_case error = NOT_DEFINED;
+
+	if (!subtest || !args)
+		return ERR_CODE(BAD_ARGS);
+
+	ret = util_read_test_error(&error, subtest->params);
+	if (ret != ERR_CODE(PASSED))
+		return ret;
+
+	switch (error) {
+	case NOT_DEFINED:
+		break;
+
+	case ARGS_NULL:
+		*args = NULL;
+		break;
+
+	default:
+		DBG_PRINT_BAD_PARAM(TEST_ERR_OBJ);
+		ret = ERR_CODE(BAD_PARAM_TYPE);
+		break;
+	}
+
+	return ret;
+}
+
+/**
+ * set_device_info_bad_args() - Set device info bad parameters function
+ *                              of the test error.
+ * @subtest: Subtest data
+ * @args: SMW device info parameters.
+ *
+ * Return:
+ * PASSED			- Success.
+ * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed.
+ * -BAD_ARGS			- One of the arguments is bad.
+ * -BAD_PARAM_TYPE		- A parameter value is undefined.
+ */
+static int set_device_info_bad_args(struct subtest_data *subtest,
+				    struct smw_device_info_args **args)
 {
 	int ret = ERR_CODE(PASSED);
 	enum arguments_test_err_case error = NOT_DEFINED;
@@ -507,7 +611,9 @@ int device_lifecycle(struct subtest_data *subtest, bool set)
 			goto exit;
 		}
 
-		DBG_PRINT("Device Lifecycle is #%d", smw_args->lifecycle_name);
+		DBG_PRINT("Device Lifecycle is #%d (%s)",
+			  smw_args->lifecycle_name,
+			  lifecycle_to_string(smw_args->lifecycle_name));
 	}
 
 exit:
@@ -616,6 +722,54 @@ exit:
 
 	if (msg.data)
 		free(msg.data);
+
+	return res;
+}
+
+int device_get_info(struct subtest_data *subtest)
+{
+	int res = ERR_CODE(BAD_ARGS);
+	struct smw_device_info_args args = { 0 };
+	struct smw_device_info_args *smw_args = &args;
+	const char *name = NULL;
+
+	if (!subtest) {
+		DBG_PRINT_BAD_ARGS();
+		return res;
+	}
+
+	args.version = subtest->version;
+	args.subsystem_name = subtest->subsystem;
+
+	name = util_subsystem_name_to_string(subtest->subsystem);
+
+	res = set_device_info_bad_args(subtest, &smw_args);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	subtest->smw_status = smw_device_get_info(smw_args);
+	if (subtest->smw_status == SMW_STATUS_OK) {
+		LOG_TTY("Device info:\n"
+			" SoC ID:       0x%04X (%s)\n"
+			" SoC revision: 0x%04X (%s)\n"
+			" Lifecycle:    %s\n"
+			" OEM SRKH fused: %s",
+			args.soc_id, soc_id_to_string(args.soc_id),
+			args.soc_rev, soc_rev_to_string(args.soc_rev),
+			lifecycle_to_string(args.lifecycle),
+			args.srkh_fused ? "true" : "false");
+	} else if (subtest->smw_status == SMW_STATUS_OPERATION_NOT_SUPPORTED) {
+		if (subtest->subsystem != SMW_SUBSYSTEM_NAME_NONE) {
+			DBG_PRINT("Device Get Info is not supported by %s",
+				  name);
+			res = ERR_CODE(API_STATUS_NOK);
+		} else {
+			DBG_PRINT("Device Get Info is not supported");
+			res = ERR_CODE(SKIPPED);
+		}
+	} else {
+		res = ERR_CODE(API_STATUS_NOK);
+	}
 
 	return res;
 }

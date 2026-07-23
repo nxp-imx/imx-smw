@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2026 NXP
+ * Copyright 2023-2024, 2026 NXP
  */
 
 #include "compiler.h"
 
 #include "debug.h"
-#include "devmgr.h"
 #include "utils.h"
 
 #include "local.h"
@@ -21,6 +20,21 @@ struct ele_get_info_head {
 	uint8_t ssm_state;
 	uint8_t reserved;
 	uint32_t uid[ELE_NB_UID_WORD];
+};
+
+/*
+ * Define the ELE SOC ID mask and real SOC ID value.
+ * Caution the list order must be function of mask and value to screen the
+ * soc id value. E.g. i.MX95 and i.MX952 are starting with the same 0x95x0
+ * value.
+ */
+static const struct ele_soc_id {
+	uint16_t mask;
+	smw_soc_id_t soc_id;
+} ele_soc_ids[] = {
+	{ 0xFFFF, SOC_IMX8ULP }, { 0xFFFF, SOC_IMX91 },	 { 0xFFFF, SOC_IMX93 },
+	{ 0xFFF0, SOC_IMX941 },	 { 0xFFF0, SOC_IMX942 }, { 0xFFF0, SOC_IMX943 },
+	{ 0xFFF0, SOC_IMX937 },	 { 0xFFF0, SOC_IMX952 }, { 0xFF00, SOC_IMX95 },
 };
 
 static void features_per_soc(struct ele_info *info)
@@ -179,12 +193,40 @@ end:
 	return status;
 }
 
+static int ele_device_get_info(struct subsystem_context *ele_ctx, void *args)
+{
+	int status = SMW_STATUS_OK;
+
+	struct ele_info *info = &ele_ctx->info;
+	enum smw_lifecycle_id lifecycle = SMW_LIFECYCLE_ID_INVALID;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	status = ele_get_device_info(ele_ctx);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	status = ele_get_device_lifecycle_id(ele_ctx, &lifecycle);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	smw_devmgr_set_device_soc(args, info->soc_id, info->soc_rev);
+	smw_devmgr_set_device_srkh(args, info->srkh_fused);
+
+	smw_devmgr_set_device_lifecycle(args, lifecycle);
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 int ele_get_device_info(struct subsystem_context *ele_ctx)
 {
 	int status = SMW_STATUS_OK;
 	int status_mutex = SMW_STATUS_OK;
 
 	struct ele_info *info = &ele_ctx->info;
+
 	uint8_t *uid = NULL;
 	size_t i = 0;
 
@@ -217,8 +259,17 @@ int ele_get_device_info(struct subsystem_context *ele_ctx)
 
 	SMW_UTILS_MEMCPY(uid, op_args.uid, op_args.uid_sz);
 
-	info->soc_id = op_args.soc_id;
 	info->soc_rev = op_args.soc_rev;
+	info->soc_id = SOC_UNKNOWN;
+
+	/* Match op_args.soc_id against the known SOC IDs table */
+	for (; i < ARRAY_SIZE(ele_soc_ids); i++) {
+		if ((op_args.soc_id & ele_soc_ids[i].mask) ==
+		    ele_soc_ids[i].soc_id) {
+			info->soc_id = ele_soc_ids[i].soc_id;
+			break;
+		}
+	}
 
 	info->attest_api_ver = hsm_get_dev_attest_api_ver();
 
@@ -226,7 +277,7 @@ int ele_get_device_info(struct subsystem_context *ele_ctx)
 
 	/* Verify if the OEM SRKH is fused */
 	if (op_args.oem_srkh && op_args.oem_srkh_sz) {
-		for (; i < op_args.oem_srkh_sz; i++) {
+		for (i = 0; i < op_args.oem_srkh_sz; i++) {
 			if (op_args.oem_srkh[i]) {
 				info->srkh_fused = true;
 				break;
@@ -306,6 +357,11 @@ bool ele_device_manager_handle(struct subsystem_context *ele_ctx,
 	switch (operation_id) {
 	case OPERATION_ID_DEVICE_GET_UUID:
 		*status = ele_device_uuid(ele_ctx, args);
+		handled = true;
+		break;
+
+	case OPERATION_ID_DEVICE_GET_INFO:
+		*status = ele_device_get_info(ele_ctx, args);
 		handled = true;
 		break;
 

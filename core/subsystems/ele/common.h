@@ -6,10 +6,13 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
+#include "devmgr.h"
+
 #define PSA_COMPLIANT
 #include <hsm_api.h>
 
 #include "constants.h"
+#include "lifecycle.h"
 #include "list.h"
 
 #include "operation_step.h"
@@ -56,8 +59,8 @@ struct ele_info {
 	void *mutex;
 	bool valid;
 	uint8_t attest_api_ver;
-	uint16_t soc_rev;
-	uint16_t soc_id;
+	smw_soc_revision_t soc_rev;
+	smw_soc_id_t soc_id;
 	uint16_t lifecycle;
 	unsigned int uid_length;
 	unsigned char *uid;
@@ -545,7 +548,7 @@ int ele_export_public_key(struct subsystem_context *ele_ctx,
  * Other SMW status error.
  */
 int ele_get_device_lifecycle_id(struct subsystem_context *ele_ctx,
-				unsigned int *lifecycle);
+				enum smw_lifecycle_id *lifecycle);
 
 /**
  * ele_get_key_lifecycles() - Convert the ELE lifecycles to SMW lifecycles

@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2024, 2026 NXP
  */
 
 #include "debug.h"
-#include "lifecycle.h"
 #include "utils.h"
 
 #include "common.h"
@@ -83,7 +82,7 @@ end:
 }
 
 int ele_get_device_lifecycle_id(struct subsystem_context *ele_ctx,
-				unsigned int *lifecycle)
+				enum smw_lifecycle_id *lifecycle)
 {
 	int status = SMW_STATUS_OK;
 

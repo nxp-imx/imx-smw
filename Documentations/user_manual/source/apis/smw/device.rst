@@ -9,23 +9,32 @@ Device information
 """"""""""""""""""
 Functions
 ~~~~~~~~~
-.. kernel-doc:: /public/smw_device.h
-    :functions: smw_device_attestation
+.. kdoc-extension:: /public/smw_device.h
+   :functions: smw_device_get_info
 
-.. kernel-doc:: /public/smw_device.h
-    :functions: smw_device_get_uuid
+.. kdoc-extension:: /public/smw_device.h
+   :functions: smw_device_attestation
+
+.. kdoc-extension:: /public/smw_device.h
+   :functions: smw_device_get_uuid
 
 Structures
 ~~~~~~~~~~
 .. kdoc-extension:: /public/smw_device.h
-   :structs: smw_device_attestation_args smw_device_uuid_args
+   :structs: smw_device_info_args smw_device_attestation_args
+             smw_device_uuid_args
+
+Typedefs
+~~~~~~~~
+.. kdoc-extension:: /public/smw_device.h
+   :typedefs: smw_soc_id_t smw_soc_revision_t
 
 Device lifecycle
 """"""""""""""""
 Functions
 ~~~~~~~~~
-.. kernel-doc:: /public/smw_device.h
-    :functions: smw_device_set_lifecycle smw_device_get_lifecycle
+.. kdoc-extension:: /public/smw_device.h
+   :functions: smw_device_set_lifecycle smw_device_get_lifecycle
 
 Structures
 ~~~~~~~~~~
@@ -43,8 +52,8 @@ Details on the reprovisioning support and procedure are available in the
 
 Functions
 ~~~~~~~~~
-.. kernel-doc:: /public/smw_device.h
-    :functions: smw_device_reprovision_prepare smw_device_reprovision
+.. kdoc-extension:: /public/smw_device.h
+   :functions: smw_device_reprovision_prepare smw_device_reprovision
 
 Structures
 ~~~~~~~~~~

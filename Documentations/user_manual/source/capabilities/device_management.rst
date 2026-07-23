@@ -2,7 +2,7 @@ Device Management
 -----------------
 
 Device management operations allow interaction with device-specific features
-such as attestation, UUID, and lifecycle management.
+such as attestation, UUID, lifecycle management and device information.
 
 Supported Operations versus Subsystems
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -23,6 +23,8 @@ Supported Operations versus Subsystems
    | `Get Device UUID`_        |    Y    |    N    |    N     |
    +---------------------------+---------+---------+----------+
    | `Device Lifecycle`_       |    Y    |    N    |    N     |
+   +---------------------------+---------+---------+----------+
+   | `Device information`_     |    Y    |    N    |    N     |
    +---------------------------+---------+---------+----------+
 
 
@@ -325,6 +327,28 @@ Query and manage the device lifecycle state.
    | SMW     | :c:func:`smw_device_set_lifecycle`     |
    +         +----------------------------------------+
    |         | :c:func:`smw_device_get_lifecycle`     |
+   +---------+----------------------------------------+
+   | PSA     | Not supported                          |
+   +---------+----------------------------------------+
+   | PKCS11  | Not supported                          |
+   +---------+----------------------------------------+
+
+Device information
+^^^^^^^^^^^^^^^^^^
+Retrieve device information such as SoC identifier and revision, if the OEM
+SRKH is fused, the device lifecycle.
+
+.. table:: Get Device information APIs Comparison
+   :name: table_get_device_information_apis_comparison
+   :align: center
+   :widths: 15 85
+   :width: 100%
+   :class: wrap-table
+
+   +---------+----------------------------------------+
+   | **API** | **Function**                           |
+   +=========+========================================+
+   | SMW     | :c:func:`smw_device_get_info`          |
    +---------+----------------------------------------+
    | PSA     | Not supported                          |
    +---------+----------------------------------------+

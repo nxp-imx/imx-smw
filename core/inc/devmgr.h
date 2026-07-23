@@ -1,12 +1,13 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2024, 2026 NXP
  */
 
 #ifndef __DEVMGR_H___
 #define __DEVMGR_H___
 
 #include "smw_device.h"
+#include "lifecycle.h"
 
 enum smw_op_devmgr {
 	SMW_OP_DEVMGR_ATTESTATION,
@@ -14,14 +15,18 @@ enum smw_op_devmgr {
 	SMW_OP_DEVMGR_SET_LIFECYCLE,
 	SMW_OP_DEVMGR_GET_LIFECYCLE,
 	SMW_OP_DEVMGR_REPROVISION_PREP,
-	SMW_OP_DEVMGR_REPROVISION
+	SMW_OP_DEVMGR_REPROVISION,
+	SMW_OP_DEVMGR_GET_INFO
 };
 
 /**
  * struct smw_devmgr_args - Device manager arguments
  * @op: Device manager operation
- * @pub: Pointer to the public API arguments structure
- *
+ * @pub: Union of pointers to the public API arguments structure
+ * @pub.attestation: Pointer to the device attestation arguments
+ * @pub.uuid: Pointer to the device UUID arguments
+ * @pub.reprovision: Pointer to the device storage reprovisioning arguments
+ * @pub.info: Pointer to the device information arguments
  */
 struct smw_devmgr_args {
 	enum smw_op_devmgr op;
@@ -29,6 +34,7 @@ struct smw_devmgr_args {
 		struct smw_device_attestation_args *attestation;
 		struct smw_device_uuid_args *uuid;
 		struct smw_device_reprovision_args *reprovision;
+		struct smw_device_info_args *info;
 	} pub;
 };
 
@@ -185,4 +191,45 @@ unsigned int smw_devmgr_get_reprovision_length(struct smw_devmgr_args *args);
 void smw_devmgr_set_reprovision_length(struct smw_devmgr_args *args,
 				       unsigned int length);
 
+/**
+ * smw_devmgr_set_device_soc() - Set the device information SoC ID and revision.
+ * @args: Pointer to the internal device args structure.
+ * @soc_id: SoC identifier.
+ * @soc_rev: SoC revision.
+ *
+ * This function fills the public device info args structure with the
+ * device id and revision.
+ *
+ * Return:
+ * None.
+ */
+void smw_devmgr_set_device_soc(struct smw_devmgr_args *args,
+			       smw_soc_id_t soc_id, smw_soc_revision_t soc_rev);
+
+/**
+ * smw_devmgr_set_device_srkh() - Set the device information SRKH status.
+ * @args: Pointer to the internal device args structure.
+ * @srkh_fused: True if the OEM SRKH is fused.
+ *
+ * This function fills the public device info args structure if SRKH is
+ * fused or not.
+ *
+ * Return:
+ * None.
+ */
+void smw_devmgr_set_device_srkh(struct smw_devmgr_args *args, bool srkh_fused);
+
+/**
+ * smw_devmgr_set_device_lifecycle() - Set the device information lifecycle.
+ * @args: Pointer to the internal device args structure.
+ * @id: Lifecycle value.
+ *
+ * This function fills the public device info args structure with the
+ * lifecycle.
+ *
+ * Return:
+ * None.
+ */
+void smw_devmgr_set_device_lifecycle(struct smw_devmgr_args *args,
+				     enum smw_lifecycle_id id);
 #endif /* __DEVMGR_H___ */

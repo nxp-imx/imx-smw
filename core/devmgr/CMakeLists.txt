@@ -1,5 +1,6 @@
 if(ENABLE_DEVMGR_MODULE)
    add_operation_implicit(DEVICE_GET_UUID)
+   add_operation_implicit(DEVICE_GET_INFO)
 endif()
 
 if(ENABLE_DEVICE_ATTESTATION)

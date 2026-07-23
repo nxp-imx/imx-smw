@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2024, 2026 NXP
  */
 
 #include "smw_device.h"
@@ -84,6 +84,16 @@ smw_device_reprovision_prepare(struct smw_device_reprovision_args *args)
 
 __weak enum smw_status_code
 smw_device_reprovision(struct smw_device_reprovision_args *args)
+{
+	(void)args;
+
+	SMW_DBG_TRACE_API_CALL;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__weak enum smw_status_code
+smw_device_get_info(struct smw_device_info_args *args)
 {
 	(void)args;
 

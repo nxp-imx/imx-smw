@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2024, 2026 NXP
  */
 
 #include "smw/names.h"
@@ -54,6 +54,13 @@ static int get_lifecycle_name(enum smw_lifecycle_id id, smw_lifecycle_t *name)
 	}
 
 	return status;
+}
+
+void smw_lifecycle_set_name(enum smw_lifecycle_id id, smw_lifecycle_t *name)
+{
+	if (name &&
+	    get_lifecycle_name(id, name) == SMW_STATUS_INVALID_LIFECYCLE)
+		*name = SMW_LIFECYCLE_NAME_NONE;
 }
 
 enum smw_status_code

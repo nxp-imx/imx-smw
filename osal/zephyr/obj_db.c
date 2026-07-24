@@ -118,8 +118,6 @@ int osal_zephyr_add_obj_info(struct smw_osal_object *descriptor)
 	if (!descriptor || !descriptor->obj_desc)
 		return -1;
 
-	descriptor->obj_desc->id = INVALID_OBJ_ID;
-
 	return 0;
 }
 

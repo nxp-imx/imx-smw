@@ -127,6 +127,8 @@ opt_ele=0
 opt_tss2=0
 opt_doc_only=0
 
+opt_ela_enable=0
+
 if [[ "${subsystems}" == "coverity" ]]; then
     opt_tee=1
 
@@ -137,6 +139,7 @@ if [[ "${subsystems}" == "coverity" ]]; then
         opt_seco=1
         opt_ele=1
         opt_tss2=1
+        opt_ela_enable=1
         optee_plat="imx-mx93evk"
     fi
 else
@@ -201,7 +204,6 @@ tee_build="../build_arm""${arch//[^0-9]/}"
 psaarchtests_src_path="../psa-arch-tests"
 opt_config=""
 opt_feature_options=""
-opt_ela_enable=0
 opt_debug=0
 
 for arg in "$@"
@@ -264,6 +266,22 @@ do
 
     shift
 done
+
+#
+# For coverity scans, enable all possible build options to maximize the code coverage
+# for scan analysis. This ensures all code paths are analyzed.
+# For coverity scans, append required options after arg parsing.
+# Appended last so they take precedence over any user-supplied flags.
+# - enable_psa_default_alt=on for all coverity scans (aarch32 and aarch64)
+# - enable_ela=on for aarch64 coverity scan only (ELA not supported on aarch32)
+#
+if [[ "${subsystems}" == "coverity" ]]; then
+    opt_feature_options="${opt_feature_options} enable_psa_default_alt=on"
+
+    if [[ ! ${arch} =~ "aarch32" ]]; then
+        opt_feature_options="${opt_feature_options} enable_ela=on"
+    fi
+fi
 
 if [[ ${opt_doc_only} -eq 1 ]]; then
     eval "./scripts/smw_build.sh configure out=${out} doc_only"

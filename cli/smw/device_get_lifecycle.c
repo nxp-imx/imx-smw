@@ -28,10 +28,10 @@ log_smw_dev_get_lifecycle_params(const struct smw_device_lifecycle_args *args)
 		return;
 
 	LOG_INFO("=== smw_device_get_lifecycle Parameters ===");
-	LOG_INFO("  version: %u", args->version);
-	LOG_INFO("  subsystem_name: %s",
+	LOG_INFO("  version        : %u", args->version);
+	LOG_INFO("  subsystem_name : %s",
 		 cli_smw_get_subsystem_name(args->subsystem_name));
-	LOG_INFO("  lifecycle_name: %d", args->lifecycle_name);
+	LOG_INFO("  lifecycle_name : %d", args->lifecycle_name);
 	LOG_INFO("===========================================");
 }
 
@@ -58,45 +58,61 @@ enum cli_exit_code cli_dev_get_lifecycle_operation(struct parsed_options *args)
 		goto cleanup;
 	}
 
-	LOG_INFO("Device Lifecycle operation (SMW API)");
+	LOG_INFO("Device lifecycle operation started (SMW API)");
+	LOG_VERBOSE("  output_file : %s",
+		    args->output_filename ? args->output_filename : "(stdout)");
+	LOG_VERBOSE("  subsystem   : %s",
+		    cli_smw_get_subsystem_name(args->subsystem));
 
 	/* Setup SMW device lifecycle arguments */
 	lifecycle_args.version = 0;
 	lifecycle_args.subsystem_name = args->subsystem;
 	lifecycle_args.lifecycle_name = SMW_LIFECYCLE_NAME_NONE;
 
+	/* Log SMW API parameters */
 	log_smw_dev_get_lifecycle_params(&lifecycle_args);
 
-	/* Get current lifecycle */
+	/* Call SMW API to get current lifecycle */
+	LOG_VERBOSE("Calling smw_device_get_lifecycle()");
 	status = smw_device_get_lifecycle(&lifecycle_args);
 	if (!is_smw_api_success("smw_device_get_lifecycle", status))
 		goto cleanup;
 
+	/* Convert lifecycle enum to string */
 	lifecycle_str = lifecycle_name_to_string(lifecycle_args.lifecycle_name);
 
-	LOG_INFO("Lifecycle: %s (%d)", lifecycle_str,
-		 lifecycle_args.lifecycle_name);
+	LOG_VERBOSE("Lifecycle value returned: %d",
+		    lifecycle_args.lifecycle_name);
 
 	SUCCESS("Get Device Lifecycle");
 
 	/* Write output to file if specified, otherwise print to stdout */
 	if (args->output_filename) {
-		fp = fopen(args->output_filename, "w");
+		LOG_VERBOSE("Opening output file: %s", args->output_filename);
 
+		fp = fopen(args->output_filename, "w");
 		if (!fp) {
 			LOG_ERROR("Failed to open output file: %s",
 				  args->output_filename);
 			goto cleanup;
 		}
-		fprintf(fp, "%s\n", lifecycle_str);
-		fclose(fp);
-		LOG_INFO("Lifecycle written to %s", args->output_filename);
+
+		FPRINTF(fp, "%s\n", lifecycle_str);
+		FCLOSE(fp);
+		fp = NULL;
+
+		LOG_VERBOSE("Lifecycle written to file: %s",
+			    args->output_filename);
 	} else {
+		LOG_VERBOSE("Writing lifecycle to stdout");
 		printf("%s\n", lifecycle_str);
 	}
 
 	ret = CLI_EXIT_SUCCESS;
 
 cleanup:
+	if (fp)
+		FCLOSE(fp);
+
 	return ret;
 }

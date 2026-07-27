@@ -18,7 +18,7 @@
 /**
  * @brief Log SMW device UUID operation parameters
  *
- * @param args: Pointer to smw_device_uuid_args structure
+ * @param args Pointer to smw_device_uuid_args structure
  */
 static void log_smw_device_uuid_params(const struct smw_device_uuid_args *args)
 {
@@ -26,11 +26,13 @@ static void log_smw_device_uuid_params(const struct smw_device_uuid_args *args)
 		return;
 
 	LOG_INFO("=== smw_device_get_uuid Parameters ===");
-	LOG_INFO("  version: %u", args->version);
-	LOG_INFO("  subsystem_name: %s",
+	LOG_INFO("  version           : %u", args->version);
+	LOG_INFO("  subsystem_name    : %s",
 		 cli_smw_get_subsystem_name(args->subsystem_name));
-	LOG_INFO("  uuid: %p", (void *)args->uuid);
-	LOG_INFO("  uuid_length: %u", args->uuid_length);
+	LOG_INFO("  uuid              : %p", (void *)args->uuid);
+	LOG_INFO("  uuid_length       : %u", args->uuid_length);
+	LOG_INFO("  certificate       : %p", (void *)args->certificate);
+	LOG_INFO("  certificate_length: %u", args->certificate_length);
 	LOG_INFO("=======================================");
 }
 
@@ -58,7 +60,12 @@ enum cli_exit_code cli_device_uuid_operation(struct parsed_options *args)
 		goto cleanup;
 	}
 
-	LOG_INFO("Device UUID operation (SMW API)");
+	LOG_INFO("Device UUID operation started (SMW API)");
+	LOG_VERBOSE("  output_file : %s",
+		    args->output_filename ? args->output_filename : "(stdout)");
+	LOG_VERBOSE("  text_format : %s", args->text_format ? "yes" : "no");
+	LOG_VERBOSE("  subsystem   : %s",
+		    cli_smw_get_subsystem_name(args->subsystem));
 
 	/* Setup SMW device UUID arguments for first call to get length */
 	device_args.version = 0;
@@ -68,26 +75,42 @@ enum cli_exit_code cli_device_uuid_operation(struct parsed_options *args)
 	device_args.uuid = NULL;
 	device_args.uuid_length = 0;
 
+	LOG_VERBOSE("Step 1: Querying required UUID buffer length");
+	log_smw_device_uuid_params(&device_args);
+
 	/* First call: Get required UUID length */
+	LOG_VERBOSE("Calling smw_device_get_uuid() (length query)");
 	status = smw_device_get_uuid(&device_args);
 	if (!is_smw_api_success("smw_device_get_uuid (query length)", status))
 		goto cleanup;
+
+	LOG_VERBOSE("Required UUID buffer length: %u bytes",
+		    device_args.uuid_length);
 
 	/* Allocate buffer for UUID */
 	uuid = util_alloc_buffer(device_args.uuid_length, "device UUID");
 	if (!uuid)
 		goto cleanup;
 
+	LOG_VERBOSE("UUID buffer allocated: %p (%u bytes)", (void *)uuid,
+		    device_args.uuid_length);
+
 	/* Second call: Get actual UUID */
 	device_args.uuid = uuid;
 
+	LOG_VERBOSE("Step 2: Retrieving actual UUID data");
 	log_smw_device_uuid_params(&device_args);
 
+	LOG_VERBOSE("Calling smw_device_get_uuid() (data retrieval)");
 	status = smw_device_get_uuid(&device_args);
 	if (!is_smw_api_success("smw_device_get_uuid", status))
 		goto cleanup;
 
 	SUCCESS("Get Device UUID");
+
+	LOG_VERBOSE("UUID retrieved successfully (%u bytes)",
+		    device_args.uuid_length);
+	LOG_VERBOSE("Writing output data (%u bytes)", device_args.uuid_length);
 
 	/* Write output */
 	if (util_write_output_data(uuid, device_args.uuid_length,
@@ -101,8 +124,10 @@ cleanup:
 	if (fp)
 		FCLOSE(fp);
 
-	if (uuid)
+	if (uuid) {
+		LOG_VERBOSE("Freeing UUID buffer");
 		free(uuid);
+	}
 
 	return ret;
 }

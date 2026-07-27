@@ -12,6 +12,7 @@
 #include <strings.h>
 #include "cli_print.h"
 #include "helper.h"
+#include "logger.h"
 #include "mac_algo_mappings.h"
 #include "opt_parser.h"
 #include "parser_mac.h"
@@ -284,9 +285,8 @@ void cli_mac_help_common(void)
 	printf("  -m, --mac <file>        Output file for computed MAC\n");
 	printf("                          (prints hex to stdout if omitted)\n");
 	printf("  -t, --text              Write MAC in hex text format\n");
-	printf("  -L, --log <dest>        Enable session logging");
-	printf(" (%s log --help for info)\n", prog_name);
-	printf("  -h, --help              Show help\n");
+	print_log_options_help(prog_name);
+	print_help_option_help();
 }
 
 /**
@@ -301,13 +301,12 @@ void cli_mac_verify_help_common(void)
 	print_mac_common_options(prog_name, "mac-verify");
 
 	printf("  -m, --mac <file>        MAC file to verify against (required)\n");
-	printf("  -L, --log <dest>        Enable session logging");
-	printf(" (%s log --help for info)\n", prog_name);
-	printf("  -h, --help              Show help\n");
+	print_log_options_help(prog_name);
+	print_help_option_help();
 }
 
 /* Short getopt options string for MAC (compute) */
-static const char *mac_short_opts = ":hk:a:i:m:S:L::t";
+static const char *mac_short_opts = ":hk:a:i:m:S:t";
 
 /* Define options for MAC (compute) operation */
 static const struct option mac_options[] = {
@@ -317,9 +316,10 @@ static const struct option mac_options[] = {
 	{ "input", required_argument, 0, 'i' },
 	{ "mac", required_argument, 0, 'm' },
 	{ "subsystem", required_argument, 0, 'S' },
-	{ "log", optional_argument, 0, 'L' },
 	{ "text", no_argument, 0, 't' },
 	{ "list", no_argument, 0, 0 },
+	{ "v", optional_argument, 0, 0 },
+	{ "vv", optional_argument, 0, 0 },
 	{ 0, 0, 0, 0 }
 };
 
@@ -337,13 +337,29 @@ int parse_mac_options(int argc, char **argv, struct parsed_options *opts,
 	int opt = 0;
 	int option_index = 0;
 	bool key_id_set = false;
+	opterr = 0;
+
+	LOG_VERBOSE("Parsing mac options (argc=%d)", argc);
 
 	while ((opt = getopt_long(argc, argv, mac_short_opts, mac_options,
 				  &option_index)) != -1) {
 		switch (opt) {
 		case 0:
-			if (!strcmp(mac_options[option_index].name, "list"))
+			if (!strcmp(mac_options[option_index].name, "list")) {
 				opts->show_list = true;
+			} else if (!strcmp(mac_options[option_index].name,
+					   "v")) {
+				if (parse_log_option(opts, argc, argv,
+						     prog_name, "mac",
+						     LOG_LEVEL_INFO))
+					return -1;
+			} else if (!strcmp(mac_options[option_index].name,
+					   "vv")) {
+				if (parse_log_option(opts, argc, argv,
+						     prog_name, "mac",
+						     LOG_LEVEL_VERBOSE))
+					return -1;
+			}
 			break;
 
 		case 'h':
@@ -361,6 +377,7 @@ int parse_mac_options(int argc, char **argv, struct parsed_options *opts,
 				return -1;
 			}
 			key_id_set = true;
+			LOG_VERBOSE("  key_id = %u", opts->op.mac.key_id);
 			break;
 
 		case 'a': {
@@ -384,6 +401,7 @@ int parse_mac_options(int argc, char **argv, struct parsed_options *opts,
 				ERROR("Memory allocation failed");
 				return -1;
 			}
+			LOG_VERBOSE("  algo = %s", optarg);
 			break;
 		}
 
@@ -394,6 +412,8 @@ int parse_mac_options(int argc, char **argv, struct parsed_options *opts,
 				print_help_hint(prog_name, "mac");
 				return -1;
 			}
+			LOG_VERBOSE("  input_filename = %s",
+				    opts->input_filename);
 			break;
 
 		case 'm':
@@ -403,24 +423,21 @@ int parse_mac_options(int argc, char **argv, struct parsed_options *opts,
 				print_help_hint(prog_name, "mac");
 				return -1;
 			}
+			LOG_VERBOSE("  mac_filename = %s",
+				    opts->op.mac.mac_filename);
 			break;
 
 		case 'S':
 			opts->subsystem = parse_subsystem(optarg);
-			break;
-
-		case 'L':
-			if (parse_log_option(opts, argc, argv, prog_name,
-					     "mac"))
-				return -1;
+			LOG_VERBOSE("  subsystem = %s", optarg);
 			break;
 
 		case 't':
 			opts->text_format = true;
+			LOG_VERBOSE("  text_format = true");
 			break;
 
 		case ':':
-			/* Missing argument for a known option */
 			ERROR("Option '%s' requires an argument",
 			      SAFE_ARGV_OPT(argv, "<unknown>"));
 			print_help_hint(prog_name, "mac");
@@ -428,7 +445,6 @@ int parse_mac_options(int argc, char **argv, struct parsed_options *opts,
 
 		case '?':
 		default:
-			/* Unknown option */
 			ERROR("Unknown option '%s'",
 			      SAFE_ARGV_OPT(argv, "<unknown>"));
 			print_help_hint(prog_name, "mac");
@@ -462,11 +478,13 @@ int parse_mac_options(int argc, char **argv, struct parsed_options *opts,
 		}
 	}
 
+	LOG_VERBOSE("MAC options parsed successfully");
+
 	return 0;
 }
 
 /* Short getopt options string for MAC (verify) */
-static const char *mac_verify_short_opts = ":hk:a:i:m:S:L::";
+static const char *mac_verify_short_opts = ":hk:a:i:m:S:";
 
 /* Define options for MAC (verify) operation */
 static const struct option mac_verify_options[] = {
@@ -476,8 +494,9 @@ static const struct option mac_verify_options[] = {
 	{ "input", required_argument, 0, 'i' },
 	{ "mac", required_argument, 0, 'm' },
 	{ "subsystem", required_argument, 0, 'S' },
-	{ "log", optional_argument, 0, 'L' },
 	{ "list", no_argument, 0, 0 },
+	{ "v", optional_argument, 0, 0 },
+	{ "vv", optional_argument, 0, 0 },
 	{ 0, 0, 0, 0 }
 };
 
@@ -497,13 +516,28 @@ int parse_mac_verify_options(int argc, char **argv, struct parsed_options *opts,
 	bool key_id_set = false;
 	opterr = 0;
 
+	LOG_VERBOSE("Parsing mac-verify options (argc=%d)", argc);
+
 	while ((opt = getopt_long(argc, argv, mac_verify_short_opts,
 				  mac_verify_options, &option_index)) != -1) {
 		switch (opt) {
 		case 0:
 			if (!strcmp(mac_verify_options[option_index].name,
-				    "list"))
+				    "list")) {
 				opts->show_list = true;
+			} else if (!strcmp(mac_verify_options[option_index].name,
+					   "v")) {
+				if (parse_log_option(opts, argc, argv,
+						     prog_name, "mac-verify",
+						     LOG_LEVEL_INFO))
+					return -1;
+			} else if (!strcmp(mac_verify_options[option_index].name,
+					   "vv")) {
+				if (parse_log_option(opts, argc, argv,
+						     prog_name, "mac-verify",
+						     LOG_LEVEL_VERBOSE))
+					return -1;
+			}
 			break;
 
 		case 'h':
@@ -521,6 +555,7 @@ int parse_mac_verify_options(int argc, char **argv, struct parsed_options *opts,
 				return -1;
 			}
 			key_id_set = true;
+			LOG_VERBOSE("  key_id = %u", opts->op.mac.key_id);
 			break;
 
 		case 'a': {
@@ -544,6 +579,7 @@ int parse_mac_verify_options(int argc, char **argv, struct parsed_options *opts,
 				ERROR("Memory allocation failed");
 				return -1;
 			}
+			LOG_VERBOSE("  algo = %s", optarg);
 			break;
 		}
 
@@ -554,6 +590,8 @@ int parse_mac_verify_options(int argc, char **argv, struct parsed_options *opts,
 				print_help_hint(prog_name, "mac-verify");
 				return -1;
 			}
+			LOG_VERBOSE("  input_filename = %s",
+				    opts->input_filename);
 			break;
 
 		case 'm':
@@ -563,20 +601,16 @@ int parse_mac_verify_options(int argc, char **argv, struct parsed_options *opts,
 				print_help_hint(prog_name, "mac-verify");
 				return -1;
 			}
+			LOG_VERBOSE("  mac_filename = %s",
+				    opts->op.mac.mac_filename);
 			break;
 
 		case 'S':
 			opts->subsystem = parse_subsystem(optarg);
-			break;
-
-		case 'L':
-			if (parse_log_option(opts, argc, argv, prog_name,
-					     "mac-verify"))
-				return -1;
+			LOG_VERBOSE("  subsystem = %s", optarg);
 			break;
 
 		case ':':
-			/* Missing argument for a known option */
 			ERROR("Option '%s' requires an argument",
 			      SAFE_ARGV_OPT(argv, "<unknown>"));
 			print_help_hint(prog_name, "mac-verify");
@@ -584,7 +618,6 @@ int parse_mac_verify_options(int argc, char **argv, struct parsed_options *opts,
 
 		case '?':
 		default:
-			/* Unknown option */
 			ERROR("Unknown option '%s'",
 			      SAFE_ARGV_OPT(argv, "<unknown>"));
 			print_help_hint(prog_name, "mac-verify");
@@ -623,6 +656,8 @@ int parse_mac_verify_options(int argc, char **argv, struct parsed_options *opts,
 			return -1;
 		}
 	}
+
+	LOG_VERBOSE("MAC verify options parsed successfully");
 
 	return 0;
 }

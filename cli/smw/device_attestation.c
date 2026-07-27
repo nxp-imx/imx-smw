@@ -25,7 +25,7 @@
 /**
  * @brief Generate challenge from current date/time
  *
- * @param challenge Pointer to store generated challenge
+ * @param challenge     Pointer to store generated challenge
  * @param challenge_len Pointer to store challenge length
  */
 static int generate_date_challenge(unsigned char **challenge,
@@ -36,6 +36,8 @@ static int generate_date_challenge(unsigned char **challenge,
 	char time_str[TIME_STR_SIZE] = { 0 };
 	size_t len = 16;
 	int written = 0;
+
+	LOG_VERBOSE("Generating 16-byte challenge from current date/time");
 
 	now = time(NULL);
 	if (now == (time_t)-1) {
@@ -49,17 +51,14 @@ static int generate_date_challenge(unsigned char **challenge,
 		return -1;
 	}
 
-	/* Format: YYMMDD HH:MM:SS (16 bytes with trailing space)
-	 * YY   = year last 2 digits
-	 * MM   = month
+	/*
+	 * Format: DD.MM.YYHH:MM:SS (16 bytes)
 	 * DD   = day
-	 * ' '  = space separator
+	 * MM   = month
+	 * YY   = year last 2 digits
 	 * HH   = hour
-	 * :    = colon
 	 * MM   = minute
-	 * :    = colon
 	 * SS   = second
-	 * ' '  = trailing space (padding)
 	 */
 	written =
 		snprintf(time_str, sizeof(time_str),
@@ -82,8 +81,8 @@ static int generate_date_challenge(unsigned char **challenge,
 	memcpy(*challenge, time_str, len);
 	*challenge_len = len;
 
-	LOG_INFO("Generated 16-byte challenge from current date/time: %s",
-		 time_str);
+	LOG_VERBOSE("Challenge generated: %s (%zu bytes)", time_str, len);
+
 	return 0;
 }
 
@@ -104,13 +103,13 @@ log_smw_dev_attestation_params(const struct smw_device_attestation_args *args)
 		return;
 
 	LOG_INFO("=== smw_device_attestation Parameters ===");
-	LOG_INFO("  version: %u", args->version);
-	LOG_INFO("  subsystem_name: %s",
+	LOG_INFO("  version            : %u", args->version);
+	LOG_INFO("  subsystem_name     : %s",
 		 cli_smw_get_subsystem_name(args->subsystem_name));
 
 	/* Log challenge */
 	if (args->challenge && args->challenge_length) {
-		LOG_INFO("  challenge_length: %u", args->challenge_length);
+		LOG_INFO("  challenge_length   : %u", args->challenge_length);
 		LOG_INFO("  challenge (hex):");
 		for (i = 0; i < args->challenge_length; i++) {
 			if (i % 16 == 0) {
@@ -126,26 +125,26 @@ log_smw_dev_attestation_params(const struct smw_device_attestation_args *args)
 			    (size_t)written < (sizeof(hex_line) - offset))
 				offset += (size_t)written;
 			else
-				break; /* Buffer full or error */
+				break;
 		}
 		if (offset > 0)
 			LOG_INFO("    %s", hex_line);
 	} else {
-		LOG_INFO("  challenge: NULL");
-		LOG_INFO("  challenge_length: 0");
+		LOG_INFO("  challenge          : NULL");
+		LOG_INFO("  challenge_length   : 0");
 	}
 
 	/* Log certificate */
 	if (args->certificate && args->certificate_length) {
-		LOG_INFO("  certificate_length: %u", args->certificate_length);
-		LOG_INFO("  certificate: <binary data, %u bytes>",
+		LOG_INFO("  certificate_length : %u", args->certificate_length);
+		LOG_INFO("  certificate        : <binary data, %u bytes>",
 			 args->certificate_length);
 	} else {
-		LOG_INFO("  certificate: NULL");
-		LOG_INFO("  certificate_length: %u", args->certificate_length);
+		LOG_INFO("  certificate        : NULL");
+		LOG_INFO("  certificate_length : %u", args->certificate_length);
 	}
 
-	LOG_INFO("==========================================");
+	LOG_INFO("=========================================");
 }
 
 /**
@@ -170,10 +169,22 @@ enum cli_exit_code cli_device_attestation_operation(struct parsed_options *args)
 		goto cleanup;
 	}
 
-	LOG_INFO("Device Attestation operation (SMW API)");
+	LOG_INFO("Device attestation operation started (SMW API)");
+	LOG_VERBOSE("  challenge_file : %s",
+		    args->op.dev_att.challenge_filename ?
+			    args->op.dev_att.challenge_filename :
+			    "(auto-generated)");
+	LOG_VERBOSE("  output_file    : %s",
+		    args->output_filename ? args->output_filename : "(stdout)");
+	LOG_VERBOSE("  text_format    : %s", args->text_format ? "yes" : "no");
+	LOG_VERBOSE("  subsystem      : %s",
+		    cli_smw_get_subsystem_name(args->subsystem));
 
 	/* Read challenge if provided, otherwise generate from current date */
 	if (args->op.dev_att.challenge_filename) {
+		LOG_VERBOSE("Loading challenge from file: %s",
+			    args->op.dev_att.challenge_filename);
+
 		fp = fopen(args->op.dev_att.challenge_filename, "rb");
 		if (!fp) {
 			LOG_ERROR("Failed to open challenge file: %s",
@@ -186,10 +197,15 @@ enum cli_exit_code cli_device_attestation_operation(struct parsed_options *args)
 				       args->op.dev_att.challenge_filename))
 			goto cleanup;
 
+		LOG_VERBOSE("Challenge file size: %zu bytes", challenge_len);
+
 		/* Allocate challenge buffer */
 		challenge = util_alloc_buffer(challenge_len, "challenge");
 		if (!challenge)
 			goto cleanup;
+
+		LOG_VERBOSE("Challenge buffer allocated: %p (%zu bytes)",
+			    (void *)challenge, challenge_len);
 
 		/* Read challenge data */
 		if (fread(challenge, 1, challenge_len, fp) != challenge_len) {
@@ -199,13 +215,16 @@ enum cli_exit_code cli_device_attestation_operation(struct parsed_options *args)
 
 		FCLOSE(fp);
 		fp = NULL;
-		LOG_INFO("Challenge loaded from file: %zu bytes",
-			 challenge_len);
+
+		LOG_VERBOSE("Challenge loaded from file: %zu bytes",
+			    challenge_len);
 	} else {
 		WARNING("No challenge file provided, using current time as 16-byte challenge\n\n");
 		if (generate_date_challenge(&challenge, &challenge_len))
 			goto cleanup;
 	}
+
+	LOG_VERBOSE("Challenge ready: %zu bytes", challenge_len);
 
 	/* Setup SMW device attestation arguments */
 	attest_args.version = 0;
@@ -222,16 +241,18 @@ enum cli_exit_code cli_device_attestation_operation(struct parsed_options *args)
 	attest_args.certificate = NULL;
 	attest_args.certificate_length = 0;
 
-	/* First call to get required certificate length */
-	status = smw_device_attestation(&attest_args);
-	if (status != SMW_STATUS_OK) {
-		if (!is_smw_api_success("smw_device_attestation (query length)",
-					status))
-			goto cleanup;
-	}
+	LOG_VERBOSE("Step 1: Querying required certificate buffer length");
+	log_smw_dev_attestation_params(&attest_args);
 
-	LOG_INFO("Required certificate length: %u",
-		 attest_args.certificate_length);
+	/* First call to get required certificate length */
+	LOG_VERBOSE("Calling smw_device_attestation() (length query)");
+	status = smw_device_attestation(&attest_args);
+	if (!is_smw_api_success("smw_device_attestation (query length)",
+				status))
+		goto cleanup;
+
+	LOG_VERBOSE("Required certificate buffer length: %u bytes",
+		    attest_args.certificate_length);
 
 	/* Allocate certificate buffer */
 	certificate = util_alloc_buffer(attest_args.certificate_length,
@@ -239,16 +260,25 @@ enum cli_exit_code cli_device_attestation_operation(struct parsed_options *args)
 	if (!certificate)
 		goto cleanup;
 
+	LOG_VERBOSE("Certificate buffer allocated: %p (%u bytes)",
+		    (void *)certificate, attest_args.certificate_length);
+
 	/* Second call to get actual certificate */
 	attest_args.certificate = certificate;
 
+	LOG_VERBOSE("Step 2: Retrieving actual certificate data");
 	log_smw_dev_attestation_params(&attest_args);
 
+	LOG_VERBOSE("Calling smw_device_attestation() (data retrieval)");
 	status = smw_device_attestation(&attest_args);
 	if (!is_smw_api_success("smw_device_attestation", status))
 		goto cleanup;
 
 	SUCCESS("Get Device Attestation");
+	LOG_VERBOSE("Certificate retrieved successfully (%u bytes)",
+		    attest_args.certificate_length);
+	LOG_VERBOSE("Writing output data (%u bytes)",
+		    attest_args.certificate_length);
 
 	/* Write certificate to file or stdout */
 	if (util_write_output_data(certificate, attest_args.certificate_length,
@@ -261,9 +291,16 @@ enum cli_exit_code cli_device_attestation_operation(struct parsed_options *args)
 cleanup:
 	if (fp)
 		FCLOSE(fp);
-	if (challenge)
+
+	if (challenge) {
+		LOG_VERBOSE("Freeing challenge buffer");
 		free(challenge);
-	if (certificate)
+	}
+
+	if (certificate) {
+		LOG_VERBOSE("Freeing certificate buffer");
 		free(certificate);
+	}
+
 	return ret;
 }

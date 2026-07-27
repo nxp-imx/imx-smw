@@ -13,6 +13,7 @@
 #include "cli_print.h"
 #include "helper.h"
 #include "key_asym_mappings.h"
+#include "logger.h"
 #include "opt_parser.h"
 #include "parser_keygen_asym.h"
 #include "utils.h"
@@ -24,7 +25,7 @@
 #define KEY_ID_RESERVED_START 0x40000000
 
 /* Short getopt options for asymmetric KEYGEN */
-static const char *keygen_asym_short_opts = ":ht:s:i:a:u:S:L::";
+static const char *keygen_asym_short_opts = ":ht:s:i:a:u:S:";
 
 /* Define options for asymmetric KEYGEN operation */
 static const struct option keygen_asym_options[] = {
@@ -37,8 +38,9 @@ static const struct option keygen_asym_options[] = {
 	{ "transient", no_argument, 0, 0 },
 	{ "non-sensitive", no_argument, 0, 0 },
 	{ "subsystem", required_argument, 0, 'S' },
-	{ "log", optional_argument, 0, 'L' },
 	{ "list", no_argument, 0, 0 },
+	{ "v", optional_argument, 0, 0 },
+	{ "vv", optional_argument, 0, 0 },
 	{ 0, 0, 0, 0 }
 };
 
@@ -74,9 +76,9 @@ void cli_keygen_asym_help_common(void)
 		printf("      --non-sensitive       Mark key as non-sensitive");
 		printf(" (default: sensitive)\n");
 	}
-	printf("  -L, --log <dest>          Enable session logging");
-	printf(" (%s log --help for info)\n", prog_name);
-	printf("  -h, --help                Show help\n");
+	printf("  -S, --subsystem <name>    Force subsystem (ELE/TEE/SECO)\n");
+	print_log_options_help(prog_name);
+	print_help_option_help();
 }
 
 /**
@@ -198,7 +200,6 @@ void cli_keygen_asym_print_list(void)
 
 	printf("Keys supporting Signature (sign/verify):\n\n");
 
-	/* RSA Signature */
 	if (rsa_sig_count > 0) {
 		printf("  RSA Signature:\n");
 		printf("    Key types:  ");
@@ -217,7 +218,6 @@ void cli_keygen_asym_print_list(void)
 		printf(" -u sign,verify --transient\n\n");
 	}
 
-	/* ECDSA Signature */
 	if (ecdsa_sig_count > 0) {
 		printf("  ECDSA Signature:\n");
 		printf("    Key types:  ");
@@ -239,7 +239,6 @@ void cli_keygen_asym_print_list(void)
 		printf("\n");
 	}
 
-	/* EdDSA Signature */
 	if (eddsa_sig_count > 0) {
 		eddsa_algos = get_eddsa_algo_mappings();
 		eddsa_algo_count = get_eddsa_algo_mappings_count();
@@ -252,7 +251,6 @@ void cli_keygen_asym_print_list(void)
 		for (i = 0; i < eddsa_algo_count; i++) {
 			if (i > 0)
 				printf(", ");
-			/* Strip EDDSA- prefix for display */
 			variant = eddsa_algos[i].name + strlen("EDDSA-");
 			printf("%s", variant);
 		}
@@ -268,7 +266,6 @@ void cli_keygen_asym_print_list(void)
 		printf("\n");
 	}
 
-	/* DSA Signature */
 	if (dsa_sig_count > 0) {
 		printf("  DSA Signature:\n");
 		printf("    Key types:  ");
@@ -281,7 +278,6 @@ void cli_keygen_asym_print_list(void)
 		printf(" -u sign,verify --transient\n\n");
 	}
 
-	/* RSA Encryption */
 	if (rsa_enc_count > 0 && encrypt_mode_count > 0) {
 		printf("Keys supporting Asymmetric Encryption (encrypt/decrypt):\n\n");
 		printf("  Key types:    ");
@@ -312,7 +308,6 @@ void cli_keygen_asym_print_list(void)
 		printf("\n");
 	}
 
-	/* TLS Key Derivation */
 	if (tls_algo_count > 0) {
 		printf("Keys supporting TLS Key Derivation (derive):\n\n");
 		printf("  Key types:  ");
@@ -334,7 +329,6 @@ void cli_keygen_asym_print_list(void)
 		printf("\n");
 	}
 
-	/* KDF */
 	if (kdf_algo_count > 0) {
 		printf("Keys supporting key derivation (KDF):\n\n");
 		printf("  Key types:  ");
@@ -419,9 +413,9 @@ static int parse_key_id(const char *id_str, unsigned int *id)
 /**
  * @brief Parse command-line options for asymmetric KEYGEN operation
  *
- * @param argc Argument count from command line
- * @param argv Argument vector from command line
- * @param opts Pointer to parsed_options structure to populate
+ * @param argc      Argument count from command line
+ * @param argv      Argument vector from command line
+ * @param opts      Pointer to parsed_options structure to populate
  * @param prog_name The program name (executable)
  */
 int parse_keygen_asym_options(int argc, char **argv,
@@ -435,6 +429,8 @@ int parse_keygen_asym_options(int argc, char **argv,
 
 	opts->op.keygen.key_id = 0;
 
+	LOG_VERBOSE("Parsing keygen-asym options (argc=%d)", argc);
+
 	while ((opt = getopt_long(argc, argv, keygen_asym_short_opts,
 				  keygen_asym_options, &option_index)) != -1) {
 		switch (opt) {
@@ -442,19 +438,37 @@ int parse_keygen_asym_options(int argc, char **argv,
 			if (!strcmp(keygen_asym_options[option_index].name,
 				    "list")) {
 				opts->show_list = true;
+				LOG_VERBOSE("  show_list = true");
 			} else if (!strcmp(keygen_asym_options[option_index]
 						   .name,
 					   "transient")) {
 				opts->op.keygen.transient = true;
+				LOG_VERBOSE("  transient = true");
 			} else if (!strcmp(keygen_asym_options[option_index]
 						   .name,
 					   "non-sensitive")) {
 				opts->op.keygen.non_sensitive = true;
+				LOG_VERBOSE("  non_sensitive = true");
+			} else if (!strcmp(keygen_asym_options[option_index]
+						   .name,
+					   "v")) {
+				if (parse_log_option(opts, argc, argv,
+						     prog_name, "keygen-asym",
+						     LOG_LEVEL_INFO))
+					return -1;
+			} else if (!strcmp(keygen_asym_options[option_index]
+						   .name,
+					   "vv")) {
+				if (parse_log_option(opts, argc, argv,
+						     prog_name, "keygen-asym",
+						     LOG_LEVEL_VERBOSE))
+					return -1;
 			}
 			break;
 
 		case 'h':
 			opts->show_help = true;
+			LOG_VERBOSE("  show_help = true");
 			break;
 
 		case 't':
@@ -468,6 +482,8 @@ int parse_keygen_asym_options(int argc, char **argv,
 				ERROR("Memory allocation failed");
 				return -1;
 			}
+			LOG_VERBOSE("  key_type = %s",
+				    opts->op.keygen.key_type);
 			break;
 
 		case 's':
@@ -480,6 +496,8 @@ int parse_keygen_asym_options(int argc, char **argv,
 				print_help_hint(prog_name, "keygen-asym");
 				return -1;
 			}
+			LOG_VERBOSE("  key_size = %u bits",
+				    opts->op.keygen.key_size);
 			break;
 
 		case 'i':
@@ -493,6 +511,9 @@ int parse_keygen_asym_options(int argc, char **argv,
 				return -1;
 			}
 			id_specified = true;
+			LOG_VERBOSE("  key_id = 0x%08x (%u)",
+				    opts->op.keygen.key_id,
+				    opts->op.keygen.key_id);
 			break;
 
 		case 'a':
@@ -506,6 +527,8 @@ int parse_keygen_asym_options(int argc, char **argv,
 				ERROR("Memory allocation failed");
 				return -1;
 			}
+			LOG_VERBOSE("  permitted_algo = %s",
+				    opts->op.keygen.permitted_algo);
 			break;
 
 		case 'u':
@@ -519,16 +542,12 @@ int parse_keygen_asym_options(int argc, char **argv,
 				ERROR("Memory allocation failed");
 				return -1;
 			}
+			LOG_VERBOSE("  usage = %s", opts->op.keygen.usage);
 			break;
 
 		case 'S':
 			opts->subsystem = parse_subsystem(optarg);
-			break;
-
-		case 'L':
-			if (parse_log_option(opts, argc, argv, prog_name,
-					     "keygen-asym"))
-				return -1;
+			LOG_VERBOSE("  subsystem = %s", optarg);
 			break;
 
 		case ':':
@@ -549,6 +568,7 @@ int parse_keygen_asym_options(int argc, char **argv,
 	}
 
 	if (opts->show_list) {
+		LOG_VERBOSE("Printing asymmetric key type list");
 		cli_keygen_asym_print_list();
 		return 0;
 	}
@@ -574,7 +594,6 @@ int parse_keygen_asym_options(int argc, char **argv,
 			return -1;
 		}
 
-		/* Validate ID constraints based on persistence */
 		if (opts->op.keygen.transient) {
 			if (id_specified) {
 				ERROR("--id cannot be used with --transient");
@@ -582,6 +601,7 @@ int parse_keygen_asym_options(int argc, char **argv,
 				return -1;
 			}
 			opts->op.keygen.key_id = KEY_ID_TRANSIENT;
+			LOG_VERBOSE("Transient key: no ID assigned");
 		} else {
 			if (!id_specified) {
 				ERROR("--id is required for persistent keys");
@@ -598,7 +618,12 @@ int parse_keygen_asym_options(int argc, char **argv,
 				print_help_hint(prog_name, "keygen-asym");
 				return -1;
 			}
+			LOG_VERBOSE("Persistent key: ID=0x%08x",
+				    opts->op.keygen.key_id);
 		}
 	}
+
+	LOG_VERBOSE("keygen-asym options parsed successfully");
+
 	return 0;
 }

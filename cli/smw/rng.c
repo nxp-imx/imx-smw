@@ -19,7 +19,7 @@
 /**
  * @brief Log SMW RNG operation parameters
  *
- * @param args: Pointer to SMW RNG arguments structure
+ * @param args Pointer to SMW RNG arguments structure
  */
 static void log_smw_rng_params(const struct smw_rng_args *args)
 {
@@ -29,11 +29,11 @@ static void log_smw_rng_params(const struct smw_rng_args *args)
 	}
 
 	LOG_INFO("=== smw_rng Parameters (smw_rng_args) ===");
-	LOG_INFO("  version: %u", args->version);
+	LOG_INFO("  version       : %u", args->version);
 	LOG_INFO("  subsystem_name: %s",
 		 cli_smw_get_subsystem_name(args->subsystem_name));
-	LOG_INFO("  output: %p", (void *)args->output);
-	LOG_INFO("  output_length: %u", args->output_length);
+	LOG_INFO("  output        : %p", (void *)args->output);
+	LOG_INFO("  output_length : %u", args->output_length);
 	LOG_INFO("=========================================");
 }
 
@@ -72,14 +72,18 @@ enum cli_exit_code cli_rng_operation(struct parsed_options *args)
 	unsigned char *buffer = NULL;
 	struct smw_rng_args rng_args = { 0 };
 	enum smw_status_code status = SMW_STATUS_OK;
-	enum cli_exit_code ret = CLI_EXIT_OPERATION_FAILURE; // Assume failure
+	enum cli_exit_code ret = CLI_EXIT_OPERATION_FAILURE;
 
 	if (!args) {
 		LOG_ERROR("NULL arguments passed to %s", __func__);
 		goto cleanup;
 	}
 
-	LOG_INFO("RNG operation (SMW API)");
+	LOG_INFO("RNG operation started (SMW API)");
+	LOG_VERBOSE("  requested size : %zu bytes", args->op.rng.size);
+	LOG_VERBOSE("  output file    : %s",
+		    args->output_filename ? args->output_filename : "(stdout)");
+	LOG_VERBOSE("  text format    : %s", args->text_format ? "yes" : "no");
 
 	/* Validate size fits in unsigned int */
 	if (args->op.rng.size > UINT32_MAX) {
@@ -93,6 +97,9 @@ enum cli_exit_code cli_rng_operation(struct parsed_options *args)
 	if (!buffer)
 		goto cleanup;
 
+	LOG_VERBOSE("Output buffer allocated: %p (%zu bytes)", (void *)buffer,
+		    args->op.rng.size);
+
 	/* Setup SMW RNG arguments */
 	rng_args.version = 0;
 	rng_args.output = buffer;
@@ -101,14 +108,18 @@ enum cli_exit_code cli_rng_operation(struct parsed_options *args)
 	if (args->subsystem != SMW_SUBSYSTEM_NAME_NONE)
 		rng_args.subsystem_name = args->subsystem;
 
+	/* Log SMW API parameters */
 	log_smw_rng_params(&rng_args);
 
 	/* Call SMW RNG API */
+	LOG_VERBOSE("Calling smw_rng()");
 	status = smw_rng(&rng_args);
 	if (!is_smw_api_success("smw_rng", status))
 		goto cleanup;
 
 	SUCCESS("RNG");
+
+	LOG_VERBOSE("Writing output data (%zu bytes)", args->op.rng.size);
 
 	/* Write output using common helper */
 	if (util_write_output_data(buffer, args->op.rng.size,
@@ -119,8 +130,10 @@ enum cli_exit_code cli_rng_operation(struct parsed_options *args)
 	ret = CLI_EXIT_SUCCESS;
 
 cleanup:
-	if (buffer)
+	if (buffer) {
+		LOG_VERBOSE("Freeing output buffer");
 		free(buffer);
+	}
 
 	return ret;
 }

@@ -12,12 +12,13 @@
 #include <strings.h>
 #include "cli_print.h"
 #include "helper.h"
+#include "logger.h"
 #include "opt_parser.h"
 #include "parser_key_export.h"
 #include "utils.h"
 
 /* Short getopt options for key export */
-static const char *key_export_short_opts = ":hi:o:S:L::dp";
+static const char *key_export_short_opts = ":hi:o:S:dp";
 
 /* Define options for key export operation */
 static const struct option key_export_options[] = {
@@ -25,9 +26,10 @@ static const struct option key_export_options[] = {
 	{ "id", required_argument, 0, 'i' },
 	{ "pub-output", required_argument, 0, 'o' },
 	{ "subsystem", required_argument, 0, 'S' },
-	{ "log", optional_argument, 0, 'L' },
 	{ "der", no_argument, 0, 'd' },
 	{ "pem", no_argument, 0, 'p' },
+	{ "v", optional_argument, 0, 0 },
+	{ "vv", optional_argument, 0, 0 },
 	{ 0, 0, 0, 0 }
 };
 
@@ -55,9 +57,9 @@ void cli_key_export_help_common(void)
 	printf("  -o, --pub-output <file>   Output file for public key\n");
 	printf("  -d, --der                 Export key in DER format\n");
 	printf("  -p, --pem                 Export key in PEM format\n");
-	printf("  -L, --log <dest>          Enable session logging");
-	printf(" (%s log --help for info)\n", prog_name);
-	printf("  -h, --help                Show help\n");
+	printf("  -S, --subsystem <name>    Force subsystem (ELE/TEE/SECO)\n");
+	print_log_options_help(prog_name);
+	print_help_option_help();
 }
 
 /**
@@ -94,9 +96,9 @@ static int parse_key_id(const char *id_str, unsigned int *id)
 /**
  * @brief Parse command-line options for key export operation
  *
- * @param argc Argument count from command line
- * @param argv Argument vector from command line
- * @param opts Pointer to parsed_options structure to populate
+ * @param argc      Argument count from command line
+ * @param argv      Argument vector from command line
+ * @param opts      Pointer to parsed_options structure to populate
  * @param prog_name The program name (executable)
  */
 int parse_key_export_options(int argc, char **argv, struct parsed_options *opts,
@@ -107,11 +109,30 @@ int parse_key_export_options(int argc, char **argv, struct parsed_options *opts,
 	bool id_specified = false;
 	opterr = 0;
 
+	LOG_VERBOSE("Parsing key-export options (argc=%d)", argc);
+
 	while ((opt = getopt_long(argc, argv, key_export_short_opts,
 				  key_export_options, &option_index)) != -1) {
 		switch (opt) {
+		case 0:
+			if (!strcmp(key_export_options[option_index].name,
+				    "v")) {
+				if (parse_log_option(opts, argc, argv,
+						     prog_name, "key-export",
+						     LOG_LEVEL_INFO))
+					return -1;
+			} else if (!strcmp(key_export_options[option_index].name,
+					   "vv")) {
+				if (parse_log_option(opts, argc, argv,
+						     prog_name, "key-export",
+						     LOG_LEVEL_VERBOSE))
+					return -1;
+			}
+			break;
+
 		case 'h':
 			opts->show_help = true;
+			LOG_VERBOSE("  show_help = true");
 			break;
 
 		case 'i':
@@ -125,6 +146,9 @@ int parse_key_export_options(int argc, char **argv, struct parsed_options *opts,
 				return -1;
 			}
 			id_specified = true;
+			LOG_VERBOSE("  key_id = 0x%08x (%u)",
+				    opts->op.key_export.key_id,
+				    opts->op.key_export.key_id);
 			break;
 
 		case 'o':
@@ -139,6 +163,8 @@ int parse_key_export_options(int argc, char **argv, struct parsed_options *opts,
 				print_help_hint(prog_name, "key-export");
 				return -1;
 			}
+			LOG_VERBOSE("  key_file = %s",
+				    opts->op.key_export.key_file);
 			break;
 
 		case 'd':
@@ -148,6 +174,7 @@ int parse_key_export_options(int argc, char **argv, struct parsed_options *opts,
 				return -1;
 			}
 			opts->op.key_export.use_der = true;
+			LOG_VERBOSE("  use_der = true");
 			break;
 
 		case 'p':
@@ -157,16 +184,12 @@ int parse_key_export_options(int argc, char **argv, struct parsed_options *opts,
 				return -1;
 			}
 			opts->op.key_export.use_pem = true;
+			LOG_VERBOSE("  use_pem = true");
 			break;
 
 		case 'S':
 			opts->subsystem = parse_subsystem(optarg);
-			break;
-
-		case 'L':
-			if (parse_log_option(opts, argc, argv, prog_name,
-					     "key-export"))
-				return -1;
+			LOG_VERBOSE("  subsystem = %s", optarg);
 			break;
 
 		case ':':
@@ -200,6 +223,8 @@ int parse_key_export_options(int argc, char **argv, struct parsed_options *opts,
 			return -1;
 		}
 	}
+
+	LOG_VERBOSE("key-export options parsed successfully");
 
 	return 0;
 }

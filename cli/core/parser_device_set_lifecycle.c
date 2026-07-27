@@ -11,20 +11,22 @@
 #include "cli_print.h"
 #include "helper.h"
 #include "lifecycle_table.h"
+#include "logger.h"
 #include "opt_parser.h"
 #include "parser_device_set_lifecycle.h"
 #include "utils.h"
 
 /* Short getopt options for set device lifecycle operation */
-static const char *dev_set_lifecycle_short_opts = ":hl:S:L::";
+static const char *dev_set_lifecycle_short_opts = ":hl:S:";
 
 /* Define options for set device lifecycle operation */
 static const struct option dev_set_lifecycle_options[] = {
 	{ "help", no_argument, 0, 'h' },
 	{ "lifecycle", required_argument, 0, 'l' },
 	{ "subsystem", required_argument, 0, 'S' },
-	{ "log", optional_argument, 0, 'L' },
 	{ "list", no_argument, 0, 0 },
+	{ "v", optional_argument, 0, 0 },
+	{ "vv", optional_argument, 0, 0 },
 	{ 0, 0, 0, 0 }
 };
 
@@ -56,12 +58,11 @@ void cli_dev_set_lifecycle_help(void)
 	printf("Options:\n");
 	printf("\n      --list                List all available lifecycle values\n\n");
 	printf("  -l, --lifecycle <name>    Target lifecycle name to set\n");
-	printf("  -L, --log <dest>          Enable session logging");
-	printf(" (%s log --help for info)\n", prog_name);
-	printf("  -h, --help                Show help\n");
-	printf("  -S, --subsystem <name>    Force subsystem (ELE/TEE/SECO)\n\n");
+	print_log_options_help(prog_name);
+	print_help_option_help();
+	printf("  -S, --subsystem <name>    Force subsystem (ELE/TEE/SECO)\n");
 
-	printf("Examples:\n");
+	printf("\nExamples:\n");
 	printf("  %s dev-set-lifecycle --list\n", prog_name);
 	printf("  %s dev-set-lifecycle -l OEM_CLOSED\n\n", prog_name);
 }
@@ -69,9 +70,9 @@ void cli_dev_set_lifecycle_help(void)
 /**
  * @brief Parse command-line options for dev-set-lifecycle operation
  *
- * @param argc Argument count from command line
- * @param argv Argument vector from command line
- * @param opts Pointer to parsed_options structure to populate
+ * @param argc      Argument count from command line
+ * @param argv      Argument vector from command line
+ * @param opts      Pointer to parsed_options structure to populate
  * @param prog_name The program name (executable)
  */
 int parse_dev_set_lifecycle_options(int argc, char **argv,
@@ -79,19 +80,44 @@ int parse_dev_set_lifecycle_options(int argc, char **argv,
 				    const char *prog_name)
 {
 	int opt = 0;
+	int opt_index = 0;
 	opterr = 0;
 
 	/* This operation is only supported by SMW backend */
 	if (prog_name && strstr(prog_name, "nxp_psa")) {
+		LOG_ERROR("dev-set-lifecycle is not supported by PSA");
 		cli_dev_set_lifecycle_operation(NULL);
 		return -1;
 	}
 
+	LOG_VERBOSE("Parsing dev-set-lifecycle options (argc=%d)", argc);
+
 	while ((opt = getopt_long(argc, argv, dev_set_lifecycle_short_opts,
-				  dev_set_lifecycle_options, NULL)) != -1) {
+				  dev_set_lifecycle_options, &opt_index)) !=
+	       -1) {
 		switch (opt) {
 		case 0:
-			opts->show_list = true;
+			if (!strcmp(dev_set_lifecycle_options[opt_index].name,
+				    "list")) {
+				opts->show_list = true;
+				LOG_VERBOSE("  show_list = true");
+			} else if (!strcmp(dev_set_lifecycle_options[opt_index]
+						   .name,
+					   "v")) {
+				if (parse_log_option(opts, argc, argv,
+						     prog_name,
+						     "dev-set-lifecycle",
+						     LOG_LEVEL_INFO))
+					return -1;
+			} else if (!strcmp(dev_set_lifecycle_options[opt_index]
+						   .name,
+					   "vv")) {
+				if (parse_log_option(opts, argc, argv,
+						     prog_name,
+						     "dev-set-lifecycle",
+						     LOG_LEVEL_VERBOSE))
+					return -1;
+			}
 			break;
 
 		case 'h':
@@ -100,16 +126,12 @@ int parse_dev_set_lifecycle_options(int argc, char **argv,
 
 		case 'l':
 			opts->op.dev_set_lc.lifecycle_name = optarg;
+			LOG_VERBOSE("  lifecycle_name = %s", optarg);
 			break;
 
 		case 'S':
 			opts->subsystem = parse_subsystem(optarg);
-			break;
-
-		case 'L':
-			if (parse_log_option(opts, argc, argv, prog_name,
-					     "dev-set-lifecycle"))
-				return -1;
+			LOG_VERBOSE("  subsystem = %s", optarg);
 			break;
 
 		case ':':
@@ -138,8 +160,12 @@ int parse_dev_set_lifecycle_options(int argc, char **argv,
 		return -1;
 	}
 
-	if (opts->show_list)
+	if (opts->show_list) {
+		LOG_VERBOSE("Printing lifecycle list");
 		print_lifecycle_list();
+	}
+
+	LOG_VERBOSE("dev-set-lifecycle options parsed successfully");
 
 	return 0;
 }

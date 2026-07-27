@@ -143,27 +143,48 @@ static enum cli_exit_code cipher_execute(struct parsed_options *args,
 		goto cleanup;
 	}
 
-	LOG_INFO("Cipher %s operation (SMW API)", direction_str);
+	LOG_INFO("Cipher %s operation started (SMW API)", direction_str);
+	LOG_VERBOSE("  algo           : %s", args->op.cipher.algo);
+	LOG_VERBOSE("  key_id         : 0x%08x (%u)", args->op.cipher.key_id,
+		    args->op.cipher.key_id);
+	LOG_VERBOSE("  iv_hex         : %s",
+		    args->op.cipher.iv_hex ? args->op.cipher.iv_hex : "(none)");
+	LOG_VERBOSE("  input_filename : %s", args->input_filename);
+	LOG_VERBOSE("  output_filename: %s",
+		    args->output_filename ? args->output_filename : "(stdout)");
+	LOG_VERBOSE("  subsystem      : %s",
+		    cli_smw_get_subsystem_name(args->subsystem));
 
 	/* Map CLI algorithm to SMW cipher mode */
+	LOG_VERBOSE("Mapping CLI algorithm to SMW cipher mode: %s",
+		    args->op.cipher.algo);
 	smw_mode = get_smw_cipher_mode(args->op.cipher.algo);
 	if (smw_mode == SMW_CIPHER_MODE_NAME_NONE) {
-		LOG_ERROR("Unsupported cipher mode");
+		LOG_ERROR("Unsupported cipher mode: %s", args->op.cipher.algo);
 		goto cleanup;
 	}
 
+	LOG_VERBOSE("SMW cipher mode resolved: %u", smw_mode);
+
 	/* Map CLI algorithm to SMW key type */
+	LOG_VERBOSE("Mapping CLI algorithm to SMW key type: %s",
+		    args->op.cipher.algo);
 	smw_key_type = get_smw_cipher_key_type(args->op.cipher.algo);
 	if (smw_key_type == SMW_KEY_TYPE_NAME_NONE) {
-		LOG_ERROR("Unsupported key type");
+		LOG_ERROR("Unsupported key type for algorithm: %s",
+			  args->op.cipher.algo);
 		goto cleanup;
 	}
+
+	LOG_VERBOSE("SMW key type resolved: %u", smw_key_type);
 
 	LOG_INFO("  SMW mode: %u, key type: %u, key ID: %u", smw_mode,
 		 smw_key_type, args->op.cipher.key_id);
 
 	/* Parse IV from hex string (if provided) */
 	if (args->op.cipher.iv_hex) {
+		LOG_VERBOSE("Parsing IV hex string: %s",
+			    args->op.cipher.iv_hex);
 		if (util_hex_string_to_bytes(args->op.cipher.iv_hex, &iv,
 					     &iv_len)) {
 			LOG_ERROR("Failed to parse IV hex string");
@@ -176,10 +197,14 @@ static enum cli_exit_code cipher_execute(struct parsed_options *args,
 			goto cleanup;
 		}
 
+		LOG_VERBOSE("IV parsed: %zu bytes", iv_len);
 		LOG_INFO("  IV length: %zu bytes", iv_len);
+	} else {
+		LOG_VERBOSE("No IV provided");
 	}
 
 	/* Read input file */
+	LOG_VERBOSE("Opening input file: %s", args->input_filename);
 	fp = fopen(args->input_filename, "rb");
 	if (!fp) {
 		LOG_ERROR("Failed to open input file: %s",
@@ -190,6 +215,8 @@ static enum cli_exit_code cipher_execute(struct parsed_options *args,
 	if (util_get_file_size(fp, &input_size, args->input_filename))
 		goto cleanup;
 
+	LOG_VERBOSE("Input file size: %zu bytes", input_size);
+
 	input = util_alloc_buffer(input_size, "cipher input");
 	if (!input)
 		goto cleanup;
@@ -198,6 +225,8 @@ static enum cli_exit_code cipher_execute(struct parsed_options *args,
 		LOG_ERROR("Failed to read input file");
 		goto cleanup;
 	}
+
+	LOG_VERBOSE("Input file read successfully");
 
 	FCLOSE(fp);
 	fp = NULL;
@@ -208,11 +237,14 @@ static enum cli_exit_code cipher_execute(struct parsed_options *args,
 	 * to handle potential padding in the output.
 	 */
 	output_size = input_size + 16;
+	LOG_VERBOSE("Allocating output buffer: %zu bytes", output_size);
 	output = util_alloc_buffer(output_size, "cipher output");
 	if (!output)
 		goto cleanup;
 
 	/* Setup key descriptor - reference key by ID */
+	LOG_VERBOSE("Setting up key descriptor: id=0x%08x, type=%u",
+		    args->op.cipher.key_id, smw_key_type);
 	key_desc.id = args->op.cipher.key_id;
 	key_desc.type_name = smw_key_type;
 
@@ -231,8 +263,11 @@ static enum cli_exit_code cipher_execute(struct parsed_options *args,
 	cipher_args.init.keys_desc = keys_desc_array;
 	cipher_args.init.nb_keys = 1;
 
-	if (args->subsystem != SMW_SUBSYSTEM_NAME_NONE)
+	if (args->subsystem != SMW_SUBSYSTEM_NAME_NONE) {
+		LOG_VERBOSE("Forcing subsystem: %s",
+			    cli_smw_get_subsystem_name(args->subsystem));
 		cipher_args.init.subsystem_name = args->subsystem;
+	}
 
 	cipher_args.data.version = 0;
 	cipher_args.data.input = input;
@@ -243,6 +278,7 @@ static enum cli_exit_code cipher_execute(struct parsed_options *args,
 	log_smw_cipher_params(&cipher_args, encrypt);
 
 	/* Call SMW one-shot cipher API */
+	LOG_VERBOSE("Calling smw_cipher()");
 	status = smw_cipher(&cipher_args);
 	if (!is_smw_api_success("smw_cipher", status)) {
 		if (status == SMW_STATUS_OUTPUT_TOO_SHORT)
@@ -258,8 +294,10 @@ static enum cli_exit_code cipher_execute(struct parsed_options *args,
 
 	/* Use the actual output length returned by SMW */
 	output_size = cipher_args.data.output_length;
+	LOG_VERBOSE("Output length: %zu bytes", output_size);
 
 	/* Write output */
+	LOG_VERBOSE("Writing output data");
 	if (util_write_output_data(output, output_size, args->output_filename,
 				   false)) {
 		goto cleanup;

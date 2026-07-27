@@ -157,13 +157,29 @@ static enum cli_exit_code mac_run(struct parsed_options *args, bool verify)
 	enum cli_exit_code ret = CLI_EXIT_OPERATION_FAILURE;
 	bool truncated = false;
 
+	LOG_VERBOSE("  algo           : %s", args->op.mac.algo);
+	LOG_VERBOSE("  key_id         : 0x%08x (%u)", args->op.mac.key_id,
+		    args->op.mac.key_id);
+	LOG_VERBOSE("  mac_filename   : %s", args->op.mac.mac_filename ?
+						     args->op.mac.mac_filename :
+						     "(none)");
+	LOG_VERBOSE("  input_filename : %s",
+		    args->input_filename ? args->input_filename : "(none)");
+
 	/* Resolve PSA algorithm from CLI algo string e.g. "HMAC-SHA256" */
+	LOG_VERBOSE("Parsing MAC algorithm string: %s", args->op.mac.algo);
 	if (resolve_psa_algo(args->op.mac.algo, &psa_alg, &truncated))
 		goto cleanup;
 
+	LOG_VERBOSE("PSA MAC algo resolved: 0x%08x, truncated: %s",
+		    (unsigned int)psa_alg, truncated ? "yes" : "no");
+
 	/* Read input data file */
+	LOG_VERBOSE("Reading input file: %s", args->input_filename);
 	if (util_read_file(args->input_filename, &input, &input_size))
 		goto cleanup;
+
+	LOG_VERBOSE("Input file read successfully: %zu bytes", input_size);
 
 	key_id = (psa_key_id_t)args->op.mac.key_id;
 
@@ -173,21 +189,28 @@ static enum cli_exit_code mac_run(struct parsed_options *args, bool verify)
 		 * using the actual MAC size from the file, then call
 		 * psa_mac_verify().
 		 */
+		LOG_VERBOSE("Reading MAC file: %s", args->op.mac.mac_filename);
 		if (util_read_file(args->op.mac.mac_filename, &mac_buf,
 				   &mac_size))
 			goto cleanup;
 
+		LOG_VERBOSE("MAC file read successfully: %zu bytes", mac_size);
+
 		/*
 		 * For truncated MACs: apply PSA_ALG_TRUNCATED_MAC()
 		 */
-		if (truncated)
+		if (truncated) {
 			final_alg = PSA_ALG_TRUNCATED_MAC(psa_alg, mac_size);
-		else
+			LOG_VERBOSE("Truncated MAC applied: mac_size=%zu",
+				    mac_size);
+		} else {
 			final_alg = psa_alg;
+		}
 
 		log_psa_mac_params(key_id, final_alg, input, input_size,
 				   mac_buf, mac_size, true);
 
+		LOG_VERBOSE("Calling psa_mac_verify()");
 		status = psa_mac_verify(key_id, final_alg, input, input_size,
 					mac_buf, mac_size);
 		if (!is_psa_api_success("psa_mac_verify", status))
@@ -209,6 +232,8 @@ static enum cli_exit_code mac_run(struct parsed_options *args, bool verify)
 		}
 		mac_size = (size_t)mac_max;
 
+		LOG_VERBOSE("Allocating MAC output buffer: %zu bytes",
+			    mac_size);
 		mac_buf = util_alloc_buffer(mac_size, "MAC output");
 		if (!mac_buf)
 			goto cleanup;
@@ -218,6 +243,7 @@ static enum cli_exit_code mac_run(struct parsed_options *args, bool verify)
 		log_psa_mac_params(key_id, final_alg, input, input_size,
 				   mac_buf, mac_size, false);
 
+		LOG_VERBOSE("Calling psa_mac_compute()");
 		status = psa_mac_compute(key_id, final_alg, input, input_size,
 					 mac_buf, mac_size, &mac_length);
 		if (!is_psa_api_success("psa_mac_compute", status))
@@ -225,6 +251,9 @@ static enum cli_exit_code mac_run(struct parsed_options *args, bool verify)
 
 		SUCCESS("MAC Computation");
 
+		LOG_VERBOSE("MAC computed successfully: %zu bytes", mac_length);
+
+		LOG_VERBOSE("Writing MAC output data");
 		if (util_write_output_data(mac_buf, mac_length,
 					   args->op.mac.mac_filename,
 					   args->text_format))
@@ -256,7 +285,7 @@ enum cli_exit_code cli_mac_operation(struct parsed_options *args)
 		return CLI_EXIT_OPERATION_FAILURE;
 	}
 
-	LOG_INFO("MAC compute operation (PSA API)");
+	LOG_INFO("MAC compute operation started (PSA API)");
 	return mac_run(args, false);
 }
 
@@ -271,6 +300,6 @@ enum cli_exit_code cli_mac_verify_operation(struct parsed_options *args)
 		return CLI_EXIT_OPERATION_FAILURE;
 	}
 
-	LOG_INFO("MAC verify operation (PSA API)");
+	LOG_INFO("MAC verify operation started (PSA API)");
 	return mac_run(args, true);
 }

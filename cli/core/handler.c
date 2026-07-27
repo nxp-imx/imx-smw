@@ -113,7 +113,7 @@ static const struct operation_entry operation_table[] = {
 /**
  * @brief Find operation entry in the dispatch table
  *
- * @param operation_name: Name of the operation to find (e.g., "rng", "hash")
+ * @param operation_name Name of the operation to find
  */
 static const struct operation_entry *find_operation(const char *operation_name)
 {
@@ -138,10 +138,9 @@ static const struct operation_entry *find_operation(const char *operation_name)
 /**
  * @brief Dispatch operation to appropriate handler
  *
- * @param operation: Name of the operation to execute (e.g., "rng", "keygen")
- * @param parsed_args: Pointer to parsed command-line arguments
+ * @param operation   Name of the operation to execute
+ * @param parsed_args Pointer to parsed command-line arguments
  */
-
 static enum cli_exit_code handler_dispatch(const char *operation,
 					   struct parsed_options *parsed_args)
 {
@@ -158,23 +157,20 @@ static enum cli_exit_code handler_dispatch(const char *operation,
 		return CLI_EXIT_OPERATION_FAILURE;
 	}
 
-	/* Found the operation, execute it */
 	return entry->opt_func(parsed_args);
 }
 
 /**
  * @brief Display help information
  *
- * @param operation: Name of operation for specific help, or NULL for general help
- * @param prog_name: Program name to display in usage message
+ * @param operation Name of operation for specific help, or NULL for general
+ * @param prog_name Program name to display in usage message
  */
-
 static void handler_show_help(const char *operation, const char *prog_name)
 {
 	const struct operation_entry *entry = NULL;
 
 	if (!operation) {
-		/* Show general help - list all operations */
 		print_tool_banner();
 
 		printf("Usage: %s <operation> [OPTIONS]\n\n", prog_name);
@@ -183,12 +179,12 @@ static void handler_show_help(const char *operation, const char *prog_name)
 			printf("  %-20s - %s\n", entry->operation_name,
 			       entry->inline_desc_func());
 		}
-		printf("\nUse '%s <operation> --help' for information on a specific operation.\n\n",
+		printf("\nUse '%s <operation> --help' for information on a",
 		       prog_name);
+		printf(" specific operation.\n\n");
 		return;
 	}
 
-	/* Show help for specific operation */
 	entry = find_operation(operation);
 	if (!entry) {
 		ERROR("Unknown operation '%s'\n", operation);
@@ -206,21 +202,20 @@ static void handler_show_help(const char *operation, const char *prog_name)
 /**
  * @brief Program entry point
  *
- * @param argc: Argument count
- * @param argv: Argument vector
+ * @param argc Argument count
+ * @param argv Argument vector
  *
  * Process flow:
  * 1. Store program name for help functions
  * 2. Check for minimum arguments (operation required)
- * 3. Handle global help flag (--help without operation)
+ * 3. Handle global help/version flags
  * 4. Parse command-line options
  * 5. Handle operation-specific help flag
- * 6. Initialize logger subsystem
+ * 6. Initialize logger subsystem (with log level)
  * 7. Initialize security backend (SMW or PSA)
  * 8. Dispatch to operation handler
  * 9. Cleanup and exit
  */
-
 int main(int argc, char *argv[])
 {
 	struct parsed_options parsed_opts = { 0 };
@@ -241,7 +236,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* Check for version flag */
-	if (argc >= 2 && (!strcmp(argv[1], "--version"))) {
+	if (!strcmp(argv[1], "--version")) {
 		print_version(prog_name);
 		return EXIT_SUCCESS;
 	}
@@ -274,12 +269,22 @@ int main(int argc, char *argv[])
 		return EXIT_SUCCESS;
 	}
 
-	/* Initialize logger */
+	/*
+	 * Initialize logger with:
+	 *   - destination (none / stderr / file)
+	 *   - optional filename
+	 *   - log level (INFO by default, VERBOSE if --verbose was passed)
+	 */
 	logger_init(parsed_opts.log_dest,
 		    (parsed_opts.log_filename &&
 		     strlen(parsed_opts.log_filename) > 0) ?
 			    parsed_opts.log_filename :
-			    NULL);
+			    NULL,
+		    parsed_opts.log_level);
+
+	LOG_VERBOSE("Operation: %s | Log level: %s", parsed_opts.operation_name,
+		    parsed_opts.log_level == LOG_LEVEL_VERBOSE ? "VERBOSE" :
+								 "INFO");
 
 	/* Initialize backend */
 	ret = cli_backend_init();

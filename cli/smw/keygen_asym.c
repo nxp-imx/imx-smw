@@ -39,10 +39,9 @@
 /**
  * @brief Split algorithm string into tokens
  *
- * @param algo_str Algorithm string to split (e.g., "PSS-SHA256")
- * @param tokens Array to store token pointers (caller must free)
+ * @param algo_str  Algorithm string to split (e.g., "PSS-SHA256")
+ * @param tokens    Array to store token pointers (caller must free)
  * @param max_tokens Maximum number of tokens to extract
- * @return Number of tokens extracted, or -1 on error
  */
 static int tokenize_algo(const char *algo_str, char **tokens, int max_tokens)
 {
@@ -79,7 +78,7 @@ static int tokenize_algo(const char *algo_str, char **tokens, int max_tokens)
  * @brief Free token array
  *
  * @param tokens Array of token pointers to free
- * @param count Number of tokens in array
+ * @param count  Number of tokens in array
  */
 static void free_tokens(char **tokens, int count)
 {
@@ -209,21 +208,28 @@ static smw_attr_algo_t parse_smw_single_algo(const char *algo_str,
 	if (!algo_str)
 		return SMW_ATTR_ALGO_NONE;
 
+	LOG_VERBOSE("Parsing SMW single algorithm: %s (key_type=%s)", algo_str,
+		    key_type ? key_type : "NULL");
+
 	if (parse_asym_key_type(key_type, &dummy_size, &key_type_value) != 0) {
 		LOG_ERROR("Invalid key type: %s", key_type);
 		return SMW_ATTR_ALGO_NONE;
 	}
 
 	key_type_str = asym_key_type_to_string(key_type_value);
+	LOG_VERBOSE("  Key type resolved: %s (0x%08x)", key_type_str,
+		    key_type_value);
 
 	/*
 	 * For dual-use types (e.g. SECP_R1 can do ECDSA or HKDF/TLS13),
-	 * try KDF/TLS parsing first — checks both tls and kdf tables,
-	 * bare and hash-based. If it succeeds, use it.
+	 * try KDF/TLS parsing first.
 	 */
 	res = parse_kdf_algo(algo_str);
-	if (res != SMW_ATTR_ALGO_NONE)
+	if (res != SMW_ATTR_ALGO_NONE) {
+		LOG_VERBOSE("  Resolved as KDF/TLS algorithm: 0x%llx",
+			    (unsigned long long)res);
 		return res;
+	}
 
 	eddsa_algos = get_eddsa_algo_mappings();
 	eddsa_algo_count = get_eddsa_algo_mappings_count();
@@ -232,15 +238,20 @@ static smw_attr_algo_t parse_smw_single_algo(const char *algo_str,
 	if (token_count < 0)
 		return SMW_ATTR_ALGO_NONE;
 
+	LOG_VERBOSE("  Token count: %d", token_count);
+
 	if (is_asym_rsa_sig_type(key_type_str) ||
 	    is_asym_rsa_enc_type(key_type_str)) {
 		base_algo = SMW_ATTR_ALGO_RSA;
+		LOG_VERBOSE("  Base algo: RSA");
 	} else if (is_asym_dsa_sig_type(key_type_str)) {
 		base_algo = SMW_ATTR_ALGO_DSA;
+		LOG_VERBOSE("  Base algo: DSA");
 	} else if (is_asym_ecdsa_sig_type(key_type_str)) {
 		if (token_count >= 1 && !strcasecmp(tokens[0], "ECDSA")) {
 			base_algo = SMW_ATTR_ALGO_ECDSA;
 			curve = SMW_ATTR_CURVE_ANY;
+			LOG_VERBOSE("  Base algo: ECDSA");
 		} else {
 			LOG_ERROR("ECDSA algorithm must start with 'ECDSA-'");
 			goto cleanup;
@@ -256,6 +267,9 @@ static smw_attr_algo_t parse_smw_single_algo(const char *algo_str,
 						  key_type);
 					goto cleanup;
 				}
+				LOG_VERBOSE("  EdDSA: curve=0x%llx param=0x%llx",
+					    (unsigned long long)curve,
+					    eddsa_algos[i].value);
 				res = SMW_EDDSA_SIGN(curve, SMW_ATTR_HASH_NONE,
 						     eddsa_algos[i].value);
 				goto cleanup;
@@ -276,6 +290,8 @@ static smw_attr_algo_t parse_smw_single_algo(const char *algo_str,
 				LOG_ERROR("Unknown RSA mode: %s", tokens[0]);
 				goto cleanup;
 			}
+			LOG_VERBOSE("  RSA encryption (no hash): mode=0x%llx",
+				    mode);
 			res = SMW_RSA_ENCR(mode, SMW_ATTR_HASH_NONE);
 			goto cleanup;
 		}
@@ -294,6 +310,7 @@ static smw_attr_algo_t parse_smw_single_algo(const char *algo_str,
 		}
 
 		if (!strcasecmp(tokens[1], "CRYPT")) {
+			LOG_VERBOSE("  RSA PKCS1V15-CRYPT: mode=0x%llx", mode);
 			res = SMW_RSA_ENCR(mode, SMW_ATTR_HASH_NONE);
 		} else {
 			hash = parse_sign_hash(tokens[1]);
@@ -302,10 +319,15 @@ static smw_attr_algo_t parse_smw_single_algo(const char *algo_str,
 					  tokens[1]);
 				goto cleanup;
 			}
-			if (mode == SMW_ATTR_MODE_OAEP)
+			if (mode == SMW_ATTR_MODE_OAEP) {
+				LOG_VERBOSE("  RSA OAEP: mode=0x%llx", mode);
+				LOG_VERBOSE("  RSA OAEP: hash=0x%llx", hash);
 				res = SMW_RSA_ENCR(mode, hash);
-			else
+			} else {
+				LOG_VERBOSE("  RSA sign: mode=0x%llx", mode);
+				LOG_VERBOSE("  RSA sign: hash=0x%llx", hash);
 				res = SMW_RSA_SIGN(mode, hash, 0);
+			}
 		}
 	} else if (base_algo == SMW_ATTR_ALGO_DSA) {
 		if (token_count != 1) {
@@ -317,6 +339,7 @@ static smw_attr_algo_t parse_smw_single_algo(const char *algo_str,
 			LOG_ERROR("Unknown hash algorithm: %s", tokens[0]);
 			goto cleanup;
 		}
+		LOG_VERBOSE("  DSA signature: hash=0x%llx", hash);
 		res = SMW_DSA_SIGN(hash);
 	} else if (base_algo == SMW_ATTR_ALGO_ECDSA) {
 		if (token_count != 2) {
@@ -329,10 +352,14 @@ static smw_attr_algo_t parse_smw_single_algo(const char *algo_str,
 			LOG_ERROR("Unknown hash algorithm: %s", tokens[1]);
 			goto cleanup;
 		}
+		LOG_VERBOSE("  ECDSA signature: curve=0x%llx hash=0x%llx",
+			    curve, hash);
 		res = SMW_ECDSA_SIGN(curve, hash);
 	}
 
 cleanup:
+	LOG_VERBOSE("  SMW single algo result: 0x%llx",
+		    (unsigned long long)res);
 	free_tokens(tokens, token_count);
 	return res;
 }
@@ -340,8 +367,8 @@ cleanup:
 /**
  * @brief Parse multiple permitted algorithms from comma-separated string
  *
- * @param algo_str Comma-separated algorithm list
- * @param key_type Key type for context (needed for ECDSA/EdDSA)
+ * @param algo_str       Comma-separated algorithm list
+ * @param key_type       Key type for context (needed for ECDSA/EdDSA)
  * @param permitted_algo Output combined permitted algorithm value
  */
 static int parse_smw_multi_algos(const char *algo_str, const char *key_type,
@@ -359,6 +386,9 @@ static int parse_smw_multi_algos(const char *algo_str, const char *key_type,
 	if (!algo_str || !permitted_algo)
 		return -1;
 
+	LOG_VERBOSE("Parsing SMW permitted algorithms: %s (key_type=%s)",
+		    algo_str, key_type ? key_type : "NULL");
+
 	algo_copy = strdup(algo_str);
 	if (!algo_copy)
 		return -1;
@@ -368,11 +398,16 @@ static int parse_smw_multi_algos(const char *algo_str, const char *key_type,
 		while (*token == ' ')
 			token++;
 
+		LOG_VERBOSE("  Parsing token: '%s'", token);
+
 		single_algo = parse_smw_single_algo(token, key_type);
 
 		if (single_algo == SMW_ATTR_ALGO_NONE) {
 			goto cleanup;
 		}
+
+		LOG_VERBOSE("  Token '%s' resolved: 0x%llx", token,
+			    (unsigned long long)single_algo);
 
 		if (!count)
 			first_algo = single_algo;
@@ -386,19 +421,28 @@ static int parse_smw_multi_algos(const char *algo_str, const char *key_type,
 	*permitted_algo = first_algo;
 
 	if (count > 1) {
-		if (SMW_ATTR_GET_MODE(mode_and_hash))
+		if (SMW_ATTR_GET_MODE(mode_and_hash)) {
 			*permitted_algo = SMW_ATTR_SET_MODE(*permitted_algo,
 							    SMW_ATTR_MODE_ANY);
+			LOG_VERBOSE("  Multiple modes: set MODE_ANY");
+		}
 
-		if (SMW_ATTR_GET_HASH(mode_and_hash))
+		if (SMW_ATTR_GET_HASH(mode_and_hash)) {
 			*permitted_algo = SMW_ATTR_SET_HASH(*permitted_algo,
 							    SMW_ATTR_HASH_ANY);
+			LOG_VERBOSE("  Multiple hashes: set HASH_ANY");
+		}
 
-		if (SMW_ATTR_GET_CURVE(mode_and_hash))
+		if (SMW_ATTR_GET_CURVE(mode_and_hash)) {
 			*permitted_algo =
 				SMW_ATTR_SET_CLEAR_VALUE(*permitted_algo, CURVE,
 							 SMW_ATTR_CURVE_ANY);
+			LOG_VERBOSE("  Multiple curves: set CURVE_ANY");
+		}
 	}
+
+	LOG_VERBOSE("Combined permitted_algo: 0x%llx",
+		    (unsigned long long)*permitted_algo);
 
 	ret = 0;
 
@@ -413,7 +457,7 @@ cleanup:
  * @param name        Algorithm name string to append
  * @param buffer      Output string buffer
  * @param buffer_size Total size of @buffer in bytes
- * @param written     Pointer to current write offset in @buffer (updated on success)
+ * @param written     Pointer to current write offset in @buffer
  * @param first       Pointer to flag indicating first entry
  */
 static void append_algo_name(const char *name, char *buffer, size_t buffer_size,
@@ -850,7 +894,12 @@ void cli_keygen_asym_help(void)
 }
 
 /**
- * @brief Execute asymmetric key generation using SMW API
+ * @brief Execute symmetric key generation using SMW API
+ *
+ * Generates an asymmetric cryptographic key using smw_generate_key() and
+ * displays the key properties.
+ *
+ * @param args Pointer to parsed command-line arguments
  */
 enum cli_exit_code cli_keygen_asym_operation(struct parsed_options *args)
 {
@@ -866,14 +915,29 @@ enum cli_exit_code cli_keygen_asym_operation(struct parsed_options *args)
 	uint32_t fixed_size = 0;
 	unsigned int security_size = 0;
 	struct smw_key_info key_info = { 0 };
+	char *func_name = "smw_config_check_generate_key()";
 
 	if (!args) {
 		LOG_ERROR("NULL arguments passed to %s", __func__);
 		goto cleanup;
 	}
 
-	LOG_INFO("Asymmetric key generation operation (SMW API)");
+	LOG_INFO("Asymmetric key generation operation started (SMW API)");
+	LOG_VERBOSE("  key_type       : %s", args->op.keygen.key_type);
+	LOG_VERBOSE("  key_size       : %u bits", args->op.keygen.key_size);
+	LOG_VERBOSE("  key_id         : 0x%08x (%u)", args->op.keygen.key_id,
+		    args->op.keygen.key_id);
+	LOG_VERBOSE("  permitted_algo : %s", args->op.keygen.permitted_algo);
+	LOG_VERBOSE("  usage          : %s", args->op.keygen.usage);
+	LOG_VERBOSE("  transient      : %s",
+		    args->op.keygen.transient ? "yes" : "no");
+	LOG_VERBOSE("  non_sensitive  : %s",
+		    args->op.keygen.non_sensitive ? "yes" : "no");
+	LOG_VERBOSE("  subsystem      : %s",
+		    cli_smw_get_subsystem_name(args->subsystem));
 
+	/* Parse key type */
+	LOG_VERBOSE("Parsing key type: %s", args->op.keygen.key_type);
 	if (parse_asym_key_type(args->op.keygen.key_type, &fixed_size,
 				&key_type_value) != 0) {
 		LOG_ERROR("Invalid key type: %s", args->op.keygen.key_type);
@@ -886,7 +950,10 @@ enum cli_exit_code cli_keygen_asym_operation(struct parsed_options *args)
 		goto cleanup;
 	}
 	key_type = (smw_key_type_t)key_type_value;
+	LOG_VERBOSE("Key type resolved: %s (0x%08x)",
+		    asym_key_type_to_string(key_type_value), key_type_value);
 
+	/* Handle key size */
 	if (fixed_size != 0) {
 		security_size = fixed_size;
 		if (args->op.keygen.key_size &&
@@ -895,6 +962,7 @@ enum cli_exit_code cli_keygen_asym_operation(struct parsed_options *args)
 				args->op.keygen.key_type, fixed_size,
 				args->op.keygen.key_size);
 		}
+		LOG_VERBOSE("Key size: %u bits (fixed)", security_size);
 	} else {
 		if (args->op.keygen.key_size == 0) {
 			LOG_ERROR("Key type %s requires --size parameter",
@@ -902,72 +970,88 @@ enum cli_exit_code cli_keygen_asym_operation(struct parsed_options *args)
 			goto cleanup;
 		}
 		security_size = args->op.keygen.key_size;
+		LOG_VERBOSE("Key size: %u bits (from --size)", security_size);
 	}
 
-	/* Always parse the algorithm — key exchange types get KDF algo */
+	/* Parse permitted algorithms */
 	if (parse_smw_multi_algos(args->op.keygen.permitted_algo,
 				  args->op.keygen.key_type, &permitted_algo)) {
+		LOG_ERROR("Invalid permitted algorithm(s): %s",
+			  args->op.keygen.permitted_algo);
 		goto cleanup;
 	}
+	LOG_VERBOSE("Permitted algo resolved: 0x%llx",
+		    (unsigned long long)permitted_algo);
 
+	/* Parse usage flags */
+	LOG_VERBOSE("Parsing usage flags: %s", args->op.keygen.usage);
 	usage_flags = parse_smw_usage_flags(args->op.keygen.usage);
 	if (!usage_flags) {
 		LOG_ERROR("Invalid or empty usage flags: %s",
 			  args->op.keygen.usage);
 		goto cleanup;
 	}
+	LOG_VERBOSE("Usage flags resolved: 0x%08x", (unsigned int)usage_flags);
 
+	/* Setup key attributes */
 	memset(&key_attrs, 0, sizeof(key_attrs));
 	key_attrs.permitted_algo = permitted_algo;
 	key_attrs.usage_flags = usage_flags;
 	key_attrs.storage_id = 0;
 
-	if (args->op.keygen.transient)
+	if (args->op.keygen.transient) {
 		key_attrs.attributes =
 			SMW_ATTR_SET_TRANSIENT(key_attrs.attributes);
-	else
+		LOG_VERBOSE("Key persistence: transient");
+	} else {
 		key_attrs.attributes =
 			SMW_ATTR_SET_PERSISTENT(key_attrs.attributes);
+		LOG_VERBOSE("Key persistence: persistent");
+	}
 
-	if (args->op.keygen.non_sensitive)
+	if (args->op.keygen.non_sensitive) {
 		key_attrs.attributes =
 			SMW_ATTR_CLEAR_SENSITIVE(key_attrs.attributes);
-	else
+		LOG_VERBOSE("Key sensitivity: non-sensitive");
+	} else {
 		key_attrs.attributes =
 			SMW_ATTR_SET_SENSITIVE(key_attrs.attributes);
+		LOG_VERBOSE("Key sensitivity: sensitive");
+	}
 
+	/* Setup key descriptor */
 	key_desc.type_name = key_type;
 	key_desc.security_size = security_size;
 	key_desc.id = args->op.keygen.key_id;
 	key_desc.buffer = NULL;
 	key_desc.attributes = key_attrs;
 
+	/* Setup generation arguments */
 	gen_args.version = 0;
 	gen_args.key_descriptor = &key_desc;
 
 	if (args->subsystem != SMW_SUBSYSTEM_NAME_NONE)
 		gen_args.subsystem_name = args->subsystem;
 
+	/* Check capability before attempting generation */
 	key_info.key_type_name = key_type;
 	key_info.security_size = security_size;
+
+	LOG_VERBOSE("Checking key gen capability via %s", func_name);
 
 	status = smw_config_check_generate_key(gen_args.subsystem_name,
 					       &key_info);
 	if (!is_smw_api_success("smw_config_check_generate_key", status))
 		goto cleanup;
 
+	/* Log SMW API parameters */
 	log_smw_keygen_params(&gen_args);
 
+	/* Call SMW key generation API */
+	LOG_VERBOSE("Calling smw_generate_key()");
 	status = smw_generate_key(&gen_args);
-	if (status != SMW_STATUS_OK &&
-	    status != SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
-		is_smw_api_success("smw_generate_key", status);
+	if (!is_smw_api_success("smw_generate_key", status))
 		goto cleanup;
-	}
-
-	if (status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
-		WARNING("Key generated but some policy elements were ignored\n");
-	}
 
 	print_key_result(&key_desc, args->op.keygen.transient,
 			 !args->op.keygen.non_sensitive);
@@ -977,18 +1061,22 @@ enum cli_exit_code cli_keygen_asym_operation(struct parsed_options *args)
 cleanup:
 	if (args) {
 		if (args->op.keygen.key_type) {
+			LOG_VERBOSE("Freeing key type buffer");
 			free(args->op.keygen.key_type);
 			args->op.keygen.key_type = NULL;
 		}
 		if (args->op.keygen.permitted_algo) {
+			LOG_VERBOSE("Freeing permitted algo buffer");
 			free(args->op.keygen.permitted_algo);
 			args->op.keygen.permitted_algo = NULL;
 		}
 		if (args->op.keygen.usage) {
+			LOG_VERBOSE("Freeing usage buffer");
 			free(args->op.keygen.usage);
 			args->op.keygen.usage = NULL;
 		}
 		if (args->log_filename) {
+			LOG_VERBOSE("Freeing log filename buffer");
 			free(args->log_filename);
 			args->log_filename = NULL;
 		}

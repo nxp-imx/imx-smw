@@ -53,14 +53,19 @@ static smw_attr_algo_t parse_single_mode(const char *mode_str,
 	if (!mode_str || !key_type)
 		return SMW_ATTR_ALGO_NONE;
 
+	LOG_VERBOSE("Parsing single mode: %s for key type: %s", mode_str,
+		    key_type);
+
 	if (parse_key_type(key_type, &key_type_value))
 		return SMW_ATTR_ALGO_NONE;
 
 	if (parse_single_algorithm(mode_str, key_type_value, &mode_value))
 		return SMW_ATTR_ALGO_NONE;
 
-	if (!strcasecmp(key_type, "HMAC"))
+	if (!strcasecmp(key_type, "HMAC")) {
+		LOG_VERBOSE("  HMAC mode resolved: 0x%x", mode_value);
 		return SMW_SYM_HMAC((smw_attr_algo_t)mode_value, 0);
+	}
 
 	/* Convert key type value to SMW algo attribute */
 	key_algo = key_type_to_algo((smw_key_type_t)key_type_value);
@@ -77,9 +82,11 @@ static smw_attr_algo_t parse_single_mode(const char *mode_str,
 		}
 	}
 
-	if (is_aead)
+	if (is_aead) {
+		LOG_VERBOSE("  Mode identified as AEAD: %s", mode_str);
 		return SMW_ATTR_ALGO_AEAD(key_algo, (smw_attr_algo_t)mode_value,
 					  0);
+	}
 
 	/* Determine whether mode is MAC (CMAC) */
 	cmac_algos = get_cmac_algo_mappings();
@@ -93,17 +100,20 @@ static smw_attr_algo_t parse_single_mode(const char *mode_str,
 		}
 	}
 
-	if (is_mac)
+	if (is_mac) {
+		LOG_VERBOSE("  Mode identified as MAC (CMAC): %s", mode_str);
 		return SMW_SYM_MAC(key_algo, (smw_attr_algo_t)mode_value, 0);
+	}
 
+	LOG_VERBOSE("  Mode identified as cipher: %s", mode_str);
 	return SMW_SYM_ENCR(key_algo, (smw_attr_algo_t)mode_value);
 }
 
 /**
  * @brief Parse multiple permitted algorithms from comma-separated string
  *
- * @param algo_str Comma-separated algorithm list (e.g., "CBC,GCM,CTR")
- * @param key_type Key type string (e.g., "AES", "HMAC")
+ * @param algo_str      Comma-separated algorithm list (e.g., "CBC,GCM,CTR")
+ * @param key_type      Key type string (e.g., "AES", "HMAC")
  * @param permitted_algo Output combined permitted algorithm value
  */
 static int parse_smw_permitted_algos_multi(const char *algo_str,
@@ -120,20 +130,23 @@ static int parse_smw_permitted_algos_multi(const char *algo_str,
 	if (!algo_str || !key_type || !permitted_algo)
 		return -1;
 
+	LOG_VERBOSE("Parsing permitted algorithms: %s (key_type=%s)", algo_str,
+		    key_type);
+
 	algo_copy = strdup(algo_str);
 	if (!algo_copy)
 		return -1;
 
 	token = strtok_r(algo_copy, ",", &saveptr);
 	while (token) {
-		/* Parse this mode/hash */
 		single_algo = parse_single_mode(token, key_type);
 		if (!single_algo)
 			goto cleanup;
 
-		/* Combine using OR */
-		combined_algo |= single_algo;
+		LOG_VERBOSE("  algo token '%s' resolved: 0x%llx", token,
+			    (unsigned long long)single_algo);
 
+		combined_algo |= single_algo;
 		token = strtok_r(NULL, ",", &saveptr);
 	}
 
@@ -141,6 +154,9 @@ static int parse_smw_permitted_algos_multi(const char *algo_str,
 		LOG_ERROR("No valid algorithms parsed");
 		goto cleanup;
 	}
+
+	LOG_VERBOSE("Combined permitted_algo: 0x%llx",
+		    (unsigned long long)combined_algo);
 
 	*permitted_algo = combined_algo;
 	ret = 0;
@@ -153,11 +169,11 @@ cleanup:
 /**
  * @brief Append a matched algorithm name to output buffer
  *
- * @param buffer Output buffer
+ * @param buffer      Output buffer
  * @param buffer_size Size of output buffer
- * @param written Pointer to number of bytes already written
- * @param first Pointer to flag indicating first entry
- * @param name Algorithm name to append
+ * @param written     Pointer to number of bytes already written
+ * @param first       Pointer to flag indicating first entry
+ * @param name        Algorithm name to append
  */
 static void append_algo_str(char *buffer, size_t buffer_size, size_t *written,
 			    bool *first, const char *name)
@@ -180,9 +196,9 @@ static void append_algo_str(char *buffer, size_t buffer_size, size_t *written,
  * @brief Convert permitted algorithm to string representation
  *
  * @param permitted_algo Permitted algorithm from key attributes
- * @param key_algo Key algorithm
- * @param buffer Output buffer for algorithm string
- * @param buffer_size Size of output buffer
+ * @param key_algo       Key algorithm
+ * @param buffer         Output buffer for algorithm string
+ * @param buffer_size    Size of output buffer
  */
 static void permitted_algo_to_string(smw_attr_algo_t permitted_algo,
 				     smw_attr_algo_t key_algo, char *buffer,
@@ -260,7 +276,7 @@ static void permitted_algo_to_string(smw_attr_algo_t permitted_algo,
 /**
  * @brief Print key generation result
  *
- * @param key_desc Pointer to key descriptor with generated key info
+ * @param key_desc  Pointer to key descriptor with generated key info
  * @param transient Whether key is transient
  * @param sensitive Whether key is sensitive
  */
@@ -299,7 +315,6 @@ void cli_keygen_sym_help(void)
 	print_tool_banner();
 	printf("Symmetric Key Generation Operation - SMW API\n\n");
 
-	/* Print common options */
 	cli_keygen_sym_help_common();
 
 	printf("  -S, --subsystem <name>    Force subsystem (ELE/TEE/SECO)\n\n");
@@ -331,15 +346,29 @@ enum cli_exit_code cli_keygen_sym_operation(struct parsed_options *args)
 	smw_attr_usage_t usage_flags = 0;
 	struct smw_key_info key_info = { 0 };
 	uint32_t kt_value = 0;
+	char *func_name = "smw_config_check_generate_key()";
 
 	if (!args) {
 		LOG_ERROR("NULL arguments passed to %s", __func__);
 		goto cleanup;
 	}
 
-	LOG_INFO("Symmetric key generation operation (SMW API)");
+	LOG_INFO("Symmetric key generation operation started (SMW API)");
+	LOG_VERBOSE("  key_type       : %s", args->op.keygen.key_type);
+	LOG_VERBOSE("  key_size       : %u bits", args->op.keygen.key_size);
+	LOG_VERBOSE("  key_id         : 0x%08x (%u)", args->op.keygen.key_id,
+		    args->op.keygen.key_id);
+	LOG_VERBOSE("  permitted_algo : %s", args->op.keygen.permitted_algo);
+	LOG_VERBOSE("  usage          : %s", args->op.keygen.usage);
+	LOG_VERBOSE("  transient      : %s",
+		    args->op.keygen.transient ? "yes" : "no");
+	LOG_VERBOSE("  non_sensitive  : %s",
+		    args->op.keygen.non_sensitive ? "yes" : "no");
+	LOG_VERBOSE("  subsystem      : %s",
+		    cli_smw_get_subsystem_name(args->subsystem));
 
 	/* Parse key type */
+	LOG_VERBOSE("Parsing key type: %s", args->op.keygen.key_type);
 	if (parse_key_type(args->op.keygen.key_type, &kt_value)) {
 		LOG_ERROR("Invalid key type: %s", args->op.keygen.key_type);
 		goto cleanup;
@@ -352,8 +381,10 @@ enum cli_exit_code cli_keygen_sym_operation(struct parsed_options *args)
 	}
 
 	key_type = (smw_key_type_t)kt_value;
+	LOG_VERBOSE("Key type resolved: %s (%u)", key_type_to_string(key_type),
+		    kt_value);
 
-	/* Parse permitted algorithms (supports multiple comma-separated) */
+	/* Parse permitted algorithms */
 	if (parse_smw_permitted_algos_multi(args->op.keygen.permitted_algo,
 					    args->op.keygen.key_type,
 					    &permitted_algo)) {
@@ -362,13 +393,19 @@ enum cli_exit_code cli_keygen_sym_operation(struct parsed_options *args)
 		goto cleanup;
 	}
 
+	LOG_VERBOSE("Permitted algo resolved: 0x%llx",
+		    (unsigned long long)permitted_algo);
+
 	/* Parse usage flags */
+	LOG_VERBOSE("Parsing usage flags: %s", args->op.keygen.usage);
 	usage_flags = parse_smw_usage_flags(args->op.keygen.usage);
 	if (!usage_flags) {
 		LOG_ERROR("Invalid or empty usage flags: %s",
 			  args->op.keygen.usage);
 		goto cleanup;
 	}
+
+	LOG_VERBOSE("Usage flags resolved: 0x%08x", (unsigned int)usage_flags);
 
 	/* Setup key attributes */
 	memset(&key_attrs, 0, sizeof(key_attrs));
@@ -377,20 +414,26 @@ enum cli_exit_code cli_keygen_sym_operation(struct parsed_options *args)
 	key_attrs.storage_id = 0;
 
 	/* Set persistence */
-	if (args->op.keygen.transient)
+	if (args->op.keygen.transient) {
 		key_attrs.attributes =
 			SMW_ATTR_SET_TRANSIENT(key_attrs.attributes);
-	else
+		LOG_VERBOSE("Key persistence: transient");
+	} else {
 		key_attrs.attributes =
 			SMW_ATTR_SET_PERSISTENT(key_attrs.attributes);
+		LOG_VERBOSE("Key persistence: persistent");
+	}
 
 	/* Set sensitivity */
-	if (args->op.keygen.non_sensitive)
+	if (args->op.keygen.non_sensitive) {
 		key_attrs.attributes =
 			SMW_ATTR_CLEAR_SENSITIVE(key_attrs.attributes);
-	else
+		LOG_VERBOSE("Key sensitivity: non-sensitive");
+	} else {
 		key_attrs.attributes =
 			SMW_ATTR_SET_SENSITIVE(key_attrs.attributes);
+		LOG_VERBOSE("Key sensitivity: sensitive");
+	}
 
 	/* Setup key descriptor */
 	key_desc.type_name = key_type;
@@ -410,29 +453,23 @@ enum cli_exit_code cli_keygen_sym_operation(struct parsed_options *args)
 	key_info.key_type_name = key_type;
 	key_info.security_size = args->op.keygen.key_size;
 
+	LOG_VERBOSE("Checking key gen capability via %s", func_name);
+
 	status = smw_config_check_generate_key(gen_args.subsystem_name,
 					       &key_info);
-	if (status != SMW_STATUS_OK) {
-		if (!is_smw_api_success("smw_config_check_generate_key",
-					status))
-			goto cleanup;
-	}
+	if (!is_smw_api_success("smw_config_check_generate_key", status))
+		goto cleanup;
 
-	/* Log parameters */
+	LOG_VERBOSE("Key generation capability confirmed");
+
+	/* Log SMW API parameters */
 	log_smw_keygen_params(&gen_args);
 
 	/* Call SMW key generation API */
+	LOG_VERBOSE("Calling smw_generate_key()");
 	status = smw_generate_key(&gen_args);
-	if (status != SMW_STATUS_OK &&
-	    status != SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
-		is_smw_api_success("smw_generate_key", status);
+	if (!is_smw_api_success("smw_generate_key", status))
 		goto cleanup;
-	}
-
-	/* Log warning if policy was ignored */
-	if (status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
-		WARNING("Key generated but some policy elements were ignored\n");
-	}
 
 	/* Print result */
 	print_key_result(&key_desc, args->op.keygen.transient,
@@ -443,18 +480,22 @@ enum cli_exit_code cli_keygen_sym_operation(struct parsed_options *args)
 cleanup:
 	if (args) {
 		if (args->op.keygen.key_type) {
+			LOG_VERBOSE("Freeing key type buffer");
 			free(args->op.keygen.key_type);
 			args->op.keygen.key_type = NULL;
 		}
 		if (args->op.keygen.permitted_algo) {
+			LOG_VERBOSE("Freeing permitted algo buffer");
 			free(args->op.keygen.permitted_algo);
 			args->op.keygen.permitted_algo = NULL;
 		}
 		if (args->op.keygen.usage) {
+			LOG_VERBOSE("Freeing usage buffer");
 			free(args->op.keygen.usage);
 			args->op.keygen.usage = NULL;
 		}
 		if (args->log_filename) {
+			LOG_VERBOSE("Freeing log filename buffer");
 			free(args->log_filename);
 			args->log_filename = NULL;
 		}

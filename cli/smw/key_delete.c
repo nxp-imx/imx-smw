@@ -84,7 +84,11 @@ enum cli_exit_code cli_key_delete_operation(struct parsed_options *args)
 		goto cleanup;
 	}
 
-	LOG_INFO("Key delete operation (SMW API)");
+	LOG_INFO("Key delete operation started (SMW API)");
+	LOG_VERBOSE("  key_id    : 0x%08x (%u)", args->op.key_delete.key_id,
+		    args->op.key_delete.key_id);
+	LOG_VERBOSE("  subsystem : %s",
+		    cli_smw_get_subsystem_name(args->subsystem));
 
 	/* Set up key descriptor with the given key ID */
 	key_desc.id = args->op.key_delete.key_id;
@@ -99,6 +103,7 @@ enum cli_exit_code cli_key_delete_operation(struct parsed_options *args)
 	log_smw_key_delete_params(&delete_args);
 
 	/* Call smw_delete_key() */
+	LOG_VERBOSE("Calling smw_delete_key()");
 	status = smw_delete_key(&delete_args);
 	if (!is_smw_api_success("smw_delete_key", status))
 		goto cleanup;
@@ -109,6 +114,7 @@ enum cli_exit_code cli_key_delete_operation(struct parsed_options *args)
 
 cleanup:
 	if (args && args->log_filename) {
+		LOG_VERBOSE("Freeing log filename buffer");
 		free(args->log_filename);
 		args->log_filename = NULL;
 	}

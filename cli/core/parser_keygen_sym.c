@@ -13,6 +13,7 @@
 #include <time.h>
 #include "cli_print.h"
 #include "helper.h"
+#include "logger.h"
 #include "opt_parser.h"
 #include "parser_keygen_sym.h"
 #include "utils.h"
@@ -21,7 +22,7 @@
 #define MAX_KEY_ID   0x40000000
 
 /* Short getopt options for symmetric KEYGEN */
-static const char *keygen_sym_short_opts = ":ht:s:i:a:u:S:L::";
+static const char *keygen_sym_short_opts = ":ht:s:i:a:u:S:";
 
 /* Define options for symmetric KEYGEN operation */
 static const struct option keygen_sym_options[] = {
@@ -34,15 +35,16 @@ static const struct option keygen_sym_options[] = {
 	{ "transient", no_argument, 0, 0 },
 	{ "non-sensitive", no_argument, 0, 0 },
 	{ "subsystem", required_argument, 0, 'S' },
-	{ "log", optional_argument, 0, 'L' },
 	{ "list", no_argument, 0, 0 },
+	{ "v", optional_argument, 0, 0 },
+	{ "vv", optional_argument, 0, 0 },
 	{ 0, 0, 0, 0 }
 };
 
 /**
  * @brief Print a list of strings separated by commas
  *
- * @param list Array of string pointers
+ * @param list  Array of string pointers
  * @param count Number of entries in @list
  */
 static void print_list(const char **list, size_t count)
@@ -59,7 +61,7 @@ static void print_list(const char **list, size_t count)
 /**
  * @brief Print a list of algo/key mapping names separated by commas
  *
- * @param list Array of mappings with a .name field
+ * @param list  Array of mappings with a .name field
  * @param count Number of entries in @list
  */
 static void print_mapping_list(const struct algo_mapping *list, size_t count)
@@ -107,14 +109,13 @@ void cli_keygen_sym_help_common(void)
 		printf("      --non-sensitive       Mark key as non-sensitive");
 		printf(" (default: sensitive)\n");
 	}
-	printf("  -L, --log <dest>          Enable session logging");
-	printf(" (%s log --help for info)\n", prog_name);
-	printf("  -h, --help                Show help\n");
+	printf("  -S, --subsystem <name>    Force subsystem (ELE/TEE/SECO)\n");
+	print_log_options_help(prog_name);
+	print_help_option_help();
 }
 
 /**
  * @brief Print list of available symmetric key types
- * Works for both PSA and SMW backends (compile-time selection)
  */
 void cli_keygen_sym_print_list(void)
 {
@@ -222,7 +223,7 @@ void cli_keygen_sym_print_list(void)
  * @brief Parse key size
  *
  * @param size_str String representing the key size
- * @param size Pointer to store parsed size
+ * @param size     Pointer to store parsed size
  */
 static int parse_key_size(const char *size_str, unsigned int *size)
 {
@@ -253,7 +254,7 @@ static int parse_key_size(const char *size_str, unsigned int *size)
  * @brief Parse key ID
  *
  * @param id_str String representing the key ID
- * @param id Pointer to store parsed ID
+ * @param id     Pointer to store parsed ID
  */
 static int parse_key_id(const char *id_str, unsigned int *id)
 {
@@ -284,7 +285,6 @@ static int parse_key_id(const char *id_str, unsigned int *id)
  * @brief Check if a string is a valid usage flag
  *
  * @param flag String to check
- * @return true if valid, false otherwise
  */
 static bool is_valid_usage_flag(const char *flag)
 {
@@ -305,8 +305,8 @@ static bool is_valid_usage_flag(const char *flag)
 /**
  * @brief Warn user about ignored arguments and suggest correction if possible
  *
- * @param argc Argument count
- * @param argv Argument vector
+ * @param argc         Argument count
+ * @param argv         Argument vector
  * @param optind_start Index of first ignored argument
  * @param parsed_usage Already parsed usage string
  */
@@ -325,11 +325,9 @@ static void warn_ignored_args(int argc, char **argv, int optind_start,
 		printf(" '%s'", argv[i]);
 	printf("\n\n");
 
-	/* Check if all ignored arguments are valid usage flags */
 	for (i = optind_start; i < argc; i++) {
 		SNPRINTF(stripped, sizeof(stripped), "%s", argv[i]);
 
-		/* Strip trailing commas and spaces */
 		len = strlen(stripped);
 		while (len > 0 &&
 		       (stripped[len - 1] == ',' || stripped[len - 1] == ' '))
@@ -344,10 +342,8 @@ static void warn_ignored_args(int argc, char **argv, int optind_start,
 	if (!all_valid)
 		return;
 
-	/* Build and print suggestion */
 	FPRINTF(stderr, "         Did you mean -u ");
 
-	/* Print parsed usage stripped of trailing comma */
 	if (parsed_usage) {
 		SNPRINTF(stripped, sizeof(stripped), "%s", parsed_usage);
 		len = strlen(stripped);
@@ -360,7 +356,6 @@ static void warn_ignored_args(int argc, char **argv, int optind_start,
 		arg = argv[i];
 		SNPRINTF(stripped, sizeof(stripped), "%s", arg);
 
-		/* Strip trailing commas and spaces */
 		len = strlen(stripped);
 		while (len > 0 &&
 		       (stripped[len - 1] == ',' || stripped[len - 1] == ' '))
@@ -375,9 +370,9 @@ static void warn_ignored_args(int argc, char **argv, int optind_start,
 /**
  * @brief Parse command-line options for symmetric KEYGEN operation
  *
- * @param argc Argument count from command line
- * @param argv Argument vector from command line
- * @param opts Pointer to parsed_options structure to populate
+ * @param argc      Argument count from command line
+ * @param argv      Argument vector from command line
+ * @param opts      Pointer to parsed_options structure to populate
  * @param prog_name The program name (executable)
  */
 int parse_keygen_sym_options(int argc, char **argv, struct parsed_options *opts,
@@ -390,20 +385,36 @@ int parse_keygen_sym_options(int argc, char **argv, struct parsed_options *opts,
 
 	opts->op.keygen.key_id = 0;
 
+	LOG_VERBOSE("Parsing keygen-sym options (argc=%d)", argc);
+
 	while ((opt = getopt_long(argc, argv, keygen_sym_short_opts,
 				  keygen_sym_options, &option_index)) != -1) {
 		switch (opt) {
 		case 0:
-			/* Long option */
 			if (!strcmp(keygen_sym_options[option_index].name,
 				    "list")) {
 				opts->show_list = true;
+				LOG_VERBOSE("  show_list = true");
 			} else if (!strcmp(keygen_sym_options[option_index].name,
 					   "transient")) {
 				opts->op.keygen.transient = true;
+				LOG_VERBOSE("  transient = true");
 			} else if (!strcmp(keygen_sym_options[option_index].name,
 					   "non-sensitive")) {
 				opts->op.keygen.non_sensitive = true;
+				LOG_VERBOSE("  non_sensitive = true");
+			} else if (!strcmp(keygen_sym_options[option_index].name,
+					   "v")) {
+				if (parse_log_option(opts, argc, argv,
+						     prog_name, "keygen-sym",
+						     LOG_LEVEL_INFO))
+					return -1;
+			} else if (!strcmp(keygen_sym_options[option_index].name,
+					   "vv")) {
+				if (parse_log_option(opts, argc, argv,
+						     prog_name, "keygen-sym",
+						     LOG_LEVEL_VERBOSE))
+					return -1;
 			}
 			break;
 
@@ -422,6 +433,8 @@ int parse_keygen_sym_options(int argc, char **argv, struct parsed_options *opts,
 				ERROR("Memory allocation failed\n");
 				return -1;
 			}
+			LOG_VERBOSE("  key_type = %s",
+				    opts->op.keygen.key_type);
 			break;
 
 		case 's':
@@ -434,6 +447,8 @@ int parse_keygen_sym_options(int argc, char **argv, struct parsed_options *opts,
 				print_help_hint(prog_name, "keygen-sym");
 				return -1;
 			}
+			LOG_VERBOSE("  key_size = %u bits",
+				    opts->op.keygen.key_size);
 			break;
 
 		case 'i':
@@ -447,6 +462,9 @@ int parse_keygen_sym_options(int argc, char **argv, struct parsed_options *opts,
 				return -1;
 			}
 			id_specified = true;
+			LOG_VERBOSE("  key_id = 0x%08x (%u)",
+				    opts->op.keygen.key_id,
+				    opts->op.keygen.key_id);
 			break;
 
 		case 'a':
@@ -460,6 +478,8 @@ int parse_keygen_sym_options(int argc, char **argv, struct parsed_options *opts,
 				ERROR("Memory allocation failed\n");
 				return -1;
 			}
+			LOG_VERBOSE("  permitted_algo = %s",
+				    opts->op.keygen.permitted_algo);
 			break;
 
 		case 'u':
@@ -473,16 +493,12 @@ int parse_keygen_sym_options(int argc, char **argv, struct parsed_options *opts,
 				ERROR("Memory allocation failed\n");
 				return -1;
 			}
+			LOG_VERBOSE("  usage = %s", opts->op.keygen.usage);
 			break;
 
 		case 'S':
 			opts->subsystem = parse_subsystem(optarg);
-			break;
-
-		case 'L':
-			if (parse_log_option(opts, argc, argv, prog_name,
-					     "keygen-sym"))
-				return -1;
+			LOG_VERBOSE("  subsystem = %s", optarg);
 			break;
 
 		case ':':
@@ -503,6 +519,7 @@ int parse_keygen_sym_options(int argc, char **argv, struct parsed_options *opts,
 	}
 
 	if (opts->show_list) {
+		LOG_VERBOSE("Printing symmetric key type list");
 		cli_keygen_sym_print_list();
 		return 0;
 	}
@@ -539,15 +556,14 @@ int parse_keygen_sym_options(int argc, char **argv, struct parsed_options *opts,
 
 		/* Validate ID constraints based on persistence */
 		if (opts->op.keygen.transient) {
-			/* Transient key: ID must not be specified */
 			if (id_specified) {
 				ERROR("--id cannot be used with --transient");
 				print_help_hint(prog_name, "keygen-sym");
 				return -1;
 			}
 			opts->op.keygen.key_id = 0;
+			LOG_VERBOSE("Transient key: no ID assigned");
 		} else {
-			/* Persistent key: ID must be provided by the user */
 			if (!id_specified) {
 				ERROR("--id is required for persistent keys");
 				FPRINTF(stderr,
@@ -557,7 +573,6 @@ int parse_keygen_sym_options(int argc, char **argv, struct parsed_options *opts,
 				print_help_hint(prog_name, "keygen-sym");
 				return -1;
 			}
-			/* Validate specified ID is in valid range */
 			if (!opts->op.keygen.key_id ||
 			    opts->op.keygen.key_id >= MAX_KEY_ID) {
 				ERROR("Persistent key ID must be in range");
@@ -566,8 +581,12 @@ int parse_keygen_sym_options(int argc, char **argv, struct parsed_options *opts,
 				print_help_hint(prog_name, "keygen-sym");
 				return -1;
 			}
+			LOG_VERBOSE("Persistent key: ID=0x%08x",
+				    opts->op.keygen.key_id);
 		}
 	}
+
+	LOG_VERBOSE("keygen-sym options parsed successfully");
 
 	return 0;
 }

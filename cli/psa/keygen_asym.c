@@ -580,9 +580,9 @@ static psa_algorithm_t parse_eddsa_algo(const char *algo_str,
 /**
  * @brief Parse a single algorithm string based on key type and usage
  *
- * @param algo_str Algorithm string to parse
+ * @param algo_str     Algorithm string to parse
  * @param key_type_str Key type string (e.g., "RSA", "SECP_R1")
- * @param usage_flags Key usage flags to determine context (sign/encrypt)
+ * @param usage_flags  Key usage flags to determine context (sign/encrypt)
  */
 static psa_algorithm_t parse_psa_single_algorithm(const char *algo_str,
 						  const char *key_type_str,
@@ -594,6 +594,9 @@ static psa_algorithm_t parse_psa_single_algorithm(const char *algo_str,
 	if (!algo_str || !key_type_str)
 		return PSA_ALG_NONE;
 
+	LOG_VERBOSE("Parsing PSA single algorithm: %s (key_type=%s)", algo_str,
+		    key_type_str);
+
 	is_encryption = (usage_flags &
 			 (PSA_KEY_USAGE_ENCRYPT | PSA_KEY_USAGE_DECRYPT)) != 0;
 
@@ -604,17 +607,24 @@ static psa_algorithm_t parse_psa_single_algorithm(const char *algo_str,
 				  key_type_str);
 			return PSA_ALG_NONE;
 		}
+		LOG_VERBOSE("  KDF/TLS algorithm resolved: 0x%08x",
+			    (unsigned int)kdf_result);
 		return kdf_result;
 	}
 
 	if (is_asym_rsa_sig_type(key_type_str)) {
-		if (is_encryption)
+		if (is_encryption) {
+			LOG_VERBOSE("  Parsing as RSA encryption algorithm");
 			return parse_rsa_encrypt_algo(algo_str);
-		else
+		} else {
+			LOG_VERBOSE("  Parsing as RSA signature algorithm");
 			return parse_rsa_sign_algo(algo_str);
+		}
 	} else if (is_asym_ecdsa_sig_type(key_type_str)) {
+		LOG_VERBOSE("  Parsing as ECDSA algorithm");
 		return parse_ecdsa_algo(algo_str);
 	} else if (is_asym_eddsa_sig_type(key_type_str)) {
+		LOG_VERBOSE("  Parsing as EdDSA algorithm");
 		return parse_eddsa_algo(algo_str, key_type_str);
 	}
 
@@ -626,9 +636,9 @@ static psa_algorithm_t parse_psa_single_algorithm(const char *algo_str,
 /**
  * @brief Parse permitted algorithm (takes first valid one for PSA)
  *
- * @param algo_str Comma-separated algorithm list or single algorithm
+ * @param algo_str     Comma-separated algorithm list or single algorithm
  * @param key_type_str Key type string to determine algorithm context
- * @param usage_flags Key usage flags to determine context
+ * @param usage_flags  Key usage flags to determine context
  */
 static psa_algorithm_t parse_psa_permitted_algo(const char *algo_str,
 						const char *key_type_str,
@@ -641,6 +651,9 @@ static psa_algorithm_t parse_psa_permitted_algo(const char *algo_str,
 
 	if (!algo_str || !key_type_str)
 		return PSA_ALG_NONE;
+
+	LOG_VERBOSE("Parsing PSA permitted algo: %s (key_type=%s)", algo_str,
+		    key_type_str);
 
 	algo_copy = strdup(algo_str);
 	if (!algo_copy)
@@ -662,6 +675,9 @@ static psa_algorithm_t parse_psa_permitted_algo(const char *algo_str,
 				token);
 		}
 	}
+
+	LOG_VERBOSE("PSA permitted algo resolved: 0x%08x",
+		    (unsigned int)algorithm);
 
 	free(algo_copy);
 	return algorithm;
@@ -692,9 +708,9 @@ static const char *get_key_type_string(psa_key_type_t key_type, size_t key_bits)
 /**
  * @brief Print key generation result
  *
- * @param key_id Generated key identifier
+ * @param key_id     Generated key identifier
  * @param attributes Pointer to PSA key attributes
- * @param transient Whether key is transient (volatile) or persistent
+ * @param transient  Whether key is transient (volatile) or persistent
  */
 static void print_key_result(psa_key_id_t key_id,
 			     const psa_key_attributes_t *attributes,
@@ -762,22 +778,35 @@ enum cli_exit_code cli_keygen_asym_operation(struct parsed_options *args)
 		goto cleanup;
 	}
 
-	LOG_INFO("Asymmetric key generation operation (PSA API)");
+	LOG_INFO("Asymmetric key generation operation started (PSA API)");
+	LOG_VERBOSE("  key_type       : %s", args->op.keygen.key_type);
+	LOG_VERBOSE("  key_size       : %u bits", args->op.keygen.key_size);
+	LOG_VERBOSE("  key_id         : 0x%08x (%u)", args->op.keygen.key_id,
+		    args->op.keygen.key_id);
+	LOG_VERBOSE("  permitted_algo : %s", args->op.keygen.permitted_algo);
+	LOG_VERBOSE("  usage          : %s", args->op.keygen.usage);
+	LOG_VERBOSE("  transient      : %s",
+		    args->op.keygen.transient ? "yes" : "no");
 
 	/* Parse usage flags - true for asymmetric */
+	LOG_VERBOSE("Parsing usage flags: %s", args->op.keygen.usage);
 	usage_flags = parse_psa_usage_flags(args->op.keygen.usage);
 	if (!usage_flags) {
 		LOG_ERROR("Invalid or empty usage flags: %s",
 			  args->op.keygen.usage);
 		goto cleanup;
 	}
+	LOG_VERBOSE("Usage flags resolved: 0x%08x", (unsigned int)usage_flags);
 
 	/* Parse key type */
+	LOG_VERBOSE("Parsing key type: %s", args->op.keygen.key_type);
 	key_type = parse_psa_asym_key_type(args->op.keygen.key_type, &key_bits);
 	if (key_type == PSA_KEY_TYPE_NONE) {
 		LOG_ERROR("Invalid key type: %s", args->op.keygen.key_type);
 		goto cleanup;
 	}
+	LOG_VERBOSE("Key type resolved: 0x%04x (fixed_bits=%zu)",
+		    (unsigned int)key_type, key_bits);
 
 	/* Handle key size parameter */
 	if (args->op.keygen.key_size != 0) {
@@ -789,6 +818,8 @@ enum cli_exit_code cli_keygen_asym_operation(struct parsed_options *args)
 		} else if (key_bits == 0) {
 			/* Variable-size key, use user-provided size */
 			key_bits = args->op.keygen.key_size;
+			LOG_VERBOSE("Key size set from --size: %zu bits",
+				    key_bits);
 		}
 	} else if (key_bits == 0) {
 		/* Variable-size key without -s parameter */
@@ -797,13 +828,20 @@ enum cli_exit_code cli_keygen_asym_operation(struct parsed_options *args)
 		goto cleanup;
 	}
 
+	LOG_VERBOSE("Key size to use: %zu bits", key_bits);
+
 	/* Parse permitted algorithm */
+	LOG_VERBOSE("Parsing permitted algorithm: %s",
+		    args->op.keygen.permitted_algo);
 	algorithm =
 		parse_psa_permitted_algo(args->op.keygen.permitted_algo,
 					 args->op.keygen.key_type, usage_flags);
 	if (algorithm == PSA_ALG_NONE) {
 		goto cleanup;
 	}
+	LOG_VERBOSE("Algorithm resolved: %s (0x%08x)",
+		    psa_algorithm_to_string(algorithm),
+		    (unsigned int)algorithm);
 
 	/* Setup key attributes */
 	psa_set_key_type(&attributes, key_type);
@@ -814,20 +852,25 @@ enum cli_exit_code cli_keygen_asym_operation(struct parsed_options *args)
 	/* Set lifetime and ID */
 	if (args->op.keygen.transient) {
 		psa_set_key_lifetime(&attributes, PSA_KEY_LIFETIME_VOLATILE);
+		LOG_VERBOSE("Key lifetime: VOLATILE (transient)");
 	} else {
 		psa_set_key_lifetime(&attributes, PSA_KEY_LIFETIME_PERSISTENT);
 		psa_set_key_id(&attributes, args->op.keygen.key_id);
+		LOG_VERBOSE("Key lifetime: PERSISTENT (id=0x%08x)",
+			    args->op.keygen.key_id);
 	}
 
 	/* Log parameters */
 	log_psa_keygen_params(&attributes, args->op.keygen.key_id);
 
 	/* Call PSA key generation API */
+	LOG_VERBOSE("Calling psa_generate_key()");
 	status = psa_generate_key(&attributes, &key_id);
 	if (!is_psa_api_success("psa_generate_key", status))
 		goto cleanup;
 
 	/* Retrieve actual attributes from subsystem */
+	LOG_VERBOSE("Retrieving key attributes via psa_get_key_attributes()");
 	psa_reset_key_attributes(&attributes);
 	status = psa_get_key_attributes(key_id, &attributes);
 	if (!is_psa_api_success("psa_get_key_attributes", status))
@@ -843,18 +886,22 @@ cleanup:
 
 	if (args) {
 		if (args->op.keygen.key_type) {
+			LOG_VERBOSE("Freeing key type buffer");
 			free(args->op.keygen.key_type);
 			args->op.keygen.key_type = NULL;
 		}
 		if (args->op.keygen.permitted_algo) {
+			LOG_VERBOSE("Freeing permitted algo buffer");
 			free(args->op.keygen.permitted_algo);
 			args->op.keygen.permitted_algo = NULL;
 		}
 		if (args->op.keygen.usage) {
+			LOG_VERBOSE("Freeing usage buffer");
 			free(args->op.keygen.usage);
 			args->op.keygen.usage = NULL;
 		}
 		if (args->log_filename) {
+			LOG_VERBOSE("Freeing log filename buffer");
 			free(args->log_filename);
 			args->log_filename = NULL;
 		}

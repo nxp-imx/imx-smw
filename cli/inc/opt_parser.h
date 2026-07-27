@@ -7,6 +7,8 @@
 #define CLI_OPT_PARSER_H
 
 #include <getopt.h>
+#include <psa/crypto.h>
+#include <smw_crypto.h>
 #include <stdbool.h>
 #include "cipher_algo_generated.h"
 #include "hash_algo_enum.h"
@@ -106,6 +108,7 @@ struct parsed_options {
 	/* Logging options */
 	enum log_dest log_dest;
 	char *log_filename;
+	enum log_level log_level; /* INFO (default) or VERBOSE */
 
 	/* Operation-specific options */
 	union {
@@ -125,8 +128,11 @@ struct parsed_options {
 smw_subsystem_t parse_subsystem(const char *subsystem_str);
 char *parse_file_opt(const char *src, const char *field_name);
 int parse_log_option(struct parsed_options *opts, int argc, char **argv,
-		     const char *prog_name, const char *operation);
+		     const char *prog_name, const char *operation,
+		     enum log_level level);
 void print_help_hint(const char *prog_name, const char *operation);
+void print_help_option_help(void);
+void print_log_options_help(const char *prog_name);
 
 /* Function prototypes */
 enum operation parse_cli_options(int argc, char **argv,

@@ -29,20 +29,33 @@ static int run_script(const char *const argv[])
 	pid_t pid;
 	int wstatus;
 
+	LOG_VERBOSE("Forking process to run: %s", argv[0]);
+
 	pid = fork();
-	if (pid < 0)
+	if (pid < 0) {
+		LOG_ERROR("fork() failed");
 		return -1;
+	}
 
 	if (pid == 0) {
 		execvp(argv[0], (char *const *)argv);
 		_exit(127);
 	}
 
-	if (waitpid(pid, &wstatus, 0) < 0)
-		return -1;
+	LOG_VERBOSE("Child process PID: %d", (int)pid);
 
-	if (WIFEXITED(wstatus) && WEXITSTATUS(wstatus) == 0)
+	if (waitpid(pid, &wstatus, 0) < 0) {
+		LOG_ERROR("waitpid() failed for PID %d", (int)pid);
+		return -1;
+	}
+
+	if (WIFEXITED(wstatus) && WEXITSTATUS(wstatus) == 0) {
+		LOG_VERBOSE("Child process exited successfully");
 		return 0;
+	}
+
+	LOG_ERROR("Child process exited with status %d",
+		  WIFEXITED(wstatus) ? WEXITSTATUS(wstatus) : -1);
 
 	return -1;
 }
@@ -59,21 +72,31 @@ static int write_temp(const uint8_t *data, size_t len, char *path)
 	mode_t old_mask;
 	int fd;
 
-	if (len > (size_t)SSIZE_MAX)
+	if (len > (size_t)SSIZE_MAX) {
+		LOG_ERROR("Data length %zu exceeds SSIZE_MAX", len);
 		return -1;
+	}
 
 	old_mask = umask(077);
 	fd = mkstemp(path);
 	(void)umask(old_mask);
 
-	if (fd < 0)
+	if (fd < 0) {
+		LOG_ERROR("mkstemp() failed for template: %s", path);
 		return -1;
+	}
+
+	LOG_VERBOSE("Temporary file created: %s (fd=%d)", path, fd);
 
 	if (write(fd, data, len) != (ssize_t)len) {
+		LOG_ERROR("Failed to write %zu bytes to temp file: %s", len,
+			  path);
 		close(fd);
 		unlink(path);
 		return -1;
 	}
+
+	LOG_VERBOSE("Written %zu bytes to temp file: %s", len, path);
 
 	close(fd);
 	return 0;
@@ -95,6 +118,10 @@ int pubkey_encode(const char *key_type, unsigned int bits, const uint8_t *raw,
 	char tmp[] = "/tmp/cli_raw_XXXXXX";
 	char bits_str[16] = { 0 };
 	const char *argv[13];
+
+	LOG_VERBOSE("%s: key_type=%s bits=%u raw_len=%zu out_file=%s format=%s",
+		    __func__, key_type, bits, raw_len, out_file,
+		    use_pem ? "pem" : "der");
 
 	if (write_temp(raw, raw_len, tmp)) {
 		LOG_ERROR("Failed to write raw key to temp file");
@@ -121,7 +148,18 @@ int pubkey_encode(const char *key_type, unsigned int bits, const uint8_t *raw,
 		 PUBKEY_CONVERT_SCRIPT, key_type, bits_str, tmp, out_file,
 		 use_pem ? "pem" : "der");
 
-	return run_script(argv) ? (unlink(tmp), -1) : (unlink(tmp), 0);
+	if (run_script(argv)) {
+		unlink(tmp);
+		LOG_ERROR("%s script failed for key_type=%s bits=%u format=%s",
+			  __func__, key_type, bits, use_pem ? "pem" : "der");
+		return -1;
+	}
+
+	unlink(tmp);
+	LOG_VERBOSE("Temp file removed: %s", tmp);
+	LOG_VERBOSE("%s completed successfully: output=%s", __func__, out_file);
+
+	return 0;
 }
 
 /**
@@ -147,9 +185,17 @@ int pubkey_encode_rsa(unsigned int bits, const uint8_t *mod, size_t mod_len,
 	const char *fmt =
 		"Running: python3 %s -t RSA -b %s --modulus %s --exponent %s -o %s -f %s";
 
-	if (write_temp(mod, mod_len, tmp_mod) ||
-	    write_temp(exp, exp_len, tmp_exp)) {
-		LOG_ERROR("Failed to write RSA components to temp files");
+	LOG_VERBOSE("%s: bits=%u mod_len=%zu exp_len=%zu out_file=%s format=%s",
+		    __func__, bits, mod_len, exp_len, out_file,
+		    use_pem ? "pem" : "der");
+
+	if (write_temp(mod, mod_len, tmp_mod)) {
+		LOG_ERROR("Failed to write RSA modulus to temp file");
+		goto out;
+	}
+
+	if (write_temp(exp, exp_len, tmp_exp)) {
+		LOG_ERROR("Failed to write RSA exponent to temp file");
 		goto out;
 	}
 
@@ -176,8 +222,17 @@ int pubkey_encode_rsa(unsigned int bits, const uint8_t *mod, size_t mod_len,
 
 	ret = run_script(argv);
 
+	if (ret)
+		LOG_ERROR("%s script failed: bits=%u format=%s", __func__, bits,
+			  use_pem ? "pem" : "der");
+	else
+		LOG_VERBOSE("%s completed successfully: output=%s", __func__,
+			    out_file);
+
 out:
 	unlink(tmp_mod);
 	unlink(tmp_exp);
+	LOG_VERBOSE("Temp files removed: %s %s", tmp_mod, tmp_exp);
+
 	return ret;
 }

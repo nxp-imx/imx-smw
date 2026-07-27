@@ -31,10 +31,10 @@ log_smw_dev_set_lifecycle_params(const struct smw_device_lifecycle_args *args)
 		return;
 
 	LOG_INFO("=== smw_device_set_lifecycle Parameters ===");
-	LOG_INFO("  version: %u", args->version);
-	LOG_INFO("  subsystem_name: %s",
+	LOG_INFO("  version        : %u", args->version);
+	LOG_INFO("  subsystem_name : %s",
 		 cli_smw_get_subsystem_name(args->subsystem_name));
-	LOG_INFO("  lifecycle_name: %s (%d)",
+	LOG_INFO("  lifecycle_name : %s (%d)",
 		 lifecycle_name_to_string(args->lifecycle_name),
 		 args->lifecycle_name);
 	LOG_INFO("===========================================");
@@ -87,11 +87,19 @@ enum cli_exit_code cli_dev_set_lifecycle_operation(struct parsed_options *args)
 		goto cleanup;
 	}
 
-	LOG_INFO("Device Set Lifecycle operation (SMW API)");
+	LOG_INFO("Device set lifecycle operation started (SMW API)");
+	LOG_VERBOSE("  lifecycle_name : %s",
+		    args->op.dev_set_lc.lifecycle_name);
+	LOG_VERBOSE("  subsystem      : %s",
+		    cli_smw_get_subsystem_name(args->subsystem));
 
 	/* Convert lifecycle name string to enum value */
+	LOG_VERBOSE("Converting lifecycle name '%s' to enum value",
+		    args->op.dev_set_lc.lifecycle_name);
+
 	target_lifecycle =
 		string_to_lifecycle_name(args->op.dev_set_lc.lifecycle_name);
+
 	if (target_lifecycle == SMW_LIFECYCLE_NAME_NONE) {
 		LOG_ERROR("Unknown lifecycle");
 		PRINT_USE_LIST("types");
@@ -100,28 +108,39 @@ enum cli_exit_code cli_dev_set_lifecycle_operation(struct parsed_options *args)
 
 	lifecycle_str = lifecycle_name_to_string(target_lifecycle);
 
+	LOG_VERBOSE("Target lifecycle resolved: %s (%d)", lifecycle_str,
+		    target_lifecycle);
+
 	/* Prompt user for explicit confirmation before applying */
+	LOG_VERBOSE("Prompting user for confirmation");
+
 	if (!confirm_lifecycle_change(lifecycle_str)) {
+		LOG_VERBOSE("Operation cancelled by user");
 		printf("\nOperation cancelled by user.\n\n");
 		ret = CLI_EXIT_SUCCESS;
 		goto cleanup;
 	}
+
+	LOG_VERBOSE("User confirmed lifecycle change to: %s", lifecycle_str);
 
 	/* Setup SMW device lifecycle arguments */
 	lifecycle_args.version = 0;
 	lifecycle_args.subsystem_name = args->subsystem;
 	lifecycle_args.lifecycle_name = target_lifecycle;
 
+	/* Log SMW API parameters */
 	log_smw_dev_set_lifecycle_params(&lifecycle_args);
 
-	/* Set lifecycle */
+	/* Call SMW API to set lifecycle */
+	LOG_VERBOSE("Calling smw_device_set_lifecycle()");
 	status = smw_device_set_lifecycle(&lifecycle_args);
 	if (!is_smw_api_success("smw_device_set_lifecycle", status))
 		goto cleanup;
 
 	SUCCESS("Set Device Lifecycle");
-	LOG_INFO("Lifecycle successfully set to: %s (%d)", lifecycle_str,
-		 target_lifecycle);
+
+	LOG_VERBOSE("Lifecycle successfully set to: %s (%d)", lifecycle_str,
+		    target_lifecycle);
 
 	ret = CLI_EXIT_SUCCESS;
 

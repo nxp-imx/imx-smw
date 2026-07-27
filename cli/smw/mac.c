@@ -134,13 +134,31 @@ static enum cli_exit_code mac_run(struct parsed_options *args, bool verify)
 	smw_mac_algo_t smw_algo = SMW_MAC_ALGO_NAME_NONE;
 	smw_hash_algo_t smw_hash = SMW_HASH_ALGO_NAME_NONE;
 
+	LOG_VERBOSE("  algo           : %s", args->op.mac.algo);
+	LOG_VERBOSE("  key_id         : 0x%08x (%u)", args->op.mac.key_id,
+		    args->op.mac.key_id);
+	LOG_VERBOSE("  mac_filename   : %s", args->op.mac.mac_filename ?
+						     args->op.mac.mac_filename :
+						     "(none)");
+	LOG_VERBOSE("  input_filename : %s",
+		    args->input_filename ? args->input_filename : "(none)");
+	LOG_VERBOSE("  subsystem      : %s",
+		    cli_smw_get_subsystem_name(args->subsystem));
+
 	/* Parse combined algo string e.g. "HMAC-SHA256" */
+	LOG_VERBOSE("Parsing MAC algorithm string: %s", args->op.mac.algo);
 	if (resolve_smw_algo(args->op.mac.algo, &smw_algo, &smw_hash))
 		goto cleanup;
 
+	LOG_VERBOSE("SMW MAC algo resolved: %u, hash: %u",
+		    (unsigned int)smw_algo, (unsigned int)smw_hash);
+
 	/* Read input data file */
+	LOG_VERBOSE("Reading input file: %s", args->input_filename);
 	if (util_read_file(args->input_filename, &input, &input_size))
 		goto cleanup;
+
+	LOG_VERBOSE("Input file read successfully: %zu bytes", input_size);
 
 	if (input_size > UINT32_MAX) {
 		LOG_ERROR("Input size too large for SMW API: %zu", input_size);
@@ -148,6 +166,8 @@ static enum cli_exit_code mac_run(struct parsed_options *args, bool verify)
 	}
 
 	/* Setup key descriptor (key by ID) */
+	LOG_VERBOSE("Setting up key descriptor: id=0x%08x",
+		    args->op.mac.key_id);
 	key_desc.id = args->op.mac.key_id;
 
 	/* Setup MAC arguments */
@@ -158,17 +178,23 @@ static enum cli_exit_code mac_run(struct parsed_options *args, bool verify)
 	mac_args.input = input;
 	mac_args.input_length = (unsigned int)input_size;
 
-	if (args->subsystem != SMW_SUBSYSTEM_NAME_NONE)
+	if (args->subsystem != SMW_SUBSYSTEM_NAME_NONE) {
+		LOG_VERBOSE("Forcing subsystem: %s",
+			    cli_smw_get_subsystem_name(args->subsystem));
 		mac_args.subsystem_name = args->subsystem;
+	}
 
 	if (verify) {
 		/*
 		 * Verify mode: read MAC from file and pass to
 		 * smw_mac_verify()
 		 */
+		LOG_VERBOSE("Reading MAC file: %s", args->op.mac.mac_filename);
 		if (util_read_file(args->op.mac.mac_filename, &mac_buf,
 				   &mac_size))
 			goto cleanup;
+
+		LOG_VERBOSE("MAC file read successfully: %zu bytes", mac_size);
 
 		if (mac_size > UINT32_MAX) {
 			LOG_ERROR("MAC size too large for SMW API: %zu",
@@ -181,11 +207,12 @@ static enum cli_exit_code mac_run(struct parsed_options *args, bool verify)
 
 		log_smw_mac_params(&mac_args, true);
 
+		LOG_VERBOSE("Calling smw_mac_verify()");
 		status = smw_mac_verify(&mac_args);
 		if (!is_smw_api_success("smw_mac_verify", status))
 			goto cleanup;
 
-		SUCCESS("MAC Computation");
+		SUCCESS("MAC Verification");
 
 	} else {
 		/*
@@ -198,6 +225,7 @@ static enum cli_exit_code mac_run(struct parsed_options *args, bool verify)
 		log_smw_mac_params(&mac_args, false);
 
 		/* First call: get required MAC length */
+		LOG_VERBOSE("Calling smw_mac() to get required MAC length");
 		status = smw_mac(&mac_args);
 		if (status != SMW_STATUS_OUTPUT_TOO_SHORT &&
 		    status != SMW_STATUS_OK) {
@@ -216,6 +244,8 @@ static enum cli_exit_code mac_run(struct parsed_options *args, bool verify)
 			goto cleanup;
 		}
 
+		LOG_VERBOSE("Required MAC length: %zu bytes", mac_size);
+
 		mac_buf = util_alloc_buffer(mac_size, "MAC output");
 		if (!mac_buf)
 			goto cleanup;
@@ -230,13 +260,18 @@ static enum cli_exit_code mac_run(struct parsed_options *args, bool verify)
 		mac_args.mac_length = (unsigned int)mac_size;
 
 		/* Second call: compute MAC */
+		LOG_VERBOSE("Calling smw_mac() to compute MAC");
 		status = smw_mac(&mac_args);
 		if (!is_smw_api_success("smw_mac", status))
 			goto cleanup;
 
 		SUCCESS("MAC Computation");
 
+		LOG_VERBOSE("MAC computed successfully: %u bytes",
+			    mac_args.mac_length);
+
 		/* Write output (file or stdout) */
+		LOG_VERBOSE("Writing MAC output data");
 		if (util_write_output_data(mac_buf, mac_args.mac_length,
 					   args->op.mac.mac_filename,
 					   args->text_format))
@@ -270,7 +305,7 @@ enum cli_exit_code cli_mac_operation(struct parsed_options *args)
 		return CLI_EXIT_OPERATION_FAILURE;
 	}
 
-	LOG_INFO("MAC compute operation (SMW API)");
+	LOG_INFO("MAC compute operation started (SMW API)");
 	return mac_run(args, false);
 }
 
@@ -286,6 +321,6 @@ enum cli_exit_code cli_mac_verify_operation(struct parsed_options *args)
 		return CLI_EXIT_OPERATION_FAILURE;
 	}
 
-	LOG_INFO("MAC verify operation (SMW API)");
+	LOG_INFO("MAC verify operation started (SMW API)");
 	return mac_run(args, true);
 }

@@ -21,7 +21,7 @@
 /**
  * @brief Log SMW hash operation parameters
  *
- * @param args: Pointer to SMW hash arguments structure
+ * @param args Pointer to SMW hash arguments structure
  */
 static void log_smw_hash_params(const struct smw_hash_args *args)
 {
@@ -29,15 +29,15 @@ static void log_smw_hash_params(const struct smw_hash_args *args)
 		return;
 
 	LOG_INFO("=== smw_hash Parameters (smw_hash_args) ===");
-	LOG_INFO("  version: %u", args->version);
+	LOG_INFO("  version       : %u", args->version);
 	LOG_INFO("  subsystem_name: %s",
 		 cli_smw_get_subsystem_name(args->subsystem_name));
-	LOG_INFO("  algo_name: %s",
+	LOG_INFO("  algo_name     : %s",
 		 cli_smw_get_hash_algo_name(args->algo_name));
-	LOG_INFO("  input: %p", (void *)args->input);
-	LOG_INFO("  input_length: %u", args->input_length);
-	LOG_INFO("  output: %p", (void *)args->output);
-	LOG_INFO("  output_length: %u", args->output_length);
+	LOG_INFO("  input         : %p", (void *)args->input);
+	LOG_INFO("  input_length  : %u", args->input_length);
+	LOG_INFO("  output        : %p", (void *)args->output);
+	LOG_INFO("  output_length : %u", args->output_length);
 	LOG_INFO("===========================================");
 }
 
@@ -96,18 +96,30 @@ enum cli_exit_code cli_hash_operation(struct parsed_options *args)
 		goto cleanup;
 	}
 
-	LOG_INFO("Hash operation (SMW API)");
+	LOG_INFO("Hash operation started (SMW API)");
+	LOG_VERBOSE("  algo          : %d", args->op.hash.algo);
+	LOG_VERBOSE("  input_file    : %s", args->input_filename);
+	LOG_VERBOSE("  output_file   : %s",
+		    args->output_filename ? args->output_filename : "(stdout)");
+	LOG_VERBOSE("  output_length : %zu", args->op.hash.output_length);
+	LOG_VERBOSE("  text_format   : %s", args->text_format ? "yes" : "no");
 
-	/* Validate algorithm support */
+	/* Convert CLI algo enum to SMW algo */
 	smw_algo = cli_hash_algo_to_smw(args->op.hash.algo);
+	LOG_VERBOSE("  smw_algo      : %s",
+		    cli_smw_get_hash_algo_name(smw_algo));
 
-	/* Check if the algo is supported by subsystem, from core/config/hash.c */
+	/* Check if the algo is supported by subsystem */
+	LOG_VERBOSE("Checking algorithm support via smw_config_check_digest()");
 	config_status = smw_config_check_digest(args->subsystem, smw_algo);
 
 	if (config_status != SMW_STATUS_OK) {
-		LOG_ERROR("Algorithm not supported by configured subsystem");
+		LOG_ERROR("Algorithm not supported by subsystem: %s (%d)",
+			  cli_smw_status_to_name(config_status), config_status);
 		goto cleanup;
 	}
+
+	LOG_VERBOSE("Algorithm supported by subsystem");
 
 	/* Read input file using shared utility */
 	if (util_read_file(args->input_filename, &input, &input_size))
@@ -115,15 +127,22 @@ enum cli_exit_code cli_hash_operation(struct parsed_options *args)
 
 	/* Determine output size */
 	if (args->op.hash.output_length > 0) {
-		/* User specified custom length (for XOF like SHAKE256) */
 		output_size = args->op.hash.output_length;
-		LOG_INFO("Using custom output length: %zu bytes", output_size);
+		LOG_VERBOSE("Using custom output length: %zu bytes",
+			    output_size);
 	} else {
 		output_size = get_hash_output_length(args->op.hash.algo);
+		LOG_VERBOSE("Using default output length: %zu bytes",
+			    output_size);
 	}
+
+	/* Allocate output buffer */
 	output = util_alloc_buffer(output_size, "hash output");
 	if (!output)
 		goto cleanup;
+
+	LOG_VERBOSE("Output buffer allocated: %p (%zu bytes)", (void *)output,
+		    output_size);
 
 	/* Setup SMW hash arguments */
 	hash_args.version = 0;
@@ -140,14 +159,18 @@ enum cli_exit_code cli_hash_operation(struct parsed_options *args)
 	if (args->subsystem != SMW_SUBSYSTEM_NAME_NONE)
 		hash_args.subsystem_name = args->subsystem;
 
+	/* Log SMW API parameters */
 	log_smw_hash_params(&hash_args);
 
 	/* Call SMW hash API */
+	LOG_VERBOSE("Calling smw_hash()");
 	status = smw_hash(&hash_args);
 	if (!is_smw_api_success("smw_hash", status))
 		goto cleanup;
 
 	SUCCESS("Hash");
+
+	LOG_VERBOSE("Writing output data (%zu bytes)", output_size);
 
 	/* Write output */
 	if (util_write_output_data(output, output_size, args->output_filename,
@@ -161,11 +184,15 @@ cleanup:
 	if (fp)
 		FCLOSE(fp);
 
-	if (input)
+	if (input) {
+		LOG_VERBOSE("Freeing input buffer");
 		free(input);
+	}
 
-	if (output)
+	if (output) {
+		LOG_VERBOSE("Freeing output buffer");
 		free(output);
+	}
 
 	return ret;
 }

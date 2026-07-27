@@ -11,25 +11,27 @@
 #include "cli_print.h"
 #include "helper.h"
 #include "lifecycle_table.h"
+#include "logger.h"
 #include "opt_parser.h"
 #include "parser_device_get_lifecycle.h"
 #include "utils.h"
 
 /* Short getopt options for get device lifecycle operation */
-static const char *dev_get_lifecycle_short_opts = ":ho:S:L::";
+static const char *dev_get_lifecycle_short_opts = ":ho:S:";
 
 /* Define options for get device lifecycle operation */
 static const struct option dev_get_lifecycle_options[] = {
 	{ "help", no_argument, 0, 'h' },
 	{ "output", required_argument, 0, 'o' },
 	{ "subsystem", required_argument, 0, 'S' },
-	{ "log", optional_argument, 0, 'L' },
 	{ "list", no_argument, 0, 0 },
+	{ "v", optional_argument, 0, 0 },
+	{ "vv", optional_argument, 0, 0 },
 	{ 0, 0, 0, 0 }
 };
 
 /**
- * @brief Get inline description for dev-get-uuid operation
+ * @brief Get inline description for dev-get-lifecycle operation
  */
 const char *cli_dev_get_lifecycle_inline_desc(void)
 {
@@ -54,22 +56,21 @@ void cli_dev_get_lifecycle_help(void)
 	printf("Options:\n");
 	printf("\n      --list                List all available lifecycle values\n\n");
 	printf("  -o, --output <file>       Output file\n");
-	printf("  -L, --log <dest>          Enable session logging");
-	printf(" (%s log --help for info)\n", prog_name);
-	printf("  -h, --help                Show help\n");
-	printf("  -S, --subsystem <name>    Force subsystem (ELE/TEE/SECO)\n\n");
+	print_log_options_help(prog_name);
+	print_help_option_help();
+	printf("  -S, --subsystem <name>    Force subsystem (ELE/TEE/SECO)\n");
 
-	printf("Examples:\n");
+	printf("\nExamples:\n");
 	printf("  %s dev-get-lifecycle\n", prog_name);
-	printf("  %s dev-get-lifecycle -o lifecycle.txt\n\n", prog_name);
+	printf("  %s dev-get-lifecycle -o lifecycle.txt\n", prog_name);
 }
 
 /**
  * @brief Parse command-line options for dev-get-lifecycle operation
  *
- * @param argc Argument count from command line
- * @param argv Argument vector from command line
- * @param opts Pointer to parsed_options structure to populate
+ * @param argc      Argument count from command line
+ * @param argv      Argument vector from command line
+ * @param opts      Pointer to parsed_options structure to populate
  * @param prog_name The program name (executable)
  */
 int parse_dev_get_lifecycle_options(int argc, char **argv,
@@ -77,19 +78,44 @@ int parse_dev_get_lifecycle_options(int argc, char **argv,
 				    const char *prog_name)
 {
 	int opt = 0;
+	int opt_index = 0;
 	opterr = 0;
 
 	/* This operation is only supported by SMW backend */
 	if (prog_name && strstr(prog_name, "nxp_psa")) {
+		LOG_ERROR("dev-get-lifecycle is not supported by PSA");
 		cli_dev_get_lifecycle_operation(NULL);
 		return -1;
 	}
 
+	LOG_VERBOSE("Parsing dev-get-lifecycle options (argc=%d)", argc);
+
 	while ((opt = getopt_long(argc, argv, dev_get_lifecycle_short_opts,
-				  dev_get_lifecycle_options, NULL)) != -1) {
+				  dev_get_lifecycle_options, &opt_index)) !=
+	       -1) {
 		switch (opt) {
 		case 0:
-			opts->show_list = true;
+			if (!strcmp(dev_get_lifecycle_options[opt_index].name,
+				    "list")) {
+				opts->show_list = true;
+				LOG_VERBOSE("  show_list = true");
+			} else if (!strcmp(dev_get_lifecycle_options[opt_index]
+						   .name,
+					   "v")) {
+				if (parse_log_option(opts, argc, argv,
+						     prog_name,
+						     "dev-get-lifecycle",
+						     LOG_LEVEL_INFO))
+					return -1;
+			} else if (!strcmp(dev_get_lifecycle_options[opt_index]
+						   .name,
+					   "vv")) {
+				if (parse_log_option(opts, argc, argv,
+						     prog_name,
+						     "dev-get-lifecycle",
+						     LOG_LEVEL_VERBOSE))
+					return -1;
+			}
 			break;
 
 		case 'h':
@@ -103,16 +129,13 @@ int parse_dev_get_lifecycle_options(int argc, char **argv,
 				print_help_hint(prog_name, "dev-get-lifecycle");
 				return -1;
 			}
+			LOG_VERBOSE("  output_filename = %s",
+				    opts->output_filename);
 			break;
 
 		case 'S':
 			opts->subsystem = parse_subsystem(optarg);
-			break;
-
-		case 'L':
-			if (parse_log_option(opts, argc, argv, prog_name,
-					     "dev-get-lifecycle"))
-				return -1;
+			LOG_VERBOSE("  subsystem = %s", optarg);
 			break;
 
 		case ':':
@@ -132,8 +155,12 @@ int parse_dev_get_lifecycle_options(int argc, char **argv,
 		}
 	}
 
-	if (opts->show_list)
+	if (opts->show_list) {
+		LOG_VERBOSE("Printing lifecycle list");
 		print_lifecycle_list();
+	}
+
+	LOG_VERBOSE("dev-get-lifecycle options parsed successfully");
 
 	return 0;
 }

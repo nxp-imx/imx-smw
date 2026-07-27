@@ -11,19 +11,21 @@
 #include <string.h>
 #include "cli_print.h"
 #include "helper.h"
+#include "logger.h"
 #include "opt_parser.h"
 #include "parser_key_delete.h"
 #include "utils.h"
 
 /* Short getopt options for key delete */
-static const char *key_delete_short_opts = ":hi:S:L::";
+static const char *key_delete_short_opts = ":hi:S:";
 
 /* Define options for key delete operation */
 static const struct option key_delete_options[] = {
 	{ "help", no_argument, 0, 'h' },
 	{ "id", required_argument, 0, 'i' },
 	{ "subsystem", required_argument, 0, 'S' },
-	{ "log", optional_argument, 0, 'L' },
+	{ "v", optional_argument, 0, 0 },
+	{ "vv", optional_argument, 0, 0 },
 	{ 0, 0, 0, 0 }
 };
 
@@ -48,9 +50,9 @@ void cli_key_delete_help_common(void)
 	printf("Options:\n");
 	printf("  -i, --id <id>             Key ID to delete");
 	printf(" (required, decimal or hex with 0x prefix)\n");
-	printf("  -L, --log <dest>          Enable session logging");
-	printf(" (%s log --help for info)\n", prog_name);
-	printf("  -h, --help                Show help\n");
+	printf("  -S, --subsystem <name>    Force subsystem (ELE/TEE/SECO)\n");
+	print_log_options_help(prog_name);
+	print_help_option_help();
 }
 
 /**
@@ -87,9 +89,9 @@ static int parse_key_id(const char *id_str, unsigned int *id)
 /**
  * @brief Parse command-line options for key delete operation
  *
- * @param argc Argument count from command line
- * @param argv Argument vector from command line
- * @param opts Pointer to parsed_options structure to populate
+ * @param argc      Argument count from command line
+ * @param argv      Argument vector from command line
+ * @param opts      Pointer to parsed_options structure to populate
  * @param prog_name The program name (executable)
  */
 int parse_key_delete_options(int argc, char **argv, struct parsed_options *opts,
@@ -100,11 +102,30 @@ int parse_key_delete_options(int argc, char **argv, struct parsed_options *opts,
 	bool id_specified = false;
 	opterr = 0;
 
+	LOG_VERBOSE("Parsing key-delete options (argc=%d)", argc);
+
 	while ((opt = getopt_long(argc, argv, key_delete_short_opts,
 				  key_delete_options, &option_index)) != -1) {
 		switch (opt) {
+		case 0:
+			if (!strcmp(key_delete_options[option_index].name,
+				    "v")) {
+				if (parse_log_option(opts, argc, argv,
+						     prog_name, "key-delete",
+						     LOG_LEVEL_INFO))
+					return -1;
+			} else if (!strcmp(key_delete_options[option_index].name,
+					   "vv")) {
+				if (parse_log_option(opts, argc, argv,
+						     prog_name, "key-delete",
+						     LOG_LEVEL_VERBOSE))
+					return -1;
+			}
+			break;
+
 		case 'h':
 			opts->show_help = true;
+			LOG_VERBOSE("  show_help = true");
 			break;
 
 		case 'i':
@@ -118,16 +139,14 @@ int parse_key_delete_options(int argc, char **argv, struct parsed_options *opts,
 				return -1;
 			}
 			id_specified = true;
+			LOG_VERBOSE("  key_id = 0x%08x (%u)",
+				    opts->op.key_delete.key_id,
+				    opts->op.key_delete.key_id);
 			break;
 
 		case 'S':
 			opts->subsystem = parse_subsystem(optarg);
-			break;
-
-		case 'L':
-			if (parse_log_option(opts, argc, argv, prog_name,
-					     "key-delete"))
-				return -1;
+			LOG_VERBOSE("  subsystem = %s", optarg);
 			break;
 
 		case ':':
@@ -155,6 +174,8 @@ int parse_key_delete_options(int argc, char **argv, struct parsed_options *opts,
 			return -1;
 		}
 	}
+
+	LOG_VERBOSE("key-delete options parsed successfully");
 
 	return 0;
 }

@@ -322,6 +322,7 @@ int util_read_file(const char *filename, unsigned char **buf, size_t *size)
 		return -1;
 	}
 
+	LOG_VERBOSE("Opening input file: %s", filename);
 	fp = fopen(filename, "rb");
 	if (!fp) {
 		LOG_ERROR("Failed to open file: %s", filename);
@@ -341,6 +342,8 @@ int util_read_file(const char *filename, unsigned char **buf, size_t *size)
 		*buf = NULL;
 		goto cleanup;
 	}
+
+	LOG_VERBOSE("Input file read successfully");
 
 	ret = 0;
 

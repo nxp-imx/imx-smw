@@ -13,12 +13,13 @@
 #include "cipher_algo_generated.h"
 #include "cli_print.h"
 #include "helper.h"
+#include "logger.h"
 #include "opt_parser.h"
 #include "parser_cipher.h"
 #include "utils.h"
 
 /* Short getopt options for CIPHER operations */
-static const char *cipher_short_opts = ":ha:k:i:o:S:L::";
+static const char *cipher_short_opts = ":ha:k:i:o:S:";
 
 /* Define options for CIPHER operations */
 static const struct option cipher_long_opts[] = {
@@ -29,8 +30,9 @@ static const struct option cipher_long_opts[] = {
 	{ "output", required_argument, 0, 'o' },
 	{ "iv", required_argument, 0, 1 },
 	{ "subsystem", required_argument, 0, 'S' },
-	{ "log", optional_argument, 0, 'L' },
 	{ "list", no_argument, 0, 0 },
+	{ "v", optional_argument, 0, 0 },
+	{ "vv", optional_argument, 0, 0 },
 	{ 0, 0, 0, 0 }
 };
 
@@ -84,14 +86,31 @@ static int parse_cipher_common(int argc, char **argv,
 			       const char *prog_name, const char *op_name)
 {
 	int opt = 0;
+	int opt_index = 0;
 	opterr = 0;
 	bool psa_backend = is_psa(prog_name);
 
+	LOG_VERBOSE("Parsing %s options (argc=%d)", op_name, argc);
+
 	while ((opt = getopt_long(argc, argv, cipher_short_opts,
-				  cipher_long_opts, NULL)) != -1) {
+				  cipher_long_opts, &opt_index)) != -1) {
 		switch (opt) {
-		case 0: /* --list */
-			opts->show_list = true;
+		case 0:
+			if (!strcmp(cipher_long_opts[opt_index].name, "list")) {
+				opts->show_list = true;
+			} else if (!strcmp(cipher_long_opts[opt_index].name,
+					   "v")) {
+				if (parse_log_option(opts, argc, argv,
+						     prog_name, op_name,
+						     LOG_LEVEL_INFO))
+					return -1;
+			} else if (!strcmp(cipher_long_opts[opt_index].name,
+					   "vv")) {
+				if (parse_log_option(opts, argc, argv,
+						     prog_name, op_name,
+						     LOG_LEVEL_VERBOSE))
+					return -1;
+			}
 			break;
 
 		case 'h':
@@ -109,6 +128,7 @@ static int parse_cipher_common(int argc, char **argv,
 				print_help_hint(prog_name, op_name);
 				return -1;
 			}
+			LOG_VERBOSE("  algo = %s", optarg);
 			break;
 
 		case 'k': {
@@ -125,7 +145,7 @@ static int parse_cipher_common(int argc, char **argv,
 			tmp = strtoul(optarg, &endptr, 0);
 
 			if (errno || endptr == optarg || *endptr != '\0') {
-				ERROR("Invalid key ID '%s'\n", optarg);
+				ERROR("Invalid key ID '%s'", optarg);
 				print_help_hint(prog_name, op_name);
 				return -1;
 			}
@@ -137,6 +157,7 @@ static int parse_cipher_common(int argc, char **argv,
 			}
 
 			opts->op.cipher.key_id = (unsigned int)tmp;
+			LOG_VERBOSE("  key_id = %lu", tmp);
 			break;
 		}
 
@@ -147,6 +168,8 @@ static int parse_cipher_common(int argc, char **argv,
 				print_help_hint(prog_name, op_name);
 				return -1;
 			}
+			LOG_VERBOSE("  input_filename = %s",
+				    opts->input_filename);
 			break;
 
 		case 'o':
@@ -156,6 +179,8 @@ static int parse_cipher_common(int argc, char **argv,
 				print_help_hint(prog_name, op_name);
 				return -1;
 			}
+			LOG_VERBOSE("  output_filename = %s",
+				    opts->output_filename);
 			break;
 
 		case 1: /* --iv */
@@ -169,20 +194,15 @@ static int parse_cipher_common(int argc, char **argv,
 				ERROR("Memory allocation failed for IV");
 				return -1;
 			}
+			LOG_VERBOSE("  iv_hex = %s", optarg);
 			break;
 
 		case 'S':
 			opts->subsystem = parse_subsystem(optarg);
-			break;
-
-		case 'L':
-			if (parse_log_option(opts, argc, argv, prog_name,
-					     op_name))
-				return -1;
+			LOG_VERBOSE("  subsystem = %s", optarg);
 			break;
 
 		case ':':
-			/* Missing argument for a known option */
 			ERROR("Option '%s' requires an argument",
 			      SAFE_ARGV_OPT(argv, "<unknown>"));
 			print_help_hint(prog_name, op_name);
@@ -190,7 +210,6 @@ static int parse_cipher_common(int argc, char **argv,
 
 		case '?':
 		default:
-			/* Unknown option */
 			ERROR("Unknown option '%s'",
 			      SAFE_ARGV_OPT(argv, "<unknown>"));
 			print_help_hint(prog_name, op_name);
@@ -198,7 +217,7 @@ static int parse_cipher_common(int argc, char **argv,
 		}
 	}
 
-	/* --list requested */
+	/* --list is requested */
 	if (opts->show_list) {
 		print_cipher_algo_list();
 		return 0;
@@ -247,6 +266,8 @@ static int parse_cipher_common(int argc, char **argv,
 			WARNING("--iv accepted but ignored (PSA manages IV internally)\n");
 		}
 	}
+
+	LOG_VERBOSE("Cipher %s options parsed successfully", op_name);
 
 	return 0;
 }

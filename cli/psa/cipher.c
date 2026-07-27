@@ -128,14 +128,28 @@ static enum cli_exit_code cipher_execute(struct parsed_options *args,
 		goto cleanup;
 	}
 
-	LOG_INFO("Cipher %s operation (PSA API)", direction_str);
+	LOG_INFO("Cipher %s operation started (PSA API)", direction_str);
+	LOG_VERBOSE("  algo           : %s", args->op.cipher.algo);
+	LOG_VERBOSE("  key_id         : 0x%08x (%u)", args->op.cipher.key_id,
+		    args->op.cipher.key_id);
+	LOG_VERBOSE("  iv_hex         : %s",
+		    args->op.cipher.iv_hex ? args->op.cipher.iv_hex : "(none)");
+	LOG_VERBOSE("  input_filename : %s", args->input_filename);
+	LOG_VERBOSE("  output_filename: %s",
+		    args->output_filename ? args->output_filename : "(stdout)");
 
 	/* Map CLI algorithm to PSA algorithm */
+	LOG_VERBOSE("Mapping CLI algorithm to PSA algorithm: %s",
+		    args->op.cipher.algo);
 	alg = get_psa_cipher_alg(args->op.cipher.algo);
 	if (alg == PSA_ALG_NONE) {
-		LOG_ERROR("Unsupported cipher algorithm");
+		LOG_ERROR("Unsupported cipher algorithm: %s",
+			  args->op.cipher.algo);
 		goto cleanup;
 	}
+
+	LOG_VERBOSE("PSA algorithm resolved: %s (0x%08x)",
+		    get_psa_cipher_alg_name(alg), (unsigned int)alg);
 
 	key = (psa_key_id_t)args->op.cipher.key_id;
 
@@ -148,10 +162,13 @@ static enum cli_exit_code cipher_execute(struct parsed_options *args,
 	 *   - Decrypt: IV is read from the beginning of the input
 	 * The --iv option is accepted by the parser but ignored here.
 	 */
-	if (args->op.cipher.iv_hex && alg != PSA_ALG_ECB_NO_PADDING)
+	if (args->op.cipher.iv_hex && alg != PSA_ALG_ECB_NO_PADDING) {
 		LOG_INFO("  Note: --iv ignored, PSA manages IV internally");
+		LOG_VERBOSE("IV hex provided but ignored by PSA API");
+	}
 
 	/* Read input file */
+	LOG_VERBOSE("Opening input file: %s", args->input_filename);
 	fp = fopen(args->input_filename, "rb");
 	if (!fp) {
 		LOG_ERROR("Failed to open input file: %s",
@@ -162,6 +179,8 @@ static enum cli_exit_code cipher_execute(struct parsed_options *args,
 	if (util_get_file_size(fp, &input_size, args->input_filename))
 		goto cleanup;
 
+	LOG_VERBOSE("Input file size: %zu bytes", input_size);
+
 	input = util_alloc_buffer(input_size, "cipher input");
 	if (!input)
 		goto cleanup;
@@ -170,6 +189,8 @@ static enum cli_exit_code cipher_execute(struct parsed_options *args,
 		LOG_ERROR("Failed to read input file");
 		goto cleanup;
 	}
+
+	LOG_VERBOSE("Input file read successfully");
 
 	FCLOSE(fp);
 	fp = NULL;
@@ -187,6 +208,7 @@ static enum cli_exit_code cipher_execute(struct parsed_options *args,
 	if (!output_size)
 		output_size = input_size + 16;
 
+	LOG_VERBOSE("Allocating output buffer: %zu bytes", output_size);
 	output = util_alloc_buffer(output_size, "cipher output");
 	if (!output)
 		goto cleanup;
@@ -197,10 +219,12 @@ static enum cli_exit_code cipher_execute(struct parsed_options *args,
 	/* Call PSA cipher API */
 	if (encrypt) {
 		api_name = "psa_cipher_encrypt";
+		LOG_VERBOSE("Calling psa_cipher_encrypt()");
 		status = psa_cipher_encrypt(key, alg, input, input_size, output,
 					    output_size, &output_length);
 	} else {
 		api_name = "psa_cipher_decrypt";
+		LOG_VERBOSE("Calling psa_cipher_decrypt()");
 		status = psa_cipher_decrypt(key, alg, input, input_size, output,
 					    output_size, &output_length);
 	}
@@ -213,7 +237,10 @@ static enum cli_exit_code cipher_execute(struct parsed_options *args,
 
 	SUCCESS("Symmetric Ciphering");
 
+	LOG_VERBOSE("Output length: %zu bytes", output_length);
+
 	/* Write output */
+	LOG_VERBOSE("Writing output data");
 	if (util_write_output_data(output, output_length, args->output_filename,
 				   false)) {
 		goto cleanup;

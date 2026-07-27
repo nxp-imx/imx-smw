@@ -6,6 +6,7 @@
 #define _FILE_OFFSET_BITS	  64
 #define MIN_TIMESTAMP_BUFFER_SIZE 32
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -14,13 +15,8 @@
 #include "helper.h"
 #include "logger.h"
 
-/* Log levels */
-enum log_level {
-	LOG_LEVEL_ERROR,
-	LOG_LEVEL_SMW_ERROR,
-	LOG_LEVEL_PSA_ERROR,
-	LOG_LEVEL_INFO
-};
+/* Active log level - messages above this are filtered out */
+static enum log_level active_log_level = LOG_LEVEL_INFO;
 
 /* User-specified logging (via -L option) */
 static enum log_dest log_dest = LOG_DEST_NONE;
@@ -31,34 +27,40 @@ static bool log_enabled;
 static FILE *env_log_file;
 static bool env_log_enabled;
 
-/**
- * @brief Get log level string
- *
- * @param level of the log (ERROR, SMW_ERROR, PSA_ERROR or INFO)
+/* -------------------------------------------------------------------------
+ * Internal helpers
+ * -------------------------------------------------------------------------
  */
-static const char *log_level_string(enum log_level level)
+
+static const char *src_to_tag(enum log_src src)
 {
-	switch (level) {
-	case LOG_LEVEL_ERROR:
-		return "[CLI] [ERROR]";
-	case LOG_LEVEL_SMW_ERROR:
-		return "[SMW] [ERROR]";
-	case LOG_LEVEL_PSA_ERROR:
-		return "[PSA] [ERROR]";
-	case LOG_LEVEL_INFO:
-		return "[CLI]";
+	switch (src) {
+	case LOG_SRC_SMW:
+		return "SMW";
+	case LOG_SRC_PSA:
+		return "PSA";
+	case LOG_SRC_CLI:
 	default:
-		return "[UNKNOWN]";
+		return "CLI";
 	}
 }
 
-/**
- * @brief Gets current timestamp as formatted string.
- *
- * @param buffer: Destination buffer for timestamp string
- * @param size: Size of destination buffer in bytes
- */
-static void logger_get_timestamp(char *buffer, size_t size)
+static const char *tag_to_str(enum log_tag tag)
+{
+	switch (tag) {
+	case LOG_TAG_SUCCESS:
+		return "SUCCESS";
+	case LOG_TAG_VERBOSE:
+		return "VERBOSE";
+	case LOG_TAG_ERROR:
+		return "ERROR";
+	case LOG_TAG_INFO:
+	default:
+		return "INFO";
+	}
+}
+
+static void get_timestamp(char *buffer, size_t size)
 {
 	time_t now = 0;
 	struct tm *tm_info = NULL;
@@ -80,26 +82,112 @@ static void logger_get_timestamp(char *buffer, size_t size)
 }
 
 /**
- * @brief Internal logging function
+ * @brief Write a formatted log line to a FILE stream.
  *
- * Writes log messages to both environment-based and user-specified log destinations.
- * Handles dual logging output with timestamps and log level prefixes.
+ * Format: [timestamp] [SRC] [TAG] message
  *
- * @param level The log level for the message (ERROR, SMW_ERROR, PSA_ERROR, INFO)
- * @param fmt Format string for the message (printf-style)
- * @param args Variable argument list containing format arguments
+ * @param stream  Destination FILE stream
+ * @param src     Log source tag
+ * @param tag     Log tag
+ * @param fmt     printf-style format string
+ * @param args    va_list of format arguments
  */
-static void logger_log_message_va(enum log_level level, const char *fmt,
-				  va_list args)
+static void write_log_line(FILE *stream, enum log_src src, enum log_tag tag,
+			   const char *fmt, va_list args)
 {
-	va_list args_copy;
 	char timestamp[MIN_TIMESTAMP_BUFFER_SIZE] = { 0 };
-	const char *level_str = log_level_string(level);
+	va_list args_copy;
 
-	/* Environment variable logging */
+	get_timestamp(timestamp, sizeof(timestamp));
+
+	FPRINTF(stream, "[%s] [%s] [%s] ", timestamp, src_to_tag(src),
+		tag_to_str(tag));
+
+	va_copy(args_copy, args);
+	VFPRINTF(stream, fmt, args_copy);
+	va_end(args_copy);
+
+	FPRINTF(stream, "\n");
+	FFLUSH(stream);
+}
+
+/* -------------------------------------------------------------------------
+ * Public API
+ * -------------------------------------------------------------------------
+ */
+
+/**
+ * @brief Log a message at the given source, level and tag.
+ *
+ * Messages with level > active_log_level are silently dropped.
+ * Writes to both the environment log file and the user-specified destination.
+ *
+ * @param src   Which layer is emitting the message (CLI, SMW, PSA)
+ * @param level Verbosity level of this message
+ * @param tag   Tag to print in the log line (INFO, SUCCESS, VERBOSE)
+ * @param fmt   printf-style format string
+ * @param ...   Format arguments
+ */
+void logger_log(enum log_src src, enum log_level level, enum log_tag tag,
+		const char *fmt, ...)
+{
+	va_list args;
+
+	/* Filter by active log level */
+	if (level > active_log_level)
+		return;
+
+	va_start(args, fmt);
+
+	/* write_log_line uses va_copy internally so args is safe to reuse */
+	if (env_log_enabled && env_log_file)
+		write_log_line(env_log_file, src, tag, fmt, args);
+
+	if (log_enabled) {
+		if (log_dest == LOG_DEST_FILE && log_file) {
+			write_log_line(log_file, src, tag, fmt, args);
+		} else if (log_dest == LOG_DEST_STDERR) {
+			FPRINTF(stderr, "[%s] [%s] ", src_to_tag(src),
+				tag_to_str(tag));
+			VFPRINTF(stderr, fmt, args);
+			FPRINTF(stderr, "\n");
+		}
+	}
+
+	va_end(args);
+}
+
+/**
+ * @brief Log an error message.
+ *
+ * Errors are never filtered by log level — they always appear.
+ * Always printed to stderr and written to any open log files.
+ *
+ * @param src  Which layer is emitting the error (CLI, SMW, PSA)
+ * @param fmt  printf-style format string
+ * @param ...  Format arguments
+ */
+void logger_log_error(enum log_src src, const char *fmt, ...)
+{
+	char timestamp[MIN_TIMESTAMP_BUFFER_SIZE] = { 0 };
+	const char *src_tag = src_to_tag(src);
+	va_list args;
+	va_list args_copy;
+
+	va_start(args, fmt);
+
+	/* Always print to stderr with ERROR macro style (color + newlines) */
+	FPRINTF(stderr, "\n%s[%s] [ERROR] ", IS_TTY_STDERR ? COLOR_RED : "",
+		src_tag);
+	va_copy(args_copy, args);
+	VFPRINTF(stderr, fmt, args_copy);
+	va_end(args_copy);
+	FPRINTF(stderr, "%s\n", IS_TTY_STDERR ? COLOR_RESET : "");
+
+	/* Write to env log file - with timestamp */
 	if (env_log_enabled && env_log_file) {
-		logger_get_timestamp(timestamp, sizeof(timestamp));
-		FPRINTF(env_log_file, "[%s] %s ", timestamp, level_str);
+		get_timestamp(timestamp, sizeof(timestamp));
+		FPRINTF(env_log_file, "[%s] [%s] [ERROR] ", timestamp, src_tag);
 		va_copy(args_copy, args);
 		VFPRINTF(env_log_file, fmt, args_copy);
 		va_end(args_copy);
@@ -107,155 +195,118 @@ static void logger_log_message_va(enum log_level level, const char *fmt,
 		FFLUSH(env_log_file);
 	}
 
-	/* User-specified logging (-L option) */
-	if (log_enabled) {
-		if (log_dest == LOG_DEST_FILE && log_file) {
-			logger_get_timestamp(timestamp, sizeof(timestamp));
-			FPRINTF(log_file, "[%s] %s ", timestamp, level_str);
-			va_copy(args_copy, args);
-			VFPRINTF(log_file, fmt, args_copy);
-			va_end(args_copy);
-			FPRINTF(log_file, "\n");
-			FFLUSH(log_file);
-		} else if (log_dest == LOG_DEST_STDERR) {
-			FPRINTF(stderr, "%s ", level_str);
-			va_copy(args_copy, args);
-			VFPRINTF(stderr, fmt, args_copy);
-			va_end(args_copy);
-			FPRINTF(stderr, "\n");
-		}
+	/* Write to user log file - with timestamp */
+	if (log_enabled && log_dest == LOG_DEST_FILE && log_file) {
+		if (!timestamp[0])
+			get_timestamp(timestamp, sizeof(timestamp));
+		FPRINTF(log_file, "[%s] [%s] [ERROR] ", timestamp, src_tag);
+		va_copy(args_copy, args);
+		VFPRINTF(log_file, fmt, args_copy);
+		va_end(args_copy);
+		FPRINTF(log_file, "\n");
+		FFLUSH(log_file);
 	}
+
+	va_end(args);
 }
 
 /**
- * @brief Internal helper to print error to stderr with color and tag
+ * @brief Log a description line attached below the previous error.
  *
- * @param tag    The error tag string (e.g. "[ERROR]", "[SMW] [ERROR]")
- * @param fmt    Format string for the error message (printf-style)
- * @param args   Variable argument list containing format arguments
+ * On stderr: printed in red, no timestamp, indented below the error line.
+ * In log files: printed with timestamp and [DESCRIPTION] tag.
+ *
+ * @param src  Which layer is emitting the description (CLI, SMW, PSA)
+ * @param fmt  printf-style format string
+ * @param ...  Format arguments
  */
-static void logger_print_error_va(const char *tag, const char *fmt,
-				  va_list args)
+void logger_log_desc(enum log_src src, const char *fmt, ...)
 {
-	if (!log_enabled || log_dest != LOG_DEST_STDERR) {
-		FPRINTF(stderr, "\n%s%s ", IS_TTY_STDERR ? COLOR_RED : "", tag);
-		VFPRINTF(stderr, fmt, args);
-		FPRINTF(stderr, "%s\n\n", IS_TTY_STDERR ? COLOR_RESET : "");
+	char timestamp[MIN_TIMESTAMP_BUFFER_SIZE] = { 0 };
+	const char *src_tag = src_to_tag(src);
+	va_list args;
+	va_list args_copy;
+
+	va_start(args, fmt);
+
+	/* stderr: red, no timestamp, no src tag, visually attached below the error */
+	FPRINTF(stderr, "%s[DESCRIPTION] ", IS_TTY_STDERR ? COLOR_RED : "");
+	va_copy(args_copy, args);
+	VFPRINTF(stderr, fmt, args_copy);
+	va_end(args_copy);
+	FPRINTF(stderr, "%s\n\n", IS_TTY_STDERR ? COLOR_RESET : "");
+
+	/* Write to env log file - with timestamp and src tag */
+	if (env_log_enabled && env_log_file) {
+		get_timestamp(timestamp, sizeof(timestamp));
+		FPRINTF(env_log_file, "[%s] [%s] [DESCRIPTION] ", timestamp,
+			src_tag);
+		va_copy(args_copy, args);
+		VFPRINTF(env_log_file, fmt, args_copy);
+		va_end(args_copy);
+		FPRINTF(env_log_file, "\n");
+		FFLUSH(env_log_file);
 	}
-}
 
-/**
- * @brief Log generic CLI error message
- *
- * @param fmt Format string for the error message (printf-style)
- * @param ... Variable arguments for format string
- */
-void logger_log_error(const char *fmt, ...)
-{
-	va_list args;
+	/* Write to user log file - with timestamp and src tag */
+	if (log_enabled && log_dest == LOG_DEST_FILE && log_file) {
+		if (!timestamp[0])
+			get_timestamp(timestamp, sizeof(timestamp));
+		FPRINTF(log_file, "[%s] [%s] [DESCRIPTION] ", timestamp,
+			src_tag);
+		va_copy(args_copy, args);
+		VFPRINTF(log_file, fmt, args_copy);
+		va_end(args_copy);
+		FPRINTF(log_file, "\n");
+		FFLUSH(log_file);
+	}
 
-	va_start(args, fmt);
-	logger_log_message_va(LOG_LEVEL_ERROR, fmt, args);
-	va_end(args);
-
-	va_start(args, fmt);
-	logger_print_error_va("[CLI] [ERROR]", fmt, args);
 	va_end(args);
 }
 
 /**
- * @brief Log SMW backend error message
+ * @brief Initialize the logging subsystem.
  *
- * @param fmt Format string for the error message (printf-style)
- * @param ... Variable arguments for format string
- */
-void logger_log_smw_error(const char *fmt, ...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	logger_log_message_va(LOG_LEVEL_SMW_ERROR, fmt, args);
-	va_end(args);
-
-	va_start(args, fmt);
-	logger_print_error_va("[SMW] [ERROR]", fmt, args);
-	va_end(args);
-}
-
-/**
- * @brief Log PSA backend error message
+ * Sets up both the automatic (SMW_LOG_FILE env var) and user-specified
+ * (-L option) log destinations, and configures the active log level.
  *
- * @param fmt Format string for the error message (printf-style)
- * @param ... Variable arguments for format string
+ * @param dest          User-specified log destination
+ * @param log_filename  Log file path (required if dest is LOG_DEST_FILE)
+ * @param level         Maximum log level to emit (INFO or VERBOSE)
  */
-void logger_log_psa_error(const char *fmt, ...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	logger_log_message_va(LOG_LEVEL_PSA_ERROR, fmt, args);
-	va_end(args);
-
-	va_start(args, fmt);
-	logger_print_error_va("[PSA] [ERROR]", fmt, args);
-	va_end(args);
-}
-
-/**
- * @brief Log info message
- *
- * @param fmt Format string for the info message (printf-style)
- * @param ... Variable arguments for format string
- */
-void logger_log_info(const char *fmt, ...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	logger_log_message_va(LOG_LEVEL_INFO, fmt, args);
-	va_end(args);
-}
-
-/**
- * @brief Initializes the logging subsystem.
- *
- * @param dest: User-specified log destination (LOG_DEST_NONE/STDERR/FILE)
- * @param log_filename: Log file path (required if dest is LOG_DEST_FILE)
- */
-void logger_init(enum log_dest dest, const char *log_filename)
+void logger_init(enum log_dest dest, const char *log_filename,
+		 enum log_level level)
 {
 	const char *log_path = NULL;
 	char timestamp[MIN_TIMESTAMP_BUFFER_SIZE] = { 0 };
-
-	/* Determine automatic log file path */
 	const char *env_log_path = getenv(SMW_LOG_ENV_VAR);
 
+	active_log_level = level;
+
+	/* Determine automatic log file path from environment */
 	if (env_log_path) {
-		/* Environment variable is set */
 		if (!strlen(env_log_path) ||
 		    !strcasecmp(env_log_path, "none") ||
 		    !strcasecmp(env_log_path, "off")) {
-			/* User explicitly disabled automatic logging */
 			log_path = NULL;
 		} else {
-			/* Use custom path from environment */
 			log_path = env_log_path;
 		}
 	} else {
-		/* No environment variable - use default location (current directory) */
 		log_path = SMW_DEFAULT_LOG_FILE;
 	}
 
-	/* Open automatic log file if path is set */
+	/* Open automatic log file */
 	if (log_path) {
 		env_log_file = fopen(log_path, "a");
 		if (env_log_file) {
 			env_log_enabled = true;
-
-			logger_get_timestamp(timestamp, sizeof(timestamp));
+			get_timestamp(timestamp, sizeof(timestamp));
 			FPRINTF(env_log_file,
-				"\n[%s] [CLI] ========== New logging session ==========\n",
+				"\n[%s] [CLI] [INFO] ===== New logging session",
 				timestamp);
+			FPRINTF(env_log_file, " (level=%s) =====\n",
+				tag_to_str(LOG_TAG_INFO));
 			FFLUSH(env_log_file);
 		} else {
 			WARNING("Automatic logging disabled - cannot open SMW_LOG_FILE='%s': %s\n",
@@ -264,7 +315,7 @@ void logger_init(enum log_dest dest, const char *log_filename)
 		}
 	}
 
-	/* Only enable logging if user specified a destination */
+	/* User-specified destination */
 	if (dest == LOG_DEST_NONE) {
 		log_enabled = false;
 		return;
@@ -273,7 +324,6 @@ void logger_init(enum log_dest dest, const char *log_filename)
 	log_enabled = true;
 	log_dest = dest;
 
-	/* If destination is file, open it */
 	if (dest == LOG_DEST_FILE) {
 		if (!log_filename || !strlen(log_filename)) {
 			ERROR("Log file destination specified but no filename provided");
@@ -288,43 +338,39 @@ void logger_init(enum log_dest dest, const char *log_filename)
 			return;
 		}
 
-		/* Log session start */
-		char timestamp[32] = { 0 };
-
-		logger_get_timestamp(timestamp, sizeof(timestamp));
+		get_timestamp(timestamp, sizeof(timestamp));
 		FPRINTF(log_file,
-			"\n[%s] [CLI] ========== New logging session ==========\n",
+			"\n[%s] [CLI] [INFO] ===== New logging session",
 			timestamp);
+		FPRINTF(log_file, " (level=%s) =====\n",
+			tag_to_str(LOG_TAG_INFO));
 		FFLUSH(log_file);
 	}
 }
 
 /**
- * @brief cleans up and closes all logging resources
+ * @brief Clean up and close all logging resources.
  */
 void logger_cleanup(void)
 {
 	char timestamp[MIN_TIMESTAMP_BUFFER_SIZE] = { 0 };
 
-	if (log_file) {
-		logger_get_timestamp(timestamp, sizeof(timestamp));
-		FPRINTF(log_file,
-			"[%s] [CLI] ========== End logging session ==========\n\n",
-			timestamp);
+	get_timestamp(timestamp, sizeof(timestamp));
 
+	if (log_file) {
+		FPRINTF(log_file,
+			"[%s] [CLI] [INFO] ===== End logging session =====\n\n",
+			timestamp);
 		FCLOSE(log_file);
 		log_file = NULL;
 	}
 	log_enabled = false;
 	log_dest = LOG_DEST_NONE;
 
-	/* Cleanup environment variable log file */
 	if (env_log_file) {
-		logger_get_timestamp(timestamp, sizeof(timestamp));
 		FPRINTF(env_log_file,
-			"[%s] [CLI] ========== End logging session ==========\n\n",
+			"[%s] [CLI] [INFO] ===== End logging session =====\n\n",
 			timestamp);
-
 		FCLOSE(env_log_file);
 		env_log_file = NULL;
 	}

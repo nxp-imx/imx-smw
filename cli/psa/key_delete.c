@@ -77,13 +77,16 @@ enum cli_exit_code cli_key_delete_operation(struct parsed_options *args)
 		goto cleanup;
 	}
 
-	LOG_INFO("Key delete operation (PSA API)");
+	LOG_INFO("Key delete operation started (PSA API)");
+	LOG_VERBOSE("  key_id : 0x%08x (%u)", args->op.key_delete.key_id,
+		    args->op.key_delete.key_id);
 
 	key_id = (psa_key_id_t)args->op.key_delete.key_id;
 
 	log_psa_key_delete_params(key_id);
 
 	/* Call psa_destroy_key() */
+	LOG_VERBOSE("Calling psa_destroy_key()");
 	status = psa_destroy_key(key_id);
 	if (!is_psa_api_success("psa_destroy_key", status))
 		goto cleanup;
@@ -94,6 +97,7 @@ enum cli_exit_code cli_key_delete_operation(struct parsed_options *args)
 
 cleanup:
 	if (args && args->log_filename) {
+		LOG_VERBOSE("Freeing log filename buffer");
 		free(args->log_filename);
 		args->log_filename = NULL;
 	}

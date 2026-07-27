@@ -22,8 +22,8 @@
 /**
  * @brief Log PSA key export operation parameters
  *
- * @param key_id PSA key identifier
- * @param data Pointer to the output buffer
+ * @param key_id    PSA key identifier
+ * @param data      Pointer to the output buffer
  * @param data_size Size of the output buffer in bytes
  */
 static void log_psa_key_export_params(psa_key_id_t key_id, const uint8_t *data,
@@ -39,9 +39,9 @@ static void log_psa_key_export_params(psa_key_id_t key_id, const uint8_t *data,
 /**
  * @brief Print key export result summary
  *
- * @param key_id Exported key ID
+ * @param key_id      Exported key ID
  * @param data_length Actual exported data length in bytes
- * @param pub_file Public key output file
+ * @param pub_file    Public key output file
  */
 static void print_export_result(psa_key_id_t key_id, size_t data_length,
 				const char *pub_file)
@@ -55,10 +55,10 @@ static void print_export_result(psa_key_id_t key_id, size_t data_length,
 /**
  * @brief Query the required buffer size for public key export
  *
- * @param key_id PSA key identifier
- * @param key_type Output key type
- * @param key_bits Output key size in bits
- * @param buffer Output pointer to allocated buffer
+ * @param key_id      PSA key identifier
+ * @param key_type    Output key type
+ * @param key_bits    Output key size in bits
+ * @param buffer      Output pointer to allocated buffer
  * @param buffer_size Output size of allocated buffer
  */
 static int query_and_alloc_export_buffer(psa_key_id_t key_id,
@@ -70,14 +70,17 @@ static int query_and_alloc_export_buffer(psa_key_id_t key_id,
 	psa_key_attributes_t attributes = PSA_KEY_ATTRIBUTES_INIT;
 	size_t required_size = 0;
 
+	LOG_VERBOSE("Querying key attributes for key_id=0x%08x", key_id);
+
 	status = psa_get_key_attributes(key_id, &attributes);
-	if (status != PSA_SUCCESS) {
-		if (!is_psa_api_success("psa_get_key_attributes", status))
-			return -1;
-	}
+	if (!is_psa_api_success("psa_get_key_attributes", status))
+		return -1;
 
 	*key_type = psa_get_key_type(&attributes);
 	*key_bits = psa_get_key_bits(&attributes);
+
+	LOG_VERBOSE("  key_type = 0x%04x", (unsigned int)*key_type);
+	LOG_VERBOSE("  key_bits = %zu", *key_bits);
 
 	psa_reset_key_attributes(&attributes);
 
@@ -98,6 +101,7 @@ static int query_and_alloc_export_buffer(psa_key_id_t key_id,
 	}
 
 	*buffer_size = required_size;
+	LOG_VERBOSE("Export buffer allocated: %zu bytes", required_size);
 
 	return 0;
 }
@@ -149,7 +153,16 @@ enum cli_exit_code cli_key_export_operation(struct parsed_options *args)
 		goto cleanup;
 	}
 
-	LOG_INFO("Key export operation (PSA API)");
+	LOG_INFO("Key export operation started (PSA API)");
+	LOG_VERBOSE("  key_id   : 0x%08x (%u)", args->op.key_export.key_id,
+		    args->op.key_export.key_id);
+	LOG_VERBOSE("  key_file : %s", args->op.key_export.key_file ?
+					       args->op.key_export.key_file :
+					       "(none)");
+	LOG_VERBOSE("  use_der  : %s",
+		    args->op.key_export.use_der ? "yes" : "no");
+	LOG_VERBOSE("  use_pem  : %s",
+		    args->op.key_export.use_pem ? "yes" : "no");
 
 	key_id = (psa_key_id_t)args->op.key_export.key_id;
 
@@ -158,24 +171,35 @@ enum cli_exit_code cli_key_export_operation(struct parsed_options *args)
 		goto cleanup;
 	}
 
+	/* Query key attributes and allocate export buffer */
+	LOG_VERBOSE("Querying key attributes and allocating export buffer");
 	if (query_and_alloc_export_buffer(key_id, &key_type, &key_bits,
 					  &pub_buffer, &pub_buffer_size))
 		goto cleanup;
 
+	/* Log export parameters */
 	log_psa_key_export_params(key_id, pub_buffer, pub_buffer_size);
 
+	/* Export public key */
+	LOG_VERBOSE("Calling psa_export_public_key()");
 	status = psa_export_public_key(key_id, pub_buffer, pub_buffer_size,
 				       &pub_data_length);
 	if (!is_psa_api_success("psa_export_public_key", status))
 		goto cleanup;
 
 	if (args->op.key_export.use_der || args->op.key_export.use_pem) {
-		type_str = psa_key_type_to_export_name(key_type, key_bits);
+		LOG_VERBOSE("Encoding public key to %s format",
+			    args->op.key_export.use_pem ? "PEM" : "DER");
 
+		type_str = psa_key_type_to_export_name(key_type, key_bits);
 		if (!type_str) {
 			LOG_ERROR("Unsupported key type for DER/PEM encoding");
 			goto cleanup;
 		}
+
+		LOG_VERBOSE("  key type string: %s", type_str);
+		LOG_VERBOSE("  key bits: %zu", key_bits);
+		LOG_VERBOSE("  output file: %s", args->op.key_export.key_file);
 
 		if (pubkey_encode(type_str, (unsigned int)key_bits, pub_buffer,
 				  pub_data_length, args->op.key_export.key_file,
@@ -183,11 +207,17 @@ enum cli_exit_code cli_key_export_operation(struct parsed_options *args)
 			LOG_ERROR("Key format conversion failed");
 			goto cleanup;
 		}
+
 		data_length = GET_FILE_SIZE(args->op.key_export.key_file);
+		LOG_VERBOSE("Encoded key written: %zu bytes", data_length);
 	} else {
 		/* Raw binary output */
-		FILE *f = fopen(args->op.key_export.key_file, "wb");
+		FILE *f = NULL;
 
+		LOG_VERBOSE("Writing raw binary public key to: %s",
+			    args->op.key_export.key_file);
+
+		f = fopen(args->op.key_export.key_file, "wb");
 		if (!f) {
 			LOG_ERROR("Failed to open output file: %s",
 				  args->op.key_export.key_file);
@@ -203,6 +233,7 @@ enum cli_exit_code cli_key_export_operation(struct parsed_options *args)
 
 		FCLOSE(f);
 		data_length = pub_data_length;
+		LOG_VERBOSE("Raw key written: %zu bytes", data_length);
 	}
 
 	print_export_result(key_id, data_length, args->op.key_export.key_file);
@@ -217,10 +248,12 @@ cleanup:
 
 	if (args) {
 		if (args->op.key_export.key_file) {
+			LOG_VERBOSE("Freeing key file buffer");
 			free(args->op.key_export.key_file);
 			args->op.key_export.key_file = NULL;
 		}
 		if (args->log_filename) {
+			LOG_VERBOSE("Freeing log filename buffer");
 			free(args->log_filename);
 			args->log_filename = NULL;
 		}

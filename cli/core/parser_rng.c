@@ -11,12 +11,13 @@
 #include <string.h>
 #include "cli_print.h"
 #include "helper.h"
+#include "logger.h"
 #include "opt_parser.h"
 #include "parser_rng.h"
 #include "utils.h"
 
 /* Short getopt options string for RNG */
-static const char *rng_short_opts = ":hs:o:S:L::t";
+static const char *rng_short_opts = ":hs:o:S:t";
 
 /* Define options for RNG operation */
 static const struct option rng_options[] = {
@@ -24,13 +25,14 @@ static const struct option rng_options[] = {
 	{ "size", required_argument, 0, 's' },
 	{ "output", required_argument, 0, 'o' },
 	{ "subsystem", required_argument, 0, 'S' },
-	{ "log", optional_argument, 0, 'L' },
 	{ "text", no_argument, 0, 't' },
+	{ "v", optional_argument, 0, 0 },
+	{ "vv", optional_argument, 0, 0 },
 	{ 0, 0, 0, 0 }
 };
 
 /**
- * @brief  Get inline description for RNG operation
+ * @brief Get inline description for RNG operation
  */
 const char *cli_rng_inline_desc(void)
 {
@@ -51,29 +53,31 @@ void cli_rng_help_common(void)
 	printf("  -s, --size <bytes>      Bytes to generate (required)\n");
 	printf("  -o, --output <file>     Output file\n");
 	printf("  -t, --text              Write hex format\n");
-	printf("  -L, --log <dest>        Enable session logging");
-	printf(" (%s log --help for info)\n", prog_name);
-	printf("  -h, --help              Show help\n");
+	print_log_options_help(prog_name);
+	print_help_option_help();
 }
 
 /**
  * @brief Parse command-line options for RNG operation
  *
- * @param argc Argument count from command line
- * @param argv Argument vector from command line
- * @param opts Pointer to parsed_options structure to populate
+ * @param argc      Argument count from command line
+ * @param argv      Argument vector from command line
+ * @param opts      Pointer to parsed_options structure to populate
  * @param prog_name The program name (executable)
  */
 int parse_rng_options(int argc, char **argv, struct parsed_options *opts,
 		      const char *prog_name)
 {
 	int opt = 0;
+	int opt_index = 0;
 	char *endptr = NULL;
 	unsigned long tmp = 0;
 	opterr = 0;
 
+	LOG_VERBOSE("Parsing RNG options (argc=%d)", argc);
+
 	while ((opt = getopt_long(argc, argv, rng_short_opts, rng_options,
-				  NULL)) != -1) {
+				  &opt_index)) != -1) {
 		switch (opt) {
 		case 'h':
 			opts->show_help = true;
@@ -111,6 +115,8 @@ int parse_rng_options(int argc, char **argv, struct parsed_options *opts,
 				print_help_hint(prog_name, "rng");
 				return -1;
 			}
+
+			LOG_VERBOSE("  size = %zu bytes", opts->op.rng.size);
 			break;
 
 		case 'o':
@@ -120,20 +126,32 @@ int parse_rng_options(int argc, char **argv, struct parsed_options *opts,
 				print_help_hint(prog_name, "rng");
 				return -1;
 			}
+			LOG_VERBOSE("  output_filename = %s",
+				    opts->output_filename);
 			break;
 
 		case 'S':
 			opts->subsystem = parse_subsystem(optarg);
-			break;
-
-		case 'L':
-			if (parse_log_option(opts, argc, argv, prog_name,
-					     "rng"))
-				return -1;
+			LOG_VERBOSE("  subsystem = %s", optarg);
 			break;
 
 		case 't':
 			opts->text_format = true;
+			LOG_VERBOSE("  text_format = true");
+			break;
+
+		case 0:
+			if (!strcmp(rng_options[opt_index].name, "v")) {
+				if (parse_log_option(opts, argc, argv,
+						     prog_name, "rng",
+						     LOG_LEVEL_INFO))
+					return -1;
+			} else if (!strcmp(rng_options[opt_index].name, "vv")) {
+				if (parse_log_option(opts, argc, argv,
+						     prog_name, "rng",
+						     LOG_LEVEL_VERBOSE))
+					return -1;
+			}
 			break;
 
 		case ':':
@@ -159,6 +177,8 @@ int parse_rng_options(int argc, char **argv, struct parsed_options *opts,
 		print_help_hint(prog_name, "rng");
 		return -1;
 	}
+
+	LOG_VERBOSE("RNG options parsed successfully");
 
 	return 0;
 }

@@ -13,6 +13,7 @@
 #include "cli_print.h"
 #include "hash_table_generated.h"
 #include "helper.h"
+#include "logger.h"
 #include "opt_parser.h"
 #include "parser_hash.h"
 #include "utils.h"
@@ -20,7 +21,7 @@
 #define MAX_HASH_LENGTH 1024
 
 /* Short getopt options for HASH */
-static const char *hash_short_opts = ":ha:i:o:S:L::l:t";
+static const char *hash_short_opts = ":ha:i:o:S:l:t";
 
 /* Define options for HASH operation */
 static const struct option hash_options[] = {
@@ -29,15 +30,16 @@ static const struct option hash_options[] = {
 	{ "input", required_argument, 0, 'i' },
 	{ "output", required_argument, 0, 'o' },
 	{ "subsystem", required_argument, 0, 'S' },
-	{ "log", optional_argument, 0, 'L' },
 	{ "text", no_argument, 0, 't' },
 	{ "length", required_argument, 0, 'l' },
 	{ "list", no_argument, 0, 0 },
+	{ "v", optional_argument, 0, 0 },
+	{ "vv", optional_argument, 0, 0 },
 	{ 0, 0, 0, 0 }
 };
 
 /**
- * @brief  Get inline description for hash operation
+ * @brief Get inline description for hash operation
  */
 const char *cli_hash_inline_desc(void)
 {
@@ -61,9 +63,8 @@ void cli_hash_help_common(void)
 	printf("  -o, --output <file>       Output file\n");
 	printf("  -l, --length <bytes>      Output length for XOF algorithms (e.g. SHAKE256)\n");
 	printf("  -t, --text                Write hex format\n");
-	printf("  -L, --log <dest>          Enable session logging");
-	printf(" (%s log --help for info)\n", prog_name);
-	printf("  -h, --help                Show help\n");
+	print_log_options_help(prog_name);
+	print_help_option_help();
 }
 
 /**
@@ -131,23 +132,40 @@ static enum hash_algo parse_hash_algo(const char *algo_str)
 /**
  * @brief Parse command-line options for HASH operation
  *
- * @param argc Argument count from command line
- * @param argv Argument vector from command line
- * @param opts Pointer to parsed_options structure to populate
+ * @param argc      Argument count from command line
+ * @param argv      Argument vector from command line
+ * @param opts      Pointer to parsed_options structure to populate
  * @param prog_name The program name (executable)
  */
 int parse_hash_options(int argc, char **argv, struct parsed_options *opts,
 		       const char *prog_name)
 {
 	int opt = 0;
+	int opt_index = 0;
 	opterr = 0;
 
+	LOG_VERBOSE("Parsing hash options (argc=%d)", argc);
+
 	while ((opt = getopt_long(argc, argv, hash_short_opts, hash_options,
-				  NULL)) != -1) {
+				  &opt_index)) != -1) {
 		switch (opt) {
 		case 0:
-			opts->show_list = true;
+			if (!strcmp(hash_options[opt_index].name, "list")) {
+				opts->show_list = true;
+			} else if (!strcmp(hash_options[opt_index].name, "v")) {
+				if (parse_log_option(opts, argc, argv,
+						     prog_name, "hash",
+						     LOG_LEVEL_INFO))
+					return -1;
+			} else if (!strcmp(hash_options[opt_index].name,
+					   "vv")) {
+				if (parse_log_option(opts, argc, argv,
+						     prog_name, "hash",
+						     LOG_LEVEL_VERBOSE))
+					return -1;
+			}
 			break;
+
 		case 'h':
 			opts->show_help = true;
 			break;
@@ -163,6 +181,7 @@ int parse_hash_options(int argc, char **argv, struct parsed_options *opts,
 				print_help_hint(prog_name, "hash");
 				return -1;
 			}
+			LOG_VERBOSE("  algo = %s", optarg);
 			break;
 
 		case 'i':
@@ -172,6 +191,8 @@ int parse_hash_options(int argc, char **argv, struct parsed_options *opts,
 				print_help_hint(prog_name, "hash");
 				return -1;
 			}
+			LOG_VERBOSE("  input_filename = %s",
+				    opts->input_filename);
 			break;
 
 		case 'o':
@@ -181,9 +202,11 @@ int parse_hash_options(int argc, char **argv, struct parsed_options *opts,
 				print_help_hint(prog_name, "hash");
 				return -1;
 			}
+			LOG_VERBOSE("  output_filename = %s",
+				    opts->output_filename);
 			break;
 
-		case 'l':
+		case 'l': {
 			char *endptr = NULL;
 			unsigned long tmp = 0;
 
@@ -209,19 +232,19 @@ int parse_hash_options(int argc, char **argv, struct parsed_options *opts,
 			}
 
 			opts->op.hash.output_length = (size_t)tmp;
+			LOG_VERBOSE("  output_length = %zu bytes",
+				    opts->op.hash.output_length);
 			break;
+		}
+
 		case 'S':
 			opts->subsystem = parse_subsystem(optarg);
-			break;
-
-		case 'L':
-			if (parse_log_option(opts, argc, argv, prog_name,
-					     "hash"))
-				return -1;
+			LOG_VERBOSE("  subsystem = %s", optarg);
 			break;
 
 		case 't':
 			opts->text_format = true;
+			LOG_VERBOSE("  text_format = true");
 			break;
 
 		case ':':
@@ -244,7 +267,7 @@ int parse_hash_options(int argc, char **argv, struct parsed_options *opts,
 	/* --list is requested */
 	if (opts->show_list) {
 		print_hash_algo_list();
-		return 0; /* No operation to perform */
+		return 0;
 	}
 
 	/* Validate required options */
@@ -270,6 +293,8 @@ int parse_hash_options(int argc, char **argv, struct parsed_options *opts,
 			return -1;
 		}
 	}
+
+	LOG_VERBOSE("Hash options parsed successfully");
 
 	return 0;
 }

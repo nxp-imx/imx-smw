@@ -3,6 +3,7 @@
  * Copyright 2026 NXP
  */
 
+#include "cli_print.h"
 #include "common.h"
 #include "error_handler.h"
 #include "helper.h"
@@ -19,7 +20,7 @@ static const char *const smw_subsystem_names[] = {
 /**
  * @brief Get SMW subsystem name string for logging
  *
- * @param subsystem: SMW subsystem enum value
+ * @param subsystem SMW subsystem enum value
  */
 const char *cli_smw_get_subsystem_name(smw_subsystem_t subsystem)
 {
@@ -33,21 +34,25 @@ const char *cli_smw_get_subsystem_name(smw_subsystem_t subsystem)
 /**
  * @brief Check SMW API status and log result
  *
- * @param func Function name
+ * @param func   Function name
  * @param status SMW status code returned by the API
  */
 bool is_smw_api_success(const char *func, enum smw_status_code status)
 {
 	bool ret = false;
 
-	if (status != SMW_STATUS_OK) {
-		LOG_SMW_ERROR("%s() failed: %s (%d)\n[DESCRIPTION] %s", func,
-			      cli_smw_status_to_name(status), status,
-			      cli_smw_status_to_description(status));
-	} else {
-		LOG_INFO("%s() succeeded: %s (%d)", func,
-			 cli_smw_status_to_name(status), status);
+	if (status == SMW_STATUS_OK) {
+		LOG_SMW_SUCCESS("%s() succeeded: %s (%d)", func,
+				cli_smw_status_to_name(status), status);
 		ret = true;
+	} else if (status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
+		LOG_VERBOSE("%s: some policy elements were ignored", func);
+		WARNING("Key generated but some policy elements were ignored");
+		ret = true;
+	} else {
+		LOG_SMW_ERROR("%s() failed: %s (%d)", func,
+			      cli_smw_status_to_name(status), status);
+		LOG_SMW_DESC("%s", cli_smw_status_to_description(status));
 	}
 
 	return ret;

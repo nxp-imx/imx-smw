@@ -18,14 +18,14 @@
 /**
  * @brief Log PSA RNG operation parameters
  *
- * @param output: Pointer to output buffer
- * @param output_size: Size of output buffer in bytes
+ * @param output      Pointer to output buffer
+ * @param output_size Size of output buffer in bytes
  */
 static void log_psa_rng_params(uint8_t *output, size_t output_size)
 {
 	LOG_INFO("=== psa_generate_random Parameters ===");
-	LOG_INFO("  output: %p", (void *)output);
-	LOG_INFO("  output_size: %zu", output_size);
+	LOG_INFO("  output      : %p", (void *)output);
+	LOG_INFO("  output_size : %zu", output_size);
 	LOG_INFO("======================================");
 }
 
@@ -68,7 +68,11 @@ enum cli_exit_code cli_rng_operation(struct parsed_options *args)
 		goto cleanup;
 	}
 
-	LOG_INFO("RNG operation (PSA API)");
+	LOG_INFO("RNG operation started (PSA API)");
+	LOG_VERBOSE("  requested size : %zu bytes", args->op.rng.size);
+	LOG_VERBOSE("  output file    : %s",
+		    args->output_filename ? args->output_filename : "(stdout)");
+	LOG_VERBOSE("  text format    : %s", args->text_format ? "yes" : "no");
 
 	/* Validate size fits in unsigned int */
 	if (args->op.rng.size > UINT32_MAX) {
@@ -82,15 +86,20 @@ enum cli_exit_code cli_rng_operation(struct parsed_options *args)
 	if (!buffer)
 		goto cleanup;
 
+	LOG_VERBOSE("Output buffer allocated: %p (%zu bytes)", (void *)buffer,
+		    args->op.rng.size);
+
 	/* Log PSA API parameters */
 	log_psa_rng_params(buffer, args->op.rng.size);
 
 	/* Call PSA RNG API */
+	LOG_VERBOSE("Calling psa_generate_random()");
 	status = psa_generate_random(buffer, args->op.rng.size);
 	if (!is_psa_api_success("psa_generate_random", status))
 		goto cleanup;
 
 	SUCCESS("RNG");
+	LOG_VERBOSE("Writing output data (%zu bytes)", args->op.rng.size);
 
 	/* Write output using common helper */
 	if (util_write_output_data(buffer, args->op.rng.size,
@@ -101,8 +110,10 @@ enum cli_exit_code cli_rng_operation(struct parsed_options *args)
 	ret = CLI_EXIT_SUCCESS;
 
 cleanup:
-	if (buffer)
+	if (buffer) {
+		LOG_VERBOSE("Freeing output buffer");
 		free(buffer);
+	}
 
 	return ret;
 }

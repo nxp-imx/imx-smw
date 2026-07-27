@@ -42,15 +42,22 @@ static psa_algorithm_t parse_psa_single_algorithm(const char *algo_str,
 	if (!algo_str)
 		return PSA_ALG_NONE;
 
+	LOG_VERBOSE("Parsing PSA single algorithm: %s (key_type=%s)", algo_str,
+		    key_type ? key_type : "NULL");
+
 	/* HMAC: search hash algorithm table */
 	if (key_type && !strcasecmp(key_type, "HMAC")) {
 		hmac_hash_algos = get_hmac_hash_algo_mappings();
 		hmac_count = get_hmac_hash_algo_mappings_count();
 		for (i = 0; i < hmac_count; i++) {
 			if (hmac_hash_algos[i].name &&
-			    !strcasecmp(algo_str, hmac_hash_algos[i].name))
+			    !strcasecmp(algo_str, hmac_hash_algos[i].name)) {
+				LOG_VERBOSE("  HMAC hash resolved: %s = 0x%08x",
+					    algo_str, hmac_hash_algos[i].value);
 				return hmac_hash_algos[i].value;
+			}
 		}
+		LOG_VERBOSE("  HMAC hash not found: %s", algo_str);
 		return PSA_ALG_NONE;
 	}
 
@@ -59,8 +66,11 @@ static psa_algorithm_t parse_psa_single_algorithm(const char *algo_str,
 	cmac_count = get_cmac_algo_mappings_count();
 	for (i = 0; i < cmac_count; i++) {
 		if (cmac_algos[i].name &&
-		    !strcasecmp(algo_str, cmac_algos[i].name))
+		    !strcasecmp(algo_str, cmac_algos[i].name)) {
+			LOG_VERBOSE("  CMAC mode resolved: %s = 0x%08x",
+				    algo_str, cmac_algos[i].value);
 			return cmac_algos[i].value;
+		}
 	}
 
 	/* Try AEAD */
@@ -68,8 +78,11 @@ static psa_algorithm_t parse_psa_single_algorithm(const char *algo_str,
 	aead_count = get_aead_algo_mappings_count();
 	for (i = 0; i < aead_count; i++) {
 		if (aead_algos[i].name &&
-		    !strcasecmp(algo_str, aead_algos[i].name))
+		    !strcasecmp(algo_str, aead_algos[i].name)) {
+			LOG_VERBOSE("  AEAD mode resolved: %s = 0x%08x",
+				    algo_str, aead_algos[i].value);
 			return aead_algos[i].value;
+		}
 	}
 
 	/* Try cipher */
@@ -77,10 +90,14 @@ static psa_algorithm_t parse_psa_single_algorithm(const char *algo_str,
 	cipher_count = get_cipher_algo_mappings_count();
 	for (i = 0; i < cipher_count; i++) {
 		if (cipher_algos[i].name &&
-		    !strcasecmp(algo_str, cipher_algos[i].name))
+		    !strcasecmp(algo_str, cipher_algos[i].name)) {
+			LOG_VERBOSE("  Cipher mode resolved: %s = 0x%08x",
+				    algo_str, cipher_algos[i].value);
 			return cipher_algos[i].value;
+		}
 	}
 
+	LOG_VERBOSE("  Algorithm not found: %s", algo_str);
 	return PSA_ALG_NONE;
 }
 
@@ -101,14 +118,20 @@ static psa_algorithm_t parse_psa_permitted_algo(const char *algo_str,
 	if (!algo_str || !key_type)
 		return PSA_ALG_NONE;
 
+	LOG_VERBOSE("Parsing PSA permitted algo: %s (key_type=%s)", algo_str,
+		    key_type);
+
 	algo_copy = strdup(algo_str);
 	if (!algo_copy)
 		return PSA_ALG_NONE;
 
 	/* PSA supports only one algorithm per key, take the first */
 	token = strtok_r(algo_copy, ",", &saveptr);
-	if (token)
+	if (token) {
 		algorithm = parse_psa_single_algorithm(token, key_type);
+		LOG_VERBOSE("PSA permitted algo (first token '%s'): 0x%08x",
+			    token, (unsigned int)algorithm);
+	}
 
 	free(algo_copy);
 	return algorithm;
@@ -172,9 +195,9 @@ static const char *psa_algorithm_to_string(psa_algorithm_t alg)
 /**
  * @brief Print key generation result
  *
- * @param key_id Generated key identifier
+ * @param key_id     Generated key identifier
  * @param attributes Pointer to key attributes
- * @param transient Whether key is transient (volatile)
+ * @param transient  Whether key is transient (volatile)
  */
 static void print_key_result(psa_key_id_t key_id,
 			     const psa_key_attributes_t *attributes,
@@ -187,7 +210,6 @@ static void print_key_result(psa_key_id_t key_id,
 	usage_flags_to_string(psa_get_key_usage_flags(attributes), usage_str,
 			      sizeof(usage_str));
 
-	/* Get the actual algorithm set in the key */
 	actual_algo = psa_get_key_algorithm(attributes);
 	algo_name = psa_algorithm_to_string(actual_algo);
 
@@ -212,7 +234,6 @@ void cli_keygen_sym_help(void)
 	print_tool_banner();
 	printf("Symmetric Key Generation Operation - PSA API\n\n");
 
-	/* Print common options */
 	cli_keygen_sym_help_common();
 
 	printf("\nNote:");
@@ -221,8 +242,9 @@ void cli_keygen_sym_help(void)
 	printf("\nExamples:\n");
 	printf("  %s keygen-sym -t AES -s 256 -a CBC -u encrypt,decrypt -i 1\n",
 	       prog_name);
-	printf("  %s keygen-sym -t HMAC -s 256 -a SHA256 -u sign,verify -i 0x12345678\n\n",
+	printf("  %s keygen-sym -t HMAC -s 256 -a SHA256 -u sign,verify",
 	       prog_name);
+	printf(" -i 0x12345678\n\n");
 }
 
 /**
@@ -249,9 +271,18 @@ enum cli_exit_code cli_keygen_sym_operation(struct parsed_options *args)
 		goto cleanup;
 	}
 
-	LOG_INFO("Symmetric key generation operation (PSA API)");
+	LOG_INFO("Symmetric key generation operation started (PSA API)");
+	LOG_VERBOSE("  key_type       : %s", args->op.keygen.key_type);
+	LOG_VERBOSE("  key_size       : %u bits", args->op.keygen.key_size);
+	LOG_VERBOSE("  key_id         : 0x%08x (%u)", args->op.keygen.key_id,
+		    args->op.keygen.key_id);
+	LOG_VERBOSE("  permitted_algo : %s", args->op.keygen.permitted_algo);
+	LOG_VERBOSE("  usage          : %s", args->op.keygen.usage);
+	LOG_VERBOSE("  transient      : %s",
+		    args->op.keygen.transient ? "yes" : "no");
 
 	/* Parse key type */
+	LOG_VERBOSE("Parsing key type: %s", args->op.keygen.key_type);
 	if (parse_key_type(args->op.keygen.key_type, &kt_value)) {
 		LOG_ERROR("Invalid key type: %s", args->op.keygen.key_type);
 		goto cleanup;
@@ -264,8 +295,12 @@ enum cli_exit_code cli_keygen_sym_operation(struct parsed_options *args)
 	}
 
 	key_type = (psa_key_type_t)kt_value;
+	LOG_VERBOSE("Key type resolved: %s (0x%04x)",
+		    key_type_to_string(key_type), kt_value);
 
 	/* Parse permitted algorithm (PSA takes only first one) */
+	LOG_VERBOSE("Parsing permitted algorithm: %s",
+		    args->op.keygen.permitted_algo);
 	algorithm = parse_psa_permitted_algo(args->op.keygen.permitted_algo,
 					     args->op.keygen.key_type);
 	if (algorithm == PSA_ALG_NONE) {
@@ -274,13 +309,20 @@ enum cli_exit_code cli_keygen_sym_operation(struct parsed_options *args)
 		goto cleanup;
 	}
 
+	LOG_VERBOSE("Algorithm resolved: %s (0x%08x)",
+		    psa_algorithm_to_string(algorithm),
+		    (unsigned int)algorithm);
+
 	/* Parse usage flags */
+	LOG_VERBOSE("Parsing usage flags: %s", args->op.keygen.usage);
 	usage_flags = parse_psa_usage_flags(args->op.keygen.usage);
 	if (!usage_flags) {
 		LOG_ERROR("Invalid or empty usage flags: %s",
 			  args->op.keygen.usage);
 		goto cleanup;
 	}
+
+	LOG_VERBOSE("Usage flags resolved: 0x%08x", (unsigned int)usage_flags);
 
 	/* Setup key attributes */
 	psa_set_key_type(&attributes, key_type);
@@ -291,20 +333,25 @@ enum cli_exit_code cli_keygen_sym_operation(struct parsed_options *args)
 	/* Set lifetime (transient or persistent) */
 	if (args->op.keygen.transient) {
 		psa_set_key_lifetime(&attributes, PSA_KEY_LIFETIME_VOLATILE);
+		LOG_VERBOSE("Key lifetime: VOLATILE (transient)");
 	} else {
 		psa_set_key_lifetime(&attributes, PSA_KEY_LIFETIME_PERSISTENT);
 		psa_set_key_id(&attributes, args->op.keygen.key_id);
+		LOG_VERBOSE("Key lifetime: PERSISTENT (id=0x%08x)",
+			    args->op.keygen.key_id);
 	}
 
-	/* Log parameters */
+	/* Log PSA API parameters */
 	log_psa_keygen_params(&attributes, args->op.keygen.key_id);
 
 	/* Call PSA key generation API */
+	LOG_VERBOSE("Calling psa_generate_key()");
 	status = psa_generate_key(&attributes, &key_id);
 	if (!is_psa_api_success("psa_generate_key", status))
 		goto cleanup;
 
 	/* Retrieve actual attributes from subsystem */
+	LOG_VERBOSE("Retrieving key attributes via psa_get_key_attributes()");
 	psa_reset_key_attributes(&attributes);
 	status = psa_get_key_attributes(key_id, &attributes);
 	if (!is_psa_api_success("psa_get_key_attributes", status))
@@ -320,18 +367,22 @@ cleanup:
 
 	if (args) {
 		if (args->op.keygen.key_type) {
+			LOG_VERBOSE("Freeing key type buffer");
 			free(args->op.keygen.key_type);
 			args->op.keygen.key_type = NULL;
 		}
 		if (args->op.keygen.permitted_algo) {
+			LOG_VERBOSE("Freeing permitted algo buffer");
 			free(args->op.keygen.permitted_algo);
 			args->op.keygen.permitted_algo = NULL;
 		}
 		if (args->op.keygen.usage) {
+			LOG_VERBOSE("Freeing usage buffer");
 			free(args->op.keygen.usage);
 			args->op.keygen.usage = NULL;
 		}
 		if (args->log_filename) {
+			LOG_VERBOSE("Freeing log filename buffer");
 			free(args->log_filename);
 			args->log_filename = NULL;
 		}

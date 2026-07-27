@@ -797,3 +797,47 @@ end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
+
+int select_subsystem_implicit_op(enum operation_id operation_id,
+				 enum subsystem_id *subsystem_id)
+{
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+
+	struct subsystem_func *func = NULL;
+	enum subsystem_id id = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	id = *subsystem_id;
+
+	if (id != SUBSYSTEM_ID_INVALID) {
+		/*
+		 * For implicit operations, ask the subsystem whether it
+		 * supports the operation at all.
+		 */
+		func = smw_config_get_subsystem_func(id);
+		if (func && func->is_operation_supported)
+			status = func->is_operation_supported(operation_id);
+	} else {
+		/*
+		 * No subsystem was specified. Iterate configured subsystems for
+		 * the operation.
+		 * For implicit operations, pick the first subsystem that
+		 * declares support for the operation via
+		 * is_operation_supported().
+		 */
+		for (id = 0; id < SUBSYSTEM_ID_NB; id++) {
+			func = smw_config_get_subsystem_func(id);
+			if (!func || !func->is_operation_supported)
+				continue;
+
+			status = func->is_operation_supported(operation_id);
+			if (status == SMW_STATUS_OK) {
+				*subsystem_id = id;
+				break;
+			}
+		}
+	}
+
+	return status;
+}

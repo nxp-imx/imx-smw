@@ -14,6 +14,24 @@
 #include "subsystems.h"
 
 /**
+ * enum smw_op_implicit - Subsystem selection mode for an operation.
+ * @SMW_OP_NOT_IMPLICIT: Normal (non-implicit) operation. The subsystem
+ *                       capabilities are checked against the operation args.
+ * @SMW_OP_REAL_IMPLICIT: Implicit operation. The subsystem is selected by
+ *                        querying is_operation_supported() on each configured
+ *                        subsystem.
+ * @SMW_OP_INHERIT_IMPLICIT: Implicit multipart update/final operation. The
+ *                           subsystem was already selected at initialization
+ *                           time and is carried in the operation context. Skip
+ *                           the is_operation_supported() check entirely.
+ */
+enum smw_op_implicit {
+	SMW_OP_NOT_IMPLICIT,
+	SMW_OP_REAL_IMPLICIT,
+	SMW_OP_INHERIT_IMPLICIT,
+};
+
+/**
  * struct smw_config_psa_config - PSA configuration
  * @subsystem_name: Default subsystem name invoked with PSA API
  * @alt: Whether or not, subsystem fallback is enabled
@@ -49,15 +67,14 @@ int smw_config_deinit(void);
  * @operation_id: Security Operation ID.
  * @args: Security Operation arguments.
  * @subsystem_id: Pointer to the Secure Subsystem ID.
- *
- * This function selects a Secure Subsystem to execute the Security Operation
- * given the arguments.
+ * @op_implicit: Subsystem selection mode. See &enum op_implicit.
  *
  * Return:
  * error code.
  */
 int smw_config_select_subsystem(enum operation_id operation_id, void *args,
-				enum subsystem_id *subsystem_id);
+				enum subsystem_id *subsystem_id,
+				enum smw_op_implicit op_implicit);
 
 /**
  * smw_config_is_operations_supported() - Check if subsystem support at least

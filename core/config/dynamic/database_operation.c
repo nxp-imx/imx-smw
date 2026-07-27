@@ -13,28 +13,14 @@
 #include "name.h"
 #include "operations.h"
 #include "subsystems.h"
+#include "config.h"
 
 #include "database.h"
 
 #include "operations_apis.h"
 
-int get_operation_id(const char *string, enum operation_id *id)
-{
-	int status = SMW_STATUS_OK;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	status = smw_utils_get_string_index(string, operation_strings,
-					    OPERATION_ID_NB, id);
-	if (status == SMW_STATUS_UNKNOWN_NAME)
-		status = SMW_STATUS_UNKNOWN_CONFIG_OP_NAME;
-
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-int smw_config_select_subsystem(enum operation_id operation_id, void *args,
-				enum subsystem_id *subsystem_id)
+static int select_subsystem_op(enum operation_id operation_id, void *args,
+			       enum subsystem_id *subsystem_id)
 {
 	int status = SMW_STATUS_OK;
 
@@ -46,8 +32,6 @@ int smw_config_select_subsystem(enum operation_id operation_id, void *args,
 	unsigned int ref_id = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	SMW_DBG_ASSERT(subsystem_id);
 
 	operation_func = get_operation_func(operation_id);
 	SMW_DBG_ASSERT(operation_func);
@@ -66,13 +50,21 @@ int smw_config_select_subsystem(enum operation_id operation_id, void *args,
 		goto end;
 
 	if (ref_id != SUBSYSTEM_ID_INVALID) {
+		/*
+		 * A specific subsystem was requested. For non-implicit
+		 * operations, verify it satisfies the capability constraints.
+		 */
 		status = check_subsystem_caps(args, node);
 		goto end;
 	}
 
+	/*
+	 * No subsystem was specified. Iterate configured subsystems for the
+	 * operation. For non-implicit operations, pick the first one whose
+	 * capabilities match the request arguments.
+	 */
 	while (node) {
 		status = check_subsystem_caps(args, node);
-
 		if (status == SMW_STATUS_OK) {
 			ref_id = smw_utils_list_get_ref(node);
 			if (ref_id < SUBSYSTEM_ID_NB)
@@ -91,6 +83,49 @@ end:
 		status_mutex = config_db_mutex_unlock();
 		if (status == SMW_STATUS_OK)
 			status = status_mutex;
+	}
+
+	return status;
+}
+
+int get_operation_id(const char *string, enum operation_id *id)
+{
+	int status = SMW_STATUS_OK;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	status = smw_utils_get_string_index(string, operation_strings,
+					    OPERATION_ID_NB, id);
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_CONFIG_OP_NAME;
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+int smw_config_select_subsystem(enum operation_id operation_id, void *args,
+				enum subsystem_id *subsystem_id,
+				enum smw_op_implicit op_implicit)
+{
+	int status = SMW_STATUS_OK;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	SMW_DBG_ASSERT(subsystem_id);
+
+	switch (op_implicit) {
+	case SMW_OP_INHERIT_IMPLICIT:
+		/* Subsystem already known from init; no check needed. */
+		break;
+
+	case SMW_OP_REAL_IMPLICIT:
+		status = select_subsystem_implicit_op(operation_id,
+						      subsystem_id);
+		break;
+
+	default:
+		status = select_subsystem_op(operation_id, args, subsystem_id);
+		break;
 	}
 
 	return status;

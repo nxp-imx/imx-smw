@@ -86,4 +86,23 @@ int config_db_mutex_unlock(void);
 int find_subsystem_per_operation(enum operation_id operation_id,
 				 unsigned int subsystem_id, struct node **node);
 
+/**
+ * select_subsystem_implicit_op() - Find a subsystem for given implicit
+ *                                  operation
+ * @operation_id: [in] The operation ID to search for.
+ * @subsystem_id: [in/out] The subsystem ID to find.
+ *
+ * The function verifies if the input subsystem ID (if defined) can execute
+ * the implicit operation. If subsystem is not defined, parse the subsystems
+ * present to find the first one supporting the operation.
+ *
+ * The @subsytem_id is updated with the id of the selected subsystem.
+ *
+  Return:
+ * SMW_STATUS_OK                        - successful
+ * SMW_STATUS_OPERATION_NOT_CONFIGURED  - operation not configured
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED   - operation not supported
+ */
+int select_subsystem_implicit_op(enum operation_id operation_id,
+				 enum subsystem_id *subsystem_id);
 #endif /* __DATABASE_H__ */

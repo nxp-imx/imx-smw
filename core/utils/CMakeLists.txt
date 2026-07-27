@@ -22,6 +22,7 @@ add_private_sources(utils
     list.c
     key.c
     mac.c
+    math.c
     name.c
     object_db.c
     object_query.c

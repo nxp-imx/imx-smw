@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2024-2025 NXP
+ * Copyright 2024-2026 NXP
  */
 
 #ifndef __KEY_H__
@@ -200,5 +200,15 @@ int smw_utils_key_copy(struct smw_keymgr_descriptor *out,
  * descriptor.
  */
 void smw_utils_key_free(struct smw_keymgr_descriptor *desc);
+
+/**
+ * smw_utils_key_buffer_set() - Determine if key buffer is set
+ * @key_desc: Key descriptor
+ *
+ * Return:
+ * true  - If plaintext key buffer is set in key descriptor
+ * false - If plaintext key buffer is not set in key descriptor
+ */
+bool smw_utils_key_buffer_set(struct smw_keymgr_descriptor *key_desc);
 
 #endif /* __KEY_H__ */

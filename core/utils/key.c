@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024-2025 NXP
+ * Copyright 2024-2026 NXP
  */
 
 #include "debug.h"
@@ -360,4 +360,24 @@ void smw_utils_key_free(struct smw_keymgr_descriptor *desc)
 	}
 
 	SMW_UTILS_MEMSET(desc, 0, sizeof(*desc));
+}
+
+bool smw_utils_key_buffer_set(struct smw_keymgr_descriptor *key_desc)
+{
+	bool is_key_buffer_set = false;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!key_desc) {
+		SMW_DBG_PRINTF(DEBUG, "NULL key descriptor\n");
+		goto end;
+	}
+
+	if (key_desc->identifier.s_id == INVALID_KEY_ID)
+		is_key_buffer_set = true;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %s\n", __func__,
+		       is_key_buffer_set ? "true" : "false");
+	return is_key_buffer_set;
 }

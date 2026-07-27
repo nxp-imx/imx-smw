@@ -126,6 +126,60 @@ __weak bool tee_asymm_encrypt_decrypt_handle(enum operation_id operation_id,
 	return false;
 }
 
+__weak bool tee_keymgr_is_operation_supported(enum operation_id operation_id,
+					      int *status)
+{
+	(void)operation_id;
+	(void)status;
+
+	return false;
+}
+
+__weak bool tee_storage_is_operation_supported(enum operation_id operation_id,
+					       int *status)
+{
+	(void)operation_id;
+	(void)status;
+
+	return false;
+}
+
+__weak bool tee_aead_is_operation_supported(enum operation_id operation_id,
+					    int *status)
+{
+	(void)operation_id;
+	(void)status;
+
+	return false;
+}
+
+__weak bool tee_hash_is_operation_supported(enum operation_id operation_id,
+					    int *status)
+{
+	(void)operation_id;
+	(void)status;
+
+	return false;
+}
+
+__weak bool tee_sign_is_operation_supported(enum operation_id operation_id,
+					    int *status)
+{
+	(void)operation_id;
+	(void)status;
+
+	return false;
+}
+
+__weak bool tee_cipher_is_operation_supported(enum operation_id operation_id,
+					      int *status)
+{
+	(void)operation_id;
+	(void)status;
+
+	return false;
+}
+
 static void str_to_hex(char *str, unsigned char *hex)
 {
 	long val = 0;
@@ -504,10 +558,38 @@ TEEC_Context *get_tee_context_ptr(void)
 	return &tee_ctx.context;
 }
 
-static const struct subsystem_func func = { .load = load,
-					    .unload = unload,
-					    .execute = execute,
-					    .ctx_ops = tee_get_ctx_ops };
+static int tee_is_operation_supported(enum operation_id operation_id)
+{
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+
+	if (tee_keymgr_is_operation_supported(operation_id, &status))
+		goto end;
+
+	if (tee_storage_is_operation_supported(operation_id, &status))
+		goto end;
+
+	if (tee_aead_is_operation_supported(operation_id, &status))
+		goto end;
+
+	if (tee_hash_is_operation_supported(operation_id, &status))
+		goto end;
+
+	if (tee_sign_is_operation_supported(operation_id, &status))
+		goto end;
+
+	tee_cipher_is_operation_supported(operation_id, &status);
+
+end:
+	return status;
+}
+
+static const struct subsystem_func func = {
+	.load = load,
+	.unload = unload,
+	.execute = execute,
+	.ctx_ops = tee_get_ctx_ops,
+	.is_operation_supported = tee_is_operation_supported
+};
 
 const struct subsystem_func *smw_tee_get_func(void)
 {

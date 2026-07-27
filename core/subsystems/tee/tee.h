@@ -433,4 +433,49 @@ int set_tmpref_buffer(unsigned int mem_type, unsigned int param_idx,
  */
 int tee_export_public_key(struct smw_keymgr_descriptor *key_desc);
 
+/**
+ * tee_keymgr_is_operation_supported() - Check if a key manager operation is
+ *                                       supported by TEE.
+ * @operation_id: Security operation ID.
+ * @status: If security operation ID is handled, returns SMW_STATUS_OK if
+ *          operation supported or SMW_STATUS_OPERATION_NOT_SUPPORTED if
+ *          operation is not supported.
+ *
+ * Return:
+ * True if operation handled.
+ * False otherwise.
+ */
+bool tee_keymgr_is_operation_supported(enum operation_id operation_id,
+				       int *status);
+
+/**
+ * tee_storage_is_operation_supported() - Check if a data manager operation is
+ *                                        supported by TEE.
+ * @operation_id: Security operation ID.
+ * @status: If security operation ID is handled, returns SMW_STATUS_OK if
+ *          operation supported or SMW_STATUS_OPERATION_NOT_SUPPORTED if
+ *          operation is not supported.
+ *
+ * Return:
+ * True if operation handled.
+ * False otherwise.
+ */
+bool tee_storage_is_operation_supported(enum operation_id operation_id,
+					int *status);
+
+/**
+ * tee_aead_is_operation_supported() - Check if an AEAD operation is supported
+ *                                     by TEE.
+ * @operation_id: Security operation ID.
+ * @status: If security operation ID is handled, returns SMW_STATUS_OK if
+ *          operation supported or SMW_STATUS_OPERATION_NOT_SUPPORTED if
+ *          operation is not supported.
+ *
+ * Return:
+ * True if operation handled.
+ * False otherwise.
+ */
+bool tee_aead_is_operation_supported(enum operation_id operation_id,
+				     int *status);
+
 #endif /* TEE_H */

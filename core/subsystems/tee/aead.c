@@ -600,3 +600,21 @@ bool tee_aead_handle(enum operation_id operation_id, void *args, int *status)
 
 	return true;
 }
+
+bool tee_aead_is_operation_supported(enum operation_id operation_id,
+				     int *status)
+{
+	bool ret = false;
+
+	switch (operation_id) {
+	case OPERATION_ID_AEAD_UPDATE_AAD:
+		*status = SMW_STATUS_OK;
+		ret = true;
+		break;
+
+	default:
+		break;
+	}
+
+	return ret;
+}

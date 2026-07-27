@@ -2156,3 +2156,24 @@ bool tee_key_handle(enum operation_id op_id, void *args, int *status)
 
 	return true;
 }
+
+bool tee_keymgr_is_operation_supported(enum operation_id operation_id,
+				       int *status)
+{
+	bool ret = false;
+
+	switch (operation_id) {
+	case OPERATION_ID_GET_KEY_LENGTHS:
+	case OPERATION_ID_GET_KEY_ATTRIBUTES:
+	case OPERATION_ID_IS_OBJECT_PRESENT:
+	case OPERATION_ID_COMMIT_KEY_STORAGE:
+		*status = SMW_STATUS_OK;
+		ret = true;
+		break;
+
+	default:
+		break;
+	}
+
+	return ret;
+}

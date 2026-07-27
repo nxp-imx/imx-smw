@@ -374,10 +374,20 @@ end:
 	return status;
 }
 
-static const struct subsystem_func func = { .load = load,
-					    .unload = unload,
-					    .execute = execute,
-					    .ctx_ops = ele_get_ctx_ops };
+static int ele_is_operation_supported(enum operation_id operation_id)
+{
+	(void)operation_id;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+static const struct subsystem_func func = {
+	.load = load,
+	.unload = unload,
+	.execute = execute,
+	.ctx_ops = ele_get_ctx_ops,
+	.is_operation_supported = ele_is_operation_supported
+};
 
 const struct subsystem_func *smw_ele_get_func(void)
 {

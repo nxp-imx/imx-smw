@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2025 NXP
+ * Copyright 2022-2026 NXP
  */
 
 #include "smw_status.h"
@@ -1475,4 +1475,26 @@ bool ele_key_handle(struct subsystem_context *ele_ctx,
 	}
 
 	return true;
+}
+
+bool ele_keymgr_is_operation_supported(enum operation_id operation_id,
+				       int *status)
+{
+	bool ret = false;
+
+	switch (operation_id) {
+	case OPERATION_ID_GET_KEY_LENGTHS:
+	case OPERATION_ID_GET_KEY_ATTRIBUTES:
+	case OPERATION_ID_IS_OBJECT_PRESENT:
+	case OPERATION_ID_COMMIT_KEY_STORAGE:
+	case OPERATION_ID_KEY_ATTESTATION:
+		*status = SMW_STATUS_OK;
+		ret = true;
+		break;
+
+	default:
+		break;
+	}
+
+	return ret;
 }

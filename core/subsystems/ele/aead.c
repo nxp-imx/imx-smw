@@ -1622,3 +1622,21 @@ end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
+
+bool ele_aead_is_operation_supported(enum operation_id operation_id,
+				     int *status)
+{
+	bool ret = false;
+
+	switch (operation_id) {
+	case OPERATION_ID_AEAD_UPDATE_AAD:
+		*status = SMW_STATUS_OK;
+		ret = true;
+		break;
+
+	default:
+		break;
+	}
+
+	return ret;
+}

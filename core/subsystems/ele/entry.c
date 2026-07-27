@@ -447,6 +447,70 @@ __weak int ela_cleanup(void)
 	return SMW_STATUS_OK;
 }
 
+__weak bool ele_keymgr_is_operation_supported(enum operation_id operation_id,
+					      int *status)
+{
+	(void)operation_id;
+	(void)status;
+
+	return false;
+}
+
+__weak bool ele_storage_is_operation_supported(enum operation_id operation_id,
+					       int *status)
+{
+	(void)operation_id;
+	(void)status;
+
+	return false;
+}
+
+__weak bool ele_cipher_is_operation_supported(enum operation_id operation_id,
+					      int *status)
+{
+	(void)operation_id;
+	(void)status;
+
+	return false;
+}
+
+__weak bool ele_aead_is_operation_supported(enum operation_id operation_id,
+					    int *status)
+{
+	(void)operation_id;
+	(void)status;
+
+	return false;
+}
+
+__weak bool ele_hash_is_operation_supported(enum operation_id operation_id,
+					    int *status)
+{
+	(void)operation_id;
+	(void)status;
+
+	return false;
+}
+
+__weak bool ele_sign_is_operation_supported(enum operation_id operation_id,
+					    int *status)
+{
+	(void)operation_id;
+	(void)status;
+
+	return false;
+}
+
+__weak bool
+ele_device_manager_is_operation_supported(enum operation_id operation_id,
+					  int *status)
+{
+	(void)operation_id;
+	(void)status;
+
+	return false;
+}
+
 static int execute(enum operation_id operation_id, void *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
@@ -486,10 +550,41 @@ end:
 	return status;
 }
 
-static const struct subsystem_func func = { .load = load,
-					    .unload = unload,
-					    .execute = execute,
-					    .ctx_ops = ele_get_ctx_ops };
+static int ele_is_operation_supported(enum operation_id operation_id)
+{
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+
+	if (ele_keymgr_is_operation_supported(operation_id, &status))
+		goto end;
+
+	if (ele_storage_is_operation_supported(operation_id, &status))
+		goto end;
+
+	if (ele_cipher_is_operation_supported(operation_id, &status))
+		goto end;
+
+	if (ele_aead_is_operation_supported(operation_id, &status))
+		goto end;
+
+	if (ele_hash_is_operation_supported(operation_id, &status))
+		goto end;
+
+	if (ele_sign_is_operation_supported(operation_id, &status))
+		goto end;
+
+	ele_device_manager_is_operation_supported(operation_id, &status);
+
+end:
+	return status;
+}
+
+static const struct subsystem_func func = {
+	.load = load,
+	.unload = unload,
+	.execute = execute,
+	.ctx_ops = ele_get_ctx_ops,
+	.is_operation_supported = ele_is_operation_supported
+};
 
 const struct subsystem_func *smw_ele_get_func(void)
 {

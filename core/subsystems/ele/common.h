@@ -904,4 +904,64 @@ int open_cipher_service(struct hdl *hdl, hsm_hdl_t *cipher_hdl);
  */
 int close_cipher_service(hsm_hdl_t cipher_hdl);
 
+/**
+ * ele_keymgr_is_operation_supported() - Check if a key manager operation is
+ *                                       supported by ELE.
+ * @operation_id: Security operation ID.
+ * @status: If security operation ID is handle, returns SMW_STATUS_OK if
+ *          operation supported or SMW_STATUS_OPERATION_NOT_SUPPORTED if
+ *          operation is not supported.
+ *
+ * Return:
+ * True if operation handled.
+ * False otherwise.
+ */
+bool ele_keymgr_is_operation_supported(enum operation_id operation_id,
+				       int *status);
+
+/**
+ * ele_storage_is_operation_supported() - Check if a data manager operation is
+ *                                        supported by ELE.
+ * @operation_id: Security operation ID.
+ * @status: If security operation ID is handled, returns SMW_STATUS_OK if
+ *          operation supported or SMW_STATUS_OPERATION_NOT_SUPPORTED if
+ *          operation is not supported.
+ *
+ * Return:
+ * True if operation handled.
+ * False otherwise.
+ */
+bool ele_storage_is_operation_supported(enum operation_id operation_id,
+					int *status);
+
+/**
+ * ele_aead_is_operation_supported() - Check if an AEAD operation is supported
+ *                                     by ELE.
+ * @operation_id: Security operation ID.
+ * @status: If security operation ID is handled, returns SMW_STATUS_OK if
+ *          operation supported or SMW_STATUS_OPERATION_NOT_SUPPORTED if
+ *          operation is not supported.
+ *
+ * Return:
+ * True if operation handled.
+ * False otherwise.
+ */
+bool ele_aead_is_operation_supported(enum operation_id operation_id,
+				     int *status);
+
+/**
+ * ele_device_manager_is_operation_supported() - Check if a device manager
+ *                                               operation is supported by ELE.
+ * @operation_id: Security operation ID.
+ * @status: If security operation ID is handled, returns SMW_STATUS_OK if
+ *          operation supported or SMW_STATUS_OPERATION_NOT_SUPPORTED if
+ *          operation is not supported.
+ *
+ * Return:
+ * True if operation handled.
+ * False otherwise.
+ */
+bool ele_device_manager_is_operation_supported(enum operation_id operation_id,
+					       int *status);
+
 #endif /* __COMMON_H__ */

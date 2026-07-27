@@ -382,3 +382,22 @@ bool ele_device_manager_handle(struct subsystem_context *ele_ctx,
 
 	return handled;
 }
+
+bool ele_device_manager_is_operation_supported(enum operation_id operation_id,
+					       int *status)
+{
+	bool ret = false;
+
+	switch (operation_id) {
+	case OPERATION_ID_DEVICE_GET_UUID:
+	case OPERATION_ID_DEVICE_GET_INFO:
+		*status = SMW_STATUS_OK;
+		ret = true;
+		break;
+
+	default:
+		break;
+	}
+
+	return ret;
+}

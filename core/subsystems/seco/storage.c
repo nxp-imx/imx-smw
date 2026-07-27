@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2025 NXP
+ * Copyright 2023-2026 NXP
  */
 
 #include "debug.h"
@@ -241,4 +241,23 @@ bool seco_storage_handle(struct hdl *hdl, enum operation_id operation_id,
 
 	// coverity[missing_unlock]
 	return true;
+}
+
+bool seco_storage_is_operation_supported(enum operation_id operation_id,
+					 int *status)
+{
+	bool ret = false;
+
+	switch (operation_id) {
+	case OPERATION_ID_IS_OBJECT_PRESENT:
+	case OPERATION_ID_STORAGE_GET_DATA_INFO:
+		*status = SMW_STATUS_OK;
+		ret = true;
+		break;
+
+	default:
+		break;
+	}
+
+	return ret;
 }

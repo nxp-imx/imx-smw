@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #include <time.h>
@@ -311,6 +311,42 @@ __weak void *seco_get_ctx_ops(void)
 	return NULL;
 }
 
+__weak bool seco_keymgr_is_operation_supported(enum operation_id operation_id,
+					       int *status)
+{
+	(void)operation_id;
+	(void)status;
+
+	return false;
+}
+
+__weak bool seco_storage_is_operation_supported(enum operation_id operation_id,
+						int *status)
+{
+	(void)operation_id;
+	(void)status;
+
+	return false;
+}
+
+__weak bool seco_hash_is_operation_supported(enum operation_id operation_id,
+					     int *status)
+{
+	(void)operation_id;
+	(void)status;
+
+	return false;
+}
+
+__weak bool seco_sign_is_operation_supported(enum operation_id operation_id,
+					     int *status)
+{
+	(void)operation_id;
+	(void)status;
+
+	return false;
+}
+
 static int execute(enum operation_id operation_id, void *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
@@ -353,10 +389,32 @@ end:
 	return status;
 }
 
-static const struct subsystem_func func = { .load = load,
-					    .unload = unload,
-					    .execute = execute,
-					    .ctx_ops = seco_get_ctx_ops };
+static int seco_is_operation_supported(enum operation_id operation_id)
+{
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+
+	if (seco_keymgr_is_operation_supported(operation_id, &status))
+		goto end;
+
+	if (seco_storage_is_operation_supported(operation_id, &status))
+		goto end;
+
+	if (seco_hash_is_operation_supported(operation_id, &status))
+		goto end;
+
+	seco_sign_is_operation_supported(operation_id, &status);
+
+end:
+	return status;
+}
+
+static const struct subsystem_func func = {
+	.load = load,
+	.unload = unload,
+	.execute = execute,
+	.ctx_ops = seco_get_ctx_ops,
+	.is_operation_supported = seco_is_operation_supported
+};
 
 const struct subsystem_func *smw_seco_get_func(void)
 {

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2025 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #ifndef __COMMON_H__
@@ -341,5 +341,35 @@ int seco_close_key_mgt_service(hsm_hdl_t key_mgt_hdl);
  *
  */
 int seco_open_key_store_service(struct hdl *hdl);
+
+/**
+ * seco_keymgr_is_operation_supported() - Check if a key manager operation is
+ *                                        supported by SECO.
+ * @operation_id: Security operation ID.
+ * @status: If security operation ID is handled, returns SMW_STATUS_OK if
+ *          operation supported or SMW_STATUS_OPERATION_NOT_SUPPORTED if
+ *          operation is not supported.
+ *
+ * Return:
+ * True if operation handled.
+ * False otherwise.
+ */
+bool seco_keymgr_is_operation_supported(enum operation_id operation_id,
+					int *status);
+
+/**
+ * seco_storage_is_operation_supported() - Check if a data manager operation is
+ *                                         supported by SECO.
+ * @operation_id: Security operation ID.
+ * @status: If security operation ID is handled, returns SMW_STATUS_OK if
+ *          operation supported or SMW_STATUS_OPERATION_NOT_SUPPORTED if
+ *          operation is not supported.
+ *
+ * Return:
+ * True if operation handled.
+ * False otherwise.
+ */
+bool seco_storage_is_operation_supported(enum operation_id operation_id,
+					 int *status);
 
 #endif /* __COMMON_H__ */

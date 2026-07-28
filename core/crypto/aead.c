@@ -1074,8 +1074,8 @@ enum smw_status_code smw_aead_update_aad(struct smw_aead_aad_args *args)
 
 	aead_args.aad_pub = args;
 
-	status = smw_utils_execute_update_implicit(OPERATION_ID_AEAD_UPDATE_AAD,
-						   &aead_args, subsystem_id);
+	status = smw_utils_execute_update(OPERATION_ID_AEAD_UPDATE_AAD,
+					  &aead_args, subsystem_id);
 	/*
 	 * Release the context if the update AAD operation has returned any status
 	 * code except SMW_STATUS_OK and SMW_STATUS_INVALID_PARAM.

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2025 NXP
+ * Copyright 2021-2026 NXP
  */
 #include "smw_status.h"
 
@@ -910,11 +910,13 @@ static int tls12_op_copy_partial_data(struct smw_keymgr_derive_key_args *args)
 	ctx->op_id = SMW_CRYPTO_OP_ID_TLS12;
 	ctx->op_state = CTX_OP_STATE_INIT;
 	ctx->subsystem_context = partial_data;
+	ctx->subsystem_id = SUBSYSTEM_ID_SECO;
 
 	key_derived_identifier->type_id = SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER;
 	key_derived_identifier->s_id = (uint32_t)-1;
 	key_derived_identifier->privacy_id = SMW_KEYMGR_PRIVACY_ID_PRIVATE;
 	key_derived_identifier->security_size = TLS12_MASTER_SECRET_SEC_SIZE;
+	key_derived_identifier->subsystem_id = SUBSYSTEM_ID_SECO;
 
 	key_derived_attributes->attributes =
 		SMW_ATTR_SET_SENSITIVE(key_derived_attributes->attributes);

@@ -13,6 +13,14 @@
 			"permitted_algo": [
 				"CMAC"
 			]
+		},
+		"key 2": {
+			"type": "AES",
+			"security_size": 256,
+			"priv_key": [
+				"603deb1015ca71be2b73aef0857d7781",
+				"1f352c073b6108d72d9810a30914dff4"
+			]
 		}
 	},
 	"subtest 1": {
@@ -126,5 +134,41 @@
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1
+	},
+	"subtest 12": {
+		"description": [
+			"Compute MAC using AES-256 CMAC algo with plaintext key buffer",
+			"Test vector from https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/AES_CMAC.pdf",
+			"Section CMAC-AES256 (Example #2)"
+		],
+		"command": "MAC_COMPUTE",
+		"algo": "CMAC",
+		"key_name": "key 2",
+		"input": "6bc1bee22e409f96e93d7e117393172a",
+		"output": 16,
+		"mac": "28a7023f452e8f82bd4bf28d8c37c35c"
+	},
+	"subtest 13": {
+		"description": [
+			"Verify MAC using AES-256 CMAC algo with plaintext key buffer",
+			"Test vector from https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/AES_CMAC.pdf",
+			"Section CMAC-AES256 (Example #2)"
+		],
+		"command": "MAC_VERIFY",
+		"algo": "CMAC",
+		"key_name": "key 2",
+		"input": "6bc1bee22e409f96e93d7e117393172a",
+		"mac": "28a7023f452e8f82bd4bf28d8c37c35c"
+	},
+	"subtest 14": {
+		"description": [
+			"Test MAC verify operation using AES-256 CMAC algorithm with invalid MAC"
+		],
+		"command": "MAC_VERIFY",
+		"algo": "CMAC",
+		"key_name": "key 2",
+		"input": "6bc1bee22e409f96e93d7e117393172a",
+		"mac": "bad962f61b7bf89efc6b551f4667d983",
+		"result": "SMW_STATUS_SIGNATURE_INVALID"
 	}
 }

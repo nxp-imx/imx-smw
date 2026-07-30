@@ -15,6 +15,15 @@
 				"HASH=SHA256",
 				"LENGTH=8"
 			]
+		},
+		"key 2": {
+			"type": "HMAC",
+			"security_size": 384,
+			"priv_key": [
+				"000102030405060708090a0b0c0d0e0f",
+				"101112131415161718191a1b1c1d1e1f",
+				"202122232425262728292a2b2c2d2e2f"
+			]
 		}
 	},
 	"subtest 1": {
@@ -137,5 +146,66 @@
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1
+	},
+	"subtest 12": {
+		"description": [
+			"HMAC-SHA384 truncated: compute 20-byte MAC using plaintext key buffer",
+			"Test vector from https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/HMAC_SHA384.pdf"
+		],
+		"command": "MAC_COMPUTE",
+		"subsystem": "ELE",
+		"algo": "HMAC_TRUNCATED",
+		"hash": "SHA384",
+		"key_name": "key 2",
+		"input": [
+			"53616d706c65206d6573736167652066",
+			"6f72206b65796c656e3c626c6f636b6c",
+			"656e"
+		],
+		"output": 20,
+		"mac": [
+			"6eb242bdbb582ca17bebfa481b1e2321",
+			"1464d2b7"
+		]
+	},
+	"subtest 13": {
+		"description": [
+			"Verify MAC using HMAC-SHA384 truncated to 20 bytes with plaintext key buffer",
+			"Test vector from https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/HMAC_SHA384.pdf"
+		],
+		"command": "MAC_VERIFY",
+		"subsystem": "ELE",
+		"algo": "HMAC_TRUNCATED",
+		"hash": "SHA384",
+		"key_name": "key 2",
+		"input": [
+			"53616d706c65206d6573736167652066",
+			"6f72206b65796c656e3c626c6f636b6c",
+			"656e"
+		],
+		"mac": [
+			"6eb242bdbb582ca17bebfa481b1e2321",
+			"1464d2b7"
+		]
+	},
+	"subtest 14": {
+		"description": [
+			"Test MAC verify operation using HMAC-SHA384 algo with invalid MAC"
+		],
+		"command": "MAC_VERIFY",
+		"subsystem": "ELE",
+		"algo": "HMAC_TRUNCATED",
+		"hash": "SHA384",
+		"key_name": "key 2",
+		"input": [
+			"53616d706c65206d6573736167652066",
+			"6f72206b65796c656e3c626c6f636b6c",
+			"656e"
+		],
+		"mac": [
+			"bad242bdbb582ca17bebfa481b1e2321",
+			"1464d2b7"
+		],
+		"result": "SMW_STATUS_SIGNATURE_INVALID"
 	}
 }

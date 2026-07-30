@@ -99,6 +99,9 @@ The failure is due to the storage manager which is already loaded and a new inst
   freed internally).
 * Add tests for ELA cipher one-shot operations (CBC, CTR, ECB modes with
   plaintext keys).
+* Add negative MAC verify subtests to validate that an invalid MAC
+  returns `SMW_STATUS_SIGNATURE_INVALID`. Add MAC compute/verify subtests with
+  plaintext key buffers using NIST test vectors.
 
 #### PKCS#11 Library
 

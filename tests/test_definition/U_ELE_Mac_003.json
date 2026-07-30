@@ -14,6 +14,14 @@
 				"CMAC",
 				"LENGTH=8"
 			]
+		},
+		"key 2": {
+			"type": "AES",
+			"security_size": 192,
+			"priv_key": [
+				"8e73b0f7da0e6452c810f32b809079e5",
+				"62f8ead2522c6b7b"
+			]
 		}
 	},
 	"subtest 1": {
@@ -127,5 +135,56 @@
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1
+	},
+	"subtest 12": {
+		"description": [
+			"Compute MAC using AES-192 CMAC truncated to 8 bytes with plaintext key buffer",
+			"Test vector from https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/AES_CMAC.pdf",
+			"Section CMAC-AES192 (Example #4)"
+		],
+		"command": "MAC_COMPUTE",
+		"algo": "CMAC_TRUNCATED",
+		"key_name": "key 2",
+		"input": [
+			"6bc1bee22e409f96e93d7e117393172a",
+			"ae2d8a571e03ac9c9eb76fac45af8e51",
+			"30c81c46a35ce411e5fbc1191a0a52ef",
+			"f69f2445df4f9b17ad2b417be66c3710"
+		],
+		"output": 8,
+		"mac": "a1d5df0eed790f79"
+	},
+	"subtest 13": {
+		"description": [
+			"MAC verify using AES-192 CMAC truncated to 8 bytes with plaintext key buffer",
+			"NIST Test vector from https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/AES_CMAC.pdf",
+			"Section CMAC-AES192 (Example #4)"
+		],
+		"command": "MAC_VERIFY",
+		"algo": "CMAC_TRUNCATED",
+		"key_name": "key 2",
+		"input": [
+			"6bc1bee22e409f96e93d7e117393172a",
+			"ae2d8a571e03ac9c9eb76fac45af8e51",
+			"30c81c46a35ce411e5fbc1191a0a52ef",
+			"f69f2445df4f9b17ad2b417be66c3710"
+		],
+		"mac": "a1d5df0eed790f79"
+	},
+	"subtest 14": {
+		"description": [
+			"Test MAC verify operation using AES-192 CMAC truncated algo with invalid MAC"
+		],
+		"command": "MAC_VERIFY",
+		"algo": "CMAC_TRUNCATED",
+		"key_name": "key 2",
+		"input": [
+			"6bc1bee22e409f96e93d7e117393172a",
+			"ae2d8a571e03ac9c9eb76fac45af8e51",
+			"30c81c46a35ce411e5fbc1191a0a52ef",
+			"f69f2445df4f9b17ad2b417be66c3710"
+		],
+		"mac": "bad5df0eed790f79",
+		"result": "SMW_STATUS_SIGNATURE_INVALID"
 	}
 }

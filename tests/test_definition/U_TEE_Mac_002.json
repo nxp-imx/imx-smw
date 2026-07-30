@@ -134,6 +134,14 @@
 				"btdtLZfGn9EzlYlSOTHyps/1VLFfc48h",
 				"7HLdl6czCQc="
 			]
+		},
+		"key 9": {
+			"type": "HMAC",
+			"security_size": 256,
+			"priv_key": [
+				"000102030405060708090a0b0c0d0e0f",
+				"101112131415161718191a1b1c1d1e1f"
+			]
 		}
 	},
 	"subtest 1": {
@@ -447,5 +455,66 @@
 		"command": "DELETE",
 		"key_name": "key 7",
 		"depends": 7
+	},
+	"subtest 23": {
+		"description": [
+			"Compute MAC using HMAC-SHA256 algo with plaintext key buffer",
+			"Test vector from https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/HMAC_SHA256.pdf"
+		],
+		"command": "MAC_COMPUTE",
+		"subsystem": "TEE",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "key 9",
+		"input": [
+			"53616d706c65206d6573736167652066",
+			"6f72206b65796c656e3c626c6f636b6c",
+			"656e"
+		],
+		"output": 32,
+		"mac": [
+			"a28cf43130ee696a98f14a37678b56bc",
+			"fcbdd9e5cf69717fecf5480f0ebdf790"
+		]
+	},
+	"subtest 24": {
+		"description": [
+			"Verify MAC using HMAC-SHA256 algo with plaintext key buffer",
+			"Test vector from https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/HMAC_SHA256.pdf"
+		],
+		"command": "MAC_VERIFY",
+		"subsystem": "TEE",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "key 9",
+		"input": [
+			"53616d706c65206d6573736167652066",
+			"6f72206b65796c656e3c626c6f636b6c",
+			"656e"
+		],
+		"mac": [
+			"a28cf43130ee696a98f14a37678b56bc",
+			"fcbdd9e5cf69717fecf5480f0ebdf790"
+		]
+	},
+	"subtest 25": {
+		"description": [
+			"Test MAC verify operation using HMAC-SHA256 algo with invalid MAC"
+		],
+		"command": "MAC_VERIFY",
+		"subsystem": "TEE",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "key 9",
+		"input": [
+			"53616d706c65206d6573736167652066",
+			"6f72206b65796c656e3c626c6f636b6c",
+			"656e"
+		],
+		"mac": [
+			"badcf43130ee696a98f14a37678b56bc",
+			"baddd9e5cf69717fecf5480f0ebdf790"
+		],
+		"result": "SMW_STATUS_SIGNATURE_INVALID"
 	}
 }

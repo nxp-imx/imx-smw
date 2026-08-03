@@ -3,11 +3,10 @@
  * Copyright 2026 NXP
  */
 
-#include <malloc.h>
-#include <string.h>
-
 #include "ele_common.h"
 #include "ele_crypto_internal.h"
+
+#include "utils.h"
 
 /*******************************************************************************
  * Code
@@ -20,7 +19,7 @@ void *malloc_if_not_null(void *addr, size_t size)
 
 	/* If out address is null, use HEAP */
 	if (!addr && size > 0u)
-		new = calloc(1, size);
+		new = SMW_UTILS_CALLOC(1, size);
 
 	if (new)
 		return new;
@@ -48,9 +47,9 @@ status_t ele_mu_get_response(s3mu_t *mu, uint32_t *buf)
 			break;
 
 		if (msg->hdr_byte.tag == MSG_TAG_RESP) {
-			(void)memcpy((void *)buf, (void *)msg,
-				     (uint32_t)(msg->hdr_byte.size *
-						sizeof(uint32_t)));
+			(void)SMW_UTILS_MEMCPY((void *)buf, (void *)msg,
+					       (uint32_t)(msg->hdr_byte.size *
+							  sizeof(uint32_t)));
 			break;
 		} else if (msg->hdr_byte.tag == MSG_TAG_CMD) {
 			status = nvm_storage_handle_req(mu, rmsg,

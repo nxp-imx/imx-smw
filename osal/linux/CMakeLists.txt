@@ -155,16 +155,21 @@ macro(make_smw_conf)
                       conf=setup-imx952
                       smw_config_file="${SMW_CONFIG_FILES_INSTALL}/ele_imx952_config.txt")
 
+    set(MAKE_SMW_CONF_937 ${SMW_SYS_CONF_SCRIPT}
+                      in=${BIN_SMW_CONF}
+                      conf=setup-imx937
+                      smw_config_file="${SMW_CONFIG_FILES_INSTALL}/ele_imx952_config.txt")
+
     #
     # i.MX943 specific configuration
     #
-    install(FILES ${SMW_CONFIG_FILES_DIR}/ele_imx943_config.txt
+    install(FILES ${SMW_CONFIG_FILES_DIR}/ele_imx94x_config.txt
             DESTINATION ${SMW_CONFIG_FILES_INSTALL})
 
-    set(MAKE_SMW_CONF_943 ${SMW_SYS_CONF_SCRIPT}
+    set(MAKE_SMW_CONF_94X ${SMW_SYS_CONF_SCRIPT}
               in=${BIN_SMW_CONF}
-              conf=setup-imx943
-              smw_config_file="${SMW_CONFIG_FILES_INSTALL}/ele_imx943_config.txt")
+              conf=setup-imx94x
+              smw_config_file="${SMW_CONFIG_FILES_INSTALL}/ele_imx94x_config.txt")
 
     # Order in the command must be respected to append the resulting smw.conf
     # file generated with the first command.
@@ -174,7 +179,8 @@ macro(make_smw_conf)
                       COMMAND ${MAKE_SMW_CONF_8ULP}
                       COMMAND ${MAKE_SMW_CONF_95}
                       COMMAND ${MAKE_SMW_CONF_952}
-                      COMMAND ${MAKE_SMW_CONF_943}
+                      COMMAND ${MAKE_SMW_CONF_937}
+                      COMMAND ${MAKE_SMW_CONF_94X}
                       COMMAND ${MAKE_ELE_SE_CONF}
                       COMMAND ${MAKE_TEE_CONF}
                       COMMENT "Generate Linux system configuration ${BIN_SMW_CONF}")

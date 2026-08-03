@@ -704,8 +704,14 @@ static int read_smw_conf(FILE *fp, struct lib_config_args *config, char **line,
  *
  * This function checks if the hostname starts with the prefix, but ensures
  * that if there are additional characters after the prefix, they are NOT
- * digits.
- * This prevents "imx95" from matching "imx952" while allowing "imx95-evk".
+ * digits. This prevents "imx95" from matching "imx952" while allowing
+ * "imx95-evk".
+ *
+ * When the prefix ends with 'x', the trailing 'x' acts as a single-digit
+ * wildcard: the corresponding position in the hostname must be a numeric
+ * digit ('0'-'9'). This allows a prefix such as "imx9x" to match hostnames
+ * like "imx93" or "imx95" while still rejecting non-digit characters at that
+ * position.
  *
  * Return:
  * true  - Hostname matches prefix
@@ -715,6 +721,7 @@ static bool check_hostname_prefix(const char *prefix, size_t prefix_len,
 				  const char *hostname)
 {
 	size_t host_len = 0;
+	size_t cmp_len = 0;
 
 	if (!prefix || !hostname)
 		return false;
@@ -724,11 +731,40 @@ static bool check_hostname_prefix(const char *prefix, size_t prefix_len,
 	if (host_len < prefix_len)
 		return false;
 
+	/*
+	 * When the prefix ends with 'x', treat it as a single-digit wildcard.
+	 * Compare all characters except the trailing 'x', then verify that the
+	 * corresponding hostname character is a digit.
+	 */
+	if (prefix_len > 0 && prefix[prefix_len - 1] == 'x') {
+		cmp_len = prefix_len - 1;
+
+		if (strncmp(hostname, prefix, cmp_len) != 0)
+			return false;
+
+		if (*(hostname + cmp_len) < '0' || *(hostname + cmp_len) > '9')
+			return false;
+
+		/*
+		 * The digit-wildcard position matched. If the hostname has
+		 * additional characters after that digit, they must not be
+		 * digits (same rule as the non-wildcard case).
+		 */
+		if (host_len == prefix_len)
+			goto match;
+
+		if (*(hostname + prefix_len) >= '0' &&
+		    *(hostname + prefix_len) <= '9')
+			return false;
+
+		goto match;
+	}
+
 	if (strncmp(hostname, prefix, prefix_len) != 0)
 		return false;
 
 	if (host_len == prefix_len)
-		return true;
+		goto match;
 
 	/*
 	 * When the hostname has additional digits after the device prefix,
@@ -737,6 +773,9 @@ static bool check_hostname_prefix(const char *prefix, size_t prefix_len,
 	if (*(hostname + prefix_len) >= '0' && *(hostname + prefix_len) <= '9')
 		return false;
 
+match:
+	DBG_PRINTF(INFO, "Device configuration name %s match for hostname %s\n",
+		   prefix, hostname);
 	/* Extra characters are non-digits (e.g., "-evk"), so it's a match */
 	return true;
 }

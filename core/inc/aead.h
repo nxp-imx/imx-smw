@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2024, 2026 NXP
  */
 
 #ifndef __AEAD_H__
@@ -273,5 +273,39 @@ smw_crypto_get_aead_data_op_context(struct smw_crypto_aead_args *args);
  */
 struct smw_op_context *
 smw_crypto_get_aead_aad_op_context(struct smw_crypto_aead_args *args);
+
+/**
+ * smw_utils_get_aead_input_data_len() - Return input data buffer length
+ * @args: Pointer to internal AEAD argument structure
+ * @input_data_length: Pointer to hold the input data buffer length
+ *
+ * For encryption operation, it returns the length of the input data.
+ * For decryption operation, it returns length of the ciphertext (excluding tag
+ * length, if tag is part of the output buffer) for ONESHOT or FINAL steps.
+ *
+ * Return:
+ * SMW_STATUS_OK            - Success
+ * SMW_STATUS_INVALID_PARAM - Invalid argument parameter
+ */
+int smw_utils_get_aead_input_data_len(struct smw_crypto_aead_args *args,
+				      unsigned int *input_data_length);
+
+/**
+ * smw_utils_get_aead_output_data_len() - Return output data buffer length
+ * @args: Pointer to internal AEAD arguments
+ * @output_data_length: Pointer to hold the output data buffer length
+ *
+ * For encryption operation,
+ *  - ONESHOT or FINAL steps: it returns length of the ciphertext (excluding tag
+ *     length, if tag is part of the output buffer)
+ *  - UPDATE step: it returns length of the ciphertext buffer.
+ * For decryption operation, it returns the length of the plaintext buffer.
+ *
+ * Return:
+ * SMW_STATUS_OK            - Success
+ * SMW_STATUS_INVALID_PARAM - Invalid argument parameter
+ */
+int smw_utils_get_aead_output_data_len(struct smw_crypto_aead_args *args,
+				       unsigned int *output_data_length);
 
 #endif /* __AEAD_H__ */

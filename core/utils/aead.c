@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2024, 2026 NXP
  */
 
 #include "smw_status.h"
 
+#include "aead.h"
 #include "config.h"
 #include "debug.h"
-#include "utils.h"
 
 /*
  * Ordering must be the same for internal values and public values.
@@ -61,5 +61,56 @@ int smw_utils_get_aead_op_type_id(smw_aead_op_type_t name,
 	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+int smw_utils_get_aead_input_data_len(struct smw_crypto_aead_args *args,
+				      unsigned int *input_data_length)
+{
+	int status = SMW_STATUS_OK;
+
+	*input_data_length = smw_crypto_get_aead_input_len(args);
+
+	if (args->op_type_id == SMW_CONFIG_AEAD_OP_TYPE_ID_DECRYPT &&
+	    (args->op_step == SMW_OP_STEP_ONESHOT ||
+	     args->op_step == SMW_OP_STEP_FINAL)) {
+		if (!smw_crypto_is_aead_tag_field_set(args)) {
+			if (DEC_OVERFLOW(*input_data_length,
+					 smw_crypto_get_aead_tag_len(args)))
+				status = SMW_STATUS_INVALID_PARAM;
+		}
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned with input data length = %u\n",
+		       __func__, *input_data_length);
+	return status;
+}
+
+int smw_utils_get_aead_output_data_len(struct smw_crypto_aead_args *args,
+				       unsigned int *output_data_length)
+{
+	int status = SMW_STATUS_OK;
+	unsigned int input_data_length = 0;
+
+	*output_data_length = smw_crypto_get_aead_output_len(args);
+	input_data_length = smw_crypto_get_aead_input_len(args);
+
+	if (args->op_type_id == SMW_CONFIG_AEAD_OP_TYPE_ID_ENCRYPT &&
+	    (args->op_step == SMW_OP_STEP_ONESHOT ||
+	     args->op_step == SMW_OP_STEP_FINAL)) {
+		if (!smw_crypto_is_aead_tag_field_set(args)) {
+			if (DEC_OVERFLOW(*output_data_length,
+					 smw_crypto_get_aead_tag_len(args)))
+				status = SMW_STATUS_OUTPUT_TOO_SHORT;
+
+			if (args->op_step == SMW_OP_STEP_ONESHOT &&
+			    *output_data_length > input_data_length)
+				*output_data_length = input_data_length;
+		}
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned with output data length = %u\n",
+		       __func__, *output_data_length);
+
 	return status;
 }

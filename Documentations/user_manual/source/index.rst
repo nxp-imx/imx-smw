@@ -10,5 +10,6 @@ Security Middleware (SMW) (release |release|)
    introduction
    configuration
    osal
+   subsystems_overview
    capabilities
    apis_reference

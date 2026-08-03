@@ -110,7 +110,8 @@
 			"imx8ulp",
 			"imx943",
 			"imx95",
-			"imx952"
+			"imx952",
+			"imx937"
 		]
 	},
 	"subtest 2": {

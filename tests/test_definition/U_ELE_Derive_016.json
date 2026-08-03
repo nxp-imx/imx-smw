@@ -49,11 +49,7 @@
 		"description": "Generate Base key ECDSA",
 		"command": "GENERATE",
 		"subsystem": "ELE",
-		"key_name": "key ECDSA",
-		"restriction_list": [
-			"imx95",
-			"imx952"
-		]
+		"key_name": "key ECDSA"
 	},
 	"subtest 2": {
 		"description": [

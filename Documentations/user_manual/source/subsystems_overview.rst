@@ -42,7 +42,7 @@ ELA acceleration is enabled when all of the below mentioned conditions are met:
     - The cryptographic operation (algorithm/mode) is supported by ELA
     - Plaintext key buffers are provided (opaque keys are not supported)
 
-**Supported Platforms:** i.MX943 and i.MX952
+**Supported Platforms:** i.MX94x (i.MX943, i.MX942, i.MX941), i.MX952, i.MX937
 
 SECO Subsystem
 --------------

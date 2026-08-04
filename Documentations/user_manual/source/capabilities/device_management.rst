@@ -73,7 +73,13 @@ the following table.
    +            +               +             +                            +                                 +
    | i.MX943    |               |             |                            | and PQC 512 bits                |
    +            +               +             +                            +                                 +
+   | i.MX942    |               |             |                            |                                 |
+   +            +               +             +                            +                                 +
+   | i.MX941    |               |             |                            |                                 |
+   +            +               +             +                            +                                 +
    | i.MX952    |               |             |                            |                                 |
+   +            +               +             +                            +                                 +
+   | i.MX937    |               |             |                            |                                 |
    +------------+---------------+-------------+----------------------------+---------------------------------+
 
 The device attestation returned certificate is signed by the device manufacturer

@@ -79,7 +79,8 @@ Supported Operations versus Subsystems
    +--------------+------------------------+----------------+---------+---------+----------+
 
 (1) ELE multi-part encryption and decryption operations not supported on the i.MX8ULP, i.MX93 and i.MX91 platforms.
-(2) ELA hardware acceleration is supported on i.MX943 and i.MX952 platforms when using plaintext key buffers.
+(2) ELA hardware acceleration is supported on i.MX94x (i.MX943, i.MX942, i.MX941), i.MX952 and i.MX937 platforms
+    when using plaintext key buffers.
 
 .. table:: Symmetric Encryption APIs
    :name: table_sym_enc_apis

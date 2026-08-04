@@ -296,7 +296,8 @@ EdDSA Signatures
 
 .. note::
    - i.MX8ULP doesn't support the EdDSA signature.
-   - i.MX943, i.MX95, i.MX952 Pre-Hashed signature is not supported.
+   - i.MX94x (i.MX943, i.MX942, i.MX941), i.MX95, i.MX952, i.MX937 Pre-Hashed
+     signature is not supported.
 
 Key attributes
 """"""""""""""

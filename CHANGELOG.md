@@ -113,6 +113,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   plaintext key buffers using NIST test vectors.
 * Add tests for ELA AEAD one-shot operations (GCM mode with plaintext keys).
 * Add PSA tests validating the AEAD Multipart.
+* Add i.MX937 validation.
 
 #### PKCS#11 Library
 
@@ -124,6 +125,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Add `CKM_AES_CFB128` and `CKM_AES_OFB` cases for existing cipher tests.
 * Add RSA PSS test where the mask generation function is set.
+* Add i.MX937 validation.
 
 ---
 ### <a id ="rel_5_4"></a></br>**Release 5.4**

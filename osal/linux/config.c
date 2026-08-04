@@ -723,7 +723,7 @@ static bool check_hostname_prefix(const char *prefix, size_t prefix_len,
 	size_t host_len = 0;
 	size_t cmp_len = 0;
 
-	if (!prefix || !hostname)
+	if (!prefix || !hostname || !prefix_len)
 		return false;
 
 	host_len = strlen(hostname);

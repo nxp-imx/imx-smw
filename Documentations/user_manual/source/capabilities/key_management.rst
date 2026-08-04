@@ -1571,10 +1571,7 @@ derivation operation success.
    +----------------------+------------+-------------------------------------------+
 
 .. important::
-  The OEM SRKH must be fused.
-
-.. note::
-  Only supported on i.MX8ULP, i.MX91, i.MX93 and i.MX943
+   The OEM SRKH must be fused.
 
 Usage Example
 ~~~~~~~~~~~~~
@@ -2420,7 +2417,7 @@ The TLS 1.3 key schedule provides improved security through a more structured
 key derivation process and forward secrecy.
 
 .. note::
-   Only supported on i.MX91, i.MX93, i.MX943 and i.MX95
+   Not supported on i.MX8ULP.
 
 Key Schedule Overview
 """""""""""""""""""""
@@ -2616,15 +2613,15 @@ Subsystem Support
    :width: 100%
    :class: wrap-table
 
-   +---------------+-------------+------------------------------------------+
-   | **Subsystem** | **Support** | **Notes**                                |
-   +===============+=============+==========================================+
-   | ELE           | Yes         | i.MX91, i.MX93, i.MX943, i.MX95 only     |
-   +---------------+-------------+------------------------------------------+
-   | TEE           | No          | Not supported                            |
-   +---------------+-------------+------------------------------------------+
-   | SECO          | No          | Not supported                            |
-   +---------------+-------------+------------------------------------------+
+   +---------------+-------------+----------------------------+
+   | **Subsystem** | **Support** | **Notes**                  |
+   +===============+=============+============================+
+   | ELE           | Yes         | Not supported on i.MX8ULP  |
+   +---------------+-------------+----------------------------+
+   | TEE           | No          | Not supported              |
+   +---------------+-------------+----------------------------+
+   | SECO          | No          | Not supported              |
+   +---------------+-------------+----------------------------+
 
 Usage Example with SMW API
 """"""""""""""""""""""""""

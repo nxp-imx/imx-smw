@@ -1352,7 +1352,8 @@ static int encrypt_decrypt_generate_iv(CK_FUNCTION_LIST_3_0_PTR pfunc)
 					      encrypted_data, update_loop_count,
 					      input_data_block_size,
 					      &total_encrypted_len, true);
-		if ((is_95() || is_943()) && is_ele_subsystem() &&
+		if (is_ele_subsystem() &&
+		    (is_95() || is_943() || is_952() || is_937()) &&
 		    (gcm_params.ulIvFixedBits != 0 &&
 		     gcm_params.ulIvFixedBits != 32)) {
 			if (gcm_params.ulIvFixedBits == 128) {

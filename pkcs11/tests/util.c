@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2025 NXP
+ * Copyright 2023-2026 NXP
  */
 
 #include <ctype.h>
@@ -18,6 +18,8 @@
 #define IMX8ULP "imx8ulp"
 #define IMX943	"imx943"
 #define IMX95	"imx95"
+#define IMX952	"imx952"
+#define IMX937	"imx937"
 
 #define TO_CK_BYTES(out, val)                                                  \
 	({                                                                     \
@@ -220,6 +222,8 @@ bool is_tee_subsystem(void)
 static bool compare_hostname(const char *device)
 {
 	char hostname[256] = { 0 };
+	size_t host_len = 0;
+	size_t device_len = 0;
 
 	if (gethostname(hostname, sizeof(hostname))) {
 		TEST_OUT("%s (%d): Unable to get the hostname\n", __func__,
@@ -228,14 +232,30 @@ static bool compare_hostname(const char *device)
 	}
 
 	string_to_lower(hostname, strlen(hostname));
+	host_len = strlen(hostname);
+	device_len = strlen(device);
 
 	TEST_OUT("%s (%d): hostname: %s, device name: %s\n", __func__, __LINE__,
 		 hostname, device);
 
-	if (!strncmp(hostname, device, strlen(device)))
+	if (host_len < device_len)
+		return false;
+
+	if (strncmp(hostname, device, device_len))
+		return false;
+
+	if (host_len == device_len)
 		return true;
 
-	return false;
+	/*
+	 * When the hostname has additional digits after the device prefix,
+	 * it indicates a different SOC (e.g., "imx952" vs "imx95").
+	 */
+	if (*(hostname + device_len) >= '0' && *(hostname + device_len) <= '9')
+		return false;
+
+	/* Extra characters are non-digits (e.g., "-evk"), so it's a match */
+	return true;
 }
 
 static CK_RV util_get_database_path(char **database_path, char *smw_etc_cnf)
@@ -376,6 +396,16 @@ bool is_95(void)
 bool is_943(void)
 {
 	return compare_hostname(IMX943);
+}
+
+bool is_952(void)
+{
+	return compare_hostname(IMX952);
+}
+
+bool is_937(void)
+{
+	return compare_hostname(IMX937);
 }
 
 CK_RV util_set_unique_id(CK_UTF8CHAR_PTR unique_id, CK_ULONG_PTR length,

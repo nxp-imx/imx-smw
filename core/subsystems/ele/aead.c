@@ -303,85 +303,6 @@ end:
 }
 
 /**
- * get_input_data_len() - Return the length of the input data buffer
- * @args: Pointer to internal AEAD argument structure
- * @input_data_length: Pointer to hold the input data buffer length
- *
- * For encryption operation, it returns the length of the input data.
- * For decryption operation, it returns length of the ciphertext (excluding tag
- * length, if tag is part of the output buffer) for ONESHOT or FINAL steps.
- *
- * Return:
- * SMW_STATUS_OK            - Success
- * SMW_STATUS_INVALID_PARAM - Invalid argument parameter
- */
-static int get_input_data_len(struct smw_crypto_aead_args *args,
-			      unsigned int *input_data_length)
-{
-	int status = SMW_STATUS_OK;
-
-	*input_data_length = smw_crypto_get_aead_input_len(args);
-
-	if (args->op_type_id == SMW_CONFIG_AEAD_OP_TYPE_ID_DECRYPT &&
-	    (args->op_step == SMW_OP_STEP_ONESHOT ||
-	     args->op_step == SMW_OP_STEP_FINAL)) {
-		if (!smw_crypto_is_aead_tag_field_set(args)) {
-			if (DEC_OVERFLOW(*input_data_length,
-					 smw_crypto_get_aead_tag_len(args)))
-				status = SMW_STATUS_INVALID_PARAM;
-		}
-	}
-
-	SMW_DBG_PRINTF(VERBOSE, "%s returned with input length = %u\n",
-		       __func__, *input_data_length);
-	return status;
-}
-
-/**
- * get_output_data_len() - Return the length of the output data buffer
- * @args: Pointer to internal AEAD arguments
- * @output_data_length: Pointer to hold the output data buffer length
- *
- * For encryption operation,
- *  - ONESHOT or FINAL steps: it returns length of the ciphertext (excluding tag
- *     length, if tag is part of the output buffer)
- *  - UPDATE step: it returns length of the ciphertext buffer.
- * For decryption operation, it returns the length of the plaintext buffer.
- *
- * Return:
- * SMW_STATUS_OK
- * SMW_STATUS_INVALID_PARAM
- */
-static int get_output_data_len(struct smw_crypto_aead_args *args,
-			       unsigned int *output_data_length)
-{
-	int status = SMW_STATUS_OK;
-	unsigned int input_data_length = 0;
-
-	*output_data_length = smw_crypto_get_aead_output_len(args);
-	input_data_length = smw_crypto_get_aead_input_len(args);
-
-	if (args->op_type_id == SMW_CONFIG_AEAD_OP_TYPE_ID_ENCRYPT &&
-	    (args->op_step == SMW_OP_STEP_ONESHOT ||
-	     args->op_step == SMW_OP_STEP_FINAL)) {
-		if (!smw_crypto_is_aead_tag_field_set(args)) {
-			if (DEC_OVERFLOW(*output_data_length,
-					 smw_crypto_get_aead_tag_len(args)))
-				status = SMW_STATUS_OUTPUT_TOO_SHORT;
-
-			if (args->op_step == SMW_OP_STEP_ONESHOT &&
-			    *output_data_length > input_data_length)
-				*output_data_length = input_data_length;
-		}
-	}
-
-	SMW_DBG_PRINTF(VERBOSE, "%s returned with output length = %u\n",
-		       __func__, *output_data_length);
-
-	return status;
-}
-
-/**
  * set_output_length() - Set the output buffer length
  * @aead_args: Pointer to internal AEAD arguments
  * @aead_ctx: Pointer to AEAD context
@@ -420,7 +341,7 @@ static int set_output_length(struct smw_crypto_aead_args *aead_args,
 	unsigned int input_len = 0;
 	struct crypto_output_params params = { 0 };
 
-	status = get_input_data_len(aead_args, &input_len);
+	status = smw_utils_get_aead_input_data_len(aead_args, &input_len);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -947,7 +868,8 @@ static int aead(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	status = get_output_data_len(aead_args, &op_args.output_size);
+	status = smw_utils_get_aead_output_data_len(aead_args,
+						    &op_args.output_size);
 	if (status == SMW_STATUS_OUTPUT_TOO_SHORT) {
 		(void)set_output_length(aead_args, NULL);
 		goto end;
@@ -955,7 +877,8 @@ static int aead(struct hdl *hdl, void *args)
 
 	op_args.output = smw_crypto_get_aead_output(aead_args);
 
-	status = get_input_data_len(aead_args, &op_args.input_size);
+	status = smw_utils_get_aead_input_data_len(aead_args,
+						   &op_args.input_size);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -1223,13 +1146,15 @@ static int aead_update_common(struct hdl *hdl, struct aead_context *aead_ctx,
 		op_args.context_size = aead_ctx->ele_ctx_size;
 	}
 
-	status = get_input_data_len(aead_args, &op_args.input_size);
+	status = smw_utils_get_aead_input_data_len(aead_args,
+						   &op_args.input_size);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
 	op_args.input = smw_crypto_get_aead_input(aead_args);
 
-	status = get_output_data_len(aead_args, &op_args.output_size);
+	status = smw_utils_get_aead_output_data_len(aead_args,
+						    &op_args.output_size);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -1395,7 +1320,8 @@ static int aead_final(struct hdl *hdl, void *args)
 			       update_output_offset);
 	}
 
-	status = get_output_data_len(aead_args, &op_args.output_size);
+	status = smw_utils_get_aead_output_data_len(aead_args,
+						    &op_args.output_size);
 	if (status != SMW_STATUS_OK)
 		goto set_length_and_exit;
 
@@ -1417,7 +1343,8 @@ static int aead_final(struct hdl *hdl, void *args)
 		op_args.input = NULL;
 		op_args.input_size = 0;
 	} else {
-		status = get_input_data_len(aead_args, &op_args.input_size);
+		status = smw_utils_get_aead_input_data_len(aead_args,
+							   &op_args.input_size);
 		if (status != SMW_STATUS_OK)
 			goto set_length_and_exit;
 

@@ -345,73 +345,6 @@ static uint32_t get_tag_param_type(enum ta_commands ta_cmd)
 	return TEEC_NONE;
 }
 
-/**
- * get_tee_input_data_len() - Return the length of the input data buffer only
- * @args: Pointer to internal AEAD argument structure
- * @ta_cmd: OPTEE command
- * @input_data_length: Pointer to hold the input data buffer length
- *
- * For encryption operation, it returns input data length
- * For decryption operation, it returns ciphertext length (excludes tag length)
- *
- * Return:
- * SMW_STATUS_OK
- * SMW_STATUS_INVALID_PARAM
- */
-static unsigned int get_tee_input_data_len(struct smw_crypto_aead_args *args,
-					   enum ta_commands ta_cmd,
-					   unsigned int *input_data_length)
-{
-	int status = SMW_STATUS_OK;
-
-	*input_data_length = smw_crypto_get_aead_input_len(args);
-
-	if (ta_cmd == CMD_AEAD_DECRYPT_FINAL) {
-		if (!smw_crypto_is_aead_tag_field_set(args)) {
-			if (DEC_OVERFLOW(*input_data_length,
-					 smw_crypto_get_aead_tag_len(args)))
-				status = SMW_STATUS_INVALID_PARAM;
-		}
-	}
-
-	SMW_DBG_PRINTF(VERBOSE, "%s returned with input length = %u\n",
-		       __func__, *input_data_length);
-	return status;
-}
-
-/**
- * get_tee_output_data_len() - Return the length of the output data buffer only
- * @args: Pointer to internal AEAD arguments
- * @ta_cmd: OPTEE command
- *
- * For encryption operation, it returns ciphertext length only (excludes tag length)
- * For decryption operation, it returns data length
- *
- * Return:
- * output data buffer length
- * 0
- */
-static unsigned int get_tee_output_data_len(struct smw_crypto_aead_args *args,
-					    enum ta_commands ta_cmd)
-{
-	unsigned int out_len = 0;
-
-	out_len = smw_crypto_get_aead_output_len(args);
-
-	if (ta_cmd == CMD_AEAD_ENCRYPT_FINAL) {
-		if (!smw_crypto_is_aead_tag_field_set(args)) {
-			if (DEC_OVERFLOW(out_len,
-					 smw_crypto_get_aead_tag_len(args)))
-				out_len = 0;
-		}
-	}
-
-	SMW_DBG_PRINTF(VERBOSE, "%s returned with output length = %u\n",
-		       __func__, out_len);
-
-	return out_len;
-}
-
 static int aead_multi_part_common(struct smw_op_context *op_context,
 				  struct smw_crypto_aead_args *args,
 				  enum ta_commands ta_cmd)
@@ -472,14 +405,20 @@ static int aead_multi_part_common(struct smw_op_context *op_context,
 	op.params[0].tmpref.size = sizeof(context);
 	op.params[1].tmpref.buffer = smw_crypto_get_aead_input(args);
 
-	status = get_tee_input_data_len(args, ta_cmd, &input_length);
+	status = smw_utils_get_aead_input_data_len(args, &input_length);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
 	op.params[1].tmpref.size = input_length;
 
 	op.params[2].tmpref.buffer = smw_crypto_get_aead_output(args);
-	op.params[2].tmpref.size = get_tee_output_data_len(args, ta_cmd);
+	status = smw_utils_get_aead_output_data_len(args, &output_length);
+	if (status == SMW_STATUS_OUTPUT_TOO_SHORT)
+		output_length = 0;
+	else if (status != SMW_STATUS_OK)
+		goto end;
+
+	op.params[2].tmpref.size = output_length;
 
 	if (ta_cmd == CMD_AEAD_ENCRYPT_FINAL ||
 	    ta_cmd == CMD_AEAD_DECRYPT_FINAL) {

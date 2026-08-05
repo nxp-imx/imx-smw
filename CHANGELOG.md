@@ -98,6 +98,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   and for `PSA_ALG_VENDOR_CMAC_ATTESTATION` (0x83C00200) as a
   permitted algorithm. This NXP vendor algorithm enables the
   key attestation signing algorithm to be set as a key attribute restriction.
+* Implement the PSA multi-part unauthenticated ciphers functions and related macros.
 
 ##### 4. OSAL
 
@@ -139,6 +140,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add ELE tests to validate HKDF key derivation operations.
 * Add test for database version 2.
 * Add ELE and PSA tests to verify signatures with imported public keys.
+* Add tests for PSA multi-part unauthenticated ciphers functions.
 
 #### PKCS#11 Library
 

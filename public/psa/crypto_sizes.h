@@ -454,9 +454,6 @@ size_t psa_cipher_encrypt_output_size(psa_key_type_t key_type,
  * @alg: [in] A cipher algorithm such that :c:macro:`PSA_ALG_IS_CIPHER` is true.
  * @input_length: [in] Size of the input in bytes.
  *
- * .. warning::
- *    Not supported.
- *
  * If the size of the output buffer is at least this large, it is guaranteed
  * that psa_cipher_update() will not fail due to an insufficient buffer size.
  * The actual size of the output might be smaller in any given call.
@@ -469,7 +466,14 @@ size_t psa_cipher_encrypt_output_size(psa_key_type_t key_type,
  * incompatible, return 0.
  */
 #define PSA_CIPHER_UPDATE_OUTPUT_SIZE(key_type, alg, input_length)             \
-	/* implementation-defined value */
+	(PSA_ALG_IS_CIPHER(alg) ?                                              \
+		 (alg == PSA_ALG_CBC_NO_PADDING ||                             \
+		  alg == PSA_ALG_ECB_NO_PADDING) ?                             \
+		 input_length :                                                \
+		 PSA_ROUND_UP_TO_MULTIPLE(PSA_BLOCK_CIPHER_BLOCK_LENGTH(       \
+						  key_type),                   \
+					  input_length) :                      \
+		 0)
 
 /**
  * PSA_CIPHER_UPDATE_OUTPUT_MAX_SIZE() - The maximum output buffer size for
@@ -478,25 +482,20 @@ size_t psa_cipher_encrypt_output_size(psa_key_type_t key_type,
  *                                       algorithms.
  * @input_length: [in] Size of the input in bytes.
  *
- * .. warning::
- *    Not supported.
- *
  * If the size of the output buffer is at least this large, it is guaranteed
  * that psa_cipher_update() will not fail due to an insufficient buffer size.
  *
  * See also :c:macro:`PSA_CIPHER_UPDATE_OUTPUT_SIZE`.
  */
 #define PSA_CIPHER_UPDATE_OUTPUT_MAX_SIZE(input_length)                        \
-	/* implementation-defined value */
+	(PSA_ROUND_UP_TO_MULTIPLE(PSA_BLOCK_CIPHER_BLOCK_MAX_SIZE,             \
+				  input_length))
 
 /**
  * PSA_CIPHER_FINISH_OUTPUT_SIZE() - A sufficient ciphertext buffer size for
  *                                   psa_cipher_finish(), in bytes.
  * @key_type: [in] A symmetric key type that is compatible with algorithm @alg.
  * @alg: [in] A cipher algorithm such that :c:macro:`PSA_ALG_IS_CIPHER` is true.
- *
- * .. warning::
- *    Not supported.
  *
  * If the size of the output buffer is at least this large, it is guaranteed
  * that psa_cipher_finish() will not fail due to an insufficient buffer size.
@@ -510,7 +509,7 @@ size_t psa_cipher_encrypt_output_size(psa_key_type_t key_type,
  * incompatible, return 0.
  */
 #define PSA_CIPHER_FINISH_OUTPUT_SIZE(key_type, alg)                           \
-	/* implementation-defined value */
+	PSA_CIPHER_UPDATE_OUTPUT_SIZE(key_type, alg, 0)
 
 /**
  * PSA_CIPHER_FINISH_OUTPUT_MAX_SIZE - The maximum output buffer size for
@@ -518,12 +517,9 @@ size_t psa_cipher_encrypt_output_size(psa_key_type_t key_type,
  *                                     supported key types and cipher
  *                                     algorithms.
  *
- * .. warning::
- *    Not supported.
- *
  * See also :c:macro:`PSA_CIPHER_FINISH_OUTPUT_SIZE`.
  */
-#define PSA_CIPHER_FINISH_OUTPUT_MAX_SIZE 0 /* implementation-defined value */
+#define PSA_CIPHER_FINISH_OUTPUT_MAX_SIZE PSA_BLOCK_CIPHER_BLOCK_MAX_SIZE
 
 size_t psa_cipher_iv_length(psa_key_type_t key_type, psa_algorithm_t alg);
 
@@ -547,7 +543,12 @@ size_t psa_cipher_iv_length(psa_key_type_t key_type, psa_algorithm_t alg);
  * algorithm does not use an IV, return 0. If the key type or cipher algorithm
  * is not recognized, or the parameters are incompatible, return 0.
  */
-#define PSA_CIPHER_IV_LENGTH(key_type, alg) psa_cipher_iv_length(key_type, alg)
+#define PSA_CIPHER_IV_LENGTH(key_type, alg)                                    \
+	(alg == PSA_ALG_CTR || alg == PSA_ALG_CFB || alg == PSA_ALG_OFB ||     \
+	 alg == PSA_ALG_XTS || alg == PSA_ALG_CBC_NO_PADDING ||                \
+	 alg == PSA_ALG_CBC_PKCS7) ?                                           \
+		PSA_BLOCK_CIPHER_BLOCK_LENGTH(key_type) :                      \
+		0
 
 /**
  * PSA_CIPHER_IV_MAX_SIZE - The maximum IV size for all supported cipher

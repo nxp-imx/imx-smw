@@ -199,9 +199,6 @@ psa_status_t psa_cipher_decrypt(psa_key_id_t key, psa_algorithm_t alg,
  * @alg: [in] The cipher algorithm to compute such that
  *            :c:macro:`PSA_ALG_IS_CIPHER` is true.
  *
- * .. warning::
- *    Not supported.
- *
  * After a successful call to psa_cipher_encrypt_setup(), the application must
  * eventually terminate the operation. The following events terminate an
  * operation:
@@ -255,9 +252,6 @@ psa_status_t psa_cipher_encrypt_setup(psa_cipher_operation_t *operation,
  * @alg: [in] The cipher algorithm to compute such that
  *            :c:macro:`PSA_ALG_IS_CIPHER` is true.
  *
- * .. warning::
- *    Not supported.
- *
  * After a successful call to psa_cipher_decrypt_setup(), the application must
  * eventually terminate the operation. The following events terminate an
  * operation\:
@@ -309,9 +303,6 @@ psa_status_t psa_cipher_decrypt_setup(psa_cipher_operation_t *operation,
  *           cipher operation.
  * @iv_length: [out] On success, the number of bytes of the generated IV.
  *
- * .. warning::
- *    Not supported.
- *
  * This function generates a random IV, nonce or initial counter value for the
  * encryption operation as appropriate for the chosen algorithm, key type and
  * key size.
@@ -359,9 +350,6 @@ psa_status_t psa_cipher_generate_iv(psa_cipher_operation_t *operation,
  * @operation: [in] Active cipher operation.
  * @iv: [in] Buffer containing the IV to use.
  * @iv_length: [in] Size of the IV in bytes.
- *
- * .. warning::
- *    Not supported.
  *
  * This function sets the IV, nonce or initial counter value for the encryption
  * or decryption operation.
@@ -415,9 +403,6 @@ psa_status_t psa_cipher_set_iv(psa_cipher_operation_t *operation,
  * @output_size: [in] Size of the @output buffer in bytes.
  * @output_length: [out] On success, the number of bytes that make up the
  *                       returned output.
- *
- * .. warning::
- *    Not supported.
  *
  * The @output_size parameter must be appropriate for the selected algorithm
  * and key\:
@@ -478,9 +463,6 @@ psa_status_t psa_cipher_update(psa_cipher_operation_t *operation,
  * @output_length: [out] On success, the number of bytes that make up the
  *                       returned output.
  *
- * .. warning::
- *    Not supported.
- *
  * The @output_size parameter must be appropriate for the selected algorithm
  * and key\:
  *
@@ -534,9 +516,6 @@ psa_status_t psa_cipher_finish(psa_cipher_operation_t *operation,
 /**
  * psa_cipher_abort() - Abort a cipher operation.
  * @operation: [in] Initialized cipher operation.
- *
- * .. warning::
- *    Not supported.
  *
  * Aborting an operation frees all associated resources except for the
  * @operation object itself. Once aborted, the operation object can be reused

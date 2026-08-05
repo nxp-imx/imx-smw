@@ -35,16 +35,15 @@ static inline struct psa_aead_operation_s psa_aead_operation_init(void)
 	return PSA_AEAD_OPERATION_INIT;
 }
 
-/* To be defined */
 struct psa_cipher_operation_s {
-	int dummy;
+	void *op_context;
 };
 
 /**
  * PSA_CIPHER_OPERATION_INIT - Suitable initializer for a cipher operation
  *                             object of &typedef psa_cipher_operation_t.
  */
-#define PSA_CIPHER_OPERATION_INIT ((psa_cipher_operation_t){ 0 })
+#define PSA_CIPHER_OPERATION_INIT ((psa_cipher_operation_t){ NULL })
 
 static inline struct psa_cipher_operation_s psa_cipher_operation_init(void)
 {

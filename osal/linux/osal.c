@@ -568,6 +568,11 @@ end:
 	return status;
 }
 
+void osal_wait(uint32_t usec_to_wait)
+{
+	usleep(usec_to_wait);
+}
+
 __export enum smw_status_code smw_osal_lib_init(void)
 {
 	enum smw_status_code status = SMW_STATUS_OK;
@@ -616,6 +621,8 @@ __export enum smw_status_code smw_osal_lib_init(void)
 
 	ops.dcache_invalidate = dcache_invalidate;
 	ops.dcache_clean = dcache_clean;
+
+	ops.wait = osal_wait;
 
 	status = smw_init(&ops);
 	if (status != SMW_STATUS_OK)

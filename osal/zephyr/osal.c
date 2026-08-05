@@ -151,6 +151,18 @@ end:
 	return status;
 }
 
+void osal_zephyr_wait(uint32_t usec_to_wait)
+{
+	int32_t us = 0;
+
+	if (SET_OVERFLOW(usec_to_wait, us)) {
+		LOG_ERR("Invalid parameter for wait\n");
+		return;
+	}
+
+	k_usleep(us);
+}
+
 __weak int osal_zephyr_file_initialize(void)
 {
 	return -1;
@@ -266,6 +278,7 @@ enum smw_status_code smw_osal_lib_init(void)
 		.find_obj_init = osal_zephyr_find_obj_init,
 		.find_obj_next = osal_zephyr_find_obj_next,
 		.find_obj_final = osal_zephyr_find_obj_final,
+		.wait = osal_zephyr_wait,
 		.file_initialize = osal_zephyr_file_initialize,
 		.file_write = osal_zephyr_file_write,
 		.file_read = osal_zephyr_file_read,

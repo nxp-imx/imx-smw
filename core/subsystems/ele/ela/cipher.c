@@ -101,7 +101,7 @@ static int
 calculate_cipher_memory_size(struct smw_crypto_cipher_args *cipher_args,
 			     uint32_t *required_size)
 {
-	int status = SMW_STATUS_INVALID_PARAM;
+	int status = SMW_STATUS_OK;
 
 	uint32_t size = 0;
 	uint32_t aligned_size = 0;
@@ -110,24 +110,31 @@ calculate_cipher_memory_size(struct smw_crypto_cipher_args *cipher_args,
 	uint32_t status_buf_len = sizeof(status_buf_t);
 
 	/* Input buffer (aligned to 64 bytes) */
-	if (smw_utils_align_value(input_len, ELA_BUFFER_ALIGN_SIZE, &size))
+	status = smw_utils_align_value(input_len, ELA_BUFFER_ALIGN_SIZE, &size);
+	if (status != SMW_STATUS_OK)
 		goto end;
 
 	/* Output buffer (aligned to 64 bytes) */
-	if (smw_utils_align_value(output_len, ELA_BUFFER_ALIGN_SIZE,
-				  &aligned_size))
+	status = smw_utils_align_value(output_len, ELA_BUFFER_ALIGN_SIZE,
+				       &aligned_size);
+	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (ADD_OVERFLOW(size, aligned_size, &size))
+	if (ADD_OVERFLOW(size, aligned_size, &size)) {
+		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
+	}
 
 	/* Status buffer (aligned to 64 bytes) */
-	if (smw_utils_align_value(status_buf_len, ELA_BUFFER_ALIGN_SIZE,
-				  &aligned_size))
+	status = smw_utils_align_value(status_buf_len, ELA_BUFFER_ALIGN_SIZE,
+				       &aligned_size);
+	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (ADD_OVERFLOW(size, aligned_size, &size))
+	if (ADD_OVERFLOW(size, aligned_size, &size)) {
+		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
+	}
 
 	*required_size = size;
 
@@ -138,8 +145,6 @@ calculate_cipher_memory_size(struct smw_crypto_cipher_args *cipher_args,
 		       "  status_buf_len: %u\n"
 		       "  total_size: %u\n",
 		       input_len, output_len, status_buf_len, size);
-
-	status = SMW_STATUS_OK;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -193,7 +198,9 @@ static int set_cipher_op_params(crypto_op_args_t *op,
 	smw_utils_dcache_clean(op->src.virt_addr, input_len);
 
 	/* Set destination buffer */
-	if (smw_utils_align_value(op->src.len, ELA_BUFFER_ALIGN_SIZE, &offset))
+	status = smw_utils_align_value(op->src.len, ELA_BUFFER_ALIGN_SIZE,
+				       &offset);
+	if (status != SMW_STATUS_OK)
 		goto end;
 
 	op->dst.len = input_len;
@@ -212,12 +219,15 @@ static int set_cipher_op_params(crypto_op_args_t *op,
 	op->op_aes_args.iv = smw_crypto_get_cipher_iv(cipher_args);
 
 	if (SET_OVERFLOW(smw_crypto_get_cipher_iv_len(cipher_args),
-			 op->op_aes_args.ivlen))
+			 op->op_aes_args.ivlen)) {
+		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
+	}
 
 	/* Set status buffer (aligned after output data) */
-	if (smw_utils_align_value(offset + op->dst.len, ELA_BUFFER_ALIGN_SIZE,
-				  &offset))
+	status = smw_utils_align_value(offset + op->dst.len,
+				       ELA_BUFFER_ALIGN_SIZE, &offset);
+	if (status != SMW_STATUS_OK)
 		goto end;
 
 	op->crypto_status.phys_addr =
@@ -232,8 +242,6 @@ static int set_cipher_op_params(crypto_op_args_t *op,
 		       "  input_len: %u\n"
 		       "  iv_len: %u\n",
 		       algo, keyslot, input_len, op->op_aes_args.ivlen);
-
-	status = SMW_STATUS_OK;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

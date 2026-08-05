@@ -261,6 +261,99 @@ static int compare_buffer(const uint8_t *input_a, size_t input_a_length,
 	return SMW_UTILS_MEMCMP(input_a, input_b, input_a_length);
 }
 
+struct psa_private_cipher_context {
+	struct smw_op_context *smw_ctx;
+	psa_algorithm_t alg;
+	smw_cipher_mode_t smw_mode_name;
+	psa_key_id_t key_id;
+	bool is_encrypt;
+	bool cipher_init_done;
+	bool iv_required;
+	uint8_t iv[PSA_CIPHER_IV_MAX_SIZE];
+	unsigned int iv_length;
+};
+
+static psa_status_t cipher_multipart_do_setup(psa_cipher_operation_t *operation,
+					      psa_key_id_t key,
+					      psa_algorithm_t alg,
+					      bool is_encrypt)
+{
+	psa_status_t psa_status = PSA_SUCCESS;
+	struct psa_private_cipher_context *ctx = NULL;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!operation || operation->op_context ||
+	    !smw_utils_is_lib_initialized())
+		return PSA_ERROR_BAD_STATE;
+
+	if (!PSA_ALG_IS_CIPHER(alg))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	ctx = SMW_UTILS_CALLOC(1, sizeof(*ctx));
+	if (!ctx)
+		return PSA_ERROR_INSUFFICIENT_MEMORY;
+
+	ctx->smw_ctx = NULL;
+	ctx->key_id = key;
+	ctx->alg = alg;
+	ctx->is_encrypt = is_encrypt;
+	ctx->smw_mode_name = get_cipher_mode_name(alg);
+
+	if (ctx->smw_mode_name == SMW_CIPHER_MODE_NAME_NONE) {
+		psa_status = PSA_ERROR_NOT_SUPPORTED;
+		goto err;
+	}
+
+	ctx->iv_required = ctx->smw_mode_name != SMW_CIPHER_MODE_NAME_ECB;
+
+	operation->op_context = ctx;
+	return PSA_SUCCESS;
+
+err:
+	SMW_UTILS_FREE(ctx);
+	return psa_status;
+}
+
+static psa_status_t
+cipher_multipart_do_init(struct psa_private_cipher_context *ctx)
+{
+	enum smw_status_code smw_status = SMW_STATUS_OK;
+	psa_status_t psa_status = PSA_SUCCESS;
+
+	struct smw_key_descriptor key_desc = { 0 };
+	struct smw_key_descriptor *keys_desc[1] = { 0 };
+	struct smw_cipher_init_args init_args = { 0 };
+
+	key_desc.id = ctx->key_id;
+
+	smw_status = smw_get_key_type_name(&key_desc);
+	if (smw_status != SMW_STATUS_OK)
+		return util_smw_to_psa_status(smw_status);
+
+	keys_desc[0] = &key_desc;
+	init_args.keys_desc = keys_desc;
+	init_args.nb_keys = ARRAY_SIZE(keys_desc);
+
+	init_args.context = ctx->smw_ctx;
+	init_args.iv = ctx->iv;
+	init_args.iv_length = ctx->iv_length;
+	init_args.mode_name = ctx->smw_mode_name;
+	init_args.op_type_name = ctx->is_encrypt ?
+					 SMW_CIPHER_OP_TYPE_NAME_ENCRYPT :
+					 SMW_CIPHER_OP_TYPE_NAME_DECRYPT;
+
+	psa_status = call_smw_api_init_with_key(SMW_API_CAST(smw_cipher_init),
+						&init_args, &init_args.context);
+	if (psa_status != PSA_SUCCESS)
+		return psa_status;
+
+	ctx->smw_ctx = init_args.context;
+	ctx->cipher_init_done = true;
+
+	return PSA_SUCCESS;
+}
+
 __export size_t psa_cipher_encrypt_output_size(psa_key_type_t key_type,
 					       psa_algorithm_t alg,
 					       size_t input_length)
@@ -1198,11 +1291,27 @@ psa_asymmetric_encrypt(psa_key_id_t key, psa_algorithm_t alg,
 
 __export psa_status_t psa_cipher_abort(psa_cipher_operation_t *operation)
 {
-	(void)operation;
+	psa_status_t psa_status = PSA_SUCCESS;
+	struct psa_private_cipher_context *ctx = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!operation || !smw_utils_is_lib_initialized())
+		return PSA_ERROR_BAD_STATE;
+
+	/* Already aborted or never set up - safe no-op per PSA spec */
+	if (!operation->op_context)
+		return PSA_SUCCESS;
+
+	ctx = operation->op_context;
+
+	psa_status = do_cancel_operation(&ctx->smw_ctx);
+	if (!ctx->smw_ctx) {
+		SMW_UTILS_FREE(ctx);
+		SMW_UTILS_MEMSET(operation, 0, sizeof(*operation));
+	}
+
+	return psa_status;
 }
 
 static psa_status_t set_cipher_args(psa_key_id_t key, psa_algorithm_t alg,
@@ -1346,13 +1455,7 @@ __export psa_status_t psa_cipher_decrypt_setup(psa_cipher_operation_t *operation
 					       psa_key_id_t key,
 					       psa_algorithm_t alg)
 {
-	(void)operation;
-	(void)key;
-	(void)alg;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return PSA_ERROR_NOT_SUPPORTED;
+	return cipher_multipart_do_setup(operation, key, alg, false);
 }
 
 __export psa_status_t psa_cipher_encrypt(psa_key_id_t key, psa_algorithm_t alg,
@@ -1403,53 +1506,117 @@ __export psa_status_t psa_cipher_encrypt_setup(psa_cipher_operation_t *operation
 					       psa_key_id_t key,
 					       psa_algorithm_t alg)
 {
-	(void)operation;
-	(void)key;
-	(void)alg;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return PSA_ERROR_NOT_SUPPORTED;
+	return cipher_multipart_do_setup(operation, key, alg, true);
 }
 
 __export psa_status_t psa_cipher_finish(psa_cipher_operation_t *operation,
 					uint8_t *output, size_t output_size,
 					size_t *output_length)
 {
-	(void)operation;
-	(void)output;
-	(void)output_size;
-	(void)output_length;
+	psa_status_t psa_status = PSA_SUCCESS;
+	struct psa_private_cipher_context *ctx = NULL;
+	struct smw_cipher_data_args args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!smw_utils_is_lib_initialized() || !operation ||
+	    !operation->op_context)
+		return PSA_ERROR_BAD_STATE;
+
+	if ((!output != !output_size) || !output_length)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	ctx = operation->op_context;
+
+	args.version = 0;
+	args.context = ctx->smw_ctx;
+	args.input = NULL;
+	args.input_length = 0;
+	args.output = output;
+
+	if (SET_OVERFLOW(output_size, args.output_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	psa_status =
+		call_smw_api_no_fallback(SMW_API_CAST(smw_cipher_final), &args);
+	if (psa_status == PSA_SUCCESS ||
+	    psa_status == PSA_ERROR_BUFFER_TOO_SMALL) {
+		*output_length = args.output_length;
+	}
+
+	/* Context is consumed by smw_cipher_final regardless of result. */
+	ctx->smw_ctx = args.context;
+	if (!(psa_status == PSA_ERROR_BUFFER_TOO_SMALL ||
+	      psa_status == PSA_ERROR_INVALID_ARGUMENT ||
+	      (psa_status == PSA_SUCCESS && !output))) {
+		SMW_UTILS_FREE(ctx);
+		SMW_UTILS_MEMSET(operation, 0, sizeof(*operation));
+	}
+
+	return psa_status;
 }
 
 __export psa_status_t psa_cipher_generate_iv(psa_cipher_operation_t *operation,
 					     uint8_t *iv, size_t iv_size,
 					     size_t *iv_length)
 {
-	(void)operation;
-	(void)iv;
-	(void)iv_size;
-	(void)iv_length;
+	psa_status_t psa_status = PSA_SUCCESS;
+	psa_key_attributes_t attr = PSA_KEY_ATTRIBUTES_INIT;
+	struct psa_private_cipher_context *ctx = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!smw_utils_is_lib_initialized() || !operation ||
+	    !operation->op_context)
+		return PSA_ERROR_BAD_STATE;
+
+	if (iv_size > PSA_CIPHER_IV_MAX_SIZE)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	ctx = operation->op_context;
+
+	psa_status = psa_get_key_attributes(ctx->key_id, &attr);
+	if (psa_status != PSA_SUCCESS)
+		return psa_status;
+
+	*iv_length = PSA_CIPHER_IV_LENGTH(psa_get_key_type(&attr), ctx->alg);
+
+	if (iv_size < *iv_length)
+		return PSA_ERROR_BUFFER_TOO_SMALL;
+
+	psa_status = psa_generate_random(iv, *iv_length);
+	if (psa_status != PSA_SUCCESS)
+		return psa_status;
+
+	return psa_cipher_set_iv(operation, iv, *iv_length);
 }
 
 __export psa_status_t psa_cipher_set_iv(psa_cipher_operation_t *operation,
 					const uint8_t *iv, size_t iv_length)
 {
-	(void)operation;
-	(void)iv;
-	(void)iv_length;
+	struct psa_private_cipher_context *ctx = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!smw_utils_is_lib_initialized() || !operation ||
+	    !operation->op_context)
+		return PSA_ERROR_BAD_STATE;
+
+	ctx = operation->op_context;
+
+	if (ctx->cipher_init_done || ctx->iv_length)
+		return PSA_ERROR_BAD_STATE;
+
+	if (!ctx->iv_required)
+		return PSA_ERROR_BAD_STATE;
+
+	if (!iv || !iv_length || iv_length > PSA_CIPHER_IV_MAX_SIZE)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	ctx->iv_length = iv_length;
+	SMW_UTILS_MEMCPY(ctx->iv, iv, iv_length);
+
+	return PSA_SUCCESS;
 }
 
 __export psa_status_t psa_cipher_update(psa_cipher_operation_t *operation,
@@ -1458,16 +1625,57 @@ __export psa_status_t psa_cipher_update(psa_cipher_operation_t *operation,
 					size_t output_size,
 					size_t *output_length)
 {
-	(void)operation;
-	(void)input;
-	(void)input_length;
-	(void)output;
-	(void)output_size;
-	(void)output_length;
+	psa_status_t psa_status = PSA_SUCCESS;
+	struct psa_private_cipher_context *ctx = NULL;
+
+	struct smw_cipher_data_args data_args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!smw_utils_is_lib_initialized() || !operation ||
+	    !operation->op_context)
+		return PSA_ERROR_BAD_STATE;
+
+	if (!input || (!output != !output_size) || !output_length)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	ctx = operation->op_context;
+
+	if (ctx->iv_required && !ctx->iv_length)
+		return PSA_ERROR_BAD_STATE;
+
+	if (!ctx->cipher_init_done) {
+		psa_status = cipher_multipart_do_init(ctx);
+		if (psa_status != PSA_SUCCESS)
+			return psa_status;
+	}
+
+	data_args.version = 0;
+	data_args.context = ctx->smw_ctx;
+
+	if (SET_OVERFLOW(input_length, data_args.input_length)) {
+		psa_status = PSA_ERROR_INVALID_ARGUMENT;
+		goto err;
+	}
+	if (SET_OVERFLOW(output_size, data_args.output_length)) {
+		psa_status = PSA_ERROR_INVALID_ARGUMENT;
+		goto err;
+	}
+
+	data_args.input = (unsigned char *)input;
+	data_args.output = output;
+
+	psa_status = call_smw_api_no_fallback(SMW_API_CAST(smw_cipher_update),
+					      &data_args);
+
+	ctx->smw_ctx = data_args.context;
+
+	if (psa_status == PSA_SUCCESS ||
+	    psa_status == PSA_ERROR_BUFFER_TOO_SMALL)
+		*output_length = data_args.output_length;
+
+err:
+	return psa_status;
 }
 
 __export psa_status_t psa_crypto_init(void)

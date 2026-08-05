@@ -1,0 +1,866 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"OFB"
+			]
+		},
+		"key 2": {
+			"type": "AES",
+			"security_size": 256,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"OFB"
+			]
+		},
+		"key 3": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CFB"
+			]
+		},
+		"key 4": {
+			"type": "AES",
+			"security_size": 256,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CFB"
+			]
+		},
+		"key 5": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CTR"
+			]
+		},
+		"key 6": {
+			"type": "AES",
+			"security_size": 256,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CTR"
+			]
+		},
+		"key 7": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CBC_NO_PADDING"
+			]
+		},
+		"key 8": {
+			"type": "AES",
+			"security_size": 256,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CBC_NO_PADDING"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 1",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 2": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 2",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 3": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 3",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 4": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 4",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 5": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 5",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 6": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 6",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 7": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 7",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 8": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 8",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 9": {
+		"description": [
+			"(OFB) Cipher Encryption init",
+			"IV is set in the follow-up test with CIPHER_SET_IV"
+		],
+		"command": "CIPHER_INIT",
+		"api": "PSA",
+		"mode": "OFB",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"context_id": 1,
+		"depends": 1
+	},
+	"subtest 10": {
+		"command": "CIPHER_SET_IV",
+		"api": "PSA",
+		"iv": "d6375e6b44a333b3d8db56a57f7c6139",
+		"context_id": 1,
+		"depends": 9
+	},
+	"subtest 11": {
+		"description": [
+			"(OFB) Cipher Encryption update",
+			"Output is saved so that it can be decrypted and verified later"
+		],
+		"command": "CIPHER_UPDATE",
+		"api": "PSA",
+		"input": [
+			"eaf1760c0f25310dada6debeb966304d",
+			"b7a9f1b2d1c3af922623b263649031d2",
+			"99b3c56146d61d55b6ebf4cf8dd04039",
+			"a4d1ace3146f49ee915f806afad64cbb"
+		],
+		"save_output": true,
+		"context_id": 1,
+		"depends": 9
+	},
+	"subtest 12": {
+		"description": [
+			"(OFB) Cipher Encryption update",
+			"Output is saved so that it can be decrypted and verified later"
+		],
+		"command": "CIPHER_UPDATE",
+		"api": "PSA",
+		"input": [
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4"
+		],
+		"save_output": true,
+		"context_id": 1,
+		"depends": 11
+	},
+	"subtest 13": {
+		"command": "CIPHER_FINAL",
+		"api": "PSA",
+		"save_output": true,
+		"context_id": 1,
+		"depends": 12
+	},
+	"subtest 14": {
+		"description": [
+			"(OFB) Cipher Decryption using saved IV and ciphertext"
+		],
+		"command": "CIPHER",
+		"api": "PSA",
+		"mode": "OFB",
+		"op_type": "DECRYPT",
+		"key_name": "key 1",
+		"output": [
+			"eaf1760c0f25310dada6debeb966304d",
+			"b7a9f1b2d1c3af922623b263649031d2",
+			"99b3c56146d61d55b6ebf4cf8dd04039",
+			"a4d1ace3146f49ee915f806afad64cbb",
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4"
+		],
+		"cipher_id": 1,
+		"depends": 13
+	},
+	"subtest 15": {
+		"description": [
+			"(OFB) Cipher Encryption init",
+			"IV is set in the same test"
+		],
+		"command": "CIPHER_INIT",
+		"api": "PSA",
+		"mode": "OFB",
+		"op_type": "ENCRYPT",
+		"key_name": "key 2",
+		"iv": "d6375e6b44a333b3d8db56a57f7c6139",
+		"context_id": 2,
+		"depends": 2
+	},
+	"subtest 16": {
+		"description": [
+			"(OFB) Cipher Encryption update",
+			"Output is saved so that it can be decrypted and verified later"
+		],
+		"command": "CIPHER_UPDATE",
+		"api": "PSA",
+		"input": [
+			"eaf1760c0f25310dada6debeb966304d",
+			"b7a9f1b2d1c3af922623b263649031d2",
+			"99b3c56146d61d55b6ebf4cf8dd04039",
+			"a4d1ace3146f49ee915f806afad64cbb"
+		],
+		"save_output": true,
+		"context_id": 2,
+		"depends": 15
+	},
+	"subtest 17": {
+		"description": [
+			"(OFB) Cipher Encryption update",
+			"Output is saved so that it can be decrypted and verified later"
+		],
+		"command": "CIPHER_UPDATE",
+		"api": "PSA",
+		"input": [
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4"
+		],
+		"save_output": true,
+		"context_id": 2,
+		"depends": 16
+	},
+	"subtest 18": {
+		"command": "CIPHER_FINAL",
+		"api": "PSA",
+		"save_output": true,
+		"context_id": 2,
+		"depends": 17
+	},
+	"subtest 19": {
+		"description": [
+			"(OFB) Cipher Decryption using saved IV and ciphertext"
+		],
+		"command": "CIPHER",
+		"api": "PSA",
+		"mode": "OFB",
+		"op_type": "DECRYPT",
+		"key_name": "key 2",
+		"output": [
+			"eaf1760c0f25310dada6debeb966304d",
+			"b7a9f1b2d1c3af922623b263649031d2",
+			"99b3c56146d61d55b6ebf4cf8dd04039",
+			"a4d1ace3146f49ee915f806afad64cbb",
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4"
+		],
+		"cipher_id": 2,
+		"depends": 18
+	},
+	"subtest 20": {
+		"description": [
+			"(CFB) Cipher Encryption init",
+			"IV is generated in the follow-up test with CIPHER_GENERATE_IV"
+		],
+		"command": "CIPHER_INIT",
+		"api": "PSA",
+		"mode": "CFB",
+		"op_type": "ENCRYPT",
+		"key_name": "key 3",
+		"context_id": 3,
+		"depends": 3
+	},
+	"subtest 21": {
+		"command": "CIPHER_GENERATE_IV",
+		"api": "PSA",
+		"iv": 16,
+		"context_id": 3,
+		"depends": 20
+	},
+	"subtest 22": {
+		"description": [
+			"(CFB) Cipher Encryption update",
+			"Output is saved so that it can be decrypted and verified later"
+		],
+		"command": "CIPHER_UPDATE",
+		"api": "PSA",
+		"input": [
+			"eaf1760c0f25310dada6debeb966304d",
+			"b7a9f1b2d1c3af922623b263649031d2",
+			"99b3c56146d61d55b6ebf4cf8dd04039",
+			"a4d1ace3146f49ee915f806afad64cbb"
+		],
+		"save_output": true,
+		"context_id": 3,
+		"depends": 20
+	},
+	"subtest 23": {
+		"description": [
+			"(CFB) Cipher Encryption update",
+			"Output is saved so that it can be decrypted and verified later"
+		],
+		"command": "CIPHER_UPDATE",
+		"api": "PSA",
+		"input": [
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4"
+		],
+		"save_output": true,
+		"context_id": 3,
+		"depends": 22
+	},
+	"subtest 24": {
+		"command": "CIPHER_FINAL",
+		"api": "PSA",
+		"save_output": true,
+		"context_id": 3,
+		"depends": 23
+	},
+	"subtest 25": {
+		"description": [
+			"(CFB) Cipher Decryption using saved IV and ciphertext"
+		],
+		"command": "CIPHER",
+		"api": "PSA",
+		"mode": "CFB",
+		"op_type": "DECRYPT",
+		"key_name": "key 3",
+		"output": [
+			"eaf1760c0f25310dada6debeb966304d",
+			"b7a9f1b2d1c3af922623b263649031d2",
+			"99b3c56146d61d55b6ebf4cf8dd04039",
+			"a4d1ace3146f49ee915f806afad64cbb",
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4"
+		],
+		"cipher_id": 3,
+		"depends": 24
+	},
+	"subtest 26": {
+		"description": [
+			"(CFB) Cipher Encryption init",
+			"IV is set in the follow-up test with CIPHER_SET_IV"
+		],
+		"command": "CIPHER_INIT",
+		"api": "PSA",
+		"mode": "CFB",
+		"op_type": "ENCRYPT",
+		"key_name": "key 4",
+		"context_id": 4,
+		"depends": 4
+	},
+	"subtest 27": {
+		"command": "CIPHER_SET_IV",
+		"api": "PSA",
+		"iv": "d6375e6b44a333b3d8db56a57f7c6139",
+		"context_id": 4,
+		"depends": 26
+	},
+	"subtest 28": {
+		"description": [
+			"(CFB) Cipher Encryption update",
+			"Output is saved so that it can be decrypted and verified later"
+		],
+		"command": "CIPHER_UPDATE",
+		"api": "PSA",
+		"input": [
+			"eaf1760c0f25310dada6debeb966304d",
+			"b7a9f1b2d1c3af922623b263649031d2",
+			"99b3c56146d61d55b6ebf4cf8dd04039",
+			"a4d1ace3146f49ee915f806afad64cbb"
+		],
+		"save_output": true,
+		"context_id": 4,
+		"depends": 26
+	},
+	"subtest 29": {
+		"description": [
+			"(CFB) Cipher Encryption update",
+			"Output is saved so that it can be decrypted and verified later"
+		],
+		"command": "CIPHER_UPDATE",
+		"api": "PSA",
+		"input": [
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4"
+		],
+		"save_output": true,
+		"context_id": 4,
+		"depends": 28
+	},
+	"subtest 30": {
+		"command": "CIPHER_FINAL",
+		"api": "PSA",
+		"save_output": true,
+		"context_id": 4,
+		"depends": 29
+	},
+	"subtest 31": {
+		"description": [
+			"(CFB) Cipher Decryption using saved IV and ciphertext"
+		],
+		"command": "CIPHER",
+		"api": "PSA",
+		"mode": "CFB",
+		"op_type": "DECRYPT",
+		"key_name": "key 4",
+		"output": [
+			"eaf1760c0f25310dada6debeb966304d",
+			"b7a9f1b2d1c3af922623b263649031d2",
+			"99b3c56146d61d55b6ebf4cf8dd04039",
+			"a4d1ace3146f49ee915f806afad64cbb",
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4"
+		],
+		"cipher_id": 4,
+		"depends": 30
+	},
+	"subtest 32": {
+		"description": [
+			"(OFB) Cipher Encryption init",
+			"IV is set in the same test"
+		],
+		"command": "CIPHER_INIT",
+		"api": "PSA",
+		"mode": "CTR",
+		"op_type": "ENCRYPT",
+		"key_name": "key 5",
+		"iv": "d6375e6b44a333b3d8db56a57f7c6139",
+		"context_id": 5,
+		"depends": 5
+	},
+	"subtest 33": {
+		"description": [
+			"(CTR) Cipher Encryption update",
+			"Output is saved so that it can be decrypted and verified later"
+		],
+		"command": "CIPHER_UPDATE",
+		"api": "PSA",
+		"input": [
+			"eaf1760c0f25310dada6debeb966304d",
+			"b7a9f1b2d1c3af922623b263649031d2",
+			"99b3c56146d61d55b6ebf4cf8dd04039",
+			"a4d1ace3146f49ee915f806afad64cbb"
+		],
+		"save_output": true,
+		"context_id": 5,
+		"depends": 32
+	},
+	"subtest 34": {
+		"description": [
+			"(CTR) Cipher Encryption update",
+			"Output is saved so that it can be decrypted and verified later"
+		],
+		"command": "CIPHER_UPDATE",
+		"api": "PSA",
+		"input": [
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4"
+		],
+		"save_output": true,
+		"context_id": 5,
+		"depends": 33
+	},
+	"subtest 35": {
+		"command": "CIPHER_FINAL",
+		"api": "PSA",
+		"save_output": true,
+		"context_id": 5,
+		"depends": 34
+	},
+	"subtest 36": {
+		"description": [
+			"(CTR) Cipher Decryption using saved IV and ciphertext"
+		],
+		"command": "CIPHER",
+		"api": "PSA",
+		"mode": "CTR",
+		"op_type": "DECRYPT",
+		"key_name": "key 5",
+		"output": [
+			"eaf1760c0f25310dada6debeb966304d",
+			"b7a9f1b2d1c3af922623b263649031d2",
+			"99b3c56146d61d55b6ebf4cf8dd04039",
+			"a4d1ace3146f49ee915f806afad64cbb",
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4"
+		],
+		"cipher_id": 5,
+		"depends": 35
+	},
+	"subtest 37": {
+		"description": [
+			"(CFB) Cipher Encryption init",
+			"IV is generated in the follow-up test with CIPHER_GENERATE_IV"
+		],
+		"command": "CIPHER_INIT",
+		"api": "PSA",
+		"mode": "CTR",
+		"op_type": "ENCRYPT",
+		"key_name": "key 6",
+		"context_id": 6,
+		"depends": 6
+	},
+	"subtest 38": {
+		"command": "CIPHER_GENERATE_IV",
+		"api": "PSA",
+		"iv": 16,
+		"context_id": 6,
+		"depends": 37
+	},
+	"subtest 39": {
+		"description": [
+			"(CTR) Cipher Encryption update",
+			"Output is saved so that it can be decrypted and verified later"
+		],
+		"command": "CIPHER_UPDATE",
+		"api": "PSA",
+		"input": [
+			"eaf1760c0f25310dada6debeb966304d",
+			"b7a9f1b2d1c3af922623b263649031d2",
+			"99b3c56146d61d55b6ebf4cf8dd04039",
+			"a4d1ace3146f49ee915f806afad64cbb"
+		],
+		"save_output": true,
+		"context_id": 6,
+		"depends": 37
+	},
+	"subtest 40": {
+		"description": [
+			"(CTR) Cipher Encryption update",
+			"Output is saved so that it can be decrypted and verified later"
+		],
+		"command": "CIPHER_UPDATE",
+		"api": "PSA",
+		"input": [
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4"
+		],
+		"save_output": true,
+		"context_id": 6,
+		"depends": 39
+	},
+	"subtest 41": {
+		"command": "CIPHER_FINAL",
+		"api": "PSA",
+		"save_output": true,
+		"context_id": 6,
+		"depends": 40
+	},
+	"subtest 42": {
+		"description": [
+			"(CTR) Cipher Decryption using saved IV and ciphertext"
+		],
+		"command": "CIPHER",
+		"api": "PSA",
+		"mode": "CTR",
+		"op_type": "DECRYPT",
+		"key_name": "key 6",
+		"output": [
+			"eaf1760c0f25310dada6debeb966304d",
+			"b7a9f1b2d1c3af922623b263649031d2",
+			"99b3c56146d61d55b6ebf4cf8dd04039",
+			"a4d1ace3146f49ee915f806afad64cbb",
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4"
+		],
+		"cipher_id": 6,
+		"depends": 41
+	},
+	"subtest 43": {
+		"description": [
+			"(CBC) Cipher Encryption init",
+			"IV is set in the same test"
+		],
+		"command": "CIPHER_INIT",
+		"api": "PSA",
+		"mode": "CBC_NO_PADDING",
+		"op_type": "ENCRYPT",
+		"key_name": "key 7",
+		"iv": "d6375e6b44a333b3d8db56a57f7c6139",
+		"context_id": 7,
+		"depends": 7
+	},
+	"subtest 44": {
+		"description": [
+			"(CBC) Cipher Encryption update",
+			"Output is saved so that it can be decrypted and verified later"
+		],
+		"command": "CIPHER_UPDATE",
+		"api": "PSA",
+		"input": [
+			"eaf1760c0f25310dada6debeb966304d",
+			"b7a9f1b2d1c3af922623b263649031d2",
+			"99b3c56146d61d55b6ebf4cf8dd04039",
+			"a4d1ace3146f49ee915f806afad64cbb"
+		],
+		"save_output": true,
+		"context_id": 7,
+		"depends": 43
+	},
+	"subtest 45": {
+		"description": [
+			"(CBC) Cipher Encryption update",
+			"Output is saved so that it can be decrypted and verified later"
+		],
+		"command": "CIPHER_UPDATE",
+		"api": "PSA",
+		"input": [
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4"
+		],
+		"save_output": true,
+		"context_id": 7,
+		"depends": 44
+	},
+	"subtest 46": {
+		"command": "CIPHER_FINAL",
+		"api": "PSA",
+		"save_output": true,
+		"context_id": 7,
+		"depends": 45
+	},
+	"subtest 47": {
+		"description": [
+			"(CBC) Cipher Decryption using saved IV and ciphertext"
+		],
+		"command": "CIPHER",
+		"api": "PSA",
+		"mode": "CBC_NO_PADDING",
+		"op_type": "DECRYPT",
+		"key_name": "key 7",
+		"output": [
+			"eaf1760c0f25310dada6debeb966304d",
+			"b7a9f1b2d1c3af922623b263649031d2",
+			"99b3c56146d61d55b6ebf4cf8dd04039",
+			"a4d1ace3146f49ee915f806afad64cbb",
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4"
+		],
+		"cipher_id": 7,
+		"depends": 46
+	},
+	"subtest 48": {
+		"description": [
+			"(CBC) Cipher Encryption init",
+			"IV is generated in the follow-up test with CIPHER_GENERATE_IV"
+		],
+		"command": "CIPHER_INIT",
+		"api": "PSA",
+		"mode": "CBC_NO_PADDING",
+		"op_type": "ENCRYPT",
+		"key_name": "key 8",
+		"context_id": 8,
+		"depends": 8
+	},
+	"subtest 49": {
+		"command": "CIPHER_GENERATE_IV",
+		"api": "PSA",
+		"iv": 16,
+		"context_id": 8,
+		"depends": 48
+	},
+	"subtest 50": {
+		"description": [
+			"(CBC) Cipher Encryption update",
+			"Output is saved so that it can be decrypted and verified later"
+		],
+		"command": "CIPHER_UPDATE",
+		"api": "PSA",
+		"input": [
+			"eaf1760c0f25310dada6debeb966304d",
+			"b7a9f1b2d1c3af922623b263649031d2",
+			"99b3c56146d61d55b6ebf4cf8dd04039",
+			"a4d1ace3146f49ee915f806afad64cbb"
+		],
+		"save_output": true,
+		"context_id": 8,
+		"depends": 49
+	},
+	"subtest 51": {
+		"description": [
+			"(CBC) Cipher Encryption update",
+			"Output is saved so that it can be decrypted and verified later"
+		],
+		"command": "CIPHER_UPDATE",
+		"api": "PSA",
+		"input": [
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4"
+		],
+		"save_output": true,
+		"context_id": 8,
+		"depends": 50
+	},
+	"subtest 52": {
+		"command": "CIPHER_FINAL",
+		"api": "PSA",
+		"save_output": true,
+		"context_id": 8,
+		"depends": 51
+	},
+	"subtest 53": {
+		"description": [
+			"(CBC) Cipher Decryption using saved IV and ciphertext"
+		],
+		"command": "CIPHER",
+		"api": "PSA",
+		"mode": "CBC_NO_PADDING",
+		"op_type": "DECRYPT",
+		"key_name": "key 8",
+		"output": [
+			"eaf1760c0f25310dada6debeb966304d",
+			"b7a9f1b2d1c3af922623b263649031d2",
+			"99b3c56146d61d55b6ebf4cf8dd04039",
+			"a4d1ace3146f49ee915f806afad64cbb",
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4"
+		],
+		"cipher_id": 8,
+		"depends": 52
+	},
+	"subtest 54": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 55": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 2",
+		"depends": 2
+	},
+	"subtest 56": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 3",
+		"depends": 3
+	},
+	"subtest 57": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 4",
+		"depends": 4
+	},
+	"subtest 58": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 5",
+		"depends": 5
+	},
+	"subtest 59": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 6",
+		"depends": 6
+	},
+	"subtest 60": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 7",
+		"depends": 7
+	},
+	"subtest 61": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 8",
+		"depends": 8
+	}
+}

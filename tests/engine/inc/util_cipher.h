@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2022, 2025 NXP
+ * Copyright 2021-2022, 2025-2026 NXP
  */
 #ifndef __UTIL_CIPHER_H__
 #define __UTIL_CIPHER_H__
@@ -18,6 +18,22 @@
  * -FAILED                 - Failure
  */
 int util_cipher_init(struct llist **list);
+
+/**
+ * util_cipher_set_iv() - Set IV in a cipher output linked list
+ * @list: Pointer to cipher output data linked list.
+ * @ctx_id: Local context ID.
+ * @iv: IV to add.
+ * @iv_len: @iv length in bytes.
+ *
+ * Return:
+ * PASSED                  - Success.
+ * -BAD_ARG                - @list is NULL.
+ * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed.
+ * -FAILED                 - Failure
+ */
+int util_cipher_set_iv(struct llist *list, unsigned int ctx_id,
+		       unsigned char *iv, unsigned int iv_len);
 
 /**
  * util_cipher_add_out_data() - Add data in a cipher output linked list
@@ -60,11 +76,13 @@ int util_cipher_cmp_output_data(struct llist *list, unsigned int ctx_id,
  * util_cipher_find_node() - Point to node members, if node exists
  * @list: Linked list where the search is done.
  * @id: Id of the node.
+ * @iv: Pointer to the output IV buffer.
+ * @iv_length: @iv length in bytes.
  * @output: Pointer to the output data buffer.
  * @output_length: @output length in bytes.
  *
- * If node id exists, point output and length buffers to the respective members
- * of the linked list node.
+ * If node id exists, point output and IV buffers and lengths to the respective
+ * members of the linked list node.
  *
  * Return:
  * PASSED                  - Success.
@@ -72,6 +90,7 @@ int util_cipher_cmp_output_data(struct llist *list, unsigned int ctx_id,
  * -FAILED                 - @output is NULL or @id is not found.
  */
 int util_cipher_find_node(struct llist *list, unsigned int id,
+			  unsigned char **iv, unsigned int *iv_length,
 			  unsigned char **output, unsigned int *output_length);
 
 /**

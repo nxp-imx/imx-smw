@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023, 2025 NXP
+ * Copyright 2021-2023, 2025-2026 NXP
  */
 
 #include <stdlib.h>
@@ -11,10 +11,14 @@
 
 /**
  * struct cipher_output_data - Cipher output data
+ * @iv: Pointer to IV data.
+ * @iv_len: @iv length in bytes.
  * @output: Pointer to output data.
  * @output_len: @output length in bytes.
  */
 struct cipher_output_data {
+	unsigned char *iv;
+	unsigned int iv_len;
 	unsigned char *output;
 	unsigned int output_len;
 };
@@ -24,6 +28,9 @@ static void cipher_free_data(void *data)
 	struct cipher_output_data *cipher_output_data = data;
 
 	if (cipher_output_data) {
+		if (cipher_output_data->iv)
+			free(cipher_output_data->iv);
+
 		if (cipher_output_data->output)
 			free(cipher_output_data->output);
 
@@ -37,6 +44,56 @@ int util_cipher_init(struct llist **list)
 		return ERR_CODE(BAD_ARGS);
 
 	return util_list_init(list, cipher_free_data, LIST_ID_TYPE_UINT);
+}
+
+int util_cipher_set_iv(struct llist *list, unsigned int ctx_id,
+		       unsigned char *iv, unsigned int iv_len)
+{
+	int res = ERR_CODE(BAD_ARGS);
+	struct cipher_output_data *data = NULL;
+
+	if (!iv || !list)
+		return res;
+
+	res = util_list_find_node(list, ctx_id, (void **)&data);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	if (!data) {
+		/* 1st call, allocate node and IV */
+		data = calloc(1, sizeof(*data));
+		if (!data) {
+			DBG_PRINT_ALLOC_FAILURE();
+			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		}
+
+		data->iv_len = iv_len;
+		data->iv = malloc(data->iv_len);
+		if (!data->iv) {
+			DBG_PRINT_ALLOC_FAILURE();
+			free(data);
+			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		}
+
+		memcpy(data->iv, iv, data->iv_len);
+
+		res = util_list_add_node(list, ctx_id, data);
+		if (res != ERR_CODE(PASSED))
+			cipher_free_data(data);
+	} else {
+		/* Realloc IV and fill it */
+		data->iv_len = iv_len;
+		data->iv = realloc(data->iv, iv_len);
+		if (!data->iv) {
+			DBG_PRINT_ALLOC_FAILURE();
+			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		}
+
+		memcpy(data->iv, iv, iv_len);
+		res = ERR_CODE(PASSED);
+	}
+
+	return res;
 }
 
 int util_cipher_add_out_data(struct llist *list, unsigned int ctx_id,
@@ -56,7 +113,7 @@ int util_cipher_add_out_data(struct llist *list, unsigned int ctx_id,
 
 	if (!data) {
 		/* 1st call, allocate node and output data */
-		data = malloc(sizeof(*data));
+		data = calloc(1, sizeof(*data));
 		if (!data) {
 			DBG_PRINT_ALLOC_FAILURE();
 			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
@@ -119,6 +176,7 @@ int util_cipher_cmp_output_data(struct llist *list, unsigned int ctx_id,
 }
 
 int util_cipher_find_node(struct llist *list, unsigned int id,
+			  unsigned char **iv, unsigned int *iv_length,
 			  unsigned char **output, unsigned int *output_length)
 {
 	int res = ERR_CODE(BAD_ARGS);
@@ -132,6 +190,11 @@ int util_cipher_find_node(struct llist *list, unsigned int id,
 		return ERR_CODE(FAILED);
 
 	if (res == ERR_CODE(PASSED)) {
+		if (iv && iv_length) {
+			*iv = data->iv;
+			*iv_length = data->iv_len;
+		}
+
 		*output = data->output;
 		*output_length = data->output_len;
 	}
@@ -151,6 +214,13 @@ int util_cipher_copy_node(struct llist *list, unsigned int dst_ctx_id,
 
 	if (!data)
 		return ERR_CODE(INTERNAL);
+
+	if (data->iv && data->iv_len) {
+		res = util_cipher_set_iv(list, dst_ctx_id, data->iv,
+					 data->iv_len);
+		if (res != ERR_CODE(PASSED))
+			return res;
+	}
 
 	return util_cipher_add_out_data(list, dst_ctx_id, data->output,
 					data->output_len);

@@ -1,0 +1,280 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"ECB_NO_PADDING"
+			]
+		},
+		"key 2": {
+			"type": "AES",
+			"security_size": 256,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CBC_NO_PADDING"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 1",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 2": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 2",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 3": {
+		"command": "CIPHER_INIT",
+		"api": "PSA",
+		"mode": "ECB_NO_PADDING",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"context_id": 1,
+		"depends": 1
+	},
+	"subtest 4": {
+		"description": [
+			"Generating an IV for an ECB operation should fail"
+		],
+		"command": "CIPHER_GENERATE_IV",
+		"api": "PSA",
+		"iv": 16,
+		"context_id": 1,
+		"depends": 3,
+		"op_no_abort": true,
+		"result": "PSA_ERROR_BAD_STATE"
+	},
+	"subtest 5": {
+		"description": [
+			"Setting an IV for an ECB operation should fail"
+		],
+		"command": "CIPHER_SET_IV",
+		"api": "PSA",
+		"iv": "d6375e6b44a333b3d8db56a57f7c6139",
+		"context_id": 1,
+		"depends": 3,
+		"result": "PSA_ERROR_BAD_STATE"
+	},
+	"subtest 6": {
+		"command": "CIPHER_INIT",
+		"api": "PSA",
+		"mode": "ECB_NO_PADDING",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"context_id": 2,
+		"depends": 1
+	},
+	"subtest 7": {
+		"description": [
+			"Cipher encryption init on the same operation context should fail"
+		],
+		"command": "CIPHER_INIT",
+		"api": "PSA",
+		"mode": "ECB_NO_PADDING",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"context_id": 2,
+		"depends": 6,
+		"result": "PSA_ERROR_BAD_STATE"
+	},
+	"subtest 8": {
+		"command": "CIPHER_INIT",
+		"api": "PSA",
+		"mode": "ECB_NO_PADDING",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"context_id": 3,
+		"depends": 1
+	},
+	"subtest 9": {
+		"description": "Cipher encryption update",
+		"command": "CIPHER_UPDATE",
+		"api": "PSA",
+		"input": [
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4"
+		],
+		"context_id": 3,
+		"depends": 8
+	},
+	"subtest 10": {
+		"description": [
+			"Cipher encryption update output buffer too small should fail"
+		],
+		"command": "CIPHER_UPDATE",
+		"api": "PSA",
+		"input": [
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4"
+		],
+		"output": 10,
+		"context_id": 3,
+		"depends": 9,
+		"op_no_abort": true,
+		"result": "PSA_ERROR_BUFFER_TOO_SMALL"
+	},
+	"subtest 11": {
+		"command": "CIPHER_FINAL",
+		"api": "PSA",
+		"context_id": 3,
+		"depends": 10
+	},
+	"subtest 12": {
+		"description": [
+			"Cipher encryption final on the same operation context should fail"
+		],
+		"command": "CIPHER_FINAL",
+		"api": "PSA",
+		"context_id": 3,
+		"depends": 11,
+		"result": "PSA_ERROR_BAD_STATE"
+	},
+	"subtest 13": {
+		"command": "CIPHER_INIT",
+		"api": "PSA",
+		"mode": "CBC_NO_PADDING",
+		"op_type": "ENCRYPT",
+		"key_name": "key 2",
+		"context_id": 4,
+		"depends": 2
+	},
+	"subtest 14": {
+		"description": "Cipher encryption update without required IV",
+		"command": "CIPHER_UPDATE",
+		"api": "PSA",
+		"input": [
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4"
+		],
+		"context_id": 4,
+		"depends": 13,
+		"result": "PSA_ERROR_BAD_STATE"
+	},
+	"subtest 15": {
+		"command": "CIPHER_INIT",
+		"api": "PSA",
+		"mode": "CBC_NO_PADDING",
+		"op_type": "ENCRYPT",
+		"key_name": "key 2",
+		"context_id": 5,
+		"depends": 2
+	},
+	"subtest 16": {
+		"command": "CIPHER_GENERATE_IV",
+		"api": "PSA",
+		"iv": 16,
+		"context_id": 5,
+		"depends": 15
+	},
+	"subtest 17": {
+		"description": "Generating an IV twice should fail",
+		"command": "CIPHER_GENERATE_IV",
+		"api": "PSA",
+		"iv": 16,
+		"context_id": 5,
+		"depends": 16,
+		"result": "PSA_ERROR_BAD_STATE"
+	},
+	"subtest 18": {
+		"command": "CIPHER_INIT",
+		"api": "PSA",
+		"mode": "CBC_NO_PADDING",
+		"op_type": "ENCRYPT",
+		"key_name": "key 2",
+		"context_id": 6,
+		"depends": 2
+	},
+	"subtest 19": {
+		"command": "CIPHER_SET_IV",
+		"api": "PSA",
+		"iv": "d6375e6b44a333b3d8db56a57f7c6139",
+		"context_id": 6,
+		"depends": 18
+	},
+	"subtest 20": {
+		"description": "Setting an IV twice should fail",
+		"command": "CIPHER_SET_IV",
+		"api": "PSA",
+		"iv": "d6375e6b44a333b3d8db56a57f7c6139",
+		"context_id": 6,
+		"depends": 19,
+		"result": "PSA_ERROR_BAD_STATE"
+	},
+	"subtest 21": {
+		"command": "CIPHER_INIT",
+		"api": "PSA",
+		"mode": "CBC_NO_PADDING",
+		"op_type": "ENCRYPT",
+		"key_name": "key 2",
+		"context_id": 7,
+		"depends": 2
+	},
+	"subtest 22": {
+		"command": "CIPHER_ABORT",
+		"api": "PSA",
+		"context_id": 7,
+		"depends": 21
+	},
+	"subtest 23": {
+		"description": "Cipher update after an abort should fail",
+		"command": "CIPHER_UPDATE",
+		"api": "PSA",
+		"input": [
+			"871495c107a148fa1493837916ee5a2b",
+			"8fb2a2e4e6d1235269fea32b551514ca",
+			"ad1445ea6c56eb35aefd56aa8fd2b47f",
+			"7003994ecd56fd98cf7c9c704c1dc7e4"
+		],
+		"context_id": 7,
+		"depends": 22,
+		"op_no_abort": true,
+		"result": "PSA_ERROR_BAD_STATE"
+	},
+	"subtest 24": {
+		"description": "Cipher final after an abort should fail",
+		"command": "CIPHER_FINAL",
+		"api": "PSA",
+		"context_id": 7,
+		"depends": 23,
+		"op_no_abort": true,
+		"result": "PSA_ERROR_BAD_STATE"
+	},
+	"subtest 25": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 26": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 2",
+		"depends": 2
+	}
+}

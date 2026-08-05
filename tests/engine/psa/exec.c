@@ -203,6 +203,18 @@ static int execute_cipher_cmd(char *cmd, struct subtest_data *subtest)
 {
 	if (!strcmp(cmd, CIPHER))
 		return cipher_psa(subtest);
+	else if (!strcmp(cmd, CIPHER_INIT))
+		return cipher_init_psa(subtest);
+	else if (!strcmp(cmd, CIPHER_SET_IV))
+		return cipher_set_iv_psa(subtest);
+	else if (!strcmp(cmd, CIPHER_GENERATE_IV))
+		return cipher_generate_iv_psa(subtest);
+	else if (!strcmp(cmd, CIPHER_UPDATE))
+		return cipher_update_psa(subtest);
+	else if (!strcmp(cmd, CIPHER_FINAL))
+		return cipher_final_psa(subtest);
+	else if (!strcmp(cmd, CIPHER_ABORT))
+		return cipher_abort_psa(subtest);
 
 	DBG_PRINT("Undefined command");
 	return ERR_CODE(UNDEFINED_CMD);

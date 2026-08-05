@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2025 NXP
+ * Copyright 2021-2026 NXP
  */
 
 #include <string.h>
@@ -340,7 +340,7 @@ int cipher(struct subtest_data *subtest)
 	/* Try to get saved data if 'cipher_id' is set */
 	if (cipher_id != UINT_MAX) {
 		res = util_cipher_find_node(list_ciphers(subtest), cipher_id,
-					    &args.data.input,
+					    NULL, 0, &args.data.input,
 					    &args.data.input_length);
 
 		if ((encrypt_op && res == ERR_CODE(PASSED)) ||

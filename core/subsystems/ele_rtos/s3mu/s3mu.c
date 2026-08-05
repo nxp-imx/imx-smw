@@ -7,6 +7,8 @@
 #include "compiler.h"
 #include "s3mu.h"
 
+#include "utils_ex.h"
+
 #define _BIT(x)		((uint32_t)(1U << (x)))
 #define MU_READ_HEADER	(0x01u)
 #define GET_HDR_SIZE(x) (((x) & (uint32_t)0xFF00) >> 8u)
@@ -22,10 +24,8 @@ static void __no_optimization s3mu_hal_send_data(s3mu_t *mu, uint32_t regid,
 {
 	uint32_t mask = _BIT(regid);
 
-	while ((mu->TSR & mask) == 0u)
-		;
-
-	mu->TR[regid] = *data;
+	if (SMW_UTILS_INFINITE_WAIT_FOR(mu->TSR & mask, smw_utils_wait(1)))
+		mu->TR[regid] = *data;
 }
 
 /* Static function to retrieve one word from receive register specified by index */
@@ -34,10 +34,8 @@ static void __no_optimization s3mu_hal_receive_data(s3mu_t *mu, uint32_t regid,
 {
 	uint32_t mask = _BIT(regid);
 
-	while ((mu->RSR & mask) == 0u)
-		;
-
-	*data = mu->RR[regid];
+	if (SMW_UTILS_INFINITE_WAIT_FOR(mu->RSR & mask, smw_utils_wait(1)))
+		*data = mu->RR[regid];
 }
 
 /* Static function to retrieve one word from receive register specified by index with wait */
@@ -54,10 +52,8 @@ static status_t __no_optimization s3mu_hal_receive_data_wait(s3mu_t *mu,
 	if (!wait)
 		return STATUS_S3MU_REQUEST_TIMEOUT;
 
-	while ((mu->RSR & mask) == 0u) {
-		if (--wait == 0u)
-			return STATUS_S3MU_REQUEST_TIMEOUT;
-	}
+	if (!SMW_UTILS_WAIT_FOR(mu->RSR & mask, wait, smw_utils_wait(1)))
+		return STATUS_S3MU_REQUEST_TIMEOUT;
 
 	*data = mu->RR[regid];
 

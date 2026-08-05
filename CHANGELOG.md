@@ -107,6 +107,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   AEAD one-shot operations.
 * Update the i.MX943 and i.MX952 configuration files to enable ELA support for
   MAC one-shot operations.
+* Add wait API
 
 #### SMW Tests
 

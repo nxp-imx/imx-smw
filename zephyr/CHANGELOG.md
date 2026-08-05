@@ -26,6 +26,7 @@ This release is based on SMW Release 5.5
 * Fix coverity 2026.3.0 findings.
 * Add Key Management support.
 * Add HMAC/CMAC support.
+* Poll registers with a delay.
 
 ##### 2. OSAL
 
@@ -36,3 +37,4 @@ This release is based on SMW Release 5.5
 * Implement get mu base address API.
 * Fix coverity 2026.3.0 findings.
 * Keep object id defined by user.
+* Implement wait API.

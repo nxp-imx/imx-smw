@@ -505,6 +505,13 @@ typedef void (*smw_osal_shared_memory_free_t)(void *buf, size_t size,
 typedef void_ptr_t (*smw_osal_get_mu_base_t)(void);
 
 /**
+ * typedef smw_osal_wait_t - Wait for a specified amount of time
+ *
+ * @usec_to_wait: Number of microseconds to wait
+ */
+typedef void (*smw_osal_wait_t)(uint32_t usec_to_wait);
+
+/**
  * struct smw_ops - SMW OSAL operations interface
  * @critical_section_start: (**optional**) Start critical section, see
  *                          smw_osal_critical_section_start_t().
@@ -539,6 +546,8 @@ typedef void_ptr_t (*smw_osal_get_mu_base_t)(void);
  *                 smw_osal_db_find_next_t().
  * @find_obj_final: (**mandatory**) Close the find object query, see
  *                  smw_osal_db_find_final_t().
+ * @wait: (**optional**) Wait for a specified amount of time, see
+ *        smw_osal_wait_t().
  * @file_initialize: (**optional**) Initialize NVM storage file system, see
  *                 smw_osal_file_initialize_t().
  * @file_write: (**optional**) Write data chunk to NVM storage, see
@@ -595,6 +604,8 @@ struct smw_ops {
 	smw_osal_db_find_init_t find_obj_init;
 	smw_osal_db_find_next_t find_obj_next;
 	smw_osal_db_find_final_t find_obj_final;
+
+	smw_osal_wait_t wait;
 
 	smw_osal_file_initialize_t file_initialize;
 	smw_osal_file_write_t file_write;

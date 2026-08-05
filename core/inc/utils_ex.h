@@ -17,6 +17,23 @@
 #include "osal.h"
 #include "debug.h"
 
+#define SMW_UTILS_INFINITE_WAIT_FOR(x, wait)                                   \
+	({                                                                     \
+		bool _ret;                                                     \
+		while (!(_ret = (x)))                                          \
+			wait;                                                  \
+		(_ret);                                                        \
+	})
+
+#define SMW_UTILS_WAIT_FOR(x, timeout, wait)                                   \
+	({                                                                     \
+		bool _ret;                                                     \
+		uint32_t _timeout = (timeout);                                 \
+		while (!(_ret = (x)) && --_timeout)                            \
+			wait;                                                  \
+		(_ret);                                                        \
+	})
+
 static inline int smw_utils_file_initialise(void)
 {
 	struct smw_ops *ops = get_smw_ops();
@@ -113,6 +130,14 @@ static inline void *smw_utils_get_mu_base(void)
 		return ops->get_mu_base();
 
 	return NULL;
+}
+
+static inline void smw_utils_wait(uint32_t usec_to_wait)
+{
+	struct smw_ops *ops = get_smw_ops();
+
+	if (ops && ops->wait)
+		ops->wait(usec_to_wait);
 }
 
 #endif /* __UTILS_EX_H__ */

@@ -306,6 +306,8 @@ static int retrieve_hmac_output(crypto_op_args_t *op,
 	int status = SMW_STATUS_INVALID_PARAM;
 
 	unsigned char *mac = smw_mac_get_mac_data(mac_args);
+	unsigned int status_code = 0;
+	unsigned int error_info = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -321,9 +323,22 @@ static int retrieve_hmac_output(crypto_op_args_t *op,
 	smw_utils_dcache_invalidate((uint8_t *)op->crypto_status.virt_addr,
 				    sizeof(status_buf_t));
 
+	error_info = op->crypto_status.virt_addr->error_info;
+	status_code = op->crypto_status.virt_addr->status_code;
+
+	/*
+	 * When invalid MAC is supplied for a MAC verify operation, ELA firmware
+	 * correctly sets the error_info to FCE_ERR_VERIFICATION_FAILED but does not
+	 * update status_code to FCE_STATUS_ERROR. As a workaround, force
+	 * status_code to FCE_STATUS_ERROR when error_info is set to
+	 * FCE_ERR_VERIFICATION_FAILED
+	 */
+	if (mac_args->op_id == SMW_CONFIG_MAC_OP_ID_VERIFY &&
+	    error_info == FCE_ERR_VERIFICATION_FAILED)
+		status_code = FCE_STATUS_ERROR;
+
 	/* Convert FCE status to SMW status */
-	status = convert_fce_status(op->crypto_status.virt_addr->status_code,
-				    op->crypto_status.virt_addr->error_info);
+	status = convert_fce_status(status_code, error_info);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

@@ -872,13 +872,17 @@ static psa_status_t get_psa_alg(psa_algorithm_t *psa_alg,
 		break;
 
 	case SMW_ATTR_CLASS_ASYMMETRIC_SIGNATURE:
-		if (algo == SMW_ATTR_ALGO_ECDSA) {
+		switch (algo) {
+		case SMW_ATTR_ALGO_ECDSA:
 			*psa_alg = PSA_ALG_ECDSA(psa_hash);
-		} else if (algo == SMW_ATTR_ALGO_EDDSA) {
+			break;
+
+		case SMW_ATTR_ALGO_EDDSA:
 			switch (curve) {
 			case SMW_ATTR_CURVE_ED25519:
 				*psa_alg = PSA_ALG_ED25519PH;
 				break;
+
 			case SMW_ATTR_CURVE_ED448:
 				*psa_alg = PSA_ALG_ED448PH;
 				break;
@@ -888,14 +892,33 @@ static psa_status_t get_psa_alg(psa_algorithm_t *psa_alg,
 				break;
 
 			default:
-				goto end;
+				break;
 			}
-		} else if ((algo == SMW_ATTR_ALGO_RSA) &&
-			   (mode == SMW_ATTR_MODE_PKCS1_1_5)) {
-			if (hash == SMW_ATTR_HASH_NONE)
-				*psa_alg = PSA_ALG_RSA_PKCS1V15_SIGN_RAW;
-			else
+			break;
+
+		case SMW_ATTR_ALGO_RSA:
+			switch (mode) {
+			case SMW_ATTR_MODE_PKCS1_1_5:
+				if (hash == SMW_ATTR_HASH_NONE) {
+					*psa_alg =
+						PSA_ALG_RSA_PKCS1V15_SIGN_RAW;
+					break;
+				}
+
 				*psa_alg = PSA_ALG_RSA_PKCS1V15_SIGN(psa_hash);
+				break;
+
+			case SMW_ATTR_MODE_PSS:
+				*psa_alg = PSA_ALG_RSA_PSS_ANY_SALT(psa_hash);
+				break;
+
+			default:
+				break;
+			}
+			break;
+
+		default:
+			break;
 		}
 		break;
 
@@ -925,6 +948,14 @@ static psa_status_t get_psa_alg(psa_algorithm_t *psa_alg,
 		*psa_alg = get_psa_kdf_algo(algo, psa_hash);
 		break;
 
+	case SMW_ATTR_CLASS_KEY_ATTESTATION:
+		if (algo == SMW_ATTR_ALGO_ECDSA)
+			*psa_alg = PSA_ALG_VENDOR_ECDSA_ATTESTATION(psa_hash);
+		else if (algo == SMW_ATTR_ALGO_AES &&
+			 mode == SMW_ATTR_MODE_CMAC)
+			*psa_alg = PSA_ALG_VENDOR_CMAC_ATTESTATION;
+		break;
+
 	case SMW_ATTR_CLASS_KEY_AGREEMENT:
 		if (algo == SMW_ATTR_ALGO_ECDH)
 			*psa_alg = PSA_ALG_ECDH;
@@ -932,6 +963,10 @@ static psa_status_t get_psa_alg(psa_algorithm_t *psa_alg,
 		break;
 
 	default:
+		break;
+	}
+
+	if (*psa_alg == PSA_ALG_NONE) {
 		SMW_DBG_PRINTF(ERROR, "%s Unknown algorithm 0x%" PRIx64 "\n",
 			       __func__, permitted_algo);
 		goto end;
@@ -989,6 +1024,9 @@ smw_attr_algo_t get_smw_algo(psa_algorithm_t psa_alg, smw_key_type_t key_type)
 		case PSA_ALG_CHACHA20_POLY1305:
 			mode = SMW_ATTR_MODE_POLY1305;
 			break;
+
+		default:
+			goto end;
 		}
 
 		l = (psa_alg & PSA_ALG_AEAD_TAG_LENGTH_MASK) >>
@@ -1020,11 +1058,16 @@ smw_attr_algo_t get_smw_algo(psa_algorithm_t psa_alg, smw_key_type_t key_type)
 		break;
 
 	case PSA_ALG_CATEGORY_MAC:
-		class = SMW_ATTR_CLASS_MAC;
-		if (PSA_ALG_IS_HMAC(psa_alg)) {
+		if (PSA_ALG_IS_VENDOR_CMAC_ATTESTATION(psa_alg)) {
+			class = SMW_ATTR_CLASS_KEY_ATTESTATION;
+			algo = SMW_ATTR_ALGO_AES;
+			mode = SMW_ATTR_MODE_CMAC;
+		} else if (PSA_ALG_IS_HMAC(psa_alg)) {
+			class = SMW_ATTR_CLASS_MAC;
 			algo = SMW_ATTR_ALGO_HMAC;
 			hash = get_smw_hash(PSA_ALG_GET_HASH(psa_alg));
 		} else {
+			class = SMW_ATTR_CLASS_MAC;
 			mode = SMW_ATTR_MODE_CMAC;
 			algo = get_cipher_algo_key_type(key_type);
 		}
@@ -1040,30 +1083,41 @@ smw_attr_algo_t get_smw_algo(psa_algorithm_t psa_alg, smw_key_type_t key_type)
 		break;
 
 	case PSA_ALG_CATEGORY_SIGN:
-		class = SMW_ATTR_CLASS_ASYMMETRIC_SIGNATURE;
 		hash = get_smw_hash(PSA_ALG_GET_HASH(psa_alg));
 
-		if (PSA_ALG_IS_ECDSA(psa_alg)) {
+		if (PSA_ALG_IS_VENDOR_ECDSA_ATTESTATION(psa_alg)) {
+			class = SMW_ATTR_CLASS_KEY_ATTESTATION;
+			algo = SMW_ATTR_ALGO_ECDSA;
+			curve = SMW_ATTR_CURVE_ANY;
+		} else if (PSA_ALG_IS_ECDSA(psa_alg)) {
+			class = SMW_ATTR_CLASS_ASYMMETRIC_SIGNATURE;
 			algo = SMW_ATTR_ALGO_ECDSA;
 			curve = SMW_ATTR_CURVE_ANY;
 		} else if (PSA_ALG_IS_RSA_PKCS1V15_SIGN(psa_alg)) {
+			class = SMW_ATTR_CLASS_ASYMMETRIC_SIGNATURE;
 			algo = SMW_ATTR_ALGO_RSA;
 			mode = SMW_ATTR_MODE_PKCS1_1_5;
 		} else if (PSA_ALG_IS_RSA_PSS(psa_alg)) {
+			class = SMW_ATTR_CLASS_ASYMMETRIC_SIGNATURE;
 			algo = SMW_ATTR_ALGO_RSA;
 			mode = SMW_ATTR_MODE_PSS;
 		} else if (psa_alg == PSA_ALG_PURE_EDDSA) {
+			class = SMW_ATTR_CLASS_ASYMMETRIC_SIGNATURE;
 			algo = SMW_ATTR_ALGO_EDDSA;
 			curve = SMW_ATTR_CURVE_ANY;
 			hash = SMW_ATTR_HASH_NONE;
 		} else if (psa_alg == PSA_ALG_ED25519PH) {
+			class = SMW_ATTR_CLASS_ASYMMETRIC_SIGNATURE;
 			algo = SMW_ATTR_ALGO_EDDSA;
 			curve = SMW_ATTR_CURVE_ED25519;
 			hash = SMW_ATTR_HASH_NONE;
 		} else if (psa_alg == PSA_ALG_ED448PH) {
+			class = SMW_ATTR_CLASS_ASYMMETRIC_SIGNATURE;
 			algo = SMW_ATTR_ALGO_EDDSA;
 			curve = SMW_ATTR_CURVE_ED448;
 			hash = SMW_ATTR_HASH_NONE;
+		} else {
+			goto end;
 		}
 
 		break;

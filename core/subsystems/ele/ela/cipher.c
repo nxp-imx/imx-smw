@@ -174,6 +174,8 @@ static int set_cipher_op_params(crypto_op_args_t *op,
 	unsigned int input_len = smw_crypto_get_cipher_input_len(cipher_args);
 	unsigned char *input_data = smw_crypto_get_cipher_input(cipher_args);
 	uint32_t offset = 0;
+	uint32_t status_offset = 0;
+	uint64_t phys_addr_offset = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -205,7 +207,13 @@ static int set_cipher_op_params(crypto_op_args_t *op,
 
 	op->dst.len = input_len;
 	op->dst.virt_addr = op->src.virt_addr + offset;
-	op->dst.phys_addr = op->src.phys_addr + offset;
+
+	if (ADD_OVERFLOW(op->src.phys_addr, offset, &phys_addr_offset)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	op->dst.phys_addr = phys_addr_offset;
 
 	op->op_type = CRYPTO_OP_TYPE_AES;
 	op->op_aes_args.algo = algo;
@@ -225,8 +233,13 @@ static int set_cipher_op_params(crypto_op_args_t *op,
 	}
 
 	/* Set status buffer (aligned after output data) */
-	status = smw_utils_align_value(offset + op->dst.len,
-				       ELA_BUFFER_ALIGN_SIZE, &offset);
+	if (ADD_OVERFLOW(offset, op->dst.len, &status_offset)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	status = smw_utils_align_value(status_offset, ELA_BUFFER_ALIGN_SIZE,
+				       &offset);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -401,7 +414,7 @@ end:
 
 bool ela_cipher_handle(enum operation_id operation_id, void *args, int *status)
 {
-	bool op_status = false;
+	bool op_handled = false;
 	int tmp_status = SMW_STATUS_OK;
 
 	struct smw_crypto_cipher_args *cipher_args = args;
@@ -425,14 +438,13 @@ bool ela_cipher_handle(enum operation_id operation_id, void *args, int *status)
 	 * operation to ELE.
 	 */
 	if (tmp_status != SMW_STATUS_OPERATION_NOT_SUPPORTED) {
-		op_status = true;
+		op_handled = true;
 		*status = tmp_status;
 	}
 
 end:
-	SMW_DBG_PRINTF(VERBOSE, "%s: Operation %d handled by ELA returned %s\n",
-		       __func__, operation_id,
-		       op_status ? "success" : "failure");
+	SMW_DBG_PRINTF(VERBOSE, "%s: Operation %d %s by ELA\n", __func__,
+		       operation_id, op_handled ? "handled" : "not handled");
 
-	return op_status;
+	return op_handled;
 }

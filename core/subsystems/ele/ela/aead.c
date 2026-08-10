@@ -51,7 +51,6 @@ static int ela_set_aead_algo(enum smw_config_key_type_id key_type_id,
 
 /**
  * use_ela() - Check if ELA should handle this AEAD operation
- * @operation_id: Operation ID
  * @aead_args: AEAD arguments
  *
  * This function checks if:
@@ -253,6 +252,8 @@ static int setup_aead_op_params(crypto_op_args_t *op,
 	uint32_t offset = 0;
 	unsigned int output_len = 0;
 	unsigned int tag_len = smw_crypto_get_aead_tag_len(aead_args);
+	uint32_t unaligned_offset = 0;
+	uint64_t phys_addr_offset = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -291,17 +292,34 @@ static int setup_aead_op_params(crypto_op_args_t *op,
 	/* Set dest buffer */
 	op->dst.len = output_len;
 	op->dst.virt_addr = op->src.virt_addr + offset;
-	op->dst.phys_addr = op->src.phys_addr + offset;
+	if (ADD_OVERFLOW(op->src.phys_addr, offset, &phys_addr_offset)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
 
-	status = smw_utils_align_value(offset + op->dst.len,
-				       ELA_BUFFER_ALIGN_SIZE, &offset);
+	op->dst.phys_addr = phys_addr_offset;
+
+	if (ADD_OVERFLOW(offset, output_len, &unaligned_offset)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	status = smw_utils_align_value(unaligned_offset, ELA_BUFFER_ALIGN_SIZE,
+				       &offset);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
 	/* Set AAD buffer */
 	if (aad && aad_len) {
 		op->op_aead_args.aad.virt_addr = op->src.virt_addr + offset;
-		op->op_aead_args.aad.phys_addr = op->src.phys_addr + offset;
+
+		if (ADD_OVERFLOW(op->src.phys_addr, offset,
+				 &phys_addr_offset)) {
+			status = SMW_STATUS_INVALID_PARAM;
+			goto end;
+		}
+
+		op->op_aead_args.aad.phys_addr = phys_addr_offset;
 		op->op_aead_args.aad.len = aad_len;
 
 		/* Copy AAD data to ELA memory */
@@ -310,8 +328,13 @@ static int setup_aead_op_params(crypto_op_args_t *op,
 		/* Clean cache for AAD buffer */
 		smw_utils_dcache_clean(op->op_aead_args.aad.virt_addr, aad_len);
 
+		if (ADD_OVERFLOW(offset, aad_len, &unaligned_offset)) {
+			status = SMW_STATUS_INVALID_PARAM;
+			goto end;
+		}
+
 		/* Update offset for next buffer - Only if AAD exists */
-		status = smw_utils_align_value(offset + aad_len,
+		status = smw_utils_align_value(unaligned_offset,
 					       ELA_BUFFER_ALIGN_SIZE, &offset);
 		if (status != SMW_STATUS_OK)
 			goto end;
@@ -324,7 +347,13 @@ static int setup_aead_op_params(crypto_op_args_t *op,
 	/* allocate tag buffer from reserved memory */
 	op->op_aead_args.tag.len = tag_len;
 	op->op_aead_args.tag.virt_addr = op->src.virt_addr + offset;
-	op->op_aead_args.tag.phys_addr = op->src.phys_addr + offset;
+
+	if (ADD_OVERFLOW(op->src.phys_addr, offset, &phys_addr_offset)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	op->op_aead_args.tag.phys_addr = phys_addr_offset;
 
 	if (aead_args->op_type_id == SMW_CONFIG_AEAD_OP_TYPE_ID_DECRYPT) {
 		/* Copy TAG data to ELA memory for decryption */
@@ -355,9 +384,14 @@ static int setup_aead_op_params(crypto_op_args_t *op,
 		goto end;
 	}
 
+	if (ADD_OVERFLOW(offset, tag_len, &unaligned_offset)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
 	/* Set status buffer (aligned after tag) */
-	status = smw_utils_align_value(offset + op->op_aead_args.tag.len,
-				       ELA_BUFFER_ALIGN_SIZE, &offset);
+	status = smw_utils_align_value(unaligned_offset, ELA_BUFFER_ALIGN_SIZE,
+				       &offset);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -599,7 +633,7 @@ end:
 
 bool ela_aead_handle(enum operation_id operation_id, void *args, int *status)
 {
-	bool op_status = false;
+	bool op_handled = false;
 	int tmp_status = SMW_STATUS_OK;
 
 	struct smw_crypto_aead_args *aead_args = args;
@@ -623,14 +657,13 @@ bool ela_aead_handle(enum operation_id operation_id, void *args, int *status)
 	 * operation to ELE.
 	 */
 	if (tmp_status != SMW_STATUS_OPERATION_NOT_SUPPORTED) {
-		op_status = true;
+		op_handled = true;
 		*status = tmp_status;
 	}
 
 end:
-	SMW_DBG_PRINTF(VERBOSE, "%s: Operation %d handled by ELA returned %s\n",
-		       __func__, operation_id,
-		       op_status ? "success" : "failure");
+	SMW_DBG_PRINTF(VERBOSE, "%s: Operation %d %s by ELA\n", __func__,
+		       operation_id, op_handled ? "handled" : "not handled");
 
-	return op_status;
+	return op_handled;
 }

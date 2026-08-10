@@ -18,23 +18,23 @@
  *   https://arm-software.github.io/psa-api/crypto/1.3/
  */
 
-#define PSA_ALG_HASH_MASK		((psa_algorithm_t)0x000000ff)
-#define PSA_ALG_ANY_HASH		((psa_algorithm_t)0x020000ff)
-#define PSA_ALG_AES_MMO_ZIGBEE		((psa_algorithm_t)0x02000007)
-#define PSA_ALG_CBC_MAC			((psa_algorithm_t)0x03c00100)
-#define PSA_ALG_CBC_NO_PADDING		((psa_algorithm_t)0x04404000)
-#define PSA_ALG_CBC_PKCS7		((psa_algorithm_t)0x04404100)
-#define PSA_ALG_CCM			((psa_algorithm_t)0x05500100)
-#define PSA_ALG_CCM_STAR_ANY_TAG	((psa_algorithm_t)0x04c09300)
-#define PSA_ALG_CCM_STAR_NO_TAG		((psa_algorithm_t)0x04c01300)
-#define PSA_ALG_CFB			((psa_algorithm_t)0x04c01100)
-#define PSA_ALG_CHACHA20_POLY1305	((psa_algorithm_t)0x05100500)
-#define PSA_ALG_CMAC			((psa_algorithm_t)0x03c00200)
-#define PSA_ALG_CTR			((psa_algorithm_t)0x04c01000)
-#define PSA_ALG_ECB_NO_PADDING		((psa_algorithm_t)0x04404400)
-#define PSA_ALG_ECDH			((psa_algorithm_t)0x09020000)
-#define PSA_ALG_ECDSA_ANY		((psa_algorithm_t)0x06000600)
-#define PSA_ALG_ED25519PH		((psa_algorithm_t)0x0600090B)
+#define PSA_ALG_HASH_MASK	  ((psa_algorithm_t)0x000000ff)
+#define PSA_ALG_ANY_HASH	  ((psa_algorithm_t)0x020000ff)
+#define PSA_ALG_AES_MMO_ZIGBEE	  ((psa_algorithm_t)0x02000007)
+#define PSA_ALG_CBC_MAC		  ((psa_algorithm_t)0x03c00100)
+#define PSA_ALG_CBC_NO_PADDING	  ((psa_algorithm_t)0x04404000)
+#define PSA_ALG_CBC_PKCS7	  ((psa_algorithm_t)0x04404100)
+#define PSA_ALG_CCM		  ((psa_algorithm_t)0x05500100)
+#define PSA_ALG_CCM_STAR_ANY_TAG  ((psa_algorithm_t)0x04c09300)
+#define PSA_ALG_CCM_STAR_NO_TAG	  ((psa_algorithm_t)0x04c01300)
+#define PSA_ALG_CFB		  ((psa_algorithm_t)0x04c01100)
+#define PSA_ALG_CHACHA20_POLY1305 ((psa_algorithm_t)0x05100500)
+#define PSA_ALG_CMAC		  ((psa_algorithm_t)0x03c00200)
+#define PSA_ALG_CTR		  ((psa_algorithm_t)0x04c01000)
+#define PSA_ALG_ECB_NO_PADDING	  ((psa_algorithm_t)0x04404400)
+#define PSA_ALG_ECDH		  ((psa_algorithm_t)0x09020000)
+#define PSA_ALG_ECDSA_ANY	  ((psa_algorithm_t)0x06000600)
+#define PSA_ALG_ED25519PH	  ((psa_algorithm_t)0x0600090B)
 /* .. [[asymmetric_signature, eddsa]] */
 #define PSA_ALG_ED448PH ((psa_algorithm_t)0x06000915)
 /* .. [[asymmetric_signature, eddsa]] */
@@ -48,27 +48,27 @@
 #define PSA_ALG_PBKDF2_AES_CMAC_PRF_128 ((psa_algorithm_t)0x08800200)
 #define PSA_ALG_PURE_EDDSA		((psa_algorithm_t)0x06000800)
 /* .. [[asymmetric_signature, eddsa, pure]] */
-#define PSA_ALG_RIPEMD160		((psa_algorithm_t)0x02000004)
-#define PSA_ALG_RSA_PKCS1V15_CRYPT	((psa_algorithm_t)0x07000200)
-#define PSA_ALG_RSA_PKCS1V15_SIGN_RAW	((psa_algorithm_t)0x06000200)
-#define PSA_ALG_SHA3_224		((psa_algorithm_t)0x02000010)
-#define PSA_ALG_SHA3_256		((psa_algorithm_t)0x02000011)
-#define PSA_ALG_SHA3_384		((psa_algorithm_t)0x02000012)
-#define PSA_ALG_SHA3_512		((psa_algorithm_t)0x02000013)
-#define PSA_ALG_SHAKE256_512		((psa_algorithm_t)0x02000015)
-#define PSA_ALG_SHA_1			((psa_algorithm_t)0x02000005)
-#define PSA_ALG_SHA_224			((psa_algorithm_t)0x02000008)
-#define PSA_ALG_SHA_256			((psa_algorithm_t)0x02000009)
-#define PSA_ALG_SHA_384			((psa_algorithm_t)0x0200000a)
-#define PSA_ALG_SHA_512			((psa_algorithm_t)0x0200000b)
-#define PSA_ALG_SHA_512_224		((psa_algorithm_t)0x0200000c)
-#define PSA_ALG_SHA_512_256		((psa_algorithm_t)0x0200000d)
-#define PSA_ALG_SM3			((psa_algorithm_t)0x02000014)
-#define PSA_ALG_SP800_108_COUNTER_CMAC	((psa_algorithm_t)0x08000800)
-#define PSA_ALG_STREAM_CIPHER		((psa_algorithm_t)0x04800100)
-#define PSA_ALG_TLS12_ECJPAKE_TO_PMS	((psa_algorithm_t)0x08000609)
-#define PSA_ALG_XCHACHA20_POLY1305	((psa_algorithm_t)0x05100600)
-#define PSA_ALG_XTS			((psa_algorithm_t)0x0440ff00)
+#define PSA_ALG_RIPEMD160	       ((psa_algorithm_t)0x02000004)
+#define PSA_ALG_RSA_PKCS1V15_CRYPT     ((psa_algorithm_t)0x07000200)
+#define PSA_ALG_RSA_PKCS1V15_SIGN_RAW  ((psa_algorithm_t)0x06000200)
+#define PSA_ALG_SHA3_224	       ((psa_algorithm_t)0x02000010)
+#define PSA_ALG_SHA3_256	       ((psa_algorithm_t)0x02000011)
+#define PSA_ALG_SHA3_384	       ((psa_algorithm_t)0x02000012)
+#define PSA_ALG_SHA3_512	       ((psa_algorithm_t)0x02000013)
+#define PSA_ALG_SHAKE256_512	       ((psa_algorithm_t)0x02000015)
+#define PSA_ALG_SHA_1		       ((psa_algorithm_t)0x02000005)
+#define PSA_ALG_SHA_224		       ((psa_algorithm_t)0x02000008)
+#define PSA_ALG_SHA_256		       ((psa_algorithm_t)0x02000009)
+#define PSA_ALG_SHA_384		       ((psa_algorithm_t)0x0200000a)
+#define PSA_ALG_SHA_512		       ((psa_algorithm_t)0x0200000b)
+#define PSA_ALG_SHA_512_224	       ((psa_algorithm_t)0x0200000c)
+#define PSA_ALG_SHA_512_256	       ((psa_algorithm_t)0x0200000d)
+#define PSA_ALG_SM3		       ((psa_algorithm_t)0x02000014)
+#define PSA_ALG_SP800_108_COUNTER_CMAC ((psa_algorithm_t)0x08000800)
+#define PSA_ALG_STREAM_CIPHER	       ((psa_algorithm_t)0x04800100)
+#define PSA_ALG_TLS12_ECJPAKE_TO_PMS   ((psa_algorithm_t)0x08000609)
+#define PSA_ALG_XCHACHA20_POLY1305     ((psa_algorithm_t)0x05100600)
+#define PSA_ALG_XTS		       ((psa_algorithm_t)0x0440ff00)
 
 #define PSA_ALG_AEAD_TAG_LENGTH_MASK	       ((psa_algorithm_t)0x003f0000)
 #define PSA_AEAD_TAG_LENGTH_OFFSET	       16
@@ -103,6 +103,10 @@
 	((psa_algorithm_t)PSA_ALG_VENDOR_MASK | 0x0800FF00)
 #define PSA_ALG_VENDOR_TLS13_BASE                                              \
 	((psa_algorithm_t)PSA_ALG_VENDOR_MASK | 0x0800D000)
+#define PSA_ALG_VENDOR_ECDSA_ATTESTATION_BASE                                  \
+	((psa_algorithm_t)PSA_ALG_VENDOR_MASK | PSA_ALG_ECDSA_BASE)
+#define PSA_ALG_VENDOR_CMAC_ATTESTATION_BASE                                   \
+	((psa_algorithm_t)PSA_ALG_VENDOR_MASK | PSA_ALG_CMAC)
 
 #define PSA_ALG_CATEGORY_MASK		       ((psa_algorithm_t)0x7f000000)
 #define PSA_ALG_CATEGORY_AEAD		       ((psa_algorithm_t)0x05000000)
@@ -423,6 +427,7 @@
  * - PSA_ALG_TLS12_PRF()
  * - PSA_ALG_TLS12_PSK_TO_MS()
  * - PSA_ALG_VENDOR_TLS13()
+ * - PSA_ALG_VENDOR_ECDSA_ATTESTATION()
  *
  * Return:
  * The underlying hash algorithm if @alg is a composite algorithm that uses a
@@ -1330,6 +1335,30 @@
 		 alg == PSA_ALG_ANY_HASH)
 
 /**
+ * PSA_ALG_IS_VENDOR_ECDSA_ATTESTATION() - Whether the specified algorithm is a
+ *                                         vendor ECDSA attestation algorithm.
+ * @alg: [in] An algorithm identifier (value of &typedef psa_algorithm_t).
+ *
+ * Return:
+ *  - 1 if @alg is a vendor ECDSA attestation algorithm.
+ *  - 0 otherwise.
+ */
+#define PSA_ALG_IS_VENDOR_ECDSA_ATTESTATION(alg)                               \
+	(((alg) & ~PSA_ALG_HASH_MASK) == PSA_ALG_VENDOR_ECDSA_ATTESTATION_BASE)
+
+/**
+ * PSA_ALG_IS_VENDOR_CMAC_ATTESTATION() - Whether the specified algorithm is a
+ *                                        vendor CMAC attestation algorithm.
+ * @alg: [in] An algorithm identifier (value of &typedef psa_algorithm_t).
+ *
+ * Return:
+ *  - 1 if @alg is a vendor CMAC attestation algorithm.
+ *  - 0 otherwise.
+ */
+#define PSA_ALG_IS_VENDOR_CMAC_ATTESTATION(alg)                                \
+	((alg) == PSA_ALG_VENDOR_CMAC_ATTESTATION_BASE)
+
+/**
  * PSA_ALG_KEY_AGREEMENT() - Macro to build a combined algorithm that chains a
  *                           key agreement with a key derivation.
  * @ka_alg: [in] A key agreement algorithm such that
@@ -1838,6 +1867,31 @@
 			      PSA_ALG_MAC_AT_LEAST_THIS_LENGTH_FLAG)) |        \
 			   ((mac_length) << PSA_MAC_TRUNCATION_OFFSET &        \
 			    PSA_ALG_MAC_TRUNCATION_MASK)))
+
+/**
+ * PSA_ALG_VENDOR_ECDSA_ATTESTATION() - Vendor ECDSA attestation algorithm with
+ *                                      hashing.
+ * @hash_alg: [in] A hash algorithm such that :c:macro:`PSA_ALG_IS_HASH` is
+ *                 true. This corresponds to the SHAx hash used during
+ *                 attestation (e.g., PSA_ALG_SHA_256).
+ *
+ * This vendor algorithm encodes an ECDSA-based key attestation algorithm
+ * (NXP-specific, value 0x860006hh).
+ *
+ * Return:
+ * The corresponding vendor ECDSA attestation algorithm.
+ */
+#define PSA_ALG_VENDOR_ECDSA_ATTESTATION(hash_alg)                             \
+	((psa_algorithm_t)(PSA_ALG_VENDOR_ECDSA_ATTESTATION_BASE |             \
+			   ((hash_alg) & (PSA_ALG_HASH_MASK))))
+
+/**
+ * PSA_ALG_VENDOR_CMAC_ATTESTATION - Vendor CMAC key attestation algorithm.
+ *
+ * This vendor algorithm encodes a CMAC-based key attestation algorithm
+ * (NXP-specific, value 0x83C00200).
+ */
+#define PSA_ALG_VENDOR_CMAC_ATTESTATION PSA_ALG_VENDOR_CMAC_ATTESTATION_BASE
 
 /**
  * PSA_PAKE_PRIMITIVE() - Construct a PAKE primitive from type, family and

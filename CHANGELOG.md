@@ -81,6 +81,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE: Fix error status propagation in ELA cipher buffer size calculation and
   parameter setup functions.
 * TEE: Fix coverity 2026.6.0 findings
+* ELE: Add ELA one-shot HMAC (HMAC-SHA256, HMAC-SHA384 and HMAC-SHA512)
+  compute and verify support for plaintext key buffers.
 
 ##### 3. ARM PSA APIs
 
@@ -103,6 +105,8 @@ The failure is due to the storage manager which is already loaded and a new inst
   AES cipher one-shot operations.
 * Update the i.MX943 and i.MX952 configuration files to enable ELA support for
   AEAD one-shot operations.
+* Update the i.MX943 and i.MX952 configuration files to enable ELA support for
+  MAC one-shot operations.
 
 #### SMW Tests
 

@@ -166,6 +166,11 @@ The MAC algorithm encoding follows the algorithm encoding format described in
 :ref:`table_psa_algorithm_encoding` table, as detailed in the following
 :ref:`table_psa_mac_algorithm_encoding` table.
 
+The MAC algorithm identifiers have been extended with NXP vendor-specific
+identifiers. The :ref:`table_psa_mac_algorithms` table defines the PSA standard
+identifiers and the extended identifiers are defined in the
+:ref:`table_psa_mac_vendor_algorithms` table.
+
 .. table:: MAC Algorithm encoding
    :name: table_psa_mac_algorithm_encoding
    :align: center
@@ -175,7 +180,10 @@ The MAC algorithm encoding follows the algorithm encoding format described in
    +------------+----------+--------------------------------------------------------------------+
    | **Field**  | **Bits** | **Description**                                                    |
    +============+==========+====================================================================+
-   | V          | [31]     | =0                                                                 |
+   | V          | [31]     | Can be 0 or 1:\                                                    |
+   |            |          |                                                                    |
+   |            |          |  - =0, :ref:`table_psa_mac_algorithms` table.                      |
+   |            |          |  - =1, :ref:`table_psa_mac_vendor_algorithms` table.               |
    +------------+----------+--------------------------------------------------------------------+
    | CAT        | [30:24]  | =0x03 (MAC)                                                        |
    +------------+----------+--------------------------------------------------------------------+
@@ -225,6 +233,18 @@ PSA_ALG_TRUNCATED_MAC() generates identifiers with non-default LEN values.
 
 PSA_ALG_AT_LEAST_THIS_LENGTH_MAC() generates permitted-algorithm policies with
 W = 1.
+
+.. table:: MAC Vendor Algorithm identifiers (V=1)
+   :name: table_psa_mac_vendor_algorithms
+   :widths: 18 5 13 35 15
+   :width: 100%
+   :class: wrap-table
+
+   +------------+-------+--------------+---------------------------------+----------------------------------+
+   | **Value**  | **B** | **MAC-TYPE** | **Define**                      | **Description**                  |
+   +============+=======+==============+=================================+==================================+
+   | 0x83C00200 |   1   | 0x02         | PSA_ALG_VENDOR_CMAC_ATTESTATION | NXP vendor CMAC key attestation. |
+   +------------+-------+--------------+---------------------------------+----------------------------------+
 
 Cipher Algorithms
 """""""""""""""""
@@ -364,31 +384,39 @@ The Asymmetric Signature algorithm encoding follows the algorithm encoding
 format described in the :ref:`table_psa_algorithm_encoding` table, as detailed
 in the following :ref:`table_psa_asym_sign_algorithm_encoding` table.
 
+The asymmetric signature algorithm identifiers have been extended with NXP
+vendor-specific identifiers. The :ref:`table_psa_sign_algorithms` table defines
+the PSA standard identifiers and the extended identifiers are defined in the
+:ref:`table_psa_sign_vendor_algorithms` table.
+
 .. table:: Asymmetric Signature Algorithm encoding
    :name: table_psa_asym_sign_algorithm_encoding
    :align: center
    :widths: 15 10 60
    :class: wrap-table
 
-   +------------+----------+---------------------------------------------+
-   | **Field**  | **Bits** | **Description**                             |
-   +============+==========+=============================================+
-   | V          | [31]     | =0                                          |
-   +------------+----------+---------------------------------------------+
-   | CAT        | [30:24]  | =0x06 (Asymmetric Signature)                |
-   +------------+----------+---------------------------------------------+
-   | S          | [23]     | =0                                          |
-   +------------+----------+---------------------------------------------+
-   | B          | [22]     | =0                                          |
-   +------------+----------+---------------------------------------------+
-   | LEN        | [21:16]  | =0                                          |
-   +------------+----------+---------------------------------------------+
-   | SIGN-TYPE  | [15:8]   | The Asymmetric Signature algorithm type.    |
-   |            |          | See :ref:`table_psa_sign_algorithms` table. |
-   +------------+----------+---------------------------------------------+
-   | HASH-TYPE  | [7:0]    | =0 or HASH-TYPE as defined in the           |
-   |            |          | :ref:`table_psa_hash_algorithms` table.     |
-   +------------+----------+---------------------------------------------+
+   +------------+----------+-----------------------------------------------------------------+
+   | **Field**  | **Bits** | **Description**                                                 |
+   +============+==========+=================================================================+
+   | V          | [31]     | Can be 0 or 1:\                                                 |
+   |            |          |                                                                 |
+   |            |          |  - =0, :ref:`table_psa_sign_algorithms` table.                  |
+   |            |          |  - =1, :ref:`table_psa_sign_vendor_algorithms` table.           |
+   +------------+----------+-----------------------------------------------------------------+
+   | CAT        | [30:24]  | =0x06 (Asymmetric Signature)                                    |
+   +------------+----------+-----------------------------------------------------------------+
+   | S          | [23]     | =0                                                              |
+   +------------+----------+-----------------------------------------------------------------+
+   | B          | [22]     | =0                                                              |
+   +------------+----------+-----------------------------------------------------------------+
+   | LEN        | [21:16]  | =0                                                              |
+   +------------+----------+-----------------------------------------------------------------+
+   | SIGN-TYPE  | [15:8]   | The Asymmetric Signature algorithm type.                        |
+   |            |          | See :ref:`table_psa_sign_algorithms` table.                     |
+   +------------+----------+-----------------------------------------------------------------+
+   | HASH-TYPE  | [7:0]    | =0 or HASH-TYPE as defined in the                               |
+   |            |          | :ref:`table_psa_hash_algorithms` table.                         |
+   +------------+----------+-----------------------------------------------------------------+
 
 .. table:: Signature Algorithm identifiers
    :name: table_psa_sign_algorithms
@@ -419,6 +447,21 @@ in the following :ref:`table_psa_asym_sign_algorithm_encoding` table.
    +----------------+---------------+----------------------------------+--------------------------------------------+
    | 0x06000915     | 0x09          | PSA_ALG_ED448PH                  | Ed448ph (pre-hashed Ed448).                |
    +----------------+---------------+----------------------------------+--------------------------------------------+
+
+(1) hh is the hash algorithm identifier as defined in the
+    :ref:`table_psa_hash_algorithms` table.
+
+.. table:: Signature Vendor Algorithm identifiers (V=1)
+   :name: table_psa_sign_vendor_algorithms
+   :widths: 17 13 40 16
+   :width: 100%
+   :class: wrap-table
+
+   +----------------+---------------+------------------------------------------+------------------------------------+
+   | **Value**      | **SIGN-TYPE** | **Define**                               | **Description**                    |
+   +================+===============+==========================================+====================================+
+   | 0x860006hh (1) | 0x06          | PSA_ALG_VENDOR_ECDSA_ATTESTATION(hash)   | NXP vendor ECDSA key attestation.  |
+   +----------------+---------------+------------------------------------------+------------------------------------+
 
 (1) hh is the hash algorithm identifier as defined in the
     :ref:`table_psa_hash_algorithms` table.
@@ -706,6 +749,8 @@ Macros
             PSA_ALG_IS_TLS12_PRF
             PSA_ALG_IS_TLS12_PSK_TO_MS
             PSA_ALG_IS_VENDOR_TLS13
+            PSA_ALG_IS_VENDOR_ECDSA_ATTESTATION
+            PSA_ALG_IS_VENDOR_CMAC_ATTESTATION
 
 Composite Algorithm
 """""""""""""""""""

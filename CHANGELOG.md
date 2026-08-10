@@ -85,6 +85,10 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 3. ARM PSA APIs
 
 * Add support for AEAD Multipart.
+* Add support for `PSA_ALG_VENDOR_ECDSA_ATTESTATION(hash)` (0x860006hh)
+  and for `PSA_ALG_VENDOR_CMAC_ATTESTATION` (0x83C00200) as a
+  permitted algorithm. This NXP vendor algorithm enables the
+  key attestation signing algorithm to be set as a key attribute restriction.
 
 ##### 4. OSAL
 
@@ -115,6 +119,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add tests for ELA AEAD one-shot operations (GCM mode with plaintext keys).
 * Add PSA tests validating the AEAD Multipart.
 * Add i.MX937 validation.
+* Add PSA test `U_PSA_Attributes_004` validating key permitted algorithm
+  `PSA_ALG_VENDOR_ECDSA_ATTESTATION` and `PSA_ALG_VENDOR_CMAC_ATTESTATION`.
 
 #### PKCS#11 Library
 

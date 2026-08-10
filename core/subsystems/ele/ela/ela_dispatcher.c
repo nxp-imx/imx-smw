@@ -254,6 +254,16 @@ __weak bool ela_aead_handle(enum operation_id operation_id, void *args,
 	return false;
 }
 
+__weak bool ela_mac_handle(enum operation_id operation_id, void *args,
+			   int *status)
+{
+	(void)operation_id;
+	(void)args;
+	(void)status;
+
+	return false;
+}
+
 bool ela_execute(struct subsystem_context *ele_ctx,
 		 enum operation_id operation_id, void *args, int *status)
 {
@@ -304,6 +314,10 @@ bool ela_execute(struct subsystem_context *ele_ctx,
 		goto end;
 
 	return_status = ela_aead_handle(operation_id, args, status);
+	if (return_status)
+		goto end;
+
+	return_status = ela_mac_handle(operation_id, args, status);
 
 end:
 	if (smw_utils_mutex_unlock(ela_ctx.mutex)) {

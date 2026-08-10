@@ -20,7 +20,8 @@ set(ela_srcs
     ela_dispatcher.c
     common.c
     $<$<BOOL:${ENABLE_CIPHER}>:${CMAKE_CURRENT_SOURCE_DIR}/cipher.c>
-    $<$<BOOL:${ENABLE_AEAD}>:${CMAKE_CURRENT_SOURCE_DIR}/aead.c>)
+    $<$<BOOL:${ENABLE_AEAD}>:${CMAKE_CURRENT_SOURCE_DIR}/aead.c>
+    $<$<BOOL:${ENABLE_MAC}>:${CMAKE_CURRENT_SOURCE_DIR}/mac.c>)
 
 # Add ELA sources to the parent 'ele' target
 target_sources(ele PRIVATE ${ela_srcs})

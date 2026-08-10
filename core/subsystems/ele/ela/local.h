@@ -139,6 +139,21 @@ bool ela_cipher_handle(enum operation_id operation_id, void *args, int *status);
 bool ela_aead_handle(enum operation_id operation_id, void *args, int *status);
 
 /**
+ * ela_mac_handle() - Handle the MAC compute/verify operation.
+ * @operation_id: Security Operation ID.
+ * @args: Pointer to a structure of arguments defined by the internal API.
+ * @status: Error code set only if the Security Operation is handled.
+ *
+ * This function handles the MAC compute/verify operation.
+ * @status is set only if the function returns true.
+ *
+ * Return:
+ * * true:	- the Security Operation has been handled.
+ * * false:	- the Security Operation has not been handled.
+ */
+bool ela_mac_handle(enum operation_id operation_id, void *args, int *status);
+
+/**
  * ela_open_service() - Open ELA service with specified memory size
  * @size: Required memory size for ELA operations
  *

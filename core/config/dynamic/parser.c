@@ -497,14 +497,14 @@ static bool read_operation(char **start, char *end,
 
 	status = store_operation_params(operation_id, params, func,
 					subsystem_id);
-	if (status != SMW_STATUS_OK)
+	if (status != SMW_STATUS_OK) {
+		SMW_UTILS_FREE(params);
 		goto end;
+	}
 
 	*start = cur;
 
 end:
-	if (status != SMW_STATUS_OK && params)
-		SMW_UTILS_FREE(params);
 
 	if (return_status)
 		*return_status = status;

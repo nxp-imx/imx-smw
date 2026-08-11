@@ -100,8 +100,16 @@ static int cipher_common_read_params(char **start, char *end, void **params)
 	while ((cur < end) && (open_square_bracket != *cur)) {
 		status = read_params_string(&cur, end, buffer);
 		if (check_ela_tag(&cur, end, buffer, &status)) {
+			/*
+			 * If ELA is enabled, set use_ela flag.
+			 * If ELA is disabled (weak check_ela_tag returns
+			 * SMW_STATUS_OPERATION_NOT_SUPPORTED), reset status to OK so that
+			 * parsing continues without error.
+			 */
 			if (status == SMW_STATUS_OK)
 				p->use_ela = true;
+			else if (status == SMW_STATUS_OPERATION_NOT_SUPPORTED)
+				status = SMW_STATUS_OK;
 
 			continue;
 		}

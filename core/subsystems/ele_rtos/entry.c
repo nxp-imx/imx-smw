@@ -401,6 +401,10 @@ int ele_convert_err(uint32_t err)
 		status = SMW_STATUS_OUTPUT_TOO_SHORT;
 		break;
 
+	case STATUS_INVALID_SIGNATURE:
+		status = SMW_STATUS_SIGNATURE_INVALID;
+		break;
+
 	default:
 		/*
 		 * status = SMW_STATUS_SUBSYSTEM_FAILURE

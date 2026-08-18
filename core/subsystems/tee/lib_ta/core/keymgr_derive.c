@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024-2025 NXP
+ * Copyright 2024-2026 NXP
  */
 
 #include <stdlib.h>
@@ -472,14 +472,17 @@ static TEE_Result hkdf_derive_key(uint32_t param_types,
 	}
 
 exit:
-	TEE_FreeOperation(op_handle);
+	if (op_handle)
+		TEE_FreeOperation(op_handle);
 
 	if (!base_key_exists)
 		TEE_FreeTransientObject(base_key_handle);
 
-	TEE_FreeTransientObject(derived_key_obj.handle);
+	if (derived_key_obj.handle)
+		TEE_FreeTransientObject(derived_key_obj.handle);
 
-	TEE_FreeTransientObject(new_key_object.handle);
+	if (new_key_object.handle)
+		TEE_FreeTransientObject(new_key_object.handle);
 
 	if (imported_key_handle.persistent)
 		TEE_CloseObject(imported_key_handle.handle);
@@ -836,13 +839,17 @@ static TEE_Result ecdh_derive_key(uint32_t param_types,
 	}
 
 exit:
-	TEE_FreeOperation(op_handle);
+	if (op_handle)
+		TEE_FreeOperation(op_handle);
 
-	TEE_FreeTransientObject(derived_key_obj.handle);
+	if (derived_key_obj.handle)
+		TEE_FreeTransientObject(derived_key_obj.handle);
 
-	TEE_FreeTransientObject(new_key_object.handle);
+	if (new_key_object.handle)
+		TEE_FreeTransientObject(new_key_object.handle);
 
-	TEE_FreeTransientObject(ecdh_key_handle);
+	if (ecdh_key_handle)
+		TEE_FreeTransientObject(ecdh_key_handle);
 
 	if (imported_key_handle.persistent)
 		TEE_CloseObject(imported_key_handle.handle);

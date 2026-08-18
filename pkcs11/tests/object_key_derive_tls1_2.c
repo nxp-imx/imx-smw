@@ -37,11 +37,55 @@ static CK_BYTE session_hash[] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
 				  0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
 				  0x0c, 0x0d, 0x0e, 0x0f };
 
+static int destroy_key_material(CK_FUNCTION_LIST_PTR pfunc,
+				CK_SESSION_HANDLE sess,
+				CK_SSL3_KEY_MAT_OUT_PTR pkey_material)
+{
+	CK_RV ret = CKR_OK;
+	CK_RV status = CKR_OK;
+
+	if (!pkey_material)
+		return CKR_ARGUMENTS_BAD;
+
+	if (pkey_material->hClientKey) {
+		TEST_OUT("Delete the client key\n");
+		ret = pfunc->C_DestroyObject(sess, pkey_material->hClientKey);
+		if (ret != CKR_OK)
+			status = ret;
+	}
+
+	if (pkey_material->hClientMacSecret) {
+		TEST_OUT("Delete the client MAC key\n");
+		ret = pfunc->C_DestroyObject(sess,
+					     pkey_material->hClientMacSecret);
+		if (ret != CKR_OK)
+			status = ret;
+	}
+
+	if (pkey_material->hServerKey) {
+		TEST_OUT("Delete the server key\n");
+		ret = pfunc->C_DestroyObject(sess, pkey_material->hServerKey);
+		if (ret != CKR_OK)
+			status = ret;
+	}
+
+	if (pkey_material->hServerMacSecret) {
+		TEST_OUT("Delete the server MAC key\n");
+		ret = pfunc->C_DestroyObject(sess,
+					     pkey_material->hServerMacSecret);
+		if (ret != CKR_OK)
+			status = ret;
+	}
+
+	return status;
+}
+
 static int object_derive_key_tls12_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 {
 	int status = TEST_FAIL;
 
 	CK_RV ret = CKR_OK;
+	CK_RV err = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_BBOOL ck_true = CK_TRUE;
 
@@ -371,49 +415,44 @@ static int object_derive_key_tls12_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_DeriveKey"))
 		goto end;
 
-	TEST_OUT("Delete the client key\n");
-	ret = pfunc->C_DestroyObject(sess, key_material.hClientKey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the client MAC key\n");
-	ret = pfunc->C_DestroyObject(sess, key_material.hClientMacSecret);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the server key\n");
-	ret = pfunc->C_DestroyObject(sess, key_material.hServerKey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the server MAC key\n");
-	ret = pfunc->C_DestroyObject(sess, key_material.hServerMacSecret);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the derived key\n");
-	ret = pfunc->C_DestroyObject(sess, derived_key);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the ecdhe key\n");
-	ret = pfunc->C_DestroyObject(sess, ecdhe_key);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Key Destroy #%lu\n", hpubkey);
-	ret = pfunc->C_DestroyObject(sess, hpubkey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Key Destroy #%lu\n", hprivkey);
-	ret = pfunc->C_DestroyObject(sess, hprivkey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
 	status = TEST_PASS;
 
 end:
+	ret = destroy_key_material(pfunc, sess, &key_material);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		err = ret;
+
+	if (derived_key) {
+		TEST_OUT("Delete the derived key\n");
+		ret = pfunc->C_DestroyObject(sess, derived_key);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (ecdhe_key) {
+		TEST_OUT("Delete the ecdhe key\n");
+		ret = pfunc->C_DestroyObject(sess, ecdhe_key);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (hpubkey) {
+		TEST_OUT("Key Destroy #%lu\n", hpubkey);
+		ret = pfunc->C_DestroyObject(sess, hpubkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (hprivkey) {
+		TEST_OUT("Key Destroy #%lu\n", hprivkey);
+		ret = pfunc->C_DestroyObject(sess, hprivkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (err != CKR_OK)
+		status = TEST_FAIL;
+
 	util_close_session(pfunc, &sess);
 
 	if (pubkey_attrs[0].pValue)
@@ -428,6 +467,7 @@ static int object_derive_key_tls12_master_secret(CK_FUNCTION_LIST_PTR pfunc)
 	int status = TEST_FAIL;
 
 	CK_RV ret = CKR_OK;
+	CK_RV err = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_BBOOL ck_true = CK_TRUE;
 	CK_BBOOL bsensitive = CK_FALSE;
@@ -635,49 +675,44 @@ static int object_derive_key_tls12_master_secret(CK_FUNCTION_LIST_PTR pfunc)
 			   bsensitive, CK_TRUE))
 		goto end;
 
-	TEST_OUT("Delete the client key\n");
-	ret = pfunc->C_DestroyObject(sess, key_material.hClientKey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the client MAC key\n");
-	ret = pfunc->C_DestroyObject(sess, key_material.hClientMacSecret);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the server key\n");
-	ret = pfunc->C_DestroyObject(sess, key_material.hServerKey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the server MAC key\n");
-	ret = pfunc->C_DestroyObject(sess, key_material.hServerMacSecret);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the derived key\n");
-	ret = pfunc->C_DestroyObject(sess, derived_key);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the ecdhe key\n");
-	ret = pfunc->C_DestroyObject(sess, ecdhe_key);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Key Destroy #%lu\n", hpubkey);
-	ret = pfunc->C_DestroyObject(sess, hpubkey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Key Destroy #%lu\n", hprivkey);
-	ret = pfunc->C_DestroyObject(sess, hprivkey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
 	status = TEST_PASS;
 
 end:
+	ret = destroy_key_material(pfunc, sess, &key_material);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		err = ret;
+
+	if (derived_key) {
+		TEST_OUT("Delete the derived key\n");
+		ret = pfunc->C_DestroyObject(sess, derived_key);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (ecdhe_key) {
+		TEST_OUT("Delete the ecdhe key\n");
+		ret = pfunc->C_DestroyObject(sess, ecdhe_key);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (hpubkey) {
+		TEST_OUT("Key Destroy #%lu\n", hpubkey);
+		ret = pfunc->C_DestroyObject(sess, hpubkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (hprivkey) {
+		TEST_OUT("Key Destroy #%lu\n", hprivkey);
+		ret = pfunc->C_DestroyObject(sess, hprivkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (err != CKR_OK)
+		status = TEST_FAIL;
+
 	util_close_session(pfunc, &sess);
 
 	if (pubkey_attrs[0].pValue)
@@ -693,6 +728,7 @@ object_derive_key_tls12_extended_master_secret(CK_FUNCTION_LIST_PTR pfunc)
 	int status = TEST_FAIL;
 
 	CK_RV ret = CKR_OK;
+	CK_RV err = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_BBOOL ck_true = CK_TRUE;
 
@@ -844,49 +880,44 @@ object_derive_key_tls12_extended_master_secret(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_DeriveKey"))
 		goto end;
 
-	TEST_OUT("Delete the client key\n");
-	ret = pfunc->C_DestroyObject(sess, key_material.hClientKey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the client MAC key\n");
-	ret = pfunc->C_DestroyObject(sess, key_material.hClientMacSecret);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the server key\n");
-	ret = pfunc->C_DestroyObject(sess, key_material.hServerKey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the server MAC key\n");
-	ret = pfunc->C_DestroyObject(sess, key_material.hServerMacSecret);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the derived key\n");
-	ret = pfunc->C_DestroyObject(sess, derived_key);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the ecdhe key\n");
-	ret = pfunc->C_DestroyObject(sess, ecdhe_key);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Key Destroy #%lu\n", hpubkey);
-	ret = pfunc->C_DestroyObject(sess, hpubkey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Key Destroy #%lu\n", hprivkey);
-	ret = pfunc->C_DestroyObject(sess, hprivkey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
 	status = TEST_PASS;
 
 end:
+	ret = destroy_key_material(pfunc, sess, &key_material);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		err = ret;
+
+	if (derived_key) {
+		TEST_OUT("Delete the derived key\n");
+		ret = pfunc->C_DestroyObject(sess, derived_key);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (ecdhe_key) {
+		TEST_OUT("Delete the ecdhe key\n");
+		ret = pfunc->C_DestroyObject(sess, ecdhe_key);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (hpubkey) {
+		TEST_OUT("Key Destroy #%lu\n", hpubkey);
+		ret = pfunc->C_DestroyObject(sess, hpubkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (hprivkey) {
+		TEST_OUT("Key Destroy #%lu\n", hprivkey);
+		ret = pfunc->C_DestroyObject(sess, hprivkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (err != CKR_OK)
+		status = TEST_FAIL;
+
 	util_close_session(pfunc, &sess);
 
 	if (pubkey_attrs[0].pValue)

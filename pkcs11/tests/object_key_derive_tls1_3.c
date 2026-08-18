@@ -298,6 +298,7 @@ static int object_derive_key_tls13(CK_FUNCTION_LIST_PTR pfunc)
 	int status = TEST_FAIL;
 
 	CK_RV ret = CKR_OK;
+	CK_RV err = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_BBOOL ck_true = CK_TRUE;
 	CK_BBOOL bsensitive = CK_FALSE;
@@ -483,42 +484,54 @@ static int object_derive_key_tls13(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_DeriveKey"))
 		goto end;
 
-	free(tls13_params.pInfo);
-	tls13_params.pInfo = NULL;
-
-	TEST_OUT("Delete the IV\n");
-	ret = pfunc->C_DestroyObject(sess, derived_iv);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the handshake key\n");
-	ret = pfunc->C_DestroyObject(sess, derived_encryption_key);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the secret key\n");
-	ret = pfunc->C_DestroyObject(sess, s_hs_traffic_key);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the ecdhe key\n");
-	ret = pfunc->C_DestroyObject(sess, ecdhe_key);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Key Destroy #%lu\n", hpubkey);
-	ret = pfunc->C_DestroyObject(sess, hpubkey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Key Destroy #%lu\n", hprivkey);
-	ret = pfunc->C_DestroyObject(sess, hprivkey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
 	status = TEST_PASS;
 
 end:
+	if (derived_iv) {
+		TEST_OUT("Delete the IV\n");
+		ret = pfunc->C_DestroyObject(sess, derived_iv);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (derived_encryption_key) {
+		TEST_OUT("Delete the handshake key\n");
+		ret = pfunc->C_DestroyObject(sess, derived_encryption_key);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (s_hs_traffic_key) {
+		TEST_OUT("Delete the secret key\n");
+		ret = pfunc->C_DestroyObject(sess, s_hs_traffic_key);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (ecdhe_key) {
+		TEST_OUT("Delete the ecdhe key\n");
+		ret = pfunc->C_DestroyObject(sess, ecdhe_key);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (hpubkey) {
+		TEST_OUT("Key Destroy #%lu\n", hpubkey);
+		ret = pfunc->C_DestroyObject(sess, hpubkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (hprivkey) {
+		TEST_OUT("Key Destroy #%lu\n", hprivkey);
+		ret = pfunc->C_DestroyObject(sess, hprivkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (err != CKR_OK)
+		status = TEST_FAIL;
+
 	util_close_session(pfunc, &sess);
 
 	if (pubkey_attrs[0].pValue)
@@ -536,6 +549,7 @@ static int object_derive_key_tls13_encrypt_decrypt(CK_FUNCTION_LIST_PTR pfunc)
 	int status = TEST_FAIL;
 
 	CK_RV ret = CKR_OK;
+	CK_RV err = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_BBOOL ck_true = CK_TRUE;
 
@@ -758,34 +772,47 @@ static int object_derive_key_tls13_encrypt_decrypt(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 	}
 
-	TEST_OUT("Delete the handshake key\n");
-	ret = pfunc->C_DestroyObject(sess, derived_encryption_key);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the secret key\n");
-	ret = pfunc->C_DestroyObject(sess, s_hs_traffic_key);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the ecdhe key\n");
-	ret = pfunc->C_DestroyObject(sess, ecdhe_key);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Key Destroy #%lu\n", hpubkey);
-	ret = pfunc->C_DestroyObject(sess, hpubkey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Key Destroy #%lu\n", hprivkey);
-	ret = pfunc->C_DestroyObject(sess, hprivkey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
 	status = TEST_PASS;
 
 end:
+	if (derived_encryption_key) {
+		TEST_OUT("Delete the handshake key\n");
+		ret = pfunc->C_DestroyObject(sess, derived_encryption_key);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (s_hs_traffic_key) {
+		TEST_OUT("Delete the secret key\n");
+		ret = pfunc->C_DestroyObject(sess, s_hs_traffic_key);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (ecdhe_key) {
+		TEST_OUT("Delete the ecdhe key\n");
+		ret = pfunc->C_DestroyObject(sess, ecdhe_key);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (hpubkey) {
+		TEST_OUT("Key Destroy #%lu\n", hpubkey);
+		ret = pfunc->C_DestroyObject(sess, hpubkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (hprivkey) {
+		TEST_OUT("Key Destroy #%lu\n", hprivkey);
+		ret = pfunc->C_DestroyObject(sess, hprivkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (err != CKR_OK)
+		status = TEST_FAIL;
+
 	if (encrypted_data)
 		free(encrypted_data);
 
@@ -810,6 +837,7 @@ object_derive_key_tls13_encrypt_decrypt_all_aead(CK_FUNCTION_LIST_PTR pfunc)
 	int status = TEST_FAIL;
 
 	CK_RV ret = CKR_OK;
+	CK_RV err = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_BBOOL ck_true = CK_TRUE;
 
@@ -1035,34 +1063,47 @@ object_derive_key_tls13_encrypt_decrypt_all_aead(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 	}
 
-	TEST_OUT("Delete the handshake key\n");
-	ret = pfunc->C_DestroyObject(sess, derived_encryption_key);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the secret key\n");
-	ret = pfunc->C_DestroyObject(sess, s_hs_traffic_key);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the ecdhe key\n");
-	ret = pfunc->C_DestroyObject(sess, ecdhe_key);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Key Destroy #%lu\n", hpubkey);
-	ret = pfunc->C_DestroyObject(sess, hpubkey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Key Destroy #%lu\n", hprivkey);
-	ret = pfunc->C_DestroyObject(sess, hprivkey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
 	status = TEST_PASS;
 
 end:
+	if (derived_encryption_key) {
+		TEST_OUT("Delete the handshake key\n");
+		ret = pfunc->C_DestroyObject(sess, derived_encryption_key);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (s_hs_traffic_key) {
+		TEST_OUT("Delete the secret key\n");
+		ret = pfunc->C_DestroyObject(sess, s_hs_traffic_key);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (ecdhe_key) {
+		TEST_OUT("Delete the ecdhe key\n");
+		ret = pfunc->C_DestroyObject(sess, ecdhe_key);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (hpubkey) {
+		TEST_OUT("Key Destroy #%lu\n", hpubkey);
+		ret = pfunc->C_DestroyObject(sess, hpubkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (hprivkey) {
+		TEST_OUT("Key Destroy #%lu\n", hprivkey);
+		ret = pfunc->C_DestroyObject(sess, hprivkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (err != CKR_OK)
+		status = TEST_FAIL;
+
 	if (encrypted_data)
 		free(encrypted_data);
 
@@ -1086,6 +1127,7 @@ static int object_derive_key_tls13_sign_verify(CK_FUNCTION_LIST_PTR pfunc)
 	int status = TEST_FAIL;
 
 	CK_RV ret = CKR_OK;
+	CK_RV err = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_BBOOL ck_true = CK_TRUE;
 
@@ -1267,34 +1309,47 @@ static int object_derive_key_tls13_sign_verify(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_Verify"))
 		goto end;
 
-	TEST_OUT("Delete the handshake key\n");
-	ret = pfunc->C_DestroyObject(sess, derived_finished_key);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the secret key\n");
-	ret = pfunc->C_DestroyObject(sess, s_hs_traffic_key);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the ecdhe key\n");
-	ret = pfunc->C_DestroyObject(sess, ecdhe_key);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Key Destroy #%lu\n", hpubkey);
-	ret = pfunc->C_DestroyObject(sess, hpubkey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Key Destroy #%lu\n", hprivkey);
-	ret = pfunc->C_DestroyObject(sess, hprivkey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
 	status = TEST_PASS;
 
 end:
+	if (derived_finished_key) {
+		TEST_OUT("Delete the handshake key\n");
+		ret = pfunc->C_DestroyObject(sess, derived_finished_key);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (s_hs_traffic_key) {
+		TEST_OUT("Delete the secret key\n");
+		ret = pfunc->C_DestroyObject(sess, s_hs_traffic_key);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (ecdhe_key) {
+		TEST_OUT("Delete the ecdhe key\n");
+		ret = pfunc->C_DestroyObject(sess, ecdhe_key);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (hpubkey) {
+		TEST_OUT("Key Destroy #%lu\n", hpubkey);
+		ret = pfunc->C_DestroyObject(sess, hpubkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (hprivkey) {
+		TEST_OUT("Key Destroy #%lu\n", hprivkey);
+		ret = pfunc->C_DestroyObject(sess, hprivkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (err != CKR_OK)
+		status = TEST_FAIL;
+
 	if (signature)
 		free(signature);
 
@@ -1315,6 +1370,7 @@ static int object_derive_key_tls13_edwards_enc_dec(CK_FUNCTION_LIST_PTR pfunc)
 	int status = TEST_FAIL;
 
 	CK_RV ret = CKR_OK;
+	CK_RV err = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_BBOOL ck_true = CK_TRUE;
 
@@ -1537,34 +1593,47 @@ static int object_derive_key_tls13_edwards_enc_dec(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 	}
 
-	TEST_OUT("Delete the handshake key\n");
-	ret = pfunc->C_DestroyObject(sess, derived_encryption_key);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the secret key\n");
-	ret = pfunc->C_DestroyObject(sess, s_hs_traffic_key);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the ecdhe key\n");
-	ret = pfunc->C_DestroyObject(sess, ecdhe_key);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Key Destroy #%lu\n", hpubkey);
-	ret = pfunc->C_DestroyObject(sess, hpubkey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Key Destroy #%lu\n", hprivkey);
-	ret = pfunc->C_DestroyObject(sess, hprivkey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
 	status = TEST_PASS;
 
 end:
+	if (derived_encryption_key) {
+		TEST_OUT("Delete the handshake key\n");
+		ret = pfunc->C_DestroyObject(sess, derived_encryption_key);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (s_hs_traffic_key) {
+		TEST_OUT("Delete the secret key\n");
+		ret = pfunc->C_DestroyObject(sess, s_hs_traffic_key);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (ecdhe_key) {
+		TEST_OUT("Delete the ecdhe key\n");
+		ret = pfunc->C_DestroyObject(sess, ecdhe_key);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (hpubkey) {
+		TEST_OUT("Key Destroy #%lu\n", hpubkey);
+		ret = pfunc->C_DestroyObject(sess, hpubkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (hprivkey) {
+		TEST_OUT("Key Destroy #%lu\n", hprivkey);
+		ret = pfunc->C_DestroyObject(sess, hprivkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (err != CKR_OK)
+		status = TEST_FAIL;
+
 	if (encrypted_data)
 		free(encrypted_data);
 
@@ -1589,6 +1658,7 @@ object_derive_key_tls13_montgomery_enc_dec(CK_FUNCTION_LIST_PTR pfunc)
 	int status = TEST_FAIL;
 
 	CK_RV ret = CKR_OK;
+	CK_RV err = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_BBOOL ck_true = CK_TRUE;
 
@@ -1811,34 +1881,47 @@ object_derive_key_tls13_montgomery_enc_dec(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 	}
 
-	TEST_OUT("Delete the handshake key\n");
-	ret = pfunc->C_DestroyObject(sess, derived_encryption_key);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the secret key\n");
-	ret = pfunc->C_DestroyObject(sess, s_hs_traffic_key);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Delete the ecdhe key\n");
-	ret = pfunc->C_DestroyObject(sess, ecdhe_key);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Key Destroy #%lu\n", hpubkey);
-	ret = pfunc->C_DestroyObject(sess, hpubkey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
-	TEST_OUT("Key Destroy #%lu\n", hprivkey);
-	ret = pfunc->C_DestroyObject(sess, hprivkey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
-
 	status = TEST_PASS;
 
 end:
+	if (derived_encryption_key) {
+		TEST_OUT("Delete the handshake key\n");
+		ret = pfunc->C_DestroyObject(sess, derived_encryption_key);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (s_hs_traffic_key) {
+		TEST_OUT("Delete the secret key\n");
+		ret = pfunc->C_DestroyObject(sess, s_hs_traffic_key);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (ecdhe_key) {
+		TEST_OUT("Delete the ecdhe key\n");
+		ret = pfunc->C_DestroyObject(sess, ecdhe_key);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (hpubkey) {
+		TEST_OUT("Key Destroy #%lu\n", hpubkey);
+		ret = pfunc->C_DestroyObject(sess, hpubkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (hprivkey) {
+		TEST_OUT("Key Destroy #%lu\n", hprivkey);
+		ret = pfunc->C_DestroyObject(sess, hprivkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			err = ret;
+	}
+
+	if (err != CKR_OK)
+		status = TEST_FAIL;
+
 	if (encrypted_data)
 		free(encrypted_data);
 

@@ -80,6 +80,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   buffers.
 * ELE: Fix error status propagation in ELA cipher buffer size calculation and
   parameter setup functions.
+* TEE: Fix coverity 2026.6.0 findings
 
 ##### 3. ARM PSA APIs
 
@@ -126,6 +127,11 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add `CKM_AES_CFB128` and `CKM_AES_OFB` cases for existing cipher tests.
 * Add RSA PSS test where the mask generation function is set.
 * Add i.MX937 validation.
+* Fix coverity 2026.6.0 findings
+
+#### CLI Application
+
+* Fix coverity 2026.6.0 findings
 
 ---
 ### <a id ="rel_5_4"></a></br>**Release 5.4**

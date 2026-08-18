@@ -95,8 +95,7 @@ static const struct {
  */
 static TEE_Result get_rsa_algo_id(enum tee_signature_type signature_type,
 				  enum tee_algorithm_id hash_algo,
-				  size_t digest_len,
-				  enum tee_algorithm_id *algorithm_id)
+				  size_t digest_len, uint32_t *algorithm_id)
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	unsigned int i = 0;
@@ -132,7 +131,7 @@ static TEE_Result get_rsa_algo_id(enum tee_signature_type signature_type,
 }
 
 static TEE_Result get_ecdsa_algo_id(unsigned int security_size,
-				    enum tee_algorithm_id *algorithm_id)
+				    uint32_t *algorithm_id)
 {
 	unsigned int i = 0;
 	unsigned int size = ARRAY_SIZE(ecdsa_algorithm_ids);
@@ -351,7 +350,7 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 	uint32_t param0_type = TEE_PARAM_TYPE_GET(param_types, 0);
 	uint32_t exp_param3_type = 0;
 	uint32_t mode = 0;
-	enum tee_algorithm_id algorithm_id = 0;
+	uint32_t algorithm_id = 0;
 	enum tee_algorithm_id hash_algo = TEE_ALGORITHM_ID_INVALID;
 	uint8_t *digest = NULL;
 	size_t digest_len = 0;

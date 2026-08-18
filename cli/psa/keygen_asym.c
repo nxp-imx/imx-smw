@@ -53,7 +53,7 @@ static const char *psa_algorithm_to_string(psa_algorithm_t alg)
 		for (i = 0; i < hash_count; i++) {
 			if (hash_algos[i].value > (uint64_t)UINT32_MAX)
 				continue;
-			if ((uint32_t)hash_algos[i].value == hash_alg) {
+			if (hash_algos[i].value == (uint64_t)hash_alg) {
 				SNPRINTF(algo_buf, sizeof(algo_buf), "PSS-%s",
 					 hash_algos[i].name);
 				return algo_buf;
@@ -68,7 +68,7 @@ static const char *psa_algorithm_to_string(psa_algorithm_t alg)
 		for (i = 0; i < hash_count; i++) {
 			if (hash_algos[i].value > (uint64_t)UINT32_MAX)
 				continue;
-			if ((uint32_t)hash_algos[i].value == hash_alg) {
+			if (hash_algos[i].value == (uint64_t)hash_alg) {
 				SNPRINTF(algo_buf, sizeof(algo_buf),
 					 "PKCS1V15-%s", hash_algos[i].name);
 				return algo_buf;
@@ -88,7 +88,7 @@ static const char *psa_algorithm_to_string(psa_algorithm_t alg)
 			for (i = 0; i < hash_count; i++) {
 				if (hash_algos[i].value > (uint64_t)UINT32_MAX)
 					continue;
-				if ((uint32_t)hash_algos[i].value == hash_alg) {
+				if (hash_algos[i].value == (uint64_t)hash_alg) {
 					SNPRINTF(algo_buf, sizeof(algo_buf),
 						 "OAEP-%s", hash_algos[i].name);
 					return algo_buf;
@@ -118,7 +118,7 @@ static const char *psa_algorithm_to_string(psa_algorithm_t alg)
 				continue;
 			if (hash_algos[i].value > (uint64_t)UINT32_MAX)
 				continue;
-			if ((uint32_t)hash_algos[i].value == hash_alg) {
+			if (hash_algos[i].value == (uint64_t)hash_alg) {
 				SNPRINTF(algo_buf, sizeof(algo_buf), "ECDSA-%s",
 					 hash_algos[i].name);
 				return algo_buf;
@@ -135,7 +135,7 @@ static const char *psa_algorithm_to_string(psa_algorithm_t alg)
 			if (eddsa_algos[i].value > (uint64_t)UINT32_MAX)
 				continue;
 			if (eddsa_algos[i].name &&
-			    (uint32_t)eddsa_algos[i].value == alg) {
+			    eddsa_algos[i].value == (uint64_t)alg) {
 				/*
 				 * Strip the curve suffix for display:
 				 * "EDDSA-PREHASHED-ED448" -> "EDDSA-PREHASHED"
@@ -187,8 +187,8 @@ static const char *psa_algorithm_to_string(psa_algorithm_t alg)
 					if (hash_algos[j].value >
 					    (uint64_t)UINT32_MAX)
 						continue;
-					if ((uint32_t)hash_algos[j].value !=
-					    hash_alg)
+					if (hash_algos[j].value !=
+					    (uint64_t)hash_alg)
 						continue;
 					SNPRINTF(algo_buf, sizeof(algo_buf),
 						 "%s-%s", entry->name,
@@ -215,21 +215,30 @@ static psa_algorithm_t parse_hash_algo(const char *hash_str)
 	size_t i = 0;
 	const struct asym_algo_mapping *hash_algos = NULL;
 	size_t hash_count = 0;
+	psa_algorithm_t result = PSA_ALG_NONE;
+	uint64_t algo_value = PSA_ALG_NONE;
 
 	if (!hash_str)
-		return PSA_ALG_NONE;
+		goto end;
 
 	hash_algos = get_sign_hash_algo_mappings();
 	hash_count = get_sign_hash_algo_mappings_count();
 
 	for (i = 0; i < hash_count; i++) {
 		if (hash_algos[i].name &&
-		    !strcasecmp(hash_str, hash_algos[i].name))
-			return (psa_algorithm_t)hash_algos[i].value;
+		    !strcasecmp(hash_str, hash_algos[i].name)) {
+			algo_value = hash_algos[i].value;
+			if (SET_OVERFLOW(algo_value, result))
+				LOG_ERROR("Hash algorithm value overflow");
+			goto end;
+		}
 	}
 
-	LOG_ERROR("Unknown hash algorithm: %s", hash_str);
-	return PSA_ALG_NONE;
+end:
+	if (result == PSA_ALG_NONE)
+		LOG_ERROR("Unknown hash algorithm: %s", hash_str);
+
+	return result;
 }
 
 /**
@@ -292,6 +301,7 @@ static psa_algorithm_t parse_kdf_algo(const char *algo_str)
 	size_t count = 0;
 	size_t i = 0;
 	uint64_t combined = 0;
+	uint64_t algo_value = 0;
 
 	if (!algo_str)
 		return PSA_ALG_NONE;
@@ -299,15 +309,23 @@ static psa_algorithm_t parse_kdf_algo(const char *algo_str)
 	tbl = get_tls_algo_mappings();
 	count = get_tls_algo_mappings_count();
 	for (; i < count; i++) {
-		if (tbl[i].name && !strcasecmp(algo_str, tbl[i].name))
-			return (psa_algorithm_t)tbl[i].value;
+		if (tbl[i].name && !strcasecmp(algo_str, tbl[i].name)) {
+			algo_value = tbl[i].value;
+			if (SET_OVERFLOW(algo_value, result))
+				LOG_ERROR("TLS algorithm value overflow");
+			goto cleanup;
+		}
 	}
 
 	tbl = get_kdf_algo_mappings();
 	count = get_kdf_algo_mappings_count();
 	for (i = 0; i < count; i++) {
-		if (tbl[i].name && !strcasecmp(algo_str, tbl[i].name))
-			return (psa_algorithm_t)tbl[i].value;
+		if (tbl[i].name && !strcasecmp(algo_str, tbl[i].name)) {
+			algo_value = tbl[i].value;
+			if (SET_OVERFLOW(algo_value, result))
+				LOG_ERROR("KDF algorithm value overflow");
+			goto cleanup;
+		}
 	}
 
 	algo_copy = strdup(algo_str);
@@ -359,7 +377,9 @@ static psa_algorithm_t parse_kdf_algo(const char *algo_str)
 	}
 
 cleanup:
-	free(algo_copy);
+	if (algo_copy)
+		free(algo_copy);
+
 	return result;
 }
 
@@ -540,9 +560,11 @@ static psa_algorithm_t parse_eddsa_algo(const char *algo_str,
 	size_t i = 0;
 	char lookup[USAGE_STR_LEN] = { 0 };
 	bool is_prehashed = false;
+	psa_algorithm_t result = PSA_ALG_NONE;
+	uint64_t algo_value = 0;
 
 	if (!algo_str)
-		return PSA_ALG_NONE;
+		goto end;
 
 	eddsa_algos = get_eddsa_algo_mappings();
 	eddsa_algo_count = get_eddsa_algo_mappings_count();
@@ -564,8 +586,12 @@ static psa_algorithm_t parse_eddsa_algo(const char *algo_str,
 
 	for (i = 0; i < eddsa_algo_count; i++) {
 		if (eddsa_algos[i].name &&
-		    !strcasecmp(lookup, eddsa_algos[i].name))
-			return (psa_algorithm_t)eddsa_algos[i].value;
+		    !strcasecmp(lookup, eddsa_algos[i].name)) {
+			algo_value = eddsa_algos[i].value;
+			if (SET_OVERFLOW(algo_value, result))
+				LOG_ERROR("EdDSA algorithm value overflow");
+			goto end;
+		}
 	}
 
 	if (is_prehashed)
@@ -574,7 +600,8 @@ static psa_algorithm_t parse_eddsa_algo(const char *algo_str,
 	else
 		LOG_ERROR("Unknown EdDSA variant: %s", algo_str);
 
-	return PSA_ALG_NONE;
+end:
+	return result;
 }
 
 /**

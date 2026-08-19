@@ -238,8 +238,7 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 		get_eddsa_context(&ctx, &ctx_length, args);
 
 		if (ctx && ctx_length) {
-			if (ADD_OVERFLOW(shared_params_size, ctx_length,
-					 &shared_params_size)) {
+			if (INC_OVERFLOW(shared_params_size, ctx_length)) {
 				status = SMW_STATUS_INVALID_PARAM;
 				goto exit;
 			}
@@ -248,8 +247,8 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 		get_sm2_identifier(&identifier, &identifier_length, args);
 
 		if (identifier && identifier_length) {
-			if (ADD_OVERFLOW(shared_params_size, identifier_length,
-					 &shared_params_size)) {
+			if (INC_OVERFLOW(shared_params_size,
+					 identifier_length)) {
 				status = SMW_STATUS_INVALID_PARAM;
 				goto exit;
 			}
@@ -570,15 +569,15 @@ static int set_sm2_digest(struct smw_keymgr_descriptor *key_descriptor,
 	}
 
 	/* Concatenate ENTLA || IDA || a || b || xG || yG || xA || yA */
-	if (ADD_OVERFLOW(buf_len, id_len, &buf_len)) {
+	if (INC_OVERFLOW(buf_len, id_len)) {
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
 	}
-	if (ADD_OVERFLOW(buf_len, sm2_a_b_xg_yg_size, &buf_len)) {
+	if (INC_OVERFLOW(buf_len, sm2_a_b_xg_yg_size)) {
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
 	}
-	if (ADD_OVERFLOW(buf_len, pub_key_size, &buf_len)) {
+	if (INC_OVERFLOW(buf_len, pub_key_size)) {
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
 	}

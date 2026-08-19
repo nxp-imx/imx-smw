@@ -50,7 +50,7 @@ struct smw_sm2_params {
  *  - [out] Length in bytes of the signature buffer generated.
  * @eddsa_params: [in] (**optional**) Pointer to edwards signature parameters.
  *                See &typedef smw_eddsa_params.
- * @sm2_params: [in] (**optional**) Pointer to SM2 signature parameters.
+ * @sm2_params: [in] Pointer to SM2 signature parameters.
  *              See &typedef smw_sm2_params.
  *
  * The @subsystem_name designates the Secure Subsystem to be used.

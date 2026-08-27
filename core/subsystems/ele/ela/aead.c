@@ -531,9 +531,11 @@ static int ela_aead_one_shot(struct smw_crypto_aead_args *aead_args)
 		goto end;
 	}
 
-	/* Currently for ELA, AAD is mandatory. */
-	if (!smw_crypto_get_aead_aad(aead_args)) {
-		SMW_DBG_PRINTF(DEBUG, "ELA does not support NULL AAD.\n");
+	/* Currently ELA requires non-NULL AAD with length multiple of 16 bytes */
+	if (!smw_crypto_get_aead_aad(aead_args) ||
+	    !smw_crypto_get_aead_aad_len(aead_args) ||
+	    (smw_crypto_get_aead_aad_len(aead_args) % 16 != 0)) {
+		SMW_DBG_PRINTF(DEBUG, "ELA: Unsupported AAD params.\n");
 		goto end;
 	}
 

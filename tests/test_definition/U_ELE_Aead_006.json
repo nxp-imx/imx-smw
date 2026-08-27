@@ -23,6 +23,14 @@
 				"7da3bccaffb3464178ca7c722379836d",
 				"b50ce0bfb47640b9572163865332e486"
 			]
+		},
+		"key 4": {
+			"type": "AES",
+			"security_size": 192,
+			"priv_key": [
+				"95e5c8dcee4ef17571e1becc3f2d4ac8",
+				"d5aa73e74b3f1115"
+			]
 		}
 	},
 	"subtest 1": {
@@ -226,5 +234,56 @@
 		"tag": 16,
 		"output": "fd671cab1ee21f0df6bb610bf94f0e69",
 		"depends": 9
+	},
+	"subtest 11": {
+		"description": [
+			"Encrypt using GCM mode, tag is part of output",
+			"Plaintext key buffer is set",
+			"Test vector: https://csrc.nist.gov/Projects/Cryptographic-Algorithm-Validation-Program/CAVP-TESTING-BLOCK-CIPHER-MODES#GCMVS/gcmtestvectors.zip/gcmEncryptExtIV192.rsp",
+			"AAD length is 20 Bytes (not multiple of 16 Bytes)",
+			"ELA limitation: AAD length must be a multiple of 16-bytes, operation is handled by ELE"
+		],
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 4",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"iv": "e3b91649120f92b4f712644b",
+		"input": "eca3606b9e2a0c7a1c6c4b765176f643",
+		"aad": [
+			"68b093733bd1e77448fe5687b7479683",
+			"4d1797cf"
+		],
+		"output": [
+			"0ff6d858cf0f5309c0f4b2747f6b551f",
+			"94d6ac2796a9b9901933a0f9e5377979"
+		],
+		"tag": 16,
+		"restriction_list": "imx8ulp"
+	},
+	"subtest 12": {
+		"description": [
+			"Decrypt using GCM mode, tag is part of input",
+			"Test vector: https://csrc.nist.gov/Projects/Cryptographic-Algorithm-Validation-Program/CAVP-TESTING-BLOCK-CIPHER-MODES#GCMVS/gcmtestvectors.zip/gcmEncryptExtIV192.rsp",
+			"AAD length is 20 Bytes (not multiple of 16 Bytes)",
+			"ELA limitation: AAD length must be a multiple of 16-bytes, operation is handled by ELE"
+		],
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 4",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"iv": "e3b91649120f92b4f712644b",
+		"aad": [
+			"68b093733bd1e77448fe5687b7479683",
+			"4d1797cf"
+		],
+		"input": [
+			"0ff6d858cf0f5309c0f4b2747f6b551f",
+			"94d6ac2796a9b9901933a0f9e5377979"
+		],
+		"tag": 16,
+		"output": "eca3606b9e2a0c7a1c6c4b765176f643",
+		"depends": 11
 	}
 }

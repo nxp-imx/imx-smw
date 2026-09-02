@@ -215,7 +215,7 @@ section_footer() { echo "└─────────────────�
 prepare_input_file() {
     input_file="$1"
 
-    if [ ! -f "$input_file" ]; then
+    if [ ! -s "$input_file" ]; then
         dd if=/dev/urandom of="$input_file" bs=64 count=1 2>/dev/null
     fi
 }

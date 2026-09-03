@@ -476,7 +476,11 @@ int device_attestation(struct subtest_data *subtest)
 	if (!certificate.length && !cert_output_present) {
 		/* JSON test file doesn't give the UUID length */
 		subtest->smw_status = smw_device_attestation(smw_args);
-		if (subtest->smw_status != SMW_STATUS_OK) {
+		if (subtest->smw_status == SMW_STATUS_OPERATION_DISABLED) {
+			/* Device lacks EL2GO key KCVs (ELE FW 2.0.7 limitation). */
+			res = ERR_CODE(SKIPPED);
+			goto end;
+		} else if (subtest->smw_status != SMW_STATUS_OK) {
 			res = ERR_CODE(API_STATUS_NOK);
 			goto end;
 		}
@@ -502,7 +506,11 @@ int device_attestation(struct subtest_data *subtest)
 	}
 
 	subtest->smw_status = smw_device_attestation(smw_args);
-	if (subtest->smw_status != SMW_STATUS_OK) {
+	if (subtest->smw_status == SMW_STATUS_OPERATION_DISABLED) {
+		/* Device lacks EL2GO key KCVs (ELE FW 2.0.7 limitation). */
+		res = ERR_CODE(SKIPPED);
+		goto end;
+	} else if (subtest->smw_status != SMW_STATUS_OK) {
 		res = ERR_CODE(API_STATUS_NOK);
 		goto end;
 	}

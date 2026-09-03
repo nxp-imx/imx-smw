@@ -448,7 +448,6 @@ int seco_convert_err(hsm_err_t err)
 		break;
 
 	case HSM_FEATURE_NOT_SUPPORTED:
-	case HSM_FEATURE_DISABLED:
 	case HSM_CMD_NOT_SUPPORTED:
 		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 		break;
@@ -468,6 +467,10 @@ int seco_convert_err(hsm_err_t err)
 
 	case HSM_SIGNATURE_INVALID:
 		status = SMW_STATUS_SIGNATURE_INVALID;
+		break;
+
+	case HSM_FEATURE_DISABLED:
+		status = SMW_STATUS_OPERATION_DISABLED;
 		break;
 
 	default:

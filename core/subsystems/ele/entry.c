@@ -618,7 +618,6 @@ int ele_convert_err(hsm_err_t err)
 		break;
 
 	case HSM_FEATURE_NOT_SUPPORTED:
-	case HSM_FEATURE_DISABLED:
 	case HSM_CMD_NOT_SUPPORTED:
 		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 		break;
@@ -655,6 +654,11 @@ int ele_convert_err(hsm_err_t err)
 
 	case HSM_LIB_ERR_IO_BUF_SETUP_OUT_OF_MEM:
 		status = SMW_STATUS_INPUT_TOO_LARGE;
+		break;
+
+	case HSM_BS_NO_KCV_FEATURE_DISABLED:
+	case HSM_FEATURE_DISABLED:
+		status = SMW_STATUS_OPERATION_DISABLED;
 		break;
 
 	default:

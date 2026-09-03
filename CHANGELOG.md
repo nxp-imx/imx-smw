@@ -158,6 +158,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### CLI Application
 
 * Fix coverity 2026.6.0 findings
+* The `-S ELE` option can be omitted for the `nxp_smw dev-get-uuid` command.
 
 ---
 ### <a id ="rel_5_4"></a></br>**Release 5.4**
@@ -187,6 +188,10 @@ The failure is due to the storage manager which is already loaded and a new inst
 * As some subsystems are not handling key usage and permitted algorithm, the
   find operation is not able to find all keys whose template defines key usage
   and permitted algorithm.
+
+##### 5. CLI Application
+
+* The `nxp_smw dev-get-uuid` command requires the `-S ELE` option to be set.
 
 #### SMW Library
 ##### 1. SMW APIs

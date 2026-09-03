@@ -279,6 +279,14 @@ and contains the device public key and identity information.
    |                  |                       |             | ECC P-384 format                        |
    +------------------+-----------------------+-------------+-----------------------------------------+
 
+.. warning::
+   If EL2GO keys used during the provisioning process are missing their
+   Key Check Values (KCV) on i.MX952, i.MX937, i.MX94x, and i.MX95 B1 devices,
+   the device attestation service is disabled. :c:func:`smw_device_attestation`
+   returns ``SMW_STATUS_OPERATION_DISABLED`` on such devices. 
+   See :ref:`ELE FW 2.0.7 - EL2GO Key Service Limitation <warning-ele-fw-2_0_7>`
+   for the full list of affected EL2GO keys and disabled operations.
+
 Get Device UUID
 ^^^^^^^^^^^^^^^
 Retrieve the unique identifier (UUID) of the device.

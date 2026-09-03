@@ -29,6 +29,65 @@ specialized features such as EdgeLock 2GO provisioning and NVM Secure Storage.
 
 **Supported Platforms:** i.MX8ULP, i.MX9x series
 
+.. _warning-ele-fw-2_0_7:
+
+.. warning::
+   **ELE FW 2.0.7 - EL2GO Key Service Limitation**
+
+   ELE FW 2.0.7 introduces a limitation on devices where the EL2GO provisioned
+   keys are missing their Key Check Values (KCV), causing certain crypto
+   services to be disabled. This affects **only** i.MX952, i.MX937, i.MX94x and
+   i.MX95 B1 devices that were not delivered with the KCV fix.
+
+   The following EL2GO keys are affected:
+
+   .. list-table:: Affected EL2GO Keys
+      :widths: 28 14 18 40
+      :header-rows: 1
+
+      * - EL2GO Key Name
+        - Key ID
+        - Key Type
+        - Description
+      * - ``NXP_DIE_ID_AUTH_PRK``
+        - 0x7FFF816C
+        - ECDSA NIST P-384
+        - Key used to identify the device when establishing the EdgeLock 2GO
+          connection. Key is used to sign the EdgeLock 2GO TLS self-signed
+          Certificate.
+      * - ``NXP_DIE_ATTEST_AUTH_PRK``
+        - 0x7FFF8173
+        - ECDSA NIST P-384
+        - Key used to attest the authenticity of asset exchange between Client
+          and Server.
+      * - ``IOT_DIE_ATTEST_AUTH_PRK``
+        - 0x7FFF8174
+        - ECDSA NIST P-384
+        - Key used to sign the public key attestation certificate.
+
+   Affected devices can only be identified at runtime by calling
+   :c:func:`smw_device_attestation`. If it returns
+   ``SMW_STATUS_OPERATION_DISABLED``, the device lacks KCV.
+
+   .. list-table:: Disabled operations per EL2GO key
+      :widths: 35 65
+      :header-rows: 1
+
+      * - EL2GO Key
+        - Affected Operations
+      * - ``NXP_DIE_ID_AUTH_PRK``
+        - :c:func:`smw_sign`, :c:func:`smw_verify`,
+          :c:func:`smw_export_key`
+      * - ``NXP_DIE_ATTEST_AUTH_PRK``
+        - :c:func:`smw_verify`, :c:func:`smw_export_key`
+      * - ``IOT_DIE_ATTEST_AUTH_PRK``
+        - :c:func:`smw_export_key`, :c:func:`smw_key_attestation`
+
+   In addition, the device attestation service
+   (:c:func:`smw_device_attestation`) is disabled on affected devices and
+   returns ``SMW_STATUS_OPERATION_DISABLED``.
+
+
 EdgeLock Accelerator (ELA)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 

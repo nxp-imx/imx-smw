@@ -44,6 +44,13 @@ The failure is due to the storage manager which is already loaded and a new inst
 * AEAD multi-part encryption operations using GCM mode with opaque keys produce
   incorrect authentication tags on i.MX95 B0. However, using plaintext key
   buffers works correctly.
+* ELE FW 2.0.7 has a known limitation where EL2GO provisioned keys missing their
+  Key Check Values (KCV) cause certain crypto services to be disabled on
+  i.MX952, i.MX937, i.MX94x and i.MX95 B1 devices that were not delivered with
+  the KCV fix. Affected keys: `NXP_DIE_ID_AUTH_PRK` (0x7FFF816C),
+  `NXP_DIE_ATTEST_AUTH_PRK` (0x7FFF8173) and `IOT_DIE_ATTEST_AUTH_PRK`
+  (0x7FFF8174). The new status code `SMW_STATUS_OPERATION_DISABLED` is
+  returned by `smw_device_attestation` on affected devices.
 
 ##### 3. TEE Subsystem
 
@@ -72,6 +79,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Set the key id to the subsystem id if no id is returned by the object database.
 * Add a new `smw_osal_obj_db_has_capability()` public API function that can be used
   by applications to retrieve the object database capability flags.
+* Add `SMW_STATUS_OPERATION_DISABLED` status code to report when an operation is
+  disabled on the device.
 
 ##### 2. Subsystems
 
@@ -141,6 +150,9 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add test for database version 2.
 * Add ELE and PSA tests to verify signatures with imported public keys.
 * Add tests for PSA multi-part unauthenticated ciphers functions.
+* Mark the device attestation subtest as skipped if `smw_device_attestation()`
+  returns `SMW_STATUS_OPERATION_DISABLED`, as the disabled service is a known
+  limitation introduced in ELE FW 2.0.7.
 
 #### PKCS#11 Library
 

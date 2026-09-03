@@ -214,6 +214,9 @@ struct smw_device_info_args {
  *  - SMW_STATUS_INVALID_PARAM:
  *      - @args is NULL.
  *      - Additional invalid parameters returned by the subsystem.
+ *  - SMW_STATUS_OPERATION_DISABLED:
+ *      EL2GO provisioned keys are missing their Key Check Values (KCV) and the
+ *      device attestation service is disabled.
  *  - Other error code from &enum smw_status_code
  */
 enum smw_status_code

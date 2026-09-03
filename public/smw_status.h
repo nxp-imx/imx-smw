@@ -114,6 +114,8 @@
  * @SMW_STATUS_PUBLIC_EXPONENT_NOT_SUPPORTED: Provided RSA public exponent is unsupported.
  * @SMW_STATUS_KEY_ID_ALREADY_EXIST: Key identifier already exist.
  * @SMW_STATUS_PERMITTED_ALGO_INVALID: Permitted algorithm missing one or more algorithm parameters.
+ * @SMW_STATUS_OPERATION_DISABLED: Operation is disabled by the secure subsystem
+ * (e.g., EL2GO key KCV absent).
  *
  * Status code classification:
  *
@@ -151,6 +153,7 @@
  *	- SMW_STATUS_UNKNOWN_SIGN_ALGO_NAME
  *	- SMW_STATUS_UNKNOWN_SIGN_TYPE_NAME
  *	- SMW_STATUS_OPERATION_ALREADY_INIT
+ *	- SMW_STATUS_OPERATION_DISABLED
  *
  ** Specific return codes - Library initialization
  *
@@ -291,7 +294,8 @@ enum smw_status_code {
 	SMW_STATUS_OPERATION_ALREADY_INIT,
 	SMW_STATUS_INPUT_TOO_LARGE,
 	SMW_STATUS_KEY_RANGE_NOT_CONFIGURABLE,
-	SMW_STATUS_OBJ_DB_CAPABILITY_NOT_SUPPORTED /* 75 */
+	SMW_STATUS_OBJ_DB_CAPABILITY_NOT_SUPPORTED, /* 75 */
+	SMW_STATUS_OPERATION_DISABLED
 };
 
 #endif /* __SMW_STATUS_H__ */

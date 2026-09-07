@@ -41,9 +41,10 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * ECC Signature verification with imported public key having x or y coordinate
   MSB=0 is not supported.
-* AEAD multi-part encryption operations using GCM mode with opaque keys produce
-  incorrect authentication tags on i.MX95 B0. However, using plaintext key
-  buffers works correctly.
+* On i.MX95 B0, ELE multi-part AES-GCM encryption with a non-NULL AAD and an
+  opaque key produces an incorrect authentication tag. This is a known ELE
+  firmware limitation. The operation succeeds and produces the correct tag
+  when AAD is NULL or when a plaintext key is used.
 * ELE FW 2.0.7 has a known limitation where EL2GO provisioned keys missing their
   Key Check Values (KCV) cause certain crypto services to be disabled on
   i.MX952, i.MX937, i.MX94x and i.MX95 B1 devices that were not delivered with

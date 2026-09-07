@@ -41,9 +41,10 @@ Supported Operations versus Subsystems
     plaintext key buffer, a 12-byte IV and a non-NULL AAD whose length is a
     multiple of 16 bytes. If these conditions are not met, the operation is
     executed by ELE.
-(4) ELE Multi-part encryption operations using GCM mode with opaque keys produce
-    incorrect authentication tags on i.MX95 B0. However, using plaintext key
-    buffers works correctly.
+(4) On i.MX95 B0, ELE multi-part AES-GCM encryption with a non-NULL AAD and an
+    opaque key produces an incorrect authentication tag. This is a known ELE
+    firmware limitation. The operation succeeds and produces the correct tag
+    when AAD is NULL or when a plaintext key is used.
 
 
 .. table:: AEAD APIs

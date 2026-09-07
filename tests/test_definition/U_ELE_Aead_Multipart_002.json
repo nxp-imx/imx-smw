@@ -86,7 +86,7 @@
 		"command": "AEAD_FINAL",
 		"op_type": "ENCRYPT",
 		"tag": 16,
-		"iv": 16,
+		"iv": 12,
 		"context_id": 0,
 		"input": "32333435363738394142434445463031",
 		"aead_id": 0,
@@ -174,7 +174,7 @@
 		"command": "AEAD_FINAL",
 		"op_type": "ENCRYPT",
 		"tag": 16,
-		"iv": 16,
+		"iv": 12,
 		"context_id": 1,
 		"output": [
 			"50e22db70ac2bab6d6af7059c90d00fb",
@@ -237,7 +237,7 @@
 		"command": "AEAD_FINAL",
 		"op_type": "DECRYPT",
 		"tag": 16,
-		"iv": 16,
+		"iv": 12,
 		"input": [
 			"08aca7dec636170f481dcb9fefb85c05"
 		],

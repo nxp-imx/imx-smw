@@ -211,7 +211,7 @@
 		"command": "AEAD_FINAL",
 		"op_type": "DECRYPT",
 		"tag": 16,
-		"iv": 16,
+		"iv": 12,
 		"input": [
 			"08aca7dec636170f481dcb9fefb85c05"
 		],
@@ -229,7 +229,7 @@
 		"command": "AEAD_FINAL",
 		"op_type": "DECRYPT",
 		"tag": 16,
-		"iv": 16,
+		"iv": 12,
 		"input": [
 			"08aca7dec636170f481dcb9fefb85c05"
 		],
@@ -248,7 +248,7 @@
 		"op_type": "DECRYPT",
 		"tag_field_set": true,
 		"tag": "964e7fcb7d16e988990d6d063d012d33",
-		"iv": 16,
+		"iv": 12,
 		"input": [
 			"08aca7dec636170f481dcb9fefb85c05"
 		],
@@ -266,7 +266,7 @@
 		],
 		"command": "AEAD_FINAL",
 		"op_type": "DECRYPT",
-		"iv": 16,
+		"iv": 12,
 		"tag": "964e7fcb7d16e988990d6d063d012d33",
 		"tag_field_set": true,
 		"input": [
@@ -283,7 +283,7 @@
 		],
 		"command": "AEAD_FINAL",
 		"op_type": "DECRYPT",
-		"iv": 16,
+		"iv": 12,
 		"tag": "08aca7dec636170f481dcb9fefb85c06",
 		"tag_field_set": true,
 		"context_id": 1,

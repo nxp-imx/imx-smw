@@ -21,6 +21,14 @@
 			"permitted_algo": [
 				"GCM"
 			]
+		},
+		"key 3": {
+			"type": "AES",
+			"security_size": 256,
+			"priv_key": [
+				"54e352ea1d84bfe64a1011096111fbe7",
+				"668ad2203d902a01458c3bbd85bfce14"
+			]
 		}
 	},
 	"subtest 1": {
@@ -81,7 +89,7 @@
 		],
 		"tag": "30096d340f3d5c42d82a6f475def23eb",
 		"context_id": 0,
-		"iv": 16,
+		"iv": 12,
 		"depends": 2
 	},
 	"subtest 5": {
@@ -163,7 +171,7 @@
 	"subtest 11": {
 		"description": [
 			"AEAD encryption init using GCM mode and opaque key",
-			"Partial IV generation (User IV length = 4 bytes)",
+			"Partial IV generation (User IV length = 4 bytes)"
 		],
 		"command": "AEAD_INIT",
 		"subsystem": "ELE",
@@ -312,7 +320,7 @@
 			"742e"
 		],
 		"aead_id": 2,
-		"iv": 16,
+		"iv": 12,
 		"tag": 16,
 		"output": 100,
 		"context_id": 3,
@@ -347,5 +355,103 @@
 		"command": "DELETE",
 		"key_name": "key 2",
 		"depends": 9
+	},
+	"subtest 25": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 4,
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 26": {
+		"description": [
+			"AEAD encryption init using GCM mode and plaintext key buffer",
+			"AAD length is 16 bytes",
+			"Test vector from https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/mac/gcmtestvectors.zip"
+		],
+		"command": "AEAD_INIT",
+		"subsystem": "ELE",
+		"key_name": "key 3",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"iv": "df7c3bca00396d0c018495d9",
+		"tag": 16,
+		"aad": 16,
+		"context_id": 4,
+		"depends": 25
+	},
+	"subtest 27": {
+		"description": "GCM encryption UPDATE AAD - 16 bytes of AAD",
+		"command": "AEAD_UPDATE_AAD",
+		"aad": "7e968d71b50c1f11fd001f3fef49d045",
+		"context_id": 4,
+		"depends": 26
+	},
+	"subtest 28": {
+		"description": [
+			"GCM encryption FINAL - 16 bytes of plaintext",
+			"Expected tag and output are defined",
+			"Tag is set in the dedicated tag field"
+		],
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"tag_field_set": true,
+		"input": "85fc3dfad9b5a8d3258e4fc44571bd3b",
+		"output": "426e0efc693b7be1f3018db7ddbb7e4d",
+		"tag": "ee8257795be6a1164d7e1d2d6cac77a7",
+		"context_id": 4,
+		"iv": 12,
+		"depends": 26
+	},
+	"subtest 29": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 5,
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 30": {
+		"description": [
+			"AEAD decryption init using GCM mode and plaintext key buffer",
+			"AAD length = 16 bytes",
+			"Test vector from https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/mac/gcmtestvectors.zip"
+		],
+		"command": "AEAD_INIT",
+		"subsystem": "ELE",
+		"key_name": "key 3",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"iv": "df7c3bca00396d0c018495d9",
+		"tag": 16,
+		"aad": 16,
+		"context_id": 5,
+		"depends": 29
+	},
+	"subtest 31": {
+		"description": "GCM decryption UPDATE AAD - 16 bytes of AAD",
+		"command": "AEAD_UPDATE_AAD",
+		"aad": "7e968d71b50c1f11fd001f3fef49d045",
+		"context_id": 5,
+		"depends": 30
+	},
+	"subtest 32": {
+		"description": [
+			"GCM decryption FINAL - 16 bytes of ciphertext and verify tag",
+			"Expected tag and output are defined",
+			"Tag is set in the dedicated tag field"
+		],
+		"command": "AEAD_FINAL",
+		"op_type": "DECRYPT",
+		"tag_field_set": true,
+		"input": "426e0efc693b7be1f3018db7ddbb7e4d",
+		"output": "85fc3dfad9b5a8d3258e4fc44571bd3b",
+		"tag": "ee8257795be6a1164d7e1d2d6cac77a7",
+		"context_id": 5,
+		"iv": 12,
+		"depends": 30
 	}
 }

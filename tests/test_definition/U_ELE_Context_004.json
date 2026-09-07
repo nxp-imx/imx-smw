@@ -105,7 +105,7 @@
 		],
 		"tag": "30096d340f3d5c42d82a6f475def23eb",
 		"context_id": 1,
-		"iv": 16,
+		"iv": 12,
 		"aead_id": 0,
 		"depends": 5
 	},
@@ -126,7 +126,7 @@
 			"530aa792f796b8138eeab2e86c7b7bee",
 			"1d40b0"
 		],
-		"iv": 16,
+		"iv": 12,
 		"aead_id": 0,
 		"depends": 6
 	},
@@ -167,7 +167,7 @@
 			"3e480f"
 		],
 		"tag": "30096d340f3d5c42d82a6f475def23eb",
-		"iv": 16,
+		"iv": 12,
 		"context_id": 0,
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 8

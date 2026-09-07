@@ -1,0 +1,756 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"GCM"
+			]
+		},
+		"key 2": {
+			"type": "AES",
+			"security_size": 128,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"GCM"
+			]
+		},
+		"key 3": {
+			"type": "AES",
+			"security_size": 192,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"GCM"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 2": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 3": {
+		"description": [
+			"AEAD encryption init using GCM mode and AES-256 opaque key",
+			"Partial IV generation (User IV length = 4 bytes)",
+			"AAD length is 0",
+			"Split: UPDATE #1 32 bytes + UPDATE #2 32 bytes + FINAL 50 bytes"
+		],
+		"command": "AEAD_INIT",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"iv": "60cc50e0",
+		"tag": 16,
+		"aad": 0,
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 4": {
+		"description": "GCM AES-256 encryption UPDATE #1 - first 32 bytes",
+		"command": "AEAD_UPDATE",
+		"input": [
+			"4c616469657320616e642047656e746c",
+			"656d656e206f662074686520636c6173"
+		],
+		"save_output": true,
+		"context_id": 0,
+		"depends": 3
+	},
+	"subtest 5": {
+		"description": "GCM AES-256 encryption UPDATE #2 - second 32 bytes",
+		"command": "AEAD_UPDATE",
+		"input": [
+			"73206f66202739393a20496620492063",
+			"6f756c64206f6666657220796f75206f"
+		],
+		"save_output": true,
+		"context_id": 0,
+		"depends": 3
+	},
+	"subtest 6": {
+		"description": [
+			"GCM AES-256 encryption FINAL - last 50 bytes",
+			"Tag appended to output buffer"
+		],
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"input": [
+			"6e6c79206f6e652074697020666f7220",
+			"746865206675747572652c2073756e73",
+			"637265656e20776f756c642062652069",
+			"742e"
+		],
+		"context_id": 0,
+		"aead_id": 0,
+		"iv": 12,
+		"tag": 16,
+		"depends": 3
+	},
+	"subtest 7": {
+		"description": [
+			"Cross-validation: Multi-part AES-256 encrypt -> One-shot decrypt",
+			"Partial IV variant (aead_id=0)"
+		],
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"aad": 0,
+		"output": [
+			"4c616469657320616e642047656e746c",
+			"656d656e206f662074686520636c6173",
+			"73206f66202739393a20496620492063",
+			"6f756c64206f6666657220796f75206f",
+			"6e6c79206f6e652074697020666f7220",
+			"746865206675747572652c2073756e73",
+			"637265656e20776f756c642062652069",
+			"742e"
+		],
+		"aead_id": 0,
+		"depends": 6
+	},
+	"subtest 8": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 1,
+		"depends": 1
+	},
+	"subtest 9": {
+		"description": [
+			"AEAD encryption init using GCM mode and AES-256 opaque key",
+			"Full IV generation (User IV length = 0 bytes)",
+			"AAD length is 0",
+			"Split: UPDATE 50 bytes + FINAL 30 bytes"
+		],
+		"command": "AEAD_INIT",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"iv": 0,
+		"tag": 16,
+		"aad": 0,
+		"context_id": 1,
+		"depends": 8
+	},
+	"subtest 10": {
+		"description": "GCM AES-256 encryption UPDATE - 50 bytes",
+		"command": "AEAD_UPDATE",
+		"input": [
+			"a0a1a2a3a4a5a6a7a8a9aaabacadaeaf",
+			"b0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+			"c0c1c2c3c4c5c6c7c8c9cacbcccdcecf",
+			"d0d1"
+		],
+		"save_output": true,
+		"context_id": 1,
+		"depends": 9
+	},
+	"subtest 11": {
+		"description": "GCM AES-256 encryption FINAL - 30 bytes",
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"input": [
+			"e0e1e2e3e4e5e6e7e8e9eaebecedeeef",
+			"f0f1f2f3f4f5f6f7f8f9fafbfcfd"
+		],
+		"aead_id": 1,
+		"iv": 12,
+		"tag": 16,
+		"output": 48,
+		"context_id": 1,
+		"depends": 9
+	},
+	"subtest 12": {
+		"description": "Cross-validation: Multi-part AES-256 encrypt -> One-shot decrypt (aead_id=1)",
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"aad": 0,
+		"output": [
+			"a0a1a2a3a4a5a6a7a8a9aaabacadaeaf",
+			"b0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+			"c0c1c2c3c4c5c6c7c8c9cacbcccdcecf",
+			"d0d1e0e1e2e3e4e5e6e7e8e9eaebeced",
+			"eeeff0f1f2f3f4f5f6f7f8f9fafbfcfd"
+		],
+		"aead_id": 1,
+		"depends": 11
+	},
+	"subtest 13": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 2,
+		"depends": 1
+	},
+	"subtest 14": {
+		"description": [
+			"AEAD encryption init using GCM mode and AES-256 opaque key",
+			"Full user-supplied IV (12 bytes)",
+			"AAD length is 0",
+			"Split: UPDATE 16 bytes + FINAL 64 bytes"
+		],
+		"command": "AEAD_INIT",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"iv": "b1c2d3e4f5061728394a5b6c",
+		"tag": 16,
+		"aad": 0,
+		"context_id": 2,
+		"depends": 13
+	},
+	"subtest 15": {
+		"description": "GCM AES-256 encryption UPDATE - 16 bytes",
+		"command": "AEAD_UPDATE",
+		"input": "1122334455667788990011223344aabb",
+		"save_output": true,
+		"context_id": 2,
+		"depends": 14
+	},
+	"subtest 16": {
+		"description": "GCM AES-256 encryption FINAL - 64 bytes",
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"input": [
+			"aabbccddeeff00112233445566778899",
+			"0102030405060708090a0b0c0d0e0f10",
+			"1112131415161718191a1b1c1d1e1f20",
+			"2122232425262728292a2b2c2d2e2f30"
+		],
+		"context_id": 2,
+		"aead_id": 2,
+		"iv": 12,
+		"tag": 16,
+		"depends": 14
+	},
+	"subtest 17": {
+		"description": "Cross-validation: Multi-part AES-256 encrypt -> One-shot decrypt (aead_id=2)",
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"aad": 0,
+		"output": [
+			"1122334455667788990011223344aabb",
+			"aabbccddeeff00112233445566778899",
+			"0102030405060708090a0b0c0d0e0f10",
+			"1112131415161718191a1b1c1d1e1f20",
+			"2122232425262728292a2b2c2d2e2f30"
+		],
+		"aead_id": 2,
+		"depends": 16
+	},
+	"subtest 18": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 19": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 20": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 3,
+		"depends": 19
+	},
+	"subtest 21": {
+		"description": [
+			"AEAD encryption init using GCM mode and AES-128 opaque key",
+			"Partial IV generation (User IV length = 4 bytes)",
+			"AAD length is 0",
+			"Split: UPDATE 48 bytes + FINAL 32 bytes"
+		],
+		"command": "AEAD_INIT",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"iv": "a1b2c3d4",
+		"tag": 16,
+		"aad": 0,
+		"context_id": 3,
+		"depends": 20
+	},
+	"subtest 22": {
+		"description": "GCM AES-128 encryption UPDATE - 48 bytes",
+		"command": "AEAD_UPDATE",
+		"input": [
+			"deadbeef00112233445566778899aabb",
+			"ccddeeff001122334455667788990011",
+			"aabbccddeeff00112233445566778899"
+		],
+		"save_output": true,
+		"context_id": 3,
+		"depends": 21
+	},
+	"subtest 23": {
+		"description": "GCM AES-128 encryption FINAL - 32 bytes",
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"input": [
+			"f0e1d2c3b4a5968778695a4b3c2d1e0f",
+			"102030405060708090a0b0c0d0e0f010"
+		],
+		"context_id": 3,
+		"aead_id": 3,
+		"iv": 12,
+		"tag": 16,
+		"depends": 21
+	},
+	"subtest 24": {
+		"description": "Cross-validation: Multi-part AES-128 encrypt -> One-shot decrypt (aead_id=3)",
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"aad": 0,
+		"output": [
+			"deadbeef00112233445566778899aabb",
+			"ccddeeff001122334455667788990011",
+			"aabbccddeeff00112233445566778899",
+			"f0e1d2c3b4a5968778695a4b3c2d1e0f",
+			"102030405060708090a0b0c0d0e0f010"
+		],
+		"aead_id": 3,
+		"depends": 23
+	},
+	"subtest 25": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 4,
+		"depends": 19
+	},
+	"subtest 26": {
+		"description": [
+			"AEAD encryption init using GCM mode and AES-128 opaque key",
+			"Full IV generation (User IV length = 0 bytes)",
+			"AAD length is 0",
+			"Split: 3 UPDATEs of 16 bytes each + FINAL 32 bytes"
+		],
+		"command": "AEAD_INIT",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"iv": 0,
+		"tag": 16,
+		"aad": 0,
+		"context_id": 4,
+		"depends": 25
+	},
+	"subtest 27": {
+		"description": "GCM AES-128 encryption UPDATE #1 - 16 bytes",
+		"command": "AEAD_UPDATE",
+		"input": "1032547698badcfe1032547698badcfe",
+		"save_output": true,
+		"context_id": 4,
+		"depends": 26
+	},
+	"subtest 28": {
+		"description": "GCM AES-128 encryption UPDATE #2 - 16 bytes",
+		"command": "AEAD_UPDATE",
+		"input": "fedcba9876543210fedcba9876543210",
+		"save_output": true,
+		"context_id": 4,
+		"depends": 26
+	},
+	"subtest 29": {
+		"description": "GCM AES-128 encryption UPDATE #3 - 16 bytes",
+		"command": "AEAD_UPDATE",
+		"input": "0f1e2d3c4b5a69788796a5b4c3d2e1f0",
+		"save_output": true,
+		"context_id": 4,
+		"depends": 26
+	},
+	"subtest 30": {
+		"description": "GCM AES-128 encryption FINAL - 32 bytes",
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"input": [
+			"f0e1d2c3b4a59687786978695a4b3c2d",
+			"a0b1c2d3e4f5060718293a4b5c6d7e8f"
+		],
+		"aead_id": 4,
+		"iv": 12,
+		"tag": 16,
+		"output": 48,
+		"context_id": 4,
+		"depends": 26
+	},
+	"subtest 31": {
+		"description": "Cross-validation: Multi-part AES-128 encrypt -> One-shot decrypt (aead_id=4)",
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"aad": 0,
+		"output": [
+			"1032547698badcfe1032547698badcfe",
+			"fedcba9876543210fedcba9876543210",
+			"0f1e2d3c4b5a69788796a5b4c3d2e1f0",
+			"f0e1d2c3b4a59687786978695a4b3c2d",
+			"a0b1c2d3e4f5060718293a4b5c6d7e8f"
+		],
+		"aead_id": 4,
+		"depends": 30
+	},
+	"subtest 32": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 5,
+		"depends": 19
+	},
+	"subtest 33": {
+		"description": [
+			"AEAD encryption init using GCM mode and AES-128 opaque key",
+			"Full user-supplied IV (12 bytes)",
+			"AAD length is 0",
+			"Split: UPDATE 64 bytes + FINAL 16 bytes"
+		],
+		"command": "AEAD_INIT",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"iv": "0a1b2c3d4e5f6a7b8c9d0e1f",
+		"tag": 16,
+		"aad": 0,
+		"context_id": 5,
+		"depends": 32
+	},
+	"subtest 34": {
+		"description": "GCM AES-128 encryption UPDATE - 64 bytes",
+		"command": "AEAD_UPDATE",
+		"input": [
+			"90a1b2c3d4e5f607182930a1b2c3d4e5",
+			"f60718293a4b5c6d7e8f90a1b2c3d4e5",
+			"3d2c1b0af9e8d7c6b5a493827160504e",
+			"2c1b0af9e8d7c6b5a4938271605f4e3d"
+		],
+		"save_output": true,
+		"context_id": 5,
+		"depends": 33
+	},
+	"subtest 35": {
+		"description": "GCM AES-128 encryption FINAL - 16 bytes",
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"input": "1b0af9e8d7c6b5a493827160504e3d2c",
+		"context_id": 5,
+		"aead_id": 5,
+		"iv": 12,
+		"tag": 16,
+		"depends": 33
+	},
+	"subtest 36": {
+		"description": "Cross-validation: Multi-part AES-128 encrypt -> One-shot decrypt (aead_id=5)",
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"aad": 0,
+		"output": [
+			"90a1b2c3d4e5f607182930a1b2c3d4e5",
+			"f60718293a4b5c6d7e8f90a1b2c3d4e5",
+			"3d2c1b0af9e8d7c6b5a493827160504e",
+			"2c1b0af9e8d7c6b5a4938271605f4e3d",
+			"1b0af9e8d7c6b5a493827160504e3d2c"
+		],
+		"aead_id": 5,
+		"depends": 35
+	},
+	"subtest 37": {
+		"command": "DELETE",
+		"key_name": "key 2",
+		"depends": 19
+	},
+	"subtest 38": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 3",
+		"restriction_list": [
+			"imx8ulp",
+			"imx91",
+			"imx93"
+		]
+	},
+	"subtest 39": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 6,
+		"depends": 38
+	},
+	"subtest 40": {
+		"description": [
+			"AEAD encryption init using GCM mode and AES-192 opaque key",
+			"Partial IV generation (User IV length = 4 bytes)",
+			"AAD length is 0",
+			"Split: UPDATE #1 18 bytes + UPDATE #2 38 bytes + FINAL 22 bytes"
+		],
+		"command": "AEAD_INIT",
+		"subsystem": "ELE",
+		"key_name": "key 3",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"iv": "e5f6a7b8",
+		"tag": 16,
+		"aad": 0,
+		"context_id": 6,
+		"depends": 39
+	},
+	"subtest 41": {
+		"description": "GCM AES-192 encryption UPDATE #1 - 18 bytes",
+		"command": "AEAD_UPDATE",
+		"input": [
+			"0102030405060708090a0b0c0d0e0f10",
+			"1112"
+		],
+		"save_output": true,
+		"context_id": 6,
+		"depends": 40
+	},
+	"subtest 42": {
+		"description": "GCM AES-192 encryption UPDATE #2 - 38 bytes",
+		"command": "AEAD_UPDATE",
+		"input": [
+			"131415161718191a1b1c1d1e1f202122",
+			"232425262728292a2b2c2d2e2f303132",
+			"333435363738"
+		],
+		"save_output": true,
+		"context_id": 6,
+		"depends": 40
+	},
+	"subtest 43": {
+		"description": "GCM AES-192 encryption FINAL - 22 bytes",
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"input": [
+			"393a3b3c3d3e3f404142434445464748",
+			"494a4b4c4d4e"
+		],
+		"context_id": 6,
+		"aead_id": 6,
+		"iv": 12,
+		"tag": 16,
+		"output": 44,
+		"depends": 40
+	},
+	"subtest 44": {
+		"description": "Cross-validation: Multi-part AES-192 encrypt -> One-shot decrypt (aead_id=6)",
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 3",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"aad": 0,
+		"output": [
+			"0102030405060708090a0b0c0d0e0f10",
+			"1112131415161718191a1b1c1d1e1f20",
+			"2122232425262728292a2b2c2d2e2f30",
+			"3132333435363738393a3b3c3d3e3f40",
+			"4142434445464748494a4b4c4d4e"
+		],
+		"aead_id": 6,
+		"depends": 43
+	},
+	"subtest 45": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 7,
+		"depends": 38
+	},
+	"subtest 46": {
+		"description": [
+			"AEAD encryption init using GCM mode and AES-192 opaque key",
+			"Full IV generation (User IV length = 0 bytes)",
+			"AAD length is 0",
+			"Split: UPDATE 38 bytes + FINAL 27 bytes"
+		],
+		"command": "AEAD_INIT",
+		"subsystem": "ELE",
+		"key_name": "key 3",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"iv": 0,
+		"tag": 16,
+		"aad": 0,
+		"context_id": 7,
+		"depends": 45
+	},
+	"subtest 47": {
+		"description": "GCM AES-192 encryption UPDATE - 38 bytes",
+		"command": "AEAD_UPDATE",
+		"input": [
+			"5152535455565758595a5b5c5d5e5f60",
+			"6162636465666768696a6b6c6d6e6f70",
+			"717273747576"
+		],
+		"save_output": true,
+		"context_id": 7,
+		"depends": 46
+	},
+	"subtest 48": {
+		"description": "GCM AES-192 encryption FINAL - 27 bytes",
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"input": [
+			"7778797a7b7c7d7e7f80818283848586",
+			"8788898a8b8c8d8e8f9091"
+		],
+		"aead_id": 7,
+		"iv": 12,
+		"tag": 16,
+		"output": 49,
+		"context_id": 7,
+		"depends": 46
+	},
+	"subtest 49": {
+		"description": "Cross-validation: Multi-part AES-192 encrypt -> One-shot decrypt (aead_id=7)",
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 3",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"aad": 0,
+		"output": [
+			"5152535455565758595a5b5c5d5e5f60",
+			"6162636465666768696a6b6c6d6e6f70",
+			"7172737475767778797a7b7c7d7e7f80",
+			"8182838485868788898a8b8c8d8e8f90",
+			"91"
+		],
+		"aead_id": 7,
+		"depends": 48
+	},
+	"subtest 50": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 8,
+		"depends": 38
+	},
+	"subtest 51": {
+		"description": [
+			"AEAD encryption init using GCM mode and AES-192 opaque key",
+			"Full user-supplied IV (12 bytes)",
+			"AAD length is 0",
+			"Split: UPDATE #1 27 bytes + UPDATE #2 18 bytes + UPDATE #3 11 bytes + FINAL 14 bytes"
+		],
+		"command": "AEAD_INIT",
+		"subsystem": "ELE",
+		"key_name": "key 3",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"iv": "f1e2d3c4b5a697887968594a",
+		"tag": 16,
+		"aad": 0,
+		"context_id": 8,
+		"depends": 50
+	},
+	"subtest 52": {
+		"description": "GCM AES-192 encryption UPDATE #1 - 27 bytes",
+		"command": "AEAD_UPDATE",
+		"input": [
+			"b0a09080706050403020100f0e0d0c0b",
+			"0a09080706050403020100"
+		],
+		"save_output": true,
+		"context_id": 8,
+		"depends": 51
+	},
+	"subtest 53": {
+		"description": "GCM AES-192 encryption UPDATE #2 - 18 bytes",
+		"command": "AEAD_UPDATE",
+		"input": [
+			"6c5b4a3b2c1d0ef9e8d7c6b5a4938271",
+			"605f"
+		],
+		"save_output": true,
+		"context_id": 8,
+		"depends": 51
+	},
+	"subtest 54": {
+		"description": "GCM AES-192 encryption UPDATE #3 - 11 bytes",
+		"command": "AEAD_UPDATE",
+		"input": "4e3d2c1b0af9e8d7c6b5a4",
+		"output": 16,
+		"save_output": true,
+		"context_id": 8,
+		"depends": 51
+	},
+	"subtest 55": {
+		"description": "GCM AES-192 encryption FINAL - 14 bytes",
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"input": "938271604e3d2c1b0af9e8d7c6b5",
+		"context_id": 8,
+		"aead_id": 8,
+		"iv": 12,
+		"tag": 16,
+		"output": 43,
+		"depends": 51
+	},
+	"subtest 56": {
+		"description": "Cross-validation: Multi-part AES-192 encrypt -> One-shot decrypt (aead_id=8)",
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 3",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"aad": 0,
+		"output": [
+			"b0a09080706050403020100f0e0d0c0b",
+			"0a090807060504030201006c5b4a3b2c",
+			"1d0ef9e8d7c6b5a4938271605f4e3d2c",
+			"1b0af9e8d7c6b5a4938271604e3d2c1b",
+			"0af9e8d7c6b5"
+		],
+		"aead_id": 8,
+		"depends": 55
+	},
+	"subtest 57": {
+		"command": "DELETE",
+		"key_name": "key 3",
+		"depends": 38
+	}
+}

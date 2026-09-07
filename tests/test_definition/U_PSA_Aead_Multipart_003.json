@@ -78,7 +78,7 @@
 		"api": "PSA",
 		"op_type": "ENCRYPT",
 		"tag": 16,
-		"iv": 16,
+		"iv": 12,
 		"save_output": true,
 		"context_id": 0,
 		"aead_id": 0,

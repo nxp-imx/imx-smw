@@ -52,6 +52,14 @@ The failure is due to the storage manager which is already loaded and a new inst
   `NXP_DIE_ATTEST_AUTH_PRK` (0x7FFF8173) and `IOT_DIE_ATTEST_AUTH_PRK`
   (0x7FFF8174). The new status code `SMW_STATUS_OPERATION_DISABLED` is
   returned by `smw_device_attestation` on affected devices.
+* ELA-based HMAC and cipher are disabled in the ELE configuration files for the
+  i.MX94x and i.MX952, i.MX937 platforms (`USE_ELA` removed from MAC and cipher
+  security operations). An intermittent defect in ELA HMAC compute and cipher
+  may produce incorrect output. PKCS#11 tests involving HMAC compute or cipher
+  with a plaintext key may fail as a result if these operations are enabled in
+  the configuration files. This limitation will be lifted once
+  the fix is validated across all platforms.
+
 
 ##### 3. TEE Subsystem
 

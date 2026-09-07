@@ -164,6 +164,13 @@ void dcache_invalidate(void *addr, size_t size)
 
 	for (; i < size; i += CACHE_LINE_SIZE)
 		DCCIVAC(addr + i);
+
+	/*
+	 * DSB SY: wait for all DC CIVAC (clean+invalidate) operations to complete
+	 * before returning. Without this barrier, a subsequent CPU load may still
+	 * hit a stale cache line before the invalidate takes effect.
+	 */
+	asm volatile("dsb sy" ::: "memory");
 }
 
 void dcache_clean(void *addr, size_t size)
@@ -172,6 +179,13 @@ void dcache_clean(void *addr, size_t size)
 
 	for (; i < size; i += CACHE_LINE_SIZE)
 		DCBF(addr + i);
+
+	/*
+	 * DSB SY: wait for all DC CVAC (clean) operations to complete before
+	 * returning. Without this barrier, the DMA engine may read stale data
+	 * from RAM if the cache flush has not yet propagated to the system bus.
+	 */
+	asm volatile("dsb sy" ::: "memory");
 }
 
 __weak void set_log_file(void)

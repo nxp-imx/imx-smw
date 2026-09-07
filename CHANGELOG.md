@@ -99,6 +99,11 @@ The failure is due to the storage manager which is already loaded and a new inst
   SMW library version 5.5 requires ELE library version lf-6.18.20-2.0.0 or more recent.
 * ELE: support operations (import, get attributes, export, verify signature, delete)
   with plain public keys, by storing them in the database.
+* ELE: Fix DMA cache coherency for ELA crypto output buffers (AEAD, cipher,
+  MAC). `dcache_invalidate()` performs clean+invalidate (ARM DC CIVAC);
+  calling it after `prime_process_ops()` caused the clean step to overwrite
+  the ELA DMA result with stale CPU cache data. Output buffers are now
+  invalidated before `prime_process_ops()`.
 
 ##### 3. ARM PSA APIs
 

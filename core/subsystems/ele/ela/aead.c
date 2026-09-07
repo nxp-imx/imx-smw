@@ -299,6 +299,14 @@ static int setup_aead_op_params(crypto_op_args_t *op,
 
 	op->dst.phys_addr = phys_addr_offset;
 
+	/*
+	 * Invalidate the output buffer BEFORE prime_process_ops().
+	 * dcache_invalidate() performs clean+invalidate (ARM DC CIVAC).
+	 * Calling it after ELA writes its result would cause the CLEAN step to
+	 * flush stale CPU cache data back to RAM, overwriting the DMA result.
+	 */
+	smw_utils_dcache_invalidate(op->dst.virt_addr, op->dst.len);
+
 	if (ADD_OVERFLOW(offset, output_len, &unaligned_offset)) {
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
@@ -362,6 +370,15 @@ static int setup_aead_op_params(crypto_op_args_t *op,
 
 		/* Clean cache for TAG buffer */
 		smw_utils_dcache_clean(op->op_aead_args.tag.virt_addr, tag_len);
+	} else {
+		/*
+		 * Invalidate the tag output buffer BEFORE prime_process_ops()
+		 * for encryption. The CLEAN step of dcache_invalidate() called
+		 * after ELA writes the tag would overwrite the DMA result with
+		 * stale CPU cache data.
+		 */
+		smw_utils_dcache_invalidate(op->op_aead_args.tag.virt_addr,
+					    tag_len);
 	}
 
 	/* Set operation type */
@@ -395,6 +412,11 @@ static int setup_aead_op_params(crypto_op_args_t *op,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	/*
+	 * No dcache_invalidate() needed here for the crypto_status buffer.
+	 * The ELA library performs a clean+invalidate on this buffer inside
+	 * prime_process_ops() before submitting the operation to ELA firmware.
+	 */
 	op->crypto_status.phys_addr =
 		(status_buf_t *)(op->src.phys_addr + offset);
 	op->crypto_status.virt_addr =
@@ -456,8 +478,6 @@ static int retrieve_aead_output(crypto_op_args_t *op,
 
 	output_len = op->dst.len;
 
-	/* Clean and invalidate cache for output buffer */
-	smw_utils_dcache_invalidate(op->dst.virt_addr, op->dst.len);
 	/* Copy output data from shared memory */
 	SMW_UTILS_MEMCPY(output_data, op->dst.virt_addr, op->dst.len);
 
@@ -466,10 +486,6 @@ static int retrieve_aead_output(crypto_op_args_t *op,
 			status = SMW_STATUS_INVALID_PARAM;
 			goto end;
 		}
-
-		/* Clean and invalidate cache for tag buffer */
-		smw_utils_dcache_invalidate(op->op_aead_args.tag.virt_addr,
-					    op->op_aead_args.tag.len);
 
 		/* Copy tag from ELA memory to tag buffer */
 		SMW_UTILS_MEMCPY(smw_crypto_get_aead_tag(aead_args),

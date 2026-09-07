@@ -215,6 +215,14 @@ static int set_cipher_op_params(crypto_op_args_t *op,
 
 	op->dst.phys_addr = phys_addr_offset;
 
+	/*
+	 * Invalidate the output buffer BEFORE prime_process_ops().
+	 * dcache_invalidate() performs clean+invalidate (ARM DC CIVAC).
+	 * Calling it after ELA writes its result would cause the CLEAN step to
+	 * flush stale CPU cache data back to RAM, overwriting the DMA result.
+	 */
+	smw_utils_dcache_invalidate(op->dst.virt_addr, op->dst.len);
+
 	op->op_type = CRYPTO_OP_TYPE_AES;
 	op->op_aes_args.algo = algo;
 	op->op_aes_args.keyslot = keyslot;
@@ -243,6 +251,11 @@ static int set_cipher_op_params(crypto_op_args_t *op,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	/*
+	 * No dcache_invalidate() needed here for the crypto_status buffer.
+	 * The ELA library performs a clean+invalidate on this buffer inside
+	 * prime_process_ops() before submitting the operation to ELA firmware.
+	 */
 	op->crypto_status.phys_addr =
 		(status_buf_t *)(op->src.phys_addr + offset);
 	op->crypto_status.virt_addr =
@@ -296,9 +309,6 @@ static int retrieve_cipher_output(crypto_op_args_t *op,
 				    op->crypto_status.virt_addr->error_info);
 	if (status != SMW_STATUS_OK)
 		goto end;
-
-	/* Clean and invalidate cache for output buffer */
-	smw_utils_dcache_invalidate(op->dst.virt_addr, op->dst.len);
 
 	/* Copy output data from shared buffer */
 	SMW_UTILS_MEMCPY(output_data, op->dst.virt_addr, op->dst.len);

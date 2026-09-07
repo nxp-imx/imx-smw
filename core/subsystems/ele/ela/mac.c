@@ -245,6 +245,17 @@ static int set_hmac_op_params(crypto_op_args_t *op,
 
 	if (mac_args->op_id == SMW_CONFIG_MAC_OP_ID_COMPUTE) {
 		op->op_mac_args.dir = CRYPTO_AUTH_OP_HMAC_GEN;
+
+		/*
+		 * Invalidate the digest output buffer BEFORE prime_process_ops().
+		 * dcache_invalidate() performs clean+invalidate (ARM DC CIVAC).
+		 * Calling it after ELA writes its result would cause the CLEAN
+		 * step to flush stale CPU cache data back to RAM, overwriting
+		 * the DMA result.
+		 */
+		smw_utils_dcache_invalidate(op->op_mac_args.digest.virt_addr,
+					    mac_len);
+
 	} else {
 		op->op_mac_args.dir = CRYPTO_AUTH_OP_HMAC_VERIFY;
 
@@ -273,6 +284,11 @@ static int set_hmac_op_params(crypto_op_args_t *op,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	/*
+	 * No dcache_invalidate() needed here for the crypto_status buffer.
+	 * The ELA library performs a clean+invalidate on this buffer inside
+	 * prime_process_ops() before submitting the operation to ELA firmware.
+	 */
 	op->crypto_status.phys_addr =
 		(status_buf_t *)(op->src.phys_addr + offset);
 	op->crypto_status.virt_addr =
@@ -343,10 +359,6 @@ static int retrieve_hmac_output(crypto_op_args_t *op,
 		goto end;
 
 	if (mac_args->op_id == SMW_CONFIG_MAC_OP_ID_COMPUTE) {
-		/* Clean and invalidate cache for output buffer */
-		smw_utils_dcache_invalidate(op->op_mac_args.digest.virt_addr,
-					    op->op_mac_args.digest.len);
-
 		/* Copy computed MAC from shared buffer */
 		SMW_UTILS_MEMCPY(mac, op->op_mac_args.digest.virt_addr,
 				 op->op_mac_args.digest.len);
